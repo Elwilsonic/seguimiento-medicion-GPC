@@ -39,8 +39,29 @@ completa, en este orden, SIN saltarte pasos ni adelantarte:
    - Condiciones de error
    - Criterios de aceptación (lista clara y verificable)
 
+   Si la historia referencia a otra entidad por ID (por ejemplo, un ítem de
+   backlog que pertenece a un proyecto), la SDD debe decidir explícitamente
+   si se valida que esa entidad exista, y justificar la decisión. No dejarlo
+   implícito ni asumido.
+
+   Las funciones de consulta (Get, List) y de escritura (Create, Update, Add)
+   deben devolver copias por valor o estructuras recién creadas, nunca
+   referencias (punteros) a las estructuras internas del manager — así
+   ningún llamador externo puede mutar el estado sin pasar por las
+   validaciones.
+
    Guardá esta especificación como archivo Markdown en:
    docs/especificaciones/HU-XX-nombre-corto.md
+
+   Antes de pedir aprobación, verificá si existe un acta de planning del
+   sprint (docs/actas/sprint-N-planning.md) que describa el alcance de esta
+   historia:
+   - Si NO existe acta (o no menciona esta historia), no hay nada que
+     comparar: continuá normalmente, no bloquees la historia por esto.
+   - Si SÍ existe y describe un alcance distinto al de la SDD que acabás de
+     escribir, DETENETE y avisame la diferencia explícitamente antes de
+     pedir aprobación. No asumas que el acta ya está desactualizada ni la
+     corrijas vos solo.
 
    >>> DETENETE ACÁ. Mostrame la especificación completa y esperá mi
    >>> aprobación explícita (por ejemplo "aprobado, seguí" o "ajustá X")
@@ -103,11 +124,37 @@ completa, en este orden, SIN saltarte pasos ni adelantarte:
    validación en: docs/evidencias/HU-XX-tdd.md
    (incluyendo las salidas de los comandos anteriores).
 
+   Al escribir la trazabilidad en la evidencia, contá los escenarios BDD y
+   los tests por separado y de forma exacta (por ejemplo "8 tests cubriendo
+   6 escenarios BDD"). No asumas una correspondencia 1 a 1 salvo que
+   realmente sea así.
+
+   La tabla de commits de este documento se escribe primero con
+   "(propuesto)" en cada fila. Apenas yo autorice y ejecutes cada commit,
+   volvé a este archivo y reemplazá "(propuesto)" por el hash real de ese
+   commit. No lo dejes pendiente para después.
+
    Guardá (o actualizá) el resultado de cobertura general en:
    docs/reportes/cobertura.md
 
-   Conservá el mismo ID HU-XX en la especificación SDD, el escenario
-   BDD, los tests, el código, las evidencias y los commits.
+   Es OBLIGATORIO, para toda historia sin excepción: al crear o actualizar
+   el Issue de GitHub correspondiente, agregá (o verificá que ya tenga)
+   esta sección en el body, con el mismo formato siempre y los links reales
+   al repo:
+
+   ## Trazabilidad
+
+   - Especificación SDD: [docs/especificaciones/HU-XX-nombre.md](../blob/main/docs/especificaciones/HU-XX-nombre.md)
+   - Escenarios BDD: [features/HU-XX-nombre.feature](../blob/main/features/HU-XX-nombre.feature)
+   - Evidencia TDD: [docs/evidencias/HU-XX-tdd.md](../blob/main/docs/evidencias/HU-XX-tdd.md)
+   - Trazabilidad: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
+
+   No es opcional ni depende de si "queda tiempo": es parte de cerrar la
+   historia. Esto es lo que permite, al clickear la tarjeta en el tablero
+   Scrum, llegar directo a toda la documentación de la historia.
+
+   Conservá el mismo ID HU-XX en la especificación SDD, el escenario BDD,
+   los tests, el código, las evidencias y los commits.
 
 REGLAS GENERALES:
 - No mezcles pasos. Mostrá siempre la historia y la especificación SDD, y
@@ -132,6 +179,8 @@ REGLAS GENERALES:
 - Mantené la trazabilidad explícita: al final de cada historia, escribí
   un resumen de una línea:
   HU-XX: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
+- La historia no se considera cerrada hasta que la trazabilidad del Issue
+  y la evidencia TDD estén actualizadas y verificadas.
 
 TERMINOLOGÍA DEL PROYECTO:
 - Usar siempre "Agile Enabler" en vez de "Scrum Master".

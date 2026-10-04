@@ -23,6 +23,23 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 | Product Builder | García Santiago |
 | Product Builder | Sosa Ricardo |
 
+## Estructura del repositorio
+
+Las carpetas se van creando a medida que aparece su contenido.
+
+| Ruta | Contenido |
+|---|---|
+| `AGENTS.md` | Instrucciones del flujo de trabajo (SDD → BDD → TDD) |
+| `cmd/` | Punto de entrada ejecutable de la aplicación |
+| `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests |
+| `features/` | Escenarios BDD en Gherkin (`HU-XX-nombre.feature`) |
+| `docs/actas/` | Actas de Planning, Review y Retrospective de cada Sprint |
+| `docs/especificaciones/` | Especificaciones SDD (`HU-XX-nombre.md`) |
+| `docs/evidencias/` | Evidencia TDD por historia (`HU-XX-tdd.md`) |
+| `docs/reportes/` | Reportes de cobertura y métricas |
+
+El Product Backlog y los Sprint Backlogs están en el tablero de GitHub Projects.
+
 ## Estado del proyecto
 
 🟡 En desarrollo — Sprint 0 (Preparación)
