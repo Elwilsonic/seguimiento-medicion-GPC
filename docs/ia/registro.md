@@ -16,7 +16,7 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 | 07/10/2026 | Peñalbé Hernán | Tareas técnicas | Redacción de TEC-05 y sus criterios; propuesta de pasar TEC-02 al Sprint 1 | El equipo decidió usar PostgreSQL en Docker y mover TEC-02 al Sprint 1, y aprobó los textos |
 | 08/10/2026 | Peñalbé Hernán | Estimación | Recomendación de escalas (Fibonacci para historias, talles para épicas) | Los talles de las épicas los votó el equipo en Planning Poker |
 | 08/10/2026 | Peñalbé Hernán | Documentación | Textos de Issues (archivo de carga de HU-09 a HU-40 y TEC-01 a TEC-04, épica #13, HU-40 y correcciones de HU-07, HU-20, HU-29, HU-38 y HU-39); borradores del acta de cierre del Sprint 0, del README y de este registro | El equipo revisó y cargó los Issues, modificó la retrospectiva, agregó las decisiones 6 a 8 y ajustó el README y este registro |
-| 08/10/2026 | Peñalbé Hernán | Proceso de trabajo | Revisión y corrección de `AGENTS.md` (referencias a Issues, orden de cierre, autorización de trazabilidad, BDD automatizado con godog) | El equipo definió las reglas (ramas, push con autorización, forma del merge, uso de godog) y aprobó la versión final |
+| 08/10/2026 | Peñalbé Hernán | Proceso de trabajo | Revisión y corrección de `AGENTS.md` (referencias a Issues, orden de cierre, autorización de trazabilidad, BDD automatizado con godog), convención de commits, `.gitignore` y `.gitattributes` | El equipo definió las reglas (ramas, push con autorización, forma del merge, uso de godog, formato de commits; `.gitattributes` porque todo el equipo usa Windows) y aprobó la versión final |
 
 ## Incidentes
 
