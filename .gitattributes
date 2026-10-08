@@ -1,0 +1,14 @@
+# Todos los archivos de texto se guardan en el repositorio con finales de línea LF,
+# aunque el equipo trabaje en Windows. Evita diferencias falsas en los diffs
+# y que gofmt marque archivos como mal formateados en el CI.
+* text=auto eol=lf
+
+# Scripts de Windows conservan CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios
+*.png binary
+*.jpg binary
+*.pdf binary

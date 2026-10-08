@@ -1,0 +1,29 @@
+# Binarios y ejecutables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+/dist/
+
+# Tests y cobertura
+*.test
+*.out
+coverage.*
+cover.html
+
+# Variables de entorno (las credenciales nunca se suben; ver .env.example)
+.env
+.env.*
+!.env.example
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
