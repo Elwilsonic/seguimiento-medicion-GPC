@@ -27,3 +27,8 @@ cover.html
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Go workspace y dependencias locales
+go.work
+go.work.sum
+vendor/
