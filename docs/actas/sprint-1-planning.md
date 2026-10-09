@@ -99,6 +99,7 @@ Mientras HU-01 está en curso, los responsables de HU-02, HU-03, HU-04 y HU-06 p
 - Los tests pasan (`go test ./...`) y el código está formateado (`gofmt`). El workflow de CI (TEC-02) pasa en el Pull Request.
 - Existe una forma mínima de ejecutar y demostrar la historia (TEC-01): "funcional" significa que se pueda ejecutar y mostrar corriendo.
 - La rama de la historia está integrada a `main` por Pull Request, con "Create a merge commit".
+- El Pull Request fue aprobado por al menos un integrante distinto del responsable.
 - El README refleja el estado del Sprint.
 
 ## Estrategia de ramas e integración
