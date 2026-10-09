@@ -35,7 +35,7 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 | Sprint | Fechas | Objetivo |
 |---|---|---|
 | 0 · Preparación | 07/09 – 08/10 | Equipo, entorno, tablero y Product Backlog inicial |
-| 1 · MVP | 09/10 – 15/10 | Versión funcional básica |
+| 1 · MVP | 09/10 – 15/10 | Versión funcional básica (21 Story Points comprometidos) |
 | 2 · Interfaz | 16/10 – 22/10 | Interfaz usable |
 | 3 · Funcionalidad y Calidad | 23/10 – 29/10 | Funcionalidades clave, robustez y visualización |
 | 4 · Cierre | 30/10 – 05/11 | Exportación a PDF, documentación y entrega final |
@@ -96,4 +96,6 @@ Las épicas se estimaron por Planning Poker con talles de ropa (XS, S, M, L, XL)
 
 ## Estado del proyecto
 
-🟡 En desarrollo — Sprint 0
+🟡 En desarrollo — Sprint 1 (MVP), del 09/10 al 15/10
+
+**Sprint Goal:** Poder crear, modificar y consultar proyectos y cargar y listar su Product Backlog desde una aplicación ejecutable, con cada cambio validado por integración continua. Ver el [acta de Planning](docs/actas/sprint-1-planning.md).
