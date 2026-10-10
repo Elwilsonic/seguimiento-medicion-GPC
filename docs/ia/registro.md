@@ -18,6 +18,17 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 | 08/10/2026 | Peñalbé Hernán | Documentación | Textos de Issues (archivo de carga de HU-09 a HU-40 y TEC-01 a TEC-04, épica #13, HU-40 y correcciones de HU-07, HU-20, HU-29, HU-38 y HU-39); borradores del acta de cierre del Sprint 0, del README y de este registro | El equipo revisó y cargó los Issues, modificó la retrospectiva, agregó las decisiones 6 a 8 y ajustó el README y este registro |
 | 08/10/2026 | Peñalbé Hernán | Proceso de trabajo | Revisión y corrección de `AGENTS.md` (referencias a Issues, orden de cierre, autorización de trazabilidad, BDD automatizado con godog), convención de commits, `.gitignore` y `.gitattributes` | El equipo definió las reglas (ramas, push con autorización, forma del merge, uso de godog, formato de commits; `.gitattributes` porque todo el equipo usa Windows) y aprobó la versión final |
 
+## Sprint 1
+
+| Fecha | Responsable | Uso | Qué generó la IA | Revisión del equipo |
+|---|---|---|---|---|
+| 08/10/2026 | Peñalbé Hernán | Tablero Scrum | Lista de ítems del Sprint 1 e instrucciones para configurar las vistas del tablero (campo Sprint, filtro de la vista Sprint Backlog, jerarquía) | El equipo configuró el tablero y asignó los ítems al Sprint 1 |
+| 08/10/2026 | Peñalbé Hernán | Planning del Sprint 1 | Revisión del acta de Planning (Story Points pendientes, dependencias entre sprints, instalación de godog, registro de la Daily, carga del Sprint 2); opinión sobre la estimación de HU-01 | El equipo redactó el acta, votó los Story Points (HU-01 = 8, total 21) y definió el Sprint Goal |
+| 08/10/2026 | Peñalbé Hernán | Plan hasta la entrega | Propuesta de reparto de las historias de los Sprints 3 y 4 según las dependencias entre épicas (métricas después de Story Points, esfuerzo y defectos; dashboard y reportes después de métricas) | El equipo aceptó el reparto y agregó el riesgo de carga del Sprint 4 |
+| 08/10/2026 | Peñalbé Hernán | Responsables | Análisis de la carga por integrante según el reparto propuesto | El equipo definió los responsables, de modo que cada integrante tenga al menos una historia |
+| 08/10/2026 | Peñalbé Hernán | Daily | Recomendación de registrar la Daily en un archivo versionado y plantilla `docs/actas/sprint-1-daily.md` | El equipo decidió que el Agile Enabler consolida la Daily y la sube con un único Pull Request al cierre del Sprint |
+| 08/10/2026 | Peñalbé Hernán | Documentación | Actualización del README con el estado del Sprint 1, el Sprint Goal y los Story Points comprometidos | El equipo revisó y aprobó el README |
+
 ## Incidentes
 
 | Fecha | Qué pasó | Cómo se resolvió |

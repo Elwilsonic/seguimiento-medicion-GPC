@@ -120,7 +120,7 @@ Seguí este orden:
    `git commit -m "docs(HU-XX): cerrar historia" -m "Closes #N"`
 
    Ejecutalo y hacé el push solo si lo autorizo. Si no queda nada por cambiar, proponé agregar `Closes #N` en la descripción del Pull Request en lugar de hacer un commit vacío.
-4. El equipo hace el merge. El merge se hace con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR y que los hashes de la evidencia sigan existiendo en main. "Closes" cierra el Issue recién cuando el commit llega a main.
+4. Pedí la revisión de otro integrante del equipo en el Pull Request (campo "Reviewers"). El merge requiere su aprobación y la CI en verde. Lo hace el equipo con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR y que los hashes de la evidencia sigan existiendo en main. "Closes" cierra el Issue recién cuando el commit llega a main.
 5. Después del merge, verificá que los tres links de la sección abran archivos existentes en main y avisame el resultado.
 
 ## Trazabilidad en el Issue
