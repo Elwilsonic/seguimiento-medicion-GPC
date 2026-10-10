@@ -1,0 +1,41 @@
+# Integración continua (TEC-02): controla el formato y corre los tests
+# en cada Pull Request hacia main.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: gofmt y tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Go (versión de go.mod)
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Verificar formato (gofmt)
+        run: |
+          sin_formato=$(gofmt -l .)
+          if [ -n "$sin_formato" ]; then
+            echo "Archivos sin formatear (corré gofmt -w sobre ellos):"
+            echo "$sin_formato"
+            exit 1
+          fi
+
+      - name: Correr los tests (go test ./...)
+        run: |
+          # Mientras el repositorio no tenga paquetes Go, no hay tests que correr.
+          if [ -z "$(go list ./... 2>/dev/null)" ]; then
+            echo "Todavía no hay paquetes Go: no hay tests para correr."
+            exit 0
+          fi
+          go test ./...

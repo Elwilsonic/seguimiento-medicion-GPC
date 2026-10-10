@@ -12,6 +12,7 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 - **Prácticas:** SDD (Specification-Driven Development), BDD (Behavior-Driven Development), TDD (Test-Driven Development)
 - **Tests:** paquete `testing` de Go (TDD) y godog para ejecutar los escenarios BDD
 - **Control de versiones:** Git
+- **Integración continua:** Cada Pull Request hacia `main` corre `gofmt` y `go test ./...` con GitHub Actions
 - **Persistencia:** en memoria durante el Sprint 1; PostgreSQL en Docker a partir del Sprint 2
 
 ## Requisitos
