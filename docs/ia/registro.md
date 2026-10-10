@@ -34,6 +34,7 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 | Fecha | Qué pasó | Cómo se resolvió |
 |---|---|---|
 | 06/10/2026 | La IA creó dos Issues (HU-07 #19 y HU-08 #20) sin autorización explícita del equipo | Se verificó que coincidían con el texto del equipo y se conservaron. Desde entonces, toda acción en GitHub requiere autorización (regla incorporada en `AGENTS.md`) |
+| 10/10/2026 | Al asignar TEC-02 (#32) se eligió "Assign to Agent" y Copilot (agente de GitHub) abrió el PR #63 con un workflow de CI generado automáticamente, sin seguir el flujo de `AGENTS.md` | El PR #63 se cerró sin mergear y se borró su rama. El equipo acordó no usar "Assign to Agent"; TEC-02 se implementa siguiendo `AGENTS.md`. Se trata en la Retrospectiva del Sprint 1 (#65) |
 
 ## Cómo registrar nuevos usos
 
