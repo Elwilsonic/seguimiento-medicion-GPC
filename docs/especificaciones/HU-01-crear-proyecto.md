@@ -45,7 +45,8 @@ El identificador y el estado no son entradas: los asigna el sistema.
   - `project.go`: el tipo `Project`, los estados y los errores.
   - `repository.go`: la interfaz `Repository`.
   - `memory_repository.go`: la implementación en memoria del repositorio.
-  - `create.go`: la creación (HU-01). HU-02 y HU-03 agregan sus propios archivos.
+  - `manager.go`: el `Manager`, que aplica las reglas de negocio sobre el repositorio, con su mutex (ver "Concurrencia").
+  - `create.go`: la creación (HU-01). HU-02 y HU-03 agregan sus propios archivos con sus operaciones del `Manager`.
 - **Interfaz de repositorio.** La lógica de negocio (el `Manager` del paquete) accede al almacenamiento solo a través de la interfaz `Repository`, nunca directamente. En el Sprint 1 se implementa en memoria; en el Sprint 2, TEC-05 agrega la implementación sobre PostgreSQL sin cambiar las reglas de negocio ni los tests. HU-01 define solo las operaciones que necesita: guardar un proyecto nuevo (el repositorio asigna el ID) y listar los proyectos guardados (para controlar que el nombre no se repita). Las historias siguientes agregan las operaciones que necesiten.
 - **Copias por valor.** `Create` devuelve una copia del proyecto (un valor, no un puntero), y el repositorio en memoria guarda y devuelve copias. Modificar el proyecto devuelto no altera el proyecto guardado.
 - **Errores identificables.** Cada condición de error tiene su propio error exportado, comparable con `errors.Is`, para que TEC-01 y los tests puedan distinguirlos.
