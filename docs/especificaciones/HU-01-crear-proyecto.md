@@ -74,8 +74,9 @@ El identificador y el estado no son entradas: los asigna el sistema.
 |---|---|---|
 | Nombre vacío o con solo espacios | `ErrEmptyName` ("el nombre del proyecto es obligatorio") | No se crea el proyecto |
 | Nombre repetido (según RN-01.3) | `ErrDuplicateName` ("ya existe un proyecto con ese nombre") | No se crea el proyecto |
+| El repositorio falla al listar o al guardar | El error que devuelve el repositorio | No se crea el proyecto |
 
-Si el nombre está vacío, se informa `ErrEmptyName` sin controlar repetidos.
+Si el nombre está vacío, se informa `ErrEmptyName` sin consultar el repositorio (y, por lo tanto, sin controlar repetidos).
 
 ## Criterios de aceptación
 
