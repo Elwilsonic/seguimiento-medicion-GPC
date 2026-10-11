@@ -1,5 +1,5 @@
 # Integración continua (TEC-02): controla el formato y corre los tests
-# en cada Pull Request hacia main.
+# (con el detector de carreras) en cada Pull Request hacia main.
 name: CI
 
 on:
@@ -31,11 +31,13 @@ jobs:
             exit 1
           fi
 
-      - name: Correr los tests (go test ./...)
+      - name: Correr los tests (go test -race ./...)
         run: |
           # Mientras el repositorio no tenga paquetes Go, no hay tests que correr.
           if [ -z "$(go list ./... 2>/dev/null)" ]; then
             echo "Todavía no hay paquetes Go: no hay tests para correr."
             exit 0
           fi
-          go test ./...
+          # -race detecta accesos concurrentes sin protección (CA-01.7), sin
+          # depender de la cantidad de procesadores del runner.
+          go test -race ./...
