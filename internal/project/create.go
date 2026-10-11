@@ -4,8 +4,8 @@ import "strings"
 
 // Create crea un proyecto en estado PLANIFICADO (HU-01) y devuelve una copia.
 func (m *Manager) Create(name, description string) (Project, error) {
-	// RN-01.1 y RN-01.2: el nombre se guarda sin espacios, tabs ni saltos de
-	// línea en los extremos, y no puede quedar vacío.
+	// RN-01.1 y RN-01.2: el nombre se guarda sin espacios en blanco Unicode
+	// en los extremos (strings.TrimSpace), y no puede quedar vacío.
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return Project{}, ErrEmptyName

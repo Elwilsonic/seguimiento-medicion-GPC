@@ -166,17 +166,65 @@ func TestCreate_NombresQueDifierenEnEspaciosInternosSonDistintos(t *testing.T) {
 	}
 }
 
-// CA-01.2 (prioridad de errores): si el nombre está vacío no se controlan repetidos.
-func TestCreate_NombreVacioSeInformaAntesQueRepetido(t *testing.T) {
-	manager, _ := newManager()
-	if _, err := manager.Create("Proyecto A", ""); err != nil {
-		t.Fatalf("Create() devolvió un error inesperado: %v", err)
+// failingRepository es un Repository que falla al listar o al guardar.
+type failingRepository struct {
+	listErr error
+	saveErr error
+}
+
+func (r failingRepository) Save(p project.Project) (project.Project, error) {
+	if r.saveErr != nil {
+		return project.Project{}, r.saveErr
 	}
+	p.ID = 1
+	return p, nil
+}
+
+func (r failingRepository) List() ([]project.Project, error) {
+	return nil, r.listErr
+}
+
+var errRepository = errors.New("falla del repositorio")
+
+// CA-01.2 (prioridad de errores): si el nombre está vacío, se informa
+// ErrEmptyName sin consultar el repositorio.
+func TestCreate_NombreVacioSeInformaSinConsultarElRepositorio(t *testing.T) {
+	manager := project.NewManager(failingRepository{listErr: errRepository})
 
 	_, err := manager.Create("  ", "")
 
 	if !errors.Is(err, project.ErrEmptyName) {
 		t.Errorf("error = %v, se esperaba ErrEmptyName", err)
+	}
+}
+
+// Condición de error: si el repositorio falla al listar, se devuelve su error
+// y no se crea el proyecto.
+func TestCreate_ErrorDelRepositorioAlListarSeDevuelve(t *testing.T) {
+	manager := project.NewManager(failingRepository{listErr: errRepository})
+
+	p, err := manager.Create("Proyecto A", "")
+
+	if !errors.Is(err, errRepository) {
+		t.Errorf("error = %v, se esperaba el error del repositorio", err)
+	}
+	if p != (project.Project{}) {
+		t.Errorf("proyecto devuelto = %+v, se esperaba un proyecto vacío", p)
+	}
+}
+
+// Condición de error: si el repositorio falla al guardar, se devuelve su error
+// y no se crea el proyecto.
+func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
+	manager := project.NewManager(failingRepository{saveErr: errRepository})
+
+	p, err := manager.Create("Proyecto A", "")
+
+	if !errors.Is(err, errRepository) {
+		t.Errorf("error = %v, se esperaba el error del repositorio", err)
+	}
+	if p != (project.Project{}) {
+		t.Errorf("proyecto devuelto = %+v, se esperaba un proyecto vacío", p)
 	}
 }
 

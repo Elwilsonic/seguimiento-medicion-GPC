@@ -62,7 +62,7 @@ Característica: HU-01 Crear proyecto
     Dado que existe un proyecto con nombre "Proyecto A"
     Cuando creo un proyecto con nombre "<nombre>" y descripción "Repetido"
     Entonces la creación falla porque el nombre está repetido
-    Y hay 1 proyectos guardados
+    Y hay 1 proyecto guardado
 
     Ejemplos:
       | nombre     |
@@ -75,7 +75,7 @@ Característica: HU-01 Crear proyecto
     Dado que existe un proyecto con nombre "Proyecto A"
     Cuando creo un proyecto con nombre "  Proyecto A  " y descripción "Repetido con espacios"
     Entonces la creación falla porque el nombre está repetido
-    Y hay 1 proyectos guardados
+    Y hay 1 proyecto guardado
 
   # Caso límite - CA-01.6
   Escenario: Modificar el proyecto devuelto no altera el proyecto guardado
@@ -88,7 +88,7 @@ Característica: HU-01 Crear proyecto
   Escenario: Creaciones simultáneas con el mismo nombre crean un solo proyecto
     Dado que no hay proyectos creados
     Cuando se crean 50 proyectos en simultáneo con el nombre "Proyecto concurrente"
-    Entonces hay 1 proyectos guardados
+    Entonces hay 1 proyecto guardado
     Y 49 creaciones fallan porque el nombre está repetido
 
   # Caso límite - CA-01.7

@@ -32,8 +32,8 @@ El identificador y el estado no son entradas: los asigna el sistema.
 
 ## Reglas de negocio
 
-1. **RN-01.1 Nombre obligatorio.** El nombre no puede estar vacío ni contener solo espacios. Se consideran espacios los espacios, tabs y saltos de línea.
-2. **RN-01.2 Nombre sin espacios en los extremos.** El nombre se guarda sin los espacios del principio y del final. Los espacios internos se conservan tal como llegan. Se consideran espacios los espacios, tabs y saltos de línea.
+1. **RN-01.1 Nombre obligatorio.** El nombre no puede estar vacío ni contener solo espacios. Se consideran espacios todos los caracteres de espacio en blanco Unicode que reconoce `strings.TrimSpace` (por ejemplo, espacios, tabs, saltos de línea y el espacio no separable).
+2. **RN-01.2 Nombre sin espacios en los extremos.** El nombre se guarda sin los espacios del principio y del final. Los espacios internos se conservan tal como llegan. Se consideran espacios todos los caracteres de espacio en blanco Unicode que reconoce `strings.TrimSpace` (por ejemplo, espacios, tabs, saltos de línea y el espacio no separable).
 3. **RN-01.3 Nombre único.** No puede haber dos proyectos con el mismo nombre. Dos nombres son iguales si coinciden después de quitar los espacios de los extremos y sin distinguir mayúsculas de minúsculas (por ejemplo, "Proyecto A" y " proyecto a " son el mismo nombre).
 4. **RN-01.4 Descripción opcional.** La descripción puede estar vacía y se guarda tal como llega. No tiene longitud máxima.
 5. **RN-01.5 Identificador único.** Cada proyecto recibe un ID numérico correlativo que empieza en 1. El ID lo asigna el repositorio al guardar el proyecto.
@@ -74,8 +74,9 @@ El identificador y el estado no son entradas: los asigna el sistema.
 |---|---|---|
 | Nombre vacío o con solo espacios | `ErrEmptyName` ("el nombre del proyecto es obligatorio") | No se crea el proyecto |
 | Nombre repetido (según RN-01.3) | `ErrDuplicateName` ("ya existe un proyecto con ese nombre") | No se crea el proyecto |
+| El repositorio falla al listar o al guardar | El error que devuelve el repositorio | No se crea el proyecto |
 
-Si el nombre está vacío, se informa `ErrEmptyName` sin controlar repetidos.
+Si el nombre está vacío, se informa `ErrEmptyName` sin consultar el repositorio (y, por lo tanto, sin controlar repetidos).
 
 ## Criterios de aceptación
 

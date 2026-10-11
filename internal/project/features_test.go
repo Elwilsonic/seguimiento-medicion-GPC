@@ -58,7 +58,7 @@ func initializeCreateScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el proyecto guardado tiene el nombre "([^"]*)"$`, s.savedWithName)
 	ctx.Step(`^la creación falla porque el nombre es obligatorio$`, s.failsWithEmptyName)
 	ctx.Step(`^la creación falla porque el nombre está repetido$`, s.failsWithDuplicateName)
-	ctx.Step(`^hay (\d+) proyectos guardados$`, s.savedCount)
+	ctx.Step(`^hay (\d+) proyectos? guardados?$`, s.savedCount)
 	ctx.Step(`^(\d+) creaciones fallan porque el nombre está repetido$`, s.concurrentDuplicates)
 	ctx.Step(`^los IDs de los proyectos guardados son todos distintos$`, s.distinctIDs)
 }
