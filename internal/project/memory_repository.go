@@ -26,3 +26,14 @@ func (r *MemoryRepository) Save(p Project) (Project, error) {
 func (r *MemoryRepository) List() ([]Project, error) {
 	return slices.Clone(r.projects), nil
 }
+
+// GetByID devuelve una copia del proyecto con ese ID, o ErrProjectNotFound
+// si no existe (HU-03).
+func (r *MemoryRepository) GetByID(id int) (Project, error) {
+	for _, p := range r.projects {
+		if p.ID == id {
+			return p, nil
+		}
+	}
+	return Project{}, ErrProjectNotFound
+}

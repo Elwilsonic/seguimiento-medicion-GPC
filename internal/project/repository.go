@@ -7,4 +7,7 @@ type Repository interface {
 	Save(p Project) (Project, error)
 	// List devuelve copias de todos los proyectos guardados.
 	List() ([]Project, error)
+	// GetByID devuelve una copia del proyecto con ese ID, o ErrProjectNotFound
+	// si no existe (HU-03).
+	GetByID(id int) (Project, error)
 }
