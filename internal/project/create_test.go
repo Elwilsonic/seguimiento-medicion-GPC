@@ -166,10 +166,12 @@ func TestCreate_NombresQueDifierenEnEspaciosInternosSonDistintos(t *testing.T) {
 	}
 }
 
-// failingRepository es un Repository que falla al listar o al guardar.
+// failingRepository es un Repository que falla al listar, al guardar o al
+// buscar por ID. HU-03 agregó getErr y GetByID al ampliar la interfaz.
 type failingRepository struct {
 	listErr error
 	saveErr error
+	getErr  error
 }
 
 func (r failingRepository) Save(p project.Project) (project.Project, error) {
@@ -182,6 +184,10 @@ func (r failingRepository) Save(p project.Project) (project.Project, error) {
 
 func (r failingRepository) List() ([]project.Project, error) {
 	return nil, r.listErr
+}
+
+func (r failingRepository) GetByID(id int) (project.Project, error) {
+	return project.Project{}, r.getErr
 }
 
 var errRepository = errors.New("falla del repositorio")
