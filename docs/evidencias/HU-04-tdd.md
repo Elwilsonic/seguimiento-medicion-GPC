@@ -136,7 +136,13 @@ $ go test -c -race ./internal/backlog
 go: -race requires cgo; enable cgo by setting CGO_ENABLED=1
 ```
 
-La corre el CI de TEC-02 en cada Pull Request (workflow con `-race` sobre Linux), que es donde queda verificada CA-04.7.
+Se verificó sobre Linux, en un checkout limpio del commit GREEN (`d44fcd4`), corriendo los tests tres veces seguidas:
+```
+$ go test -race -count=3 ./...
+ok  	seguimiento-medicion-gpc/internal/backlog	1.480s
+ok  	seguimiento-medicion-gpc/internal/project	1.421s
+```
+El CI de TEC-02 también la corre en cada Pull Request.
 
 ### Nota sobre el entorno local (Control de aplicaciones de Windows)
 
@@ -147,7 +153,20 @@ $ go test ./...
 fork/exec ...\.gotmp\go-build3456440024\b188\project.test.exe: An Application Control policy has blocked this file.
 ```
 
-Por eso la verificación local se hizo compilando los binarios con `go test -c` y ejecutándolos desde la carpeta del paquete. El bloqueo también alcanza de forma intermitente a algunos binarios nuevos según su reputación (hash): se resolvió recompilando con `-ldflags "-s -w"` y, para el binario instrumentado con `-cover`, agregando `-tags=hu04`. El CI no tiene esta limitación: corre `go test ./...` (y `-race`) normalmente.
+Por eso la verificación local se hizo compilando los binarios con `go test -c` y ejecutándolos desde la carpeta del paquete. La verificación completa (`go test ./...` y `go test -race ./...`) se hizo sobre Linux: la corrió el Agile Enabler sobre un checkout limpio de la rama (ver "go test -race") y la corre el CI en cada Pull Request.
+
+### Desviación del ciclo TDD
+
+El commit GREEN (`d44fcd4`) además del código de producción modificó dos archivos de test:
+- `features/HU-04-crear-item-backlog.feature`: en el esquema "No se puede crear un ítem con una prioridad inválida", el valor `<prioridad>` pasó a ir entre comillas en la tabla de ejemplos (`""` y `"URGENTE"`), en lugar de en el paso.
+- `internal/backlog/create_features_test.go`: la expresión del paso "creo un ítem en el proyecto con ID …" pasó de "con ID …, con título" a "con ID …, título", para coincidir con el texto del `.feature`.
+Con los tests tal como quedaron en el RED (`98f27ad`) y el código del GREEN, 6 de los 20 escenarios quedan sin definición de paso:
+```
+20 scenarios (14 passed, 6 undefined)
+95 steps (77 passed, 6 undefined, 12 skipped)
+```
+Fueron errores de los tests (el texto de los escenarios no coincidía con las expresiones de los pasos), no del código: ninguna regla de negocio cambió y el código de producción no se modificó para eso. `AGENTS.md` pide que en el GREEN solo se agregue código, así que es una desviación del ciclo, como la de HU-01.
+Acción para la Retrospectiva del Sprint 1 (#65): antes de commitear el RED, verificar que godog no informe pasos "undefined" por errores de texto, sino que todos los escenarios fallen por la funcionalidad que falta.
 
 ## Commits
 
