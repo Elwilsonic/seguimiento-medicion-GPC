@@ -66,7 +66,7 @@ func initializeCreateItemScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^que existe un proyecto con nombre "([^"]*)"$`, s.existingProject)
 	ctx.Step(`^que existe un proyecto finalizado con nombre "([^"]*)"$`, s.existingFinishedProject)
 	ctx.Step(`^creo un ítem en el proyecto "([^"]*)" con título "([^"]*)", descripción "([^"]*)", prioridad "([^"]*)"(?: y (?:criterios de aceptación (.*)|sin criterios de aceptación))?$`, s.createItemInProject)
-	ctx.Step(`^creo un ítem en el proyecto con ID (-?\d+) con título "([^"]*)", descripción "([^"]*)", prioridad "([^"]*)"(?: y (?:criterios de aceptación (.*)|sin criterios de aceptación))?$`, s.createItemInProjectByID)
+	ctx.Step(`^creo un ítem en el proyecto con ID (-?\d+), título "([^"]*)", descripción "([^"]*)", prioridad "([^"]*)"(?: y (?:criterios de aceptación (.*)|sin criterios de aceptación))?$`, s.createItemInProjectByID)
 	ctx.Step(`^el ítem se crea con el ID (\d+)$`, s.createdWithID)
 	ctx.Step(`^los ítems se crean con los IDs (\d+) y (\d+)$`, s.createdItemsWithIDs)
 	ctx.Step(`^el ítem queda en el estado "([^"]*)"$`, s.createdWithStatus)

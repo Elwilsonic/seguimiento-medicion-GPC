@@ -114,14 +114,14 @@ Característica: HU-04 Crear ítem del backlog
   # Caso de error - CA-04.3, RN-04.3
   Esquema del escenario: No se puede crear un ítem con una prioridad inválida
     Dado que existe un proyecto con nombre "Sistema de ventas"
-    Cuando creo un ítem en el proyecto "Sistema de ventas" con título "Login de usuarios", descripción "", prioridad "<prioridad>" y criterios de aceptación "Login OK"
+    Cuando creo un ítem en el proyecto "Sistema de ventas" con título "Login de usuarios", descripción "", prioridad <prioridad> y criterios de aceptación "Login OK"
     Entonces la creación falla porque la prioridad debe ser ALTA, MEDIA o BAJA
     Y hay 0 ítems guardados
 
     Ejemplos:
       | prioridad |
       | ""        |
-      | URGENTE   |
+      | "URGENTE" |
 
   # Caso de error y límite - CA-04.5
   Esquema del escenario: No se puede crear un ítem en un proyecto que no existe
