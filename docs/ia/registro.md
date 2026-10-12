@@ -4,6 +4,8 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 
 - **Herramienta principal:** Claude Code (Anthropic), guiado por las reglas de [`AGENTS.md`](../../AGENTS.md).
 - **Control:** la IA no hace commits, push ni cambios en GitHub sin autorización explícita del equipo (ver `AGENTS.md`).
+- **Otras herramientas:** si un integrante usa otra herramienta de IA, la fila correspondiente lo indica.
+- **Firma de la IA:** hasta el 11/10/2026, los commits hechos con IA llevaban la línea `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (commits de TEC-02 y HU-01). Desde el 11/10/2026 el equipo decidió no incluir firmas ni menciones de la IA en commits, Pull Requests, Issues ni comentarios: el uso de la IA se registra solo en este documento.
 
 ## Sprint 0
 
@@ -30,8 +32,14 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 | 08/10/2026 | Peñalbé Hernán | Documentación | Actualización del README con el estado del Sprint 1, el Sprint Goal y los Story Points comprometidos | El equipo revisó y aprobó el README |
 | 10/10/2026 | Peñalbé Hernán | TEC-02 | Workflow de CI (`.github/workflows/ci.yml`) con `gofmt` y `go test ./...`, simulación local de los casos verde y rojo, y la línea del README | García Santiago revisó el PR #67 (propuso otras versiones de las actions; se verificó que las v7 existen y se mantuvieron). El equipo aprobó y agregó el check como obligatorio en `main` |
 | 10/10/2026 | Peñalbé Hernán | HU-01 | SDD, escenarios BDD con godog, tests (RED), código (GREEN), refactor, evidencia TDD y textos del PR y del Issue #14 | El equipo pidió dos ajustes a la SDD antes de aprobarla (se sacó una regla de IDs que nadie había pedido y se resolvió la concurrencia con un mutex). Cada commit y el push se autorizaron uno por uno |
+| 10/10/2026 | Peñalbé Hernán | Plan del Sprint 1 | Plan de trabajo día por día hasta el cierre del 15/10 (camino crítico, revisores, Daily por turnos y riesgo de carga), en Word y como mensaje para el grupo | El equipo ajustó los turnos de la Daily y el formato de las horas |
 | 11/10/2026 | Cardozo Leandro | Revisión del PR #68 | Recreación del código en un entorno aparte, ejecución de tests, `gofmt`, `go vet` y `-race`, y prueba de mutación (sin mutex, sin `TrimSpace`, `==` en lugar de `EqualFold`, otro estado inicial) | Cardozo aprobó y dejó cinco observaciones no bloqueantes, que se verificaron y resolvieron en el PR de seguimiento |
 | 11/10/2026 | Peñalbé Hernán | Ajustes de HU-01 | Tests con un repositorio falso, ciclo RED/GREEN del singular en los pasos BDD, `-race` en el CI, prueba de mutación y actualización de la SDD, la evidencia y la cobertura | El equipo exigió RED antes de GREEN y que no se fingiera una RED; la desviación del ciclo TDD quedó documentada en la evidencia y se trata en la Retrospectiva (#65) |
+| 11/10/2026 | Peñalbé Hernán | TEC-06, TEC-07 y TEC-08 | Textos de las tres tareas técnicas (documentación técnica, manual de usuario e informe final de métricas), verificados contra los entregables de la consigna, las etiquetas de las otras TEC y los rangos de HU del Product Backlog | El equipo pidió verificar etiquetas, la referencia a TEC-03 y los rangos de HU, y cargó los Issues #69, #70 y #71 |
+| 11/10/2026 | Peñalbé Hernán | Daily | Redacción de las Dailys del 10/10 y del 11/10 y propuesta del formato con horas por ítem | El equipo corrigió los datos de cada integrante y adoptó el formato |
+| 11/10/2026 | Sosa Ricardo | HU-03 | SDD, escenarios BDD con godog, tests (RED), código (GREEN) y evidencia TDD, con su propio agente de IA | Peñalbé Hernán revisó la SDD contra HU-01 (pidió ajustes en dos rondas) y dos tests que iban a fallar en el GREEN; cada commit y el push los autorizó Sosa |
+| 11/10/2026 | Peñalbé Hernán | Verificación de HU-03 | Ejecución de `go test -race` sobre la rama de HU-03 y prueba de mutación sin el mutex, en un entorno con compilador C (en el de Sosa `-race` no está disponible) | Las salidas se incorporaron a la evidencia de HU-03 |
+| 11/10/2026 | Peñalbé Hernán | PR #74 e Issue #16 | Apertura del PR #74 de HU-03 y actualización del Issue #16 con los criterios definitivos y la Trazabilidad, a pedido del equipo | El equipo revisa y mergea el PR; la IA no hace merge |
 
 ## Incidentes
 
