@@ -329,9 +329,9 @@ func TestUpdate_ModificarElResultadoDevueltoNoAlteraElGuardado(t *testing.T) {
 // falla posteriores (listar y actualizar).
 func TestUpdate_ErrorDelRepositorioSeDevuelveYElProyectoNoCambia(t *testing.T) {
 	cases := map[string]failingRepository{
-		"al buscar":      {getErr: errRepository},
-		"al listar":      {listErr: errRepository},
-		"al actualizar":  {updateErr: errRepository},
+		"al buscar":     {getErr: errRepository},
+		"al listar":     {listErr: errRepository},
+		"al actualizar": {updateErr: errRepository},
 	}
 	for caseName, repo := range cases {
 		t.Run(caseName, func(t *testing.T) {
