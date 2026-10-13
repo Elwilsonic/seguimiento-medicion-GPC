@@ -401,3 +401,17 @@ func TestUpdate_CreacionesYModificacionesSimultaneasSinAccesosSinProteger(t *tes
 		}
 	}
 }
+
+// Contrato del repositorio (RN-02.6): Update sobre un repositorio donde no
+// existe ese ID devuelve ErrProjectNotFound. La rama no es alcanzable a
+// través del Manager (el GetByID previo ya encontró el proyecto), así que se
+// prueba el repositorio directamente.
+func TestMemoryRepository_UpdateProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
+	repo := project.NewMemoryRepository()
+
+	_, err := repo.Update(project.Project{ID: 1, Name: "Proyecto A", Status: project.StatusPlanned})
+
+	if !errors.Is(err, project.ErrProjectNotFound) {
+		t.Errorf("error = %v, se esperaba ErrProjectNotFound", err)
+	}
+}
