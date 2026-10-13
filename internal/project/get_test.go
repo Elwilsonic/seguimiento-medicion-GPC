@@ -39,6 +39,18 @@ func (r *fixedStatusRepository) GetByID(id int) (project.Project, error) {
 	return project.Project{}, project.ErrProjectNotFound
 }
 
+// Update reemplaza el proyecto guardado con ese ID (HU-02 agrega la operación
+// a la interfaz; el falso la cumple para seguir compilando).
+func (r *fixedStatusRepository) Update(p project.Project) (project.Project, error) {
+	for i := range r.projects {
+		if r.projects[i].ID == p.ID {
+			r.projects[i] = p
+			return p, nil
+		}
+	}
+	return project.Project{}, project.ErrProjectNotFound
+}
+
 // CA-03.1
 func TestGet_ProyectoExistenteDevuelveNombreDescripcionYEstado(t *testing.T) {
 	manager, _ := newManager()
