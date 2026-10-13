@@ -10,4 +10,7 @@ type Repository interface {
 	// GetByID devuelve una copia del proyecto con ese ID, o ErrProjectNotFound
 	// si no existe (HU-03).
 	GetByID(id int) (Project, error)
+	// Update reemplaza el proyecto guardado con ese ID y devuelve una copia, o
+	// ErrProjectNotFound si no existe (HU-02).
+	Update(p Project) (Project, error)
 }

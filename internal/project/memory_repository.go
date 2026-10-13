@@ -37,3 +37,15 @@ func (r *MemoryRepository) GetByID(id int) (Project, error) {
 	}
 	return Project{}, ErrProjectNotFound
 }
+
+// Update reemplaza el proyecto guardado con ese ID y devuelve una copia, o
+// ErrProjectNotFound si no existe (HU-02).
+func (r *MemoryRepository) Update(p Project) (Project, error) {
+	for i := range r.projects {
+		if r.projects[i].ID == p.ID {
+			r.projects[i] = p
+			return p, nil
+		}
+	}
+	return Project{}, ErrProjectNotFound
+}
