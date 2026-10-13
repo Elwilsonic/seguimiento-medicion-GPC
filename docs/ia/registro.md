@@ -40,6 +40,7 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 | 11/10/2026 | Sosa Ricardo | HU-03 | SDD, escenarios BDD con godog, tests (RED), código (GREEN) y evidencia TDD, con su propio agente de IA | Peñalbé Hernán revisó la SDD contra HU-01 (pidió ajustes en dos rondas) y dos tests que iban a fallar en el GREEN; cada commit y el push los autorizó Sosa |
 | 11/10/2026 | Peñalbé Hernán | Verificación de HU-03 | Ejecución de `go test -race` sobre la rama de HU-03 y prueba de mutación sin el mutex, en un entorno con compilador C (en el de Sosa `-race` no está disponible) | Las salidas se incorporaron a la evidencia de HU-03 |
 | 11/10/2026 | Peñalbé Hernán | PR #74 e Issue #16 | Apertura del PR #74 de HU-03 y actualización del Issue #16 con los criterios definitivos y la Trazabilidad, a pedido del equipo | El equipo revisa y mergea el PR; la IA no hace merge |
+| 12/10/2026 | Buttini Cristobal | HU-06 | SDD, escenarios BDD con godog, tests (RED), código (GREEN) y evidencia TDD, con opencode (agente de IA, modelo GLM de Z.ai) | Peñalbé Hernán revisó la rama: RED, GREEN, `-race` tres veces, `go vet`, `gofmt` y cobertura, y confirmó que la SDD es idéntica a la aprobada; cada commit y el push los autorizó Buttini |
 
 ## Incidentes
 

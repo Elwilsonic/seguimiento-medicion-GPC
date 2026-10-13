@@ -50,7 +50,7 @@ ok  	seguimiento-medicion-gpc/internal/project	(cached)
 FAIL
 ```
 
-Todos los errores son `ListItems undefined`: la funcionalidad nueva de HU-06. No hay fallos preexistentes: `internal/project` queda en verde y el resto del paquete `backlog` (HU-04) compila.
+Todos los errores son `ListItems undefined`: la funcionalidad nueva de HU-06. No hay fallos preexistentes: el paquete `backlog` no compila hasta que exista `ListItems`, así que en el RED tampoco corren los tests de HU-04; `internal/project` queda en verde.
 
 ## Fase GREEN
 
@@ -123,6 +123,16 @@ cgo: C compiler "gcc" not found: exec: "gcc": executable file not found in %PATH
 ```
 
 La verificación con `-race` la corre el CI de TEC-02 en cada Pull Request hacia main (`ci.yml`, paso "Correr los tests (go test -race ./...)"). El test de concurrencia (50 creaciones y 50 listados en simultáneo, en el test unitario y en el escenario BDD) corre y pasa también sin `-race` en el entorno local.
+
+Se verificó sobre Linux, en un checkout limpio del commit GREEN (`20c8dd0`), corriendo los tests tres veces seguidas:
+
+```
+$ go test -race -count=3 ./...
+ok  	seguimiento-medicion-gpc/internal/backlog	1.651s
+ok  	seguimiento-medicion-gpc/internal/project	1.413s
+```
+
+El CI de TEC-02 también la corre en cada Pull Request.
 
 ### Ejecución de los escenarios BDD
 
