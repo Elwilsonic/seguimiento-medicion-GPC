@@ -20,6 +20,38 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 - Go 1.27.1 o superior
 - A partir del Sprint 2: Docker (para ejecutar PostgreSQL)
 
+## Cómo ejecutar
+
+Desde la raíz del repositorio:
+
+```
+go run ./cmd/server
+```
+
+El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de entorno `PORT` (en PowerShell: `$env:PORT="9090"; go run ./cmd/server`; en Linux o macOS: `PORT=9090 go run ./cmd/server`). En el Sprint 1 los datos se guardan en memoria: se pierden al detener el servidor.
+
+| Método | Ruta | Operación |
+|---|---|---|
+| `POST` | `/proyectos` | Crear un proyecto (HU-01) |
+| `GET` | `/proyectos/{id}` | Consultar un proyecto (HU-03) |
+| `PUT` | `/proyectos/{id}` | Modificar nombre, descripción y estado (HU-02) |
+| `POST` | `/proyectos/{id}/backlog` | Crear un ítem del Product Backlog (HU-04) |
+| `GET` | `/proyectos/{id}/backlog` | Listar el Product Backlog del proyecto (HU-06) |
+
+Ejemplo con `curl` (en Windows, desde Git Bash):
+
+```
+curl -X POST localhost:8080/proyectos -d '{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas"}'
+curl localhost:8080/proyectos/1
+curl -X PUT localhost:8080/proyectos/1 -d '{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}'
+curl -X POST localhost:8080/proyectos/1/backlog -d '{"titulo":"Registrar venta","descripcion":"Alta de una venta","prioridad":"ALTA","criterios":["Se guarda la venta"]}'
+curl localhost:8080/proyectos/1/backlog
+```
+
+Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto inexistente), 409 (nombre repetido) o 500 (error interno).
+
+Para correr los tests: `go test ./...`
+
 ## Equipo
 
 | Rol | Integrante |

@@ -4,16 +4,40 @@ Cobertura de los tests automatizados (`go test -cover ./...`), actualizada al ce
 
 ## Cobertura actual
 
-- **Fecha:** 13/10/2026
-- **Última historia con cobertura medida:** HU-02 · Modificar datos del proyecto (rama `feature/HU-02-modificar-proyecto`, pendiente de integrar a `main` por Pull Request)
+- **Fecha:** 14/10/2026
+- **Última tarea con cobertura medida:** TEC-01 · Punto de entrada ejecutable mínimo (rama `feature/TEC-01-servidor-http`, pendiente de integrar a `main` por Pull Request)
 - **Comando:** `go test -cover ./...`
 
 | Paquete | Cobertura |
 |---|---|
+| `cmd/server` | 28.6% |
 | `internal/backlog` | 100.0% |
+| `internal/httpapi` | 100.0% |
 | `internal/project` | 100.0% |
 
+`cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario; la elección del puerto está separada en `address`, con cobertura total (ver la [evidencia de TEC-01](../evidencias/TEC-01-tdd.md)).
+
 ```
+$ go tool cover -func=server-cover.out
+seguimiento-medicion-gpc/cmd/server/main.go:15:			main			0.0%
+seguimiento-medicion-gpc/cmd/server/main.go:26:			address			100.0%
+total:								(statements)		28.6%
+
+$ go tool cover -func=httpapi-cover.out
+seguimiento-medicion-gpc/internal/httpapi/server.go:63:		NewHandler		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:75:		createProject		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:90:		getProject		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:105:	updateProject		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:125:	createItem		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:145:	listItems		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:165:	pathID			100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:175:	statusFor		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:193:	writeError		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:202:	writeJSON		100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:208:	toProjectResponse	100.0%
+seguimiento-medicion-gpc/internal/httpapi/server.go:212:	toItemResponse		100.0%
+total:								(statements)		100.0%
+
 $ go tool cover -func=backlog-cover.out
 seguimiento-medicion-gpc/internal/backlog/create.go:11:			Create			100.0%
 seguimiento-medicion-gpc/internal/backlog/create.go:55:			normalizePriority	100.0%
@@ -49,3 +73,4 @@ total:									(statements)		100.0%
 | 12/10/2026 | HU-04 | `internal/backlog` (nuevo) e `internal/project` | 100.0% y 100.0% | Nuevo paquete del backlog con cobertura total; sin regresiones en `internal/project`; `-race` (CA-04.7) lo verifica el CI porque el entorno local no tiene cgo |
 | 12/10/2026 | HU-06 | `internal/backlog` e `internal/project` | 100.0% y 100.0% | `ListItems` y `ListByProject` entran con cobertura total; sin regresiones en `internal/project` ni en HU-04; `-race` (CA-06.5) lo verifica el CI porque el entorno local no tiene cgo |
 | 13/10/2026 | HU-02 | `internal/project` e `internal/backlog` | 100.0% y 100.0% | `Update` y `normalizeStatus` entran con cobertura total (tras un ajuste: el test de contrato de `MemoryRepository.Update`, ver la desviación del ciclo TDD en la evidencia de HU-02); sin regresiones en backlog ni en HU-01/HU-03; `-race` (CA-02.7) lo verifica el CI y Hernán sobre Linux porque el entorno local no tiene cgo |
+| 14/10/2026 | TEC-01 | `cmd/server` (nuevo), `internal/httpapi` (nuevo), `internal/backlog` e `internal/project` | 28.6%, 100.0%, 100.0% y 100.0% | Servidor HTTP con `net/http`; `internal/httpapi` llega al 100% tras un ajuste (test del id no numérico en las demás rutas, ver la desviación del ciclo TDD en la evidencia de TEC-01); `main()` no se prueba con tests unitarios; `-race` verificado sobre Linux |
