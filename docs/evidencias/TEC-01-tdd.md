@@ -13,7 +13,7 @@ TEC-01 es una tarea técnica: no tiene historia de usuario, especificación SDD 
 
 Issue #23 → Criterios de Aceptación → Tests → Código Go
 
-**23 tests (21 en `internal/httpapi/server_test.go` y 2 en `cmd/server/main_test.go`), 4 de ellos con subtests (9 subtests en total).** La correspondencia con los criterios no es 1 a 1: CA-TEC01.2 y CA-TEC01.3 los cubren los mismos 21 tests de los endpoints.
+**23 tests (21 en `internal/httpapi/server_test.go` y 2 en `cmd/server/main_test.go`), 3 de ellos con subtests (3 + 3 + 3 = 9 subtests).** La correspondencia con los criterios no es 1 a 1: CA-TEC01.2 y CA-TEC01.3 los cubren los mismos 21 tests de los endpoints.
 
 | Criterio | Tests | Código |
 |---|---|---|
@@ -35,7 +35,7 @@ Issue #23 → Criterios de Aceptación → Tests → Código Go
 | Todas las rutas con `{id}` | — | — | `TestRutasConID_IDNoNumericoDevuelve400` (3 casos) |
 | Error inesperado | — | — | `TestErrorInterno_Devuelve500SinDetalle` |
 
-Códigos de respuesta: 400 para datos inválidos, JSON inválido o id no numérico; 404 para proyecto inexistente; 409 para nombre repetido; 500 para cualquier otro error, sin exponer el detalle interno. Todas las respuestas son `application/json`.
+Códigos de respuesta: 400 para datos inválidos, JSON inválido o id no numérico; 404 para proyecto inexistente; 409 para nombre repetido; 500 para cualquier otro error, sin exponer el detalle interno. Las respuestas de las cinco rutas son `application/json`. Una ruta inexistente (por ejemplo `GET /foo`) o un método no definido (por ejemplo `DELETE /proyectos/1`) los responde directamente `http.ServeMux` con 404 o 405 en `text/plain`.
 
 ## Fase RED
 

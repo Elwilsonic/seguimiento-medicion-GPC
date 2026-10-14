@@ -48,6 +48,8 @@ curl -X POST localhost:8080/proyectos/1/backlog -d '{"titulo":"Registrar venta",
 curl localhost:8080/proyectos/1/backlog
 ```
 
+`PUT /proyectos/{id}` reemplaza los tres campos (nombre, descripción y estado): un campo que no se envía queda vacío, así que hay que mandar también los que no cambian.
+
 Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto inexistente), 409 (nombre repetido) o 500 (error interno).
 
 Para correr los tests: `go test ./...`
