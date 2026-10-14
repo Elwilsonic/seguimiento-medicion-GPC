@@ -170,6 +170,24 @@ func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// CA-TEC01.2 · Las demás rutas con {id} también rechazan un id no numérico.
+func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
+	casos := []struct {
+		nombre, method, path, body string
+	}{
+		{"modificar proyecto", http.MethodPut, "/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
+		{"crear ítem", http.MethodPost, "/proyectos/abc/backlog", validItem},
+		{"listar backlog", http.MethodGet, "/proyectos/abc/backlog", ""},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			rec := do(t, newHandler(), c.method, c.path, c.body)
+
+			expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+		})
+	}
+}
+
 // CA-TEC01.2 · PUT /proyectos/{id} expone HU-02 (modificar proyecto).
 func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	h := newHandler()
