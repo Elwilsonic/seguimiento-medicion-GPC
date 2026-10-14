@@ -1,0 +1,223 @@
+// Package httpapi expone por HTTP las operaciones de proyectos y de backlog
+// ya integradas (TEC-01), usando solo la librería estándar (net/http).
+package httpapi
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+
+	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/project"
+)
+
+var (
+	errInvalidJSON = errors.New("el cuerpo del pedido no es un JSON válido")
+	errInvalidID   = errors.New("el id debe ser un número entero")
+	errInternal    = errors.New("error interno del servidor")
+)
+
+type projectRequest struct {
+	Nombre      string `json:"nombre"`
+	Descripcion string `json:"descripcion"`
+	Estado      string `json:"estado"`
+}
+
+type projectResponse struct {
+	ID          int    `json:"id"`
+	Nombre      string `json:"nombre"`
+	Descripcion string `json:"descripcion"`
+	Estado      string `json:"estado"`
+}
+
+type itemRequest struct {
+	Titulo      string   `json:"titulo"`
+	Descripcion string   `json:"descripcion"`
+	Prioridad   string   `json:"prioridad"`
+	Criterios   []string `json:"criterios"`
+}
+
+type itemResponse struct {
+	ID          int      `json:"id"`
+	ProyectoID  int      `json:"proyecto_id"`
+	Titulo      string   `json:"titulo"`
+	Descripcion string   `json:"descripcion"`
+	Prioridad   string   `json:"prioridad"`
+	Criterios   []string `json:"criterios"`
+	Estado      string   `json:"estado"`
+	StoryPoints int      `json:"story_points"`
+}
+
+type errorResponse struct {
+	Error string `json:"error"`
+}
+
+// server tiene los Manager que atienden los pedidos.
+type server struct {
+	projects *project.Manager
+	items    *backlog.Manager
+}
+
+// NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
+func NewHandler(projects *project.Manager, items *backlog.Manager) http.Handler {
+	s := &server{projects: projects, items: items}
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /proyectos", s.createProject)
+	mux.HandleFunc("GET /proyectos/{id}", s.getProject)
+	mux.HandleFunc("PUT /proyectos/{id}", s.updateProject)
+	mux.HandleFunc("POST /proyectos/{id}/backlog", s.createItem)
+	mux.HandleFunc("GET /proyectos/{id}/backlog", s.listItems)
+	return mux
+}
+
+// HU-01
+func (s *server) createProject(w http.ResponseWriter, r *http.Request) {
+	var req projectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, errInvalidJSON)
+		return
+	}
+	p, err := s.projects.Create(req.Nombre, req.Descripcion)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toProjectResponse(p))
+}
+
+// HU-03
+func (s *server) getProject(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	p, err := s.projects.Get(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toProjectResponse(p))
+}
+
+// HU-02
+func (s *server) updateProject(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var req projectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, errInvalidJSON)
+		return
+	}
+	p, err := s.projects.Update(id, req.Nombre, req.Descripcion, req.Estado)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toProjectResponse(p))
+}
+
+// HU-04
+func (s *server) createItem(w http.ResponseWriter, r *http.Request) {
+	projectID, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var req itemRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, errInvalidJSON)
+		return
+	}
+	it, err := s.items.Create(projectID, req.Titulo, req.Descripcion, req.Prioridad, req.Criterios)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toItemResponse(it))
+}
+
+// HU-06
+func (s *server) listItems(w http.ResponseWriter, r *http.Request) {
+	projectID, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	items, err := s.items.ListItems(projectID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	// La lista se arma siempre no nil, para que un backlog vacío sea [] y no null.
+	resp := make([]itemResponse, 0, len(items))
+	for _, it := range items {
+		resp = append(resp, toItemResponse(it))
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// pathID lee el {id} de la ruta.
+func pathID(r *http.Request) (int, error) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		return 0, errInvalidID
+	}
+	return id, nil
+}
+
+// statusFor traduce un error a su código HTTP. Los errores no reconocidos
+// son errores internos.
+func statusFor(err error) int {
+	switch {
+	case errors.Is(err, errInvalidJSON), errors.Is(err, errInvalidID),
+		errors.Is(err, project.ErrEmptyName), errors.Is(err, project.ErrInvalidStatus),
+		errors.Is(err, backlog.ErrEmptyTitle), errors.Is(err, backlog.ErrInvalidPriority),
+		errors.Is(err, backlog.ErrNoAcceptanceCriteria):
+		return http.StatusBadRequest
+	case errors.Is(err, project.ErrProjectNotFound):
+		return http.StatusNotFound
+	case errors.Is(err, project.ErrDuplicateName):
+		return http.StatusConflict
+	default:
+		return http.StatusInternalServerError
+	}
+}
+
+// writeError responde con el código del error y su mensaje. Un error interno
+// no expone su detalle.
+func writeError(w http.ResponseWriter, err error) {
+	status := statusFor(err)
+	if status == http.StatusInternalServerError {
+		err = errInternal
+	}
+	writeJSON(w, status, errorResponse{Error: err.Error()})
+}
+
+// writeJSON responde con el código y el valor codificado en JSON.
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func toProjectResponse(p project.Project) projectResponse {
+	return projectResponse{ID: p.ID, Nombre: p.Name, Descripcion: p.Description, Estado: string(p.Status)}
+}
+
+func toItemResponse(it backlog.Item) itemResponse {
+	return itemResponse{
+		ID:          it.ID,
+		ProyectoID:  it.ProjectID,
+		Titulo:      it.Title,
+		Descripcion: it.Description,
+		Prioridad:   string(it.Priority),
+		Criterios:   it.AcceptanceCriteria,
+		Estado:      string(it.Status),
+		StoryPoints: it.StoryPoints,
+	}
+}
