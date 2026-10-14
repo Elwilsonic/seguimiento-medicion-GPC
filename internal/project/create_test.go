@@ -87,6 +87,8 @@ func TestCreate_NombreVacioDevuelveErrEmptyName(t *testing.T) {
 		"vacío":              "",
 		"solo espacios":      "   ",
 		"solo tabs y saltos": "\t\n ",
+		// #73: strings.TrimSpace también recorta el espacio no separable.
+		"solo espacio no separable": "\u00a0",
 	}
 	for caseName, name := range cases {
 		t.Run(caseName, func(t *testing.T) {
@@ -248,6 +250,23 @@ func TestCreate_NombreSeGuardaSinEspaciosEnLosExtremos(t *testing.T) {
 	manager, repo := newManager()
 
 	p, err := manager.Create("   Proyecto A \t", "")
+
+	if err != nil {
+		t.Fatalf("Create() devolvió un error inesperado: %v", err)
+	}
+	if p.Name != "Proyecto A" {
+		t.Errorf("Name devuelto = %q, se esperaba %q", p.Name, "Proyecto A")
+	}
+	if saved := savedProjects(t, repo)[0]; saved.Name != "Proyecto A" {
+		t.Errorf("Name guardado = %q, se esperaba %q", saved.Name, "Proyecto A")
+	}
+}
+
+// CA-01.3 (#73): el espacio no separable cuenta como espacio en los extremos.
+func TestCreate_NombreSeGuardaSinEspaciosNoSeparablesEnLosExtremos(t *testing.T) {
+	manager, repo := newManager()
+
+	p, err := manager.Create("\u00a0Proyecto A\u00a0", "")
 
 	if err != nil {
 		t.Fatalf("Create() devolvió un error inesperado: %v", err)
