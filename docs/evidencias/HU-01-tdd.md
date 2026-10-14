@@ -131,7 +131,7 @@ Cardozo Leandro revisó el PR #68 (con ayuda de IA) y aprobó con cinco observac
 | 2 | Sin `-race`, los tests de concurrencia dependen de la cantidad de CPU | El CI corre `go test -race ./...` (commit c81f04d) |
 | 3 | La SDD decía "espacios, tabs y saltos de línea", pero `strings.TrimSpace` recorta todo espacio en blanco Unicode | Se corrigió la redacción de RN-01.1 y RN-01.2 y el comentario de `create.go` |
 | 4 | Faltaba HU-01 en el registro de IA | Se agregaron las filas de TEC-02, HU-01, la revisión del PR #68 y estos ajustes |
-| 5 | Cobertura distinta, "hay 1 proyectos guardados" y fila "(este commit)" | La cobertura se reconfirmó con Go 1.27.1 (95.7% antes de los ajustes); el singular se corrigió con un ciclo RED/GREEN (commits 19ffa5b y fa6e9ac); la fila "(este commit)" se trata en la Retrospectiva del Sprint 1 (#65) |
+| 5 | Cobertura distinta, "hay 1 proyectos guardados" y fila "(este commit)" | La cobertura se reconfirmó con Go 1.27.1 (95.7% antes de los ajustes); el singular se corrigió con un ciclo RED/GREEN (commits 19ffa5b y fa6e9ac); la fila de cierre de la tabla de commits ya muestra el hash e79b679 en lugar de "(este commit)" (corregido en el seguimiento del Issue #73) |
 
 ### Desviación del ciclo TDD
 
@@ -228,6 +228,61 @@ $ go test -race ./...
 ok  	seguimiento-medicion-gpc/internal/project	1.123s
 ```
 
+## Seguimiento del Issue #73: recorte de espacios Unicode
+
+La revisión del PR #72 observó que ningún test fijaba que `strings.TrimSpace` recorta también el espacio no separable (`\u00a0`), como dicen RN-01.1 y RN-01.2 de la SDD. El código ya lo hacía bien: no es un bug, faltaba el test. Se agregaron:
+
+- El caso `"solo espacio no separable"` (`"\u00a0"`) en `TestCreate_NombreVacioDevuelveErrEmptyName`: devuelve `ErrEmptyName` y no guarda nada.
+- `TestCreate_NombreSeGuardaSinEspaciosNoSeparablesEnLosExtremos`: `"\u00a0Proyecto A\u00a0"` se guarda como `"Proyecto A"`.
+
+Como el comportamiento ya existía, los tests pasan desde el primer momento: no hay una fase RED real y no se fingió una. Para demostrar que protegen el comportamiento, se hizo una prueba de mutación: en `create.go` se reemplazó `strings.TrimSpace(name)` por `strings.Trim(name, " \t\n")` (recorte solo de espacio, tab y salto de línea), se corrieron los tests y se restauró el código con `git restore`.
+
+```
+== mutante
+-	name = strings.TrimSpace(name)
++	name = strings.Trim(name, " \t\n")
+
+== tests que ya existían (sin los de #73)
+$ go test -count=1 ./internal/project
+ok  	seguimiento-medicion-gpc/internal/project	0.061s
+
+== con los tests de #73
+$ go test -count=1 -run 'TestCreate_NombreVacioDevuelveErrEmptyName|TestCreate_NombreSeGuardaSinEspaciosNoSeparablesEnLosExtremos' ./internal/project
+--- FAIL: TestCreate_NombreVacioDevuelveErrEmptyName (0.00s)
+    --- FAIL: TestCreate_NombreVacioDevuelveErrEmptyName/solo_espacio_no_separable (0.00s)
+        create_test.go:100: error = <nil>, se esperaba ErrEmptyName
+        create_test.go:103: hay 1 proyectos guardados, se esperaba 0
+--- FAIL: TestCreate_NombreSeGuardaSinEspaciosNoSeparablesEnLosExtremos (0.00s)
+    create_test.go:275: Name devuelto = "\u00a0Proyecto A\u00a0", se esperaba "Proyecto A"
+    create_test.go:278: Name guardado = "\u00a0Proyecto A\u00a0", se esperaba "Proyecto A"
+FAIL
+FAIL	seguimiento-medicion-gpc/internal/project	0.013s
+
+== código restaurado
+$ git restore internal/project/create.go
+$ git status --short
+ M internal/project/create_test.go
+```
+
+Los tests que ya existían no detectaban el mutante; los dos nuevos sí. El código de producción no cambió: la única modificación es en `create_test.go`.
+
+```
+$ gofmt -l .
+(sin salida)
+
+$ go vet ./...
+(sin salida)
+
+$ go test -count=1 -race ./...
+ok  	seguimiento-medicion-gpc/cmd/server	1.015s
+ok  	seguimiento-medicion-gpc/internal/backlog	1.182s
+ok  	seguimiento-medicion-gpc/internal/httpapi	1.026s
+ok  	seguimiento-medicion-gpc/internal/project	1.224s
+
+$ go test -count=1 -cover ./internal/project
+ok  	seguimiento-medicion-gpc/internal/project	0.042s	coverage: 100.0% of statements
+```
+
 ## Acciones pendientes
 
 - ~~Rama del error de `List()` sin cubrir; se cubre en TEC-05.~~ Resuelta antes de TEC-05: se cubrió con un repositorio falso (ver "Ajustes por la revisión del PR #68").
@@ -244,3 +299,4 @@ ok  	seguimiento-medicion-gpc/internal/project	1.123s
 | GREEN (ajuste) | fa6e9ac | `fix(HU-01): aceptar singular y plural en el paso de proyectos guardados (GREEN)` |
 | Tests (ajuste) | 43eac79 | `test(HU-01): cubrir el error del repositorio y el orden de validaciones` |
 | CI (ajuste) | c81f04d | `ci(HU-01): correr los tests con -race` |
+| Tests (#73) | 9e8954c | `test(HU-01): fijar el recorte del espacio no separable en el nombre` |
