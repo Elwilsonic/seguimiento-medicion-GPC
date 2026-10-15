@@ -142,6 +142,16 @@ go: -race requires cgo; enable cgo by setting CGO_ENABLED=1
 
 La verificación con `-race` la corre Hernán (Agile Enabler) sobre Linux y el CI de TEC-02 en cada Pull Request hacia main (`ci.yml`, paso "Correr los tests (go test -race ./...)"). El test de concurrencia (50 creaciones y 50 consultas en simultáneo, en el test unitario y en el escenario BDD) corre y pasa también sin `-race` en el entorno local.
 
+Verificación de Peñalbé Hernán sobre Linux (go1.27.1 linux/amd64), en el commit ca84cd5:
+
+    $ go test -race -count=3 ./...
+    ok  	seguimiento-medicion-gpc/cmd/server	1.018s
+    ok  	seguimiento-medicion-gpc/internal/backlog	1.684s
+    ok  	seguimiento-medicion-gpc/internal/httpapi	1.059s
+    ok  	seguimiento-medicion-gpc/internal/project	1.651s
+
+Prueba de mutación: sin m.mu.Lock() ni m.mu.Unlock() en GetItem, go test -race detecta el acceso concurrente sin protección (WARNING: DATA RACE) y fallan TestGetItem_ConsultasSimultaneasMientrasSeCreanItems y TestFeatures_HU05ConsultarItem. El código se restauró y no forma parte de ningún commit.
+
 ### Ejecución de los escenarios BDD
 
 ```
