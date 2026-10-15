@@ -131,6 +131,8 @@ Las épicas se estimaron por Planning Poker con talles de ropa (XS, S, M, L, XL)
 
 ## Estado del proyecto
 
-🟡 En desarrollo — Sprint 1 (MVP), del 09/10 al 15/10
+🟡 En desarrollo — Sprint 1 (MVP) cerrado el 15/10; el Sprint 2 (La Interfaz) va del 16/10 al 22/10
 
-**Sprint Goal:** Poder crear, modificar y consultar proyectos y cargar y listar su Product Backlog desde una aplicación ejecutable, con cada cambio validado por integración continua. Ver el [acta de Planning](docs/actas/sprint-1-planning.md).
+**Sprint 1:** se cumplió el Sprint Goal ("Poder crear, modificar y consultar proyectos y cargar y listar su Product Backlog desde una aplicación ejecutable, con cada cambio validado por integración continua"), con 21 de 21 Story Points completados y la historia opcional HU-05. La aplicación se ejecuta como indica la sección [Cómo ejecutar](#cómo-ejecutar). Ver las actas de [Planning](docs/actas/sprint-1-planning.md), [Review](docs/actas/sprint-1-review.md) y [Retrospectiva](docs/actas/sprint-1-retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-1-daily.md).
+
+**Sprint 2:** el Sprint Goal y el alcance se definen en el Planning del 16/10.
