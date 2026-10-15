@@ -469,14 +469,20 @@ func TestCreate_CreacionesSimultaneasRecibenIDsDistintos(t *testing.T) {
 	}
 }
 
-// failingRepository es un Repository que falla al guardar o al listar.
+// failingRepository es un Repository que falla al guardar, al buscar o al listar.
 type failingRepository struct {
 	saveErr error
+	getErr  error
 	listErr error
 }
 
 func (r failingRepository) Save(item Item) (Item, error) {
 	return Item{}, r.saveErr
+}
+
+// GetByID falla si se configuró un error de búsqueda (HU-05).
+func (r failingRepository) GetByID(id int) (Item, error) {
+	return Item{}, r.getErr
 }
 
 func (r failingRepository) ListByProject(projectID int) ([]Item, error) {
