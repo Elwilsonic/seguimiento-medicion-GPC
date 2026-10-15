@@ -29,6 +29,19 @@ func (r *MemoryRepository) Save(item Item) (Item, error) {
 	return fresh, nil
 }
 
+// GetByID devuelve una copia del ítem con ese ID (RN-05.1), con su propia
+// copia de la lista de criterios (RN-05.3). Si no existe, devuelve
+// ErrItemNotFound (RN-05.2).
+func (r *MemoryRepository) GetByID(id int) (Item, error) {
+	for _, item := range r.items {
+		if item.ID == id {
+			item.AcceptanceCriteria = slices.Clone(item.AcceptanceCriteria)
+			return item, nil
+		}
+	}
+	return Item{}, ErrItemNotFound
+}
+
 // ListByProject devuelve una lista nueva con copias de los ítems del
 // proyecto indicado, en orden de guardado, que es el orden de ID ascendente
 // (RN-06.6). Solo aparecen los ítems de ese proyecto (RN-06.3) y cada ítem
