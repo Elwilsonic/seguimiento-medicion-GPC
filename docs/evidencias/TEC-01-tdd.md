@@ -7,7 +7,7 @@
 - **Fecha:** 14/10/2026
 - **Go:** go1.27.1 linux/amd64
 
-TEC-01 es una tarea técnica: no tiene historia de usuario, especificación SDD ni escenarios BDD propios (decisión 5 del [acta de Planning del Sprint 1](../actas/sprint-1-planning.md)). Su alcance son los criterios de aceptación del Issue #23. Los endpoints no agregan reglas de negocio: llaman a los `Manager` de las historias ya integradas en `main`, que siguen validadas por sus propias SDD, BDD y tests.
+TEC-01 es una tarea técnica: no tiene historia de usuario, especificación SDD ni escenarios BDD propios (decisión 5 del [acta de Planning del Sprint 1](../actas/sprint-1/planning.md)). Su alcance son los criterios de aceptación del Issue #23. Los endpoints no agregan reglas de negocio: llaman a los `Manager` de las historias ya integradas en `main`, que siguen validadas por sus propias SDD, BDD y tests.
 
 ## Trazabilidad
 

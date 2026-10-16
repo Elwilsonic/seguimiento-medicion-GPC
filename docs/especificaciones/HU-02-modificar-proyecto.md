@@ -104,7 +104,7 @@ Los errores de contenido (`ErrEmptyName`, `ErrInvalidStatus`) se devuelven antes
 
 ## Comparación con el acta de Planning
 
-El acta del Sprint 1 (`docs/actas/sprint-1-planning.md`) describe HU-02 como "Modificar datos del proyecto (nombre, descripción y estado)" (Issue #15, 3 Story Points, responsable Cardozo Leandro, orden 3 del sprint) y la estima como "update con validaciones y cambio de estado; mismo patrón que HU-01". **El alcance coincide**: una única operación de modificación con las validaciones del nombre y del estado, sobre el `Manager` del paquete `internal/project`. No hay diferencia entre el acta y esta SDD.
+El acta del Sprint 1 (`docs/actas/sprint-1/planning.md`) describe HU-02 como "Modificar datos del proyecto (nombre, descripción y estado)" (Issue #15, 3 Story Points, responsable Cardozo Leandro, orden 3 del sprint) y la estima como "update con validaciones y cambio de estado; mismo patrón que HU-01". **El alcance coincide**: una única operación de modificación con las validaciones del nombre y del estado, sobre el `Manager` del paquete `internal/project`. No hay diferencia entre el acta y esta SDD.
 
 ## Comparación con los criterios del Issue #15 (borrador)
 

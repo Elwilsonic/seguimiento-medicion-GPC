@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #62
 
-Registro consolidado de las Dailys del Sprint 1 (09/10/2026 al 15/10/2026), según la decisión 15 del [acta de Planning](sprint-1-planning.md). Cada Daily se publicó como un comentario en el Issue #62, donde GitHub registra la fecha y la hora; este archivo transcribe esos comentarios **sin cambios en el texto de cada integrante** (incluidas las marcas que quedaron sin completar, como `[confirmar: ...]`), organizados en una tabla por día. Las horas son las que publicó cada comentario, en hora de Argentina (UTC-3).
+Registro consolidado de las Dailys del Sprint 1 (09/10/2026 al 15/10/2026), según la decisión 15 del [acta de Planning](planning.md). Cada Daily se publicó como un comentario en el Issue #62, donde GitHub registra la fecha y la hora; este archivo transcribe esos comentarios **sin cambios en el texto de cada integrante** (incluidas las marcas que quedaron sin completar, como `[confirmar: ...]`), organizados en una tabla por día. Las horas son las que publicó cada comentario, en hora de Argentina (UTC-3).
 
 La Daily del 09/10/2026 (primer día del Sprint, día del Planning) no quedó registrada: el registro empezó el 10/10, cuando se creó el Issue #62.
 

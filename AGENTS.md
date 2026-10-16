@@ -40,7 +40,7 @@ Guardá esta especificación como archivo Markdown en: `docs/especificaciones/HU
 
 Al principio del archivo incluí la línea: `> Issue del repositorio: #N`
 
-Antes de pedir aprobación, verificá si existe un acta de planning del sprint (`docs/actas/sprint-N-planning.md`) que describa el alcance de esta historia:
+Antes de pedir aprobación, verificá si existe un acta de planning del sprint (`docs/actas/sprint-N/planning.md`) que describa el alcance de esta historia:
 
 - Si NO existe acta (o no menciona esta historia), no hay nada que comparar: continuá normalmente, no bloquees la historia por esto.
 - Si SÍ existe y describe un alcance distinto al de la SDD que acabás de escribir, DETENETE y avisame la diferencia explícitamente antes de pedir aprobación. No asumas que el acta ya está desactualizada ni la corrijas vos solo.
