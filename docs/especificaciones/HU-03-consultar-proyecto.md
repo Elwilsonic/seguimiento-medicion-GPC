@@ -94,7 +94,7 @@ HU-03 referencia una entidad por ID: el proyecto consultado. **Sí se valida su 
 
 ## Comparación con el acta de Planning
 
-El acta del Sprint 1 (`docs/actas/sprint-1-planning.md`) describe HU-03 como "Consultar estado del proyecto" (Issue #16, 2 Story Points, historia de referencia por ser solo lectura, responsable Sosa Ricardo, orden 4 del sprint). **El alcance coincide**: consulta por ID de solo lectura, sin modificación ni listado. No hay diferencia entre el acta y esta SDD.
+El acta del Sprint 1 (`docs/actas/sprint-1/planning.md`) describe HU-03 como "Consultar estado del proyecto" (Issue #16, 2 Story Points, historia de referencia por ser solo lectura, responsable Sosa Ricardo, orden 4 del sprint). **El alcance coincide**: consulta por ID de solo lectura, sin modificación ni listado. No hay diferencia entre el acta y esta SDD.
 
 ## Comparación con los criterios del Issue #16 (borrador)
 

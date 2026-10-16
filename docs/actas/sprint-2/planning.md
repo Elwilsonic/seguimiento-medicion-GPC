@@ -23,7 +23,7 @@
 
 ## Punto de partida
 
-- **Sprint 1 cerrado** (tag `sprint-1`): Sprint Goal cumplido, 21 de 21 Story Points (HU-01, HU-02, HU-03, HU-04 y HU-06), más la historia opcional HU-05 y las tareas técnicas TEC-01 y TEC-02. Ver las actas de [Review](sprint-1-review.md) y [Retrospectiva](sprint-1-retrospectiva.md).
+- **Sprint 1 cerrado** (tag `sprint-1`): Sprint Goal cumplido, 21 de 21 Story Points (HU-01, HU-02, HU-03, HU-04 y HU-06), más la historia opcional HU-05 y las tareas técnicas TEC-01 y TEC-02. Ver las actas de [Review](../sprint-1/review.md) y [Retrospectiva](../sprint-1/retrospectiva.md).
 - **Velocidad del Sprint 1:** 21 Story Points; 6 historias integradas (5 comprometidas y 1 opcional).
 - **Pendiente hasta la entrega (05/11/2026):** 34 historias (HU-07 a HU-40) en 3 sprints de una semana, unas 11 o 12 historias por sprint. Es casi el doble de las historias que se integraron en el Sprint 1 (ver "Riesgos").
 

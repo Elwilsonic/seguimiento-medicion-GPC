@@ -37,7 +37,7 @@ Los profesores no respondieron las consultas previas al Planning, así que el eq
 12. **TEC-02 (CI) entra en el Sprint 1.** Es la primera vez que entra código a `main`, así que conviene controlarlo desde los primeros Pull Requests. Es una tarea chica (un workflow de GitHub Actions) y se hace al principio del sprint, antes de integrar las historias.
 13. **Convención de commits y flujo de integración.** El título de cada commit usa `tipo(ID): descripción` (tipos `test`, `feat`, `refactor`, `docs`, `ci`, `chore`, `fix`). Cada historia o tarea se trabaja en su propia rama `feature/...` y se integra a `main` por Pull Request con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR. Los commits y el push requieren autorización explícita del responsable.
 14. **godog se incorpora con HU-01.** HU-01 es la primera historia con escenarios BDD, así que agrega godog al `go.mod` junto con su primer `.feature` y el runner de los escenarios.
-15. **Daily registrada en el repositorio.** Cada Daily se registra en `docs/actas/sprint-1-daily.md`, con una fila por integrante y por día (qué hizo, qué va a hacer y bloqueos), para que quede evidencia versionada de la ceremonia. Para evitar conflictos de edición y no trabajar sobre `main`, el Agile Enabler consolida el registro del Sprint y lo sube con un único Pull Request (rama `docs/S1-daily`) al cierre del Sprint, con "Create a merge commit".
+15. **Daily registrada en el repositorio.** Cada Daily se registra en `docs/actas/sprint-1/daily.md`, con una fila por integrante y por día (qué hizo, qué va a hacer y bloqueos), para que quede evidencia versionada de la ceremonia. Para evitar conflictos de edición y no trabajar sobre `main`, el Agile Enabler consolida el registro del Sprint y lo sube con un único Pull Request (rama `docs/S1-daily`) al cierre del Sprint, con "Create a merge commit".
 
 ## Estimación de las historias (Planning Poker)
 
@@ -79,7 +79,7 @@ Las historias se estiman en Story Points con la escala Fibonacci (1, 2, 3, 5, 8,
 
 Los objetivos de los Sprints 2 a 4 siguen los de la consigna: interfaz usable en el Sprint 2, visualización en el Sprint 3 y exportación del informe a PDF en el Sprint 4. El reparto es una propuesta y se confirma en el Planning de cada sprint.
 
-Ceremonias: la consigna pide Planning, Daily, Review y Retrospective ya desde el Sprint 1. La Daily se registra en `docs/actas/sprint-1-daily.md`, consolidada por el Agile Enabler (decisión 15). Al cierre se suben las actas `docs/actas/sprint-1-review.md` y `docs/actas/sprint-1-retrospectiva.md`.
+Ceremonias: la consigna pide Planning, Daily, Review y Retrospective ya desde el Sprint 1. La Daily se registra en `docs/actas/sprint-1/daily.md`, consolidada por el Agile Enabler (decisión 15). Al cierre se suben las actas `docs/actas/sprint-1/review.md` y `docs/actas/sprint-1/retrospectiva.md`.
 
 ## Orden de trabajo
 
