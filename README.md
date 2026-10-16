@@ -137,10 +137,13 @@ Las carpetas se van creando a medida que aparece su contenido.
 | Ruta | Contenido |
 |---|---|
 | `AGENTS.md` | Instrucciones del flujo de trabajo (SDD → BDD → TDD) |
+| `.github/` | Workflow de CI, plantillas de Issue (historia, tarea técnica, ceremonia y defecto) y plantilla de Pull Request |
 | `cmd/` | Punto de entrada ejecutable de la aplicación |
 | `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests |
 | `features/` | Escenarios BDD en Gherkin (`HU-XX-nombre.feature`) |
 | `docs/actas/` | Actas de cada Sprint, en una carpeta por Sprint (`sprint-N/planning.md`, `daily.md`, `review.md`, `retrospectiva.md`) |
+| `docs/actas/_plantillas/` | Plantillas de las actas de Planning, Review y Retrospectiva y del comentario de la Daily |
+| `docs/definition-of-ready-done.md` | Definition of Ready y Definition of Done vigentes |
 | `docs/especificaciones/` | Especificaciones SDD (`HU-XX-nombre.md`) |
 | `docs/evidencias/` | Evidencia TDD por historia (`HU-XX-tdd.md`) |
 | `docs/reportes/` | Reportes de cobertura y métricas |
