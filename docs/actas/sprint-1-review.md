@@ -14,7 +14,7 @@
 
 | Rol | Integrante | Asistió |
 |---|---|---|
-| Product Architect | Profesores de la cátedra | Sí |
+| Product Architect | Profesores de la cátedra | No |
 | Agile Enabler | Peñalbé Hernán | Sí |
 | Product Builder | Buttini Cristobal | Sí |
 | Product Builder | Cardozo Leandro | Sí |
@@ -91,7 +91,7 @@ ok  	seguimiento-medicion-gpc/internal/project	coverage: 100.0% of statements
 
 ## Observaciones del Product Architect
 
-No hubo observaciones de los profesores.
+Los profesores no participaron de la Review, así que no hubo observaciones.
 
 ## Cambios al Product Backlog
 
