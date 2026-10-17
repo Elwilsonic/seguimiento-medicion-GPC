@@ -4,8 +4,8 @@ Cobertura de los tests automatizados (`go test -cover ./...`), actualizada al ce
 
 ## Cobertura actual
 
-- **Fecha:** 15/10/2026
-- **Última tarea con cobertura medida:** HU-05 · Consultar un ítem del backlog (rama `feature/HU-05-consultar-item`, pendiente de integrar a `main` por Pull Request)
+- **Fecha:** 17/10/2026
+- **Última tarea con cobertura medida:** HU-07 · Modificar datos de un ítem (rama `feature/HU-07-modificar-item`, pendiente de integrar a `main` por Pull Request)
 - **Comando:** `go test -cover ./...`
 
 | Paquete | Cobertura |
@@ -48,7 +48,10 @@ seguimiento-medicion-gpc/internal/backlog/manager.go:21:		NewManager		100.0%
 seguimiento-medicion-gpc/internal/backlog/memory_repository.go:13:	NewMemoryRepository	100.0%
 seguimiento-medicion-gpc/internal/backlog/memory_repository.go:20:	Save			100.0%
 seguimiento-medicion-gpc/internal/backlog/memory_repository.go:35:	GetByID			100.0%
-seguimiento-medicion-gpc/internal/backlog/memory_repository.go:50:	ListByProject		100.0%
+seguimiento-medicion-gpc/internal/backlog/memory_repository.go:48:	Update			100.0%
+seguimiento-medicion-gpc/internal/backlog/memory_repository.go:68:	ListByProject		100.0%
+seguimiento-medicion-gpc/internal/backlog/update.go:22:			Update			100.0%
+seguimiento-medicion-gpc/internal/backlog/update.go:75:			validateEstimatedHours	100.0%
 total:									(statements)		100.0%
 
 $ go tool cover -func=project-cover.out
@@ -77,3 +80,4 @@ total:									(statements)		100.0%
 | 13/10/2026 | HU-02 | `internal/project` e `internal/backlog` | 100.0% y 100.0% | `Update` y `normalizeStatus` entran con cobertura total (tras un ajuste: el test de contrato de `MemoryRepository.Update`, ver la desviación del ciclo TDD en la evidencia de HU-02); sin regresiones en backlog ni en HU-01/HU-03; `-race` (CA-02.7) lo verifica el CI y Hernán sobre Linux porque el entorno local no tiene cgo |
 | 14/10/2026 | TEC-01 | `cmd/server` (nuevo), `internal/httpapi` (nuevo), `internal/backlog` e `internal/project` | 28.6%, 100.0%, 100.0% y 100.0% | Servidor HTTP con `net/http`; `internal/httpapi` llega al 100% tras un ajuste (test del id no numérico en las demás rutas, ver la desviación del ciclo TDD en la evidencia de TEC-01); `main()` no se prueba con tests unitarios; `-race` verificado sobre Linux |
 | 15/10/2026 | HU-05 | `internal/backlog` | 100.0% | `GetItem` y `GetByID` entran con cobertura total; sin regresiones en HU-04, HU-06 ni en el resto de los paquetes; `-race` (CA-05.4) lo verifican Hernán sobre Linux y el CI porque el entorno local no tiene cgo |
+| 17/10/2026 | HU-07 | `internal/backlog` | 100.0% | `Manager.Update` y `validateEstimatedHours` (`update.go`) y `MemoryRepository.Update` entran con cobertura total; el campo `EstimatedHours` entra en `Item` sin bajas; sin regresiones en HU-04, HU-05, HU-06 ni en el resto de los paquetes; `-race` (CA-07.6) lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
