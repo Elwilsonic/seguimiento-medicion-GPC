@@ -42,6 +42,24 @@ func (r *MemoryRepository) GetByID(id int) (Item, error) {
 	return Item{}, ErrItemNotFound
 }
 
+// Update reemplaza el ítem guardado cuyo ID coincida y devuelve una copia,
+// con su propia copia de la lista de criterios (RN-07.7). Si no existe un
+// ítem con ese ID, devuelve ErrItemNotFound (RN-07.6).
+func (r *MemoryRepository) Update(item Item) (Item, error) {
+	for i, stored := range r.items {
+		if stored.ID == item.ID {
+			fresh := item
+			fresh.AcceptanceCriteria = slices.Clone(item.AcceptanceCriteria)
+			r.items[i] = fresh
+
+			returned := fresh
+			returned.AcceptanceCriteria = slices.Clone(fresh.AcceptanceCriteria)
+			return returned, nil
+		}
+	}
+	return Item{}, ErrItemNotFound
+}
+
 // ListByProject devuelve una lista nueva con copias de los ítems del
 // proyecto indicado, en orden de guardado, que es el orden de ID ascendente
 // (RN-06.6). Solo aparecen los ítems de ese proyecto (RN-06.3) y cada ítem

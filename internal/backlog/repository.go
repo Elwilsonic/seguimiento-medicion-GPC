@@ -15,4 +15,9 @@ type Repository interface {
 	// criterios, o ErrItemNotFound si no existe (HU-05). Es la búsqueda por
 	// ID del paquete: HU-07 y HU-08 la reutilizan.
 	GetByID(id int) (Item, error)
+
+	// Update reemplaza el ítem guardado cuyo ID coincida y devuelve una
+	// copia, incluida la lista de criterios, o ErrItemNotFound si no existe
+	// (HU-07).
+	Update(item Item) (Item, error)
 }
