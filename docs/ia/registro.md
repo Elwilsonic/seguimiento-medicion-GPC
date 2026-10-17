@@ -52,6 +52,7 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 | Fecha | Responsable | Uso | Qué generó la IA | Revisión del equipo |
 |---|---|---|---|---|
 | 17/10/2026 | Buttini Cristobal | HU-10 | SDD, escenarios BDD con godog, tests (RED), código (GREEN) y evidencia TDD, con opencode (agente de IA, modelo GLM de Z.ai) | Peñalbé Hernán aprobó la SDD con las decisiones confirmadas el 17/10 (incluidas en la SDD); cada commit y el push los autorizó Buttini; la revisión de la rama con `-race` queda a cargo de Hernán sobre Linux porque el entorno local no tiene cgo |
+| 17/10/2026 | Sosa Ricardo | HU-07 | SDD, escenarios BDD con godog, tests (RED), código (GREEN) y evidencia TDD, con opencode (agente de IA, modelo GLM de Z.ai) | Sosa Ricardo autorizó cada commit; las correcciones de la SDD (fecha y criterio de horas ≥ 0), de los tests y de la evidencia salieron de la revisión de Cardozo Leandro; go test -race no se corrió localmente (sin cgo) y lo verifica el CI del Pull Request; Peñalbé Hernán aprobó la SDD antes de empezar; después se corrigieron la fecha, el título de la sección de decisiones y el criterio de las horas (≥ 0), cambios que se informan en el Pull Request |
 
 ## Incidentes
 
