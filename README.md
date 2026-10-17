@@ -120,7 +120,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
-| HU-07 | [#19](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/19) | Modificar datos de un ítem | — | — | — | — |
+| HU-07 | [#19](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/19) | Modificar datos de un ítem | [SDD](docs/especificaciones/HU-07-modificar-item.md) | [BDD](features/HU-07-modificar-item.feature) | [Evidencia](docs/evidencias/HU-07-tdd.md) | [#95](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/95) |
 | HU-08 | [#20](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/20) | Cambiar el estado de un ítem | — | — | — | — |
 | HU-09 | [#22](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/22) | Priorizar los ítems del backlog | — | — | — | — |
 | HU-10 | [#24](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/24) | Crear sprint | [SDD](docs/especificaciones/HU-10-crear-sprint.md) | [BDD](features/HU-10-crear-sprint.feature) | [Evidencia](docs/evidencias/HU-10-tdd.md) | [#94](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/94) |

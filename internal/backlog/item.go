@@ -33,6 +33,9 @@ type Item struct {
 	AcceptanceCriteria []string
 	Status             Status
 	StoryPoints        int
+	// EstimatedHours son las horas estimadas del ítem; 0 significa sin
+	// asignar (RN-07.5).
+	EstimatedHours float64
 }
 
 var (
