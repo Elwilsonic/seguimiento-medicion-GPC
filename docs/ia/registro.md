@@ -47,6 +47,12 @@ La consigna permite usar herramientas de IA, siempre que todo resultado sea comp
 | 15/10/2026 | Sosa Ricardo | HU-05 | SDD, escenarios BDD con godog, tests (RED), código (GREEN), evidencia TDD y actualización de cobertura, con opencode (agente de IA, modelo GLM de Z.ai) | Peñalbé Hernán aprobó la SDD con el texto definitivo (incluidas la comparación con el borrador del Issue #18 y las decisiones con el Agile Enabler); cada commit y el push los autorizó Sosa; la revisión de la rama con `-race` queda a cargo de Hernán sobre Linux porque el entorno local no tiene cgo |
 | 15/10/2026 | Peñalbé Hernán | Cierre del Sprint 1 (#62, #64 y #65) | Borradores de las actas de Review y Retrospectiva a partir de los PR, las revisiones, la CI y las Dailys; texto de la Daily del 15/10; consolidación de las Dailys del Issue #62 con un script que transcribe los comentarios sin cambios y verifica que no falte ninguna línea | Hernán completó las actas con lo decidido en la reunión (asistencia, demo, observaciones, acciones y responsables) y quitó lo que no correspondía; los integrantes corrigieron en el Issue #62 las inconsistencias de la Daily del 15/10 antes de consolidarla |
 
+## Sprint 2
+
+| Fecha | Responsable | Uso | Qué generó la IA | Revisión del equipo |
+|---|---|---|---|---|
+| 17/10/2026 | Buttini Cristobal | HU-10 | SDD, escenarios BDD con godog, tests (RED), código (GREEN) y evidencia TDD, con opencode (agente de IA, modelo GLM de Z.ai) | Peñalbé Hernán aprobó la SDD con las decisiones confirmadas el 17/10 (incluidas en la SDD); cada commit y el push los autorizó Buttini; la revisión de la rama con `-race` queda a cargo de Hernán sobre Linux porque el entorno local no tiene cgo |
+
 ## Incidentes
 
 | Fecha | Qué pasó | Cómo se resolvió |
