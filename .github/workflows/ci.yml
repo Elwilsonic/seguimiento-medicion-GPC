@@ -1,5 +1,6 @@
-# Integración continua (TEC-02): controla el formato y corre los tests
-# (con el detector de carreras) en cada Pull Request hacia main.
+# Integración continua (TEC-02): controla el formato, corre el análisis
+# estático (go vet, acción 8 de la Retrospectiva del Sprint 1) y corre los
+# tests (con el detector de carreras) en cada Pull Request hacia main.
 name: CI
 
 on:
@@ -30,6 +31,17 @@ jobs:
             echo "$sin_formato"
             exit 1
           fi
+
+      - name: Análisis estático (go vet ./...)
+        run: |
+          # Mientras el repositorio no tenga paquetes Go, no hay nada que analizar.
+          if [ -z "$(go list ./... 2>/dev/null)" ]; then
+            echo "Todavía no hay paquetes Go: no hay nada que analizar."
+            exit 0
+          fi
+          # go vet detecta errores que compilan pero están mal (por ejemplo,
+          # un formato de Printf que no coincide o un sync.Mutex copiado).
+          go vet ./...
 
       - name: Correr los tests (go test -race ./...)
         run: |
