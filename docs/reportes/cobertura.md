@@ -4,8 +4,8 @@ Cobertura de los tests automatizados (`go test -cover ./...`), actualizada al ce
 
 ## Cobertura actual
 
-- **Fecha:** 15/10/2026
-- **Última tarea con cobertura medida:** HU-05 · Consultar un ítem del backlog (rama `feature/HU-05-consultar-item`, pendiente de integrar a `main` por Pull Request)
+- **Fecha:** 17/10/2026
+- **Última tarea con cobertura medida:** HU-10 · Crear sprint con nombre, fechas y Sprint Goal (rama `feature/HU-10-crear-sprint`, pendiente de integrar a `main` por Pull Request)
 - **Comando:** `go test -cover ./...`
 
 | Paquete | Cobertura |
@@ -14,6 +14,7 @@ Cobertura de los tests automatizados (`go test -cover ./...`), actualizada al ce
 | `internal/backlog` | 100.0% |
 | `internal/httpapi` | 100.0% |
 | `internal/project` | 100.0% |
+| `internal/sprint` | 100.0% |
 
 `cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario; la elección del puerto está separada en `address`, con cobertura total (ver la [evidencia de TEC-01](../evidencias/TEC-01-tdd.md)).
 
@@ -62,7 +63,15 @@ seguimiento-medicion-gpc/internal/project/memory_repository.go:32:	GetByID			100
 seguimiento-medicion-gpc/internal/project/memory_repository.go:43:	Update			100.0%
 seguimiento-medicion-gpc/internal/project/update.go:19:			Update			100.0%
 seguimiento-medicion-gpc/internal/project/update.go:64:			normalizeStatus		100.0%
-total:									(statements)		100.0%
+total:									(statements)	100.0%
+
+$ go tool cover -func=sprint-cover.out
+seguimiento-medicion-gpc/internal/sprint/create.go:14:			Create			100.0%
+seguimiento-medicion-gpc/internal/sprint/manager.go:22:		NewManager		100.0%
+seguimiento-medicion-gpc/internal/sprint/memory_repository.go:11:	NewMemoryRepository		100.0%
+seguimiento-medicion-gpc/internal/sprint/memory_repository.go:18:	Save			100.0%
+seguimiento-medicion-gpc/internal/sprint/memory_repository.go:28:	OpenByProject		100.0%
+total:									(statements)	100.0%
 ```
 
 ## Historial
@@ -77,3 +86,4 @@ total:									(statements)		100.0%
 | 13/10/2026 | HU-02 | `internal/project` e `internal/backlog` | 100.0% y 100.0% | `Update` y `normalizeStatus` entran con cobertura total (tras un ajuste: el test de contrato de `MemoryRepository.Update`, ver la desviación del ciclo TDD en la evidencia de HU-02); sin regresiones en backlog ni en HU-01/HU-03; `-race` (CA-02.7) lo verifica el CI y Hernán sobre Linux porque el entorno local no tiene cgo |
 | 14/10/2026 | TEC-01 | `cmd/server` (nuevo), `internal/httpapi` (nuevo), `internal/backlog` e `internal/project` | 28.6%, 100.0%, 100.0% y 100.0% | Servidor HTTP con `net/http`; `internal/httpapi` llega al 100% tras un ajuste (test del id no numérico en las demás rutas, ver la desviación del ciclo TDD en la evidencia de TEC-01); `main()` no se prueba con tests unitarios; `-race` verificado sobre Linux |
 | 15/10/2026 | HU-05 | `internal/backlog` | 100.0% | `GetItem` y `GetByID` entran con cobertura total; sin regresiones en HU-04, HU-06 ni en el resto de los paquetes; `-race` (CA-05.4) lo verifican Hernán sobre Linux y el CI porque el entorno local no tiene cgo |
+| 17/10/2026 | HU-10 | `internal/sprint` (nuevo) | 100.0% | Nuevo paquete de sprints con cobertura total (`Create`, `Save`, `OpenByProject`); sin regresiones en el resto de los paquetes; `-race` (CA-10.6) lo verifica el CI porque el entorno local no tiene cgo, y la revisión de la rama sobre Linux queda a cargo de Peñalbé Hernán |
