@@ -43,9 +43,17 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 // Solo PostgreSQL: las fechas se devuelven en UTC y con precisión de
 // microsegundos, que es lo que guarda PostgreSQL, tanto al guardar como al
 // leer.
+//
+// pgx devuelve timestamptz en time.Local. El test fija time.Local en -03:00
+// (y lo restaura al terminar), así un repositorio que no normalice a UTC
+// falla también en una máquina o un CI configurados en UTC.
 func TestPostgresRepository_FechasEnUTCConMicrosegundos(t *testing.T) {
-	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 	zone := time.FixedZone("UTC-3", -3*60*60)
+	previousLocal := time.Local
+	time.Local = zone
+	t.Cleanup(func() { time.Local = previousLocal })
+
+	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 	sprint := contractSprint(contractProjectA, "Sprint 1", StatusOpen)
 	sprint.StartDate = time.Date(2026, 10, 16, 9, 30, 0, 123456789, zone)
 	sprint.EndDate = time.Date(2026, 10, 22, 18, 0, 0, 987654321, zone)
