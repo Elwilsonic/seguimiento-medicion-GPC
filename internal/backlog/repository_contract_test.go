@@ -2,6 +2,7 @@ package backlog
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"slices"
 	"testing"
@@ -126,6 +127,35 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 		}
 		contractAssertItem(t, "ListByProject[0]", got[0], first)
 		contractAssertItem(t, "ListByProject[1]", got[1], third)
+	})
+
+	// En PostgreSQL un UPDATE deja la fila al final de la tabla: sin ORDER BY,
+	// el ítem modificado saldría último. El ítem pasa a otro proyecto y vuelve,
+	// porque si solo cambia el título PostgreSQL puede hacer un HOT update que
+	// conserva la posición en el índice de project_id y el orden no cambia.
+	t.Run("ListByProject sigue en orden de ID después de modificar el primero", func(t *testing.T) {
+		repo := newRepo(t)
+		first := contractSave(t, repo, contractItem(contractProjectA, "Login"))
+		second := contractSave(t, repo, contractItem(contractProjectA, "Logout"))
+		third := contractSave(t, repo, contractItem(contractProjectA, "Perfil"))
+		first.Title = "Login modificado"
+		for _, projectID := range []int{contractProjectB, contractProjectA} {
+			first.ProjectID = projectID
+			if _, err := repo.Update(first); err != nil {
+				t.Fatalf("Update devolvió un error inesperado: %v", err)
+			}
+		}
+
+		got, err := repo.ListByProject(contractProjectA)
+		if err != nil {
+			t.Fatalf("ListByProject devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 3 {
+			t.Fatalf("ListByProject devolvió %d ítems, se esperaban 3", len(got))
+		}
+		for i, want := range []Item{first, second, third} {
+			contractAssertItem(t, fmt.Sprintf("ListByProject[%d]", i), got[i], want)
+		}
 	})
 
 	t.Run("ListByProject de un proyecto sin ítems devuelve una lista vacía, no nil", func(t *testing.T) {

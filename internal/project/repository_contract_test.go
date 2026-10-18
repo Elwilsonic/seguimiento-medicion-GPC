@@ -55,6 +55,27 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 		}
 	})
 
+	// En PostgreSQL un UPDATE deja la fila al final de la tabla: sin ORDER BY,
+	// el proyecto modificado saldría último.
+	t.Run("List sigue en orden de ID después de modificar el primero", func(t *testing.T) {
+		repo := newRepo(t)
+		first := contractSave(t, repo, Project{Name: "Alfa", Status: StatusPlanned})
+		second := contractSave(t, repo, Project{Name: "Beta", Status: StatusPlanned})
+		third := contractSave(t, repo, Project{Name: "Gamma", Status: StatusPlanned})
+		first.Status = StatusInProgress
+		if _, err := repo.Update(first); err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+
+		got, err := repo.List()
+		if err != nil {
+			t.Fatalf("List devolvió un error inesperado: %v", err)
+		}
+		if want := []Project{first, second, third}; !slices.Equal(got, want) {
+			t.Errorf("List = %+v, se esperaba %+v", got, want)
+		}
+	})
+
 	t.Run("GetByID devuelve el proyecto guardado", func(t *testing.T) {
 		repo := newRepo(t)
 		contractSave(t, repo, Project{Name: "Alfa", Status: StatusPlanned})
