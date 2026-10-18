@@ -193,7 +193,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-12 | [#26](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/26) | Registrar historias completadas | — | — | — | — |
 | HU-13 | [#27](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/27) | Cerrar sprint | — | — | — | — |
 | TEC-04 | [#34](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/34) | Interfaz usable | — | — | — | — |
-| TEC-05 | [#35](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/35) | Persistencia con PostgreSQL en Docker | — | — | [Evidencia](docs/evidencias/TEC-05-tdd.md) | |
+| TEC-05 | [#35](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/35) | Persistencia con PostgreSQL en Docker | — | — | [Evidencia](docs/evidencias/TEC-05-tdd.md) | [#96](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/96) |
 
 ## Estructura del repositorio
 
