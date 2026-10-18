@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/project"
 )
 
@@ -25,12 +26,14 @@ var (
 )
 
 // newTestManager arma un Manager de sprints con un repositorio y un Manager
-// de proyectos en memoria vacíos.
+// de proyectos en memoria vacíos. Desde HU-11 el Manager también recibe el
+// Manager de ítems del backlog, aunque HU-10 no lo use.
 func newTestManager() (*Manager, *MemoryRepository, *project.Manager, *project.MemoryRepository) {
 	projectRepo := project.NewMemoryRepository()
 	projects := project.NewManager(projectRepo)
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	repo := NewMemoryRepository()
-	return NewManager(repo, projects), repo, projects, projectRepo
+	return NewManager(repo, projects, items), repo, projects, projectRepo
 }
 
 // createTestProject crea un proyecto con ese nombre y devuelve su ID.
@@ -492,11 +495,12 @@ func TestCreate_CreacionesSimultaneasEnProyectosDistintosSeCreanTodas(t *testing
 	}
 }
 
-// failingRepository es un Repository que falla al consultar el sprint abierto
-// o al guardar.
+// failingRepository es un Repository que falla al consultar el sprint
+// abierto, al guardar o al buscar por ID (HU-11).
 type failingRepository struct {
-	openErr error
-	saveErr error
+	openErr    error
+	saveErr    error
+	getByIDErr error
 }
 
 func (r failingRepository) OpenByProject(projectID int) (Sprint, bool, error) {
@@ -508,6 +512,11 @@ func (r failingRepository) OpenByProject(projectID int) (Sprint, bool, error) {
 
 func (r failingRepository) Save(sprint Sprint) (Sprint, error) {
 	return Sprint{}, r.saveErr
+}
+
+// GetByID falla si se configuró un error de búsqueda (HU-11).
+func (r failingRepository) GetByID(id int) (Sprint, error) {
+	return Sprint{}, r.getByIDErr
 }
 
 var errRepository = errors.New("falla del repositorio")
