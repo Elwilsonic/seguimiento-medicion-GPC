@@ -75,7 +75,7 @@ docker compose up -d --wait
 Levanta PostgreSQL 17 con la configuración del archivo `.env`, si existe. Si no existe, usa los valores de desarrollo de [`.env.example`](.env.example) (usuario `gpc`, base `gpc`). Para cambiarlos, copiá `.env.example` como `.env`: el `.env` real no se sube al repositorio.
 
 - **Puerto 5433:** la base se publica en `127.0.0.1:5433`, no en el 5432, para no chocar con un PostgreSQL instalado en el sistema, que normalmente usa el 5432. Si el 5433 también está ocupado, cambiá `POSTGRES_PORT` en el `.env` (y el puerto en las URL).
-- **Esquema:** los scripts de [`db/init/`](db/init/) crean las tablas en la base `gpc` y una base de pruebas `gpc_test` con el mismo esquema. **Solo corren la primera vez, cuando el volumen de datos está vacío.** Si después cambia el esquema, hay que borrar el volumen con `docker compose down -v` (eso **borra todos los datos**) y volver a levantar la base.
+- **Esquema:** los scripts de [`db/init/`](db/init/) crean las tablas en la base `gpc` y una base de pruebas `gpc_test` con el mismo esquema. **Solo corren la primera vez, cuando el volumen de datos está vacío.** Si después cambia el esquema, hay que borrar el volumen con `docker compose down -v` (eso **borra todos los datos**) y volver a levantar la base. **HU-11 agrega la columna `sprint_id` a `backlog_items`:** una base creada antes de HU-11 no la tiene, así que hay que recrearla (`docker compose down -v` y después `docker compose up -d --wait`).
 - **Datos:** quedan en el volumen `gpc-data`, así que se conservan al reiniciar la aplicación y al hacer `docker compose down` (sin `-v`).
 
 Para ver que la base está lista: `docker compose ps` (estado `healthy`) y `docker compose port postgres 5432` (tiene que mostrar `127.0.0.1:5433`).
