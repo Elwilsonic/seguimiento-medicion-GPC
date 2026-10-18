@@ -1,0 +1,29 @@
+# Base de datos PostgreSQL del proyecto (TEC-05). Se levanta con
+# `docker compose up -d` (CA-TEC05.1). Los valores salen del archivo .env
+# (ver .env.example); los valores por defecto son solo de desarrollo.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gpc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gpc_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-gpc}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      # Los datos se guardan en un volumen con nombre, así que sobreviven a
+      # `docker compose down` y a los reinicios (CA-TEC05.5).
+      - gpc-data:/var/lib/postgresql/data
+      # Los scripts de db/init crean el esquema la primera vez que arranca la
+      # base con el volumen vacío (CA-TEC05.2).
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Por TCP: mientras se crea el esquema la base solo escucha por socket,
+      # así que no figura como lista antes de tener las tablas.
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  gpc-data:

@@ -1,8 +1,10 @@
 // Command server arranca la aplicación (TEC-01): un servidor HTTP con los
-// datos en memoria. El puerto se configura con la variable de entorno PORT.
+// datos en memoria o en PostgreSQL según STORAGE (TEC-05). El puerto se
+// configura con la variable de entorno PORT.
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -13,11 +15,21 @@ import (
 )
 
 func main() {
-	projects := project.NewManager(project.NewMemoryRepository())
-	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	cfg, err := storageConfig(os.Getenv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	repos, closeRepos, err := newRepositories(context.Background(), cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer closeRepos()
+
+	projects := project.NewManager(repos.projects)
+	items := backlog.NewManager(repos.items, projects)
 
 	addr := address(os.Getenv)
-	log.Printf("servidor escuchando en %s", addr)
+	log.Printf("servidor escuchando en %s (almacenamiento: %s)", addr, cfg.kind)
 	log.Fatal(http.ListenAndServe(addr, httpapi.NewHandler(projects, items)))
 }
 
