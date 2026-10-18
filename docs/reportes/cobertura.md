@@ -5,77 +5,61 @@ Cobertura de los tests automatizados (`go test -cover ./...`), actualizada al ce
 ## Cobertura actual
 
 - **Fecha:** 17/10/2026
-- **Última tarea con cobertura medida:** HU-07 · Modificar datos de un ítem (rama `feature/HU-07-modificar-item`, pendiente de integrar a `main` por Pull Request)
-- **Comando:** `go test -cover ./...`
+- **Última tarea con cobertura medida:** TEC-05 · Persistencia con PostgreSQL en Docker (rama `feature/TEC-05-persistencia-postgres`, pendiente de integrar a `main` por Pull Request)
+- **Comando:** `go test -cover ./...`, sin base (como en el CI) y con `TEST_DATABASE_URL` apuntando a la base de pruebas `gpc_test`
 
-| Paquete | Cobertura |
-|---|---|
-| `cmd/server` | 28.6% |
-| `internal/backlog` | 100.0% |
-| `internal/httpapi` | 100.0% |
-| `internal/project` | 100.0% |
-| `internal/sprint` | 100.0% |
+| Paquete | Sin base (CI) | Con base |
+|---|---|---|
+| `cmd/server` | 39.0% | 41.5% |
+| `internal/backlog` | 75.5% | 98.6% |
+| `internal/httpapi` | 100.0% | 100.0% |
+| `internal/postgres` (nuevo) | 83.3% | 83.3% |
+| `internal/postgrestest` (nuevo) | 36.8% | 36.8% |
+| `internal/project` | 67.4% | 96.8% |
+| `internal/sprint` | 69.0% | 98.3% |
 
-`cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario; la elección del puerto está separada en `address`, con cobertura total (ver la [evidencia de TEC-01](../evidencias/TEC-01-tdd.md)).
+Desde TEC-05, `internal/backlog`, `internal/project` e `internal/sprint` tienen un repositorio PostgreSQL además del de memoria. En el CI no hay base, así que sus tests de integración hacen `t.Skip` y ese código queda sin ejecutar: por eso bajan la cobertura de la columna "Sin base". **La cobertura de la parte de PostgreSQL se mide localmente, con la base levantada** (ver la [evidencia de TEC-05](../evidencias/TEC-05-tdd.md)).
+
+- `go test -cover` mide cada paquete solo con sus propios tests. `internal/postgrestest` queda en 36.8% porque su `Pool`, su lock y su `Reset` los usan los tests de los otros paquetes.
+- Con `-coverpkg=./...` (todos los paquetes medidos juntos, con base) el total es **92.1%**.
+- Lo que queda sin cubrir son ramas de error que necesitan que la base falle en un momento puntual, y `main()`.
+
+`cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario. La lógica con decisiones está separada en `address`, `storageConfig` y `newRepositories`, las tres con cobertura total.
 
 ```
-$ go tool cover -func=server-cover.out
-seguimiento-medicion-gpc/cmd/server/main.go:15:			main			0.0%
-seguimiento-medicion-gpc/cmd/server/main.go:26:			address			100.0%
-total:								(statements)		28.6%
-
-$ go tool cover -func=httpapi-cover.out
-seguimiento-medicion-gpc/internal/httpapi/server.go:63:		NewHandler		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:75:		createProject		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:90:		getProject		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:105:	updateProject		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:125:	createItem		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:145:	listItems		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:165:	pathID			100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:175:	statusFor		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:193:	writeError		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:202:	writeJSON		100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:208:	toProjectResponse	100.0%
-seguimiento-medicion-gpc/internal/httpapi/server.go:212:	toItemResponse		100.0%
-total:								(statements)		100.0%
-
-$ go tool cover -func=backlog-cover.out
-seguimiento-medicion-gpc/internal/backlog/create.go:11:			Create			100.0%
-seguimiento-medicion-gpc/internal/backlog/create.go:55:			normalizePriority	100.0%
-seguimiento-medicion-gpc/internal/backlog/create.go:68:			cleanCriteria		100.0%
-seguimiento-medicion-gpc/internal/backlog/get.go:13:			GetItem			100.0%
-seguimiento-medicion-gpc/internal/backlog/list.go:8:			ListItems		100.0%
-seguimiento-medicion-gpc/internal/backlog/manager.go:21:		NewManager		100.0%
-seguimiento-medicion-gpc/internal/backlog/memory_repository.go:13:	NewMemoryRepository	100.0%
-seguimiento-medicion-gpc/internal/backlog/memory_repository.go:20:	Save			100.0%
-seguimiento-medicion-gpc/internal/backlog/memory_repository.go:35:	GetByID			100.0%
-seguimiento-medicion-gpc/internal/backlog/memory_repository.go:48:	Update			100.0%
-seguimiento-medicion-gpc/internal/backlog/memory_repository.go:68:	ListByProject		100.0%
-seguimiento-medicion-gpc/internal/backlog/update.go:22:			Update			100.0%
-seguimiento-medicion-gpc/internal/backlog/update.go:75:			validateEstimatedHours	100.0%
-total:									(statements)		100.0%
-
-$ go tool cover -func=project-cover.out
-seguimiento-medicion-gpc/internal/project/create.go:6:			Create			100.0%
-seguimiento-medicion-gpc/internal/project/get.go:10:			Get			100.0%
-seguimiento-medicion-gpc/internal/project/manager.go:15:		NewManager		100.0%
-seguimiento-medicion-gpc/internal/project/memory_repository.go:13:	NewMemoryRepository	100.0%
-seguimiento-medicion-gpc/internal/project/memory_repository.go:18:	Save			100.0%
-seguimiento-medicion-gpc/internal/project/memory_repository.go:26:	List			100.0%
-seguimiento-medicion-gpc/internal/project/memory_repository.go:32:	GetByID			100.0%
-seguimiento-medicion-gpc/internal/project/memory_repository.go:43:	Update			100.0%
-seguimiento-medicion-gpc/internal/project/update.go:19:			Update			100.0%
-seguimiento-medicion-gpc/internal/project/update.go:64:			normalizeStatus		100.0%
-total:									(statements)	100.0%
-
-$ go tool cover -func=sprint-cover.out
-seguimiento-medicion-gpc/internal/sprint/create.go:14:			Create			100.0%
-seguimiento-medicion-gpc/internal/sprint/manager.go:22:		NewManager		100.0%
-seguimiento-medicion-gpc/internal/sprint/memory_repository.go:11:	NewMemoryRepository		100.0%
-seguimiento-medicion-gpc/internal/sprint/memory_repository.go:18:	Save			100.0%
-seguimiento-medicion-gpc/internal/sprint/memory_repository.go:28:	OpenByProject		100.0%
-total:									(statements)	100.0%
+$ go test -count=1 -coverpkg=./... -coverprofile=cover.out ./...      (con TEST_DATABASE_URL)
+$ go tool cover -func=cover.out      (código de TEC-05 y total)
+cmd/server/main.go:17:				main			0.0%
+cmd/server/main.go:38:				address			100.0%
+cmd/server/repositories.go:24:			newRepositories		100.0%
+cmd/server/storage.go:32:			storageConfig		100.0%
+internal/backlog/postgres_repository.go:21:	NewPostgresRepository	100.0%
+internal/backlog/postgres_repository.go:31:	Save			100.0%
+internal/backlog/postgres_repository.go:46:	GetByID			100.0%
+internal/backlog/postgres_repository.go:60:	Update			100.0%
+internal/backlog/postgres_repository.go:80:	ListByProject		77.8%
+internal/backlog/postgres_repository.go:98:	criteriaParam		100.0%
+internal/backlog/postgres_repository.go:107:	scanItem		100.0%
+internal/postgres/postgres.go:23:		Open			91.7%
+internal/postgrestest/postgrestest.go:59:	Pool			77.8%
+internal/postgrestest/postgrestest.go:77:	lock			72.7%
+internal/postgrestest/postgrestest.go:100:	Reset			75.0%
+internal/postgrestest/postgrestest.go:111:	decide			100.0%
+internal/postgrestest/postgrestest.go:129:	checkDatabaseName	100.0%
+internal/project/postgres_repository.go:21:	NewPostgresRepository	100.0%
+internal/project/postgres_repository.go:30:	Save			80.0%
+internal/project/postgres_repository.go:42:	List			75.0%
+internal/project/postgres_repository.go:58:	GetByID			100.0%
+internal/project/postgres_repository.go:72:	Update			100.0%
+internal/project/postgres_repository.go:87:	scanProject		100.0%
+internal/sprint/postgres_repository.go:21:	NewPostgresRepository	100.0%
+internal/sprint/postgres_repository.go:31:	Save			100.0%
+internal/sprint/postgres_repository.go:45:	OpenByProject		85.7%
+internal/sprint/postgres_repository.go:61:	scanSprint		100.0%
+total:									(statements)		92.1%
 ```
+
+Las funciones de las historias anteriores (`Manager`, `MemoryRepository` y `httpapi`) siguen en 100% en esta medición.
 
 ## Historial
 
@@ -91,3 +75,4 @@ total:									(statements)	100.0%
 | 15/10/2026 | HU-05 | `internal/backlog` | 100.0% | `GetItem` y `GetByID` entran con cobertura total; sin regresiones en HU-04, HU-06 ni en el resto de los paquetes; `-race` (CA-05.4) lo verifican Hernán sobre Linux y el CI porque el entorno local no tiene cgo |
 | 17/10/2026 | HU-10 | `internal/sprint` (nuevo) | 100.0% | Nuevo paquete de sprints con cobertura total (`Create`, `Save`, `OpenByProject`); sin regresiones en el resto de los paquetes; `-race` (CA-10.6) lo verifica el CI porque el entorno local no tiene cgo, y la revisión de la rama sobre Linux queda a cargo de Peñalbé Hernán |
 | 17/10/2026 | HU-07 | `internal/backlog` | 100.0% | `Manager.Update` y `validateEstimatedHours` (`update.go`) y `MemoryRepository.Update` entran con cobertura total; el campo `EstimatedHours` entra en `Item` sin bajas; sin regresiones en HU-04, HU-05, HU-06 ni en el resto de los paquetes; `-race` (CA-07.6) lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
+| 17/10/2026 | TEC-05 | `internal/postgres` (nuevo), `internal/postgrestest` (nuevo), `internal/project`, `internal/backlog`, `internal/sprint` y `cmd/server` | Con base: 83.3%, 36.8%, 96.8%, 98.6%, 98.3% y 41.5%; sin base (CI): 83.3%, 36.8%, 67.4%, 75.5%, 69.0% y 39.0% | Repositorios PostgreSQL detrás de las mismas interfaces; en el CI sus tests hacen `t.Skip`, así que la cobertura de PostgreSQL se mide localmente con la base levantada (con `-coverpkg=./...`: 92.1%); sin cubrir quedan ramas de error que necesitan una falla puntual de la base; `-race` lo verifica el CI del Pull Request porque el entorno local no tiene cgo |

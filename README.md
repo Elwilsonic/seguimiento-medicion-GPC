@@ -13,12 +13,12 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 - **Tests:** paquete `testing` de Go (TDD) y godog para ejecutar los escenarios BDD
 - **Control de versiones:** Git
 - **Integración continua:** Cada Pull Request hacia `main` corre `gofmt`, `go vet ./...` y `go test -race ./...` con GitHub Actions
-- **Persistencia:** en memoria durante el Sprint 1; PostgreSQL en Docker a partir del Sprint 2
+- **Persistencia:** en memoria (valor por defecto) o PostgreSQL 17 en Docker (TEC-05), con el driver `github.com/jackc/pgx/v5`; ver [Persistencia con PostgreSQL](#persistencia-con-postgresql)
 
 ## Requisitos
 
 - Go 1.27.1 o superior
-- A partir del Sprint 2: Docker (para ejecutar PostgreSQL)
+- Docker con Docker Compose, solo para usar PostgreSQL: con memoria no hace falta
 
 ## Cómo ejecutar
 
@@ -28,7 +28,7 @@ Desde la raíz del repositorio:
 go run ./cmd/server
 ```
 
-El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de entorno `PORT` (en PowerShell: `$env:PORT="9090"; go run ./cmd/server`; en Linux o macOS: `PORT=9090 go run ./cmd/server`). En el Sprint 1 los datos se guardan en memoria: se pierden al detener el servidor.
+El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de entorno `PORT` (en PowerShell: `$env:PORT="9090"; go run ./cmd/server`; en Linux o macOS: `PORT=9090 go run ./cmd/server`). Por defecto los datos se guardan en memoria y se pierden al detener el servidor; para conservarlos, usá PostgreSQL (ver [Persistencia con PostgreSQL](#persistencia-con-postgresql)).
 
 | Método | Ruta | Operación |
 |---|---|---|
@@ -52,7 +52,72 @@ curl localhost:8080/proyectos/1/backlog
 
 Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto inexistente), 409 (nombre repetido) o 500 (error interno).
 
-Para correr los tests: `go test ./...`
+Para correr los tests: `go test ./...` (no necesita Docker: los tests de PostgreSQL se omiten si no hay base de pruebas).
+
+## Persistencia con PostgreSQL
+
+La aplicación guarda los datos en memoria o en PostgreSQL según la variable `STORAGE` (TEC-05). El resto del equipo puede trabajar siempre en memoria, sin Docker.
+
+| Variable | Valores | Para qué |
+|---|---|---|
+| `STORAGE` | `memory` (por defecto, si no está definida) o `postgres` | Dónde se guardan los datos. Se compara tal cual: `Postgres` o ` memory` dan error |
+| `DATABASE_URL` | URL de PostgreSQL | Obligatoria con `STORAGE=postgres` |
+| `TEST_DATABASE_URL` | URL de una base que termine en `_test` | Solo para las pruebas de integración |
+
+### 1. Levantar la base
+
+Desde la raíz del repositorio:
+
+```
+docker compose up -d --wait
+```
+
+Levanta PostgreSQL 17 con la configuración del archivo `.env`, si existe. Si no existe, usa los valores de desarrollo de [`.env.example`](.env.example) (usuario `gpc`, base `gpc`). Para cambiarlos, copiá `.env.example` como `.env`: el `.env` real no se sube al repositorio.
+
+- **Puerto 5433:** la base se publica en `127.0.0.1:5433`, no en el 5432, para no chocar con un PostgreSQL instalado en el sistema, que normalmente usa el 5432. Si el 5433 también está ocupado, cambiá `POSTGRES_PORT` en el `.env` (y el puerto en las URL).
+- **Esquema:** los scripts de [`db/init/`](db/init/) crean las tablas en la base `gpc` y una base de pruebas `gpc_test` con el mismo esquema. **Solo corren la primera vez, cuando el volumen de datos está vacío.** Si después cambia el esquema, hay que borrar el volumen con `docker compose down -v` (eso **borra todos los datos**) y volver a levantar la base.
+- **Datos:** quedan en el volumen `gpc-data`, así que se conservan al reiniciar la aplicación y al hacer `docker compose down` (sin `-v`).
+
+Para ver que la base está lista: `docker compose ps` (estado `healthy`) y `docker compose port postgres 5432` (tiene que mostrar `127.0.0.1:5433`).
+
+### 2. Ejecutar la aplicación con PostgreSQL
+
+La aplicación no lee el archivo `.env`: las variables se definen en la terminal.
+
+En PowerShell:
+
+```
+$env:STORAGE="postgres"; $env:DATABASE_URL="postgres://gpc:gpc_dev@localhost:5433/gpc?sslmode=disable"; go run ./cmd/server
+```
+
+En Git Bash, Linux o macOS:
+
+```
+STORAGE=postgres DATABASE_URL="postgres://gpc:gpc_dev@localhost:5433/gpc?sslmode=disable" go run ./cmd/server
+```
+
+Al arrancar, el servidor muestra qué almacenamiento usa: `servidor escuchando en :8080 (almacenamiento: postgres)`. Si `STORAGE` tiene otro valor, si falta `DATABASE_URL` o si la base no responde, el servidor no arranca y muestra el error, que nunca incluye la URL (tiene la contraseña).
+
+### 3. Pruebas de integración
+
+Los tests de PostgreSQL corren solo si está definida `TEST_DATABASE_URL`. Sin ella (como en el CI, que no tiene Docker) se omiten con `SKIP`, y `go test ./...` pasa igual.
+
+```
+$env:TEST_DATABASE_URL="postgres://gpc:gpc_dev@localhost:5433/gpc_test?sslmode=disable"; go test -count=1 ./...
+```
+
+- La base de `TEST_DATABASE_URL` **tiene que terminar en `_test`**: si no, los tests fallan sin conectarse, porque vacían las tablas antes de cada caso.
+- Si la variable está definida pero la base no responde, los tests de PostgreSQL se omiten.
+- Los paquetes comparten la base de pruebas; un lock de PostgreSQL hace que esos tests corran de a uno aunque `go test` corra los paquetes en paralelo.
+
+### Driver de PostgreSQL
+
+Se usa **`github.com/jackc/pgx/v5`** (versión `v5.11.0`), la única dependencia externa del código de producción (CA-TEC05.10). El equipo aprobó pgx/v5 como única dependencia nueva antes de agregarla al go.mod. Motivos:
+
+- Es el driver de PostgreSQL para Go más usado y tiene mantenimiento activo; `lib/pq`, la otra opción conocida, está en modo mantenimiento y sus autores recomiendan pgx.
+- Trae su propio pool de conexiones (`pgxpool`), así que no hace falta otra librería.
+- Lee y escribe los arreglos de PostgreSQL (`TEXT[]`) directamente como `[]string`, que es como se guardan los criterios de aceptación de los ítems.
+- Expone los códigos de error de PostgreSQL (`pgconn.PgError`), que los tests usan para verificar la clave foránea.
 
 ## Equipo
 
@@ -128,7 +193,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-12 | [#26](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/26) | Registrar historias completadas | — | — | — | — |
 | HU-13 | [#27](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/27) | Cerrar sprint | — | — | — | — |
 | TEC-04 | [#34](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/34) | Interfaz usable | — | — | — | — |
-| TEC-05 | [#35](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/35) | Persistencia con PostgreSQL en Docker | — | — | — | — |
+| TEC-05 | [#35](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/35) | Persistencia con PostgreSQL en Docker | — | — | [Evidencia](docs/evidencias/TEC-05-tdd.md) | |
 
 ## Estructura del repositorio
 
@@ -139,7 +204,10 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `AGENTS.md` | Instrucciones del flujo de trabajo (SDD → BDD → TDD) |
 | `.github/` | Workflow de CI, plantillas de Issue (historia, tarea técnica, ceremonia y defecto) y plantilla de Pull Request |
 | `cmd/` | Punto de entrada ejecutable de la aplicación |
-| `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests |
+| `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests; `internal/postgres` abre la conexión a PostgreSQL e `internal/postgrestest` prepara la base de las pruebas de integración |
+| `docker-compose.yml` | Base de datos PostgreSQL en Docker (TEC-05) |
+| `db/init/` | Scripts que crean el esquema de la base y la base de pruebas la primera vez que arranca |
+| `.env.example` | Valores de ejemplo de las variables de entorno (el `.env` real no se sube) |
 | `features/` | Escenarios BDD en Gherkin (`HU-XX-nombre.feature`) |
 | `docs/actas/` | Actas de cada Sprint, en una carpeta por Sprint (`sprint-N/planning.md`, `daily.md`, `review.md`, `retrospectiva.md`) |
 | `docs/actas/_plantillas/` | Plantillas de las actas de Planning, Review y Retrospectiva y del comentario de la Daily |
