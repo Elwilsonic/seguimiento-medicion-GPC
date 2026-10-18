@@ -56,6 +56,21 @@ func (r *PostgresRepository) OpenByProject(projectID int) (Sprint, bool, error) 
 	return sprint, true, nil
 }
 
+// GetByID devuelve el sprint con ese ID (RN-11.1) o ErrSprintNotFound si no
+// existe, incluidos los IDs 0 y negativos.
+func (r *PostgresRepository) GetByID(id int) (Sprint, error) {
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+sprintColumns+" FROM sprints WHERE id = $1", id)
+	sprint, err := scanSprint(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Sprint{}, ErrSprintNotFound
+	}
+	if err != nil {
+		return Sprint{}, fmt.Errorf("buscar el sprint: %w", err)
+	}
+	return sprint, nil
+}
+
 // scanSprint lee un sprint con las columnas de sprintColumns y normaliza las
 // fechas a UTC: pgx devuelve timestamptz en la zona local de la máquina.
 func scanSprint(row pgx.Row) (Sprint, error) {

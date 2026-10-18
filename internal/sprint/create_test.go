@@ -527,7 +527,8 @@ func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
 		t.Fatalf("crear el proyecto de prueba: %v", err)
 	}
-	manager := NewManager(failingRepository{saveErr: errRepository}, projects)
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	manager := NewManager(failingRepository{saveErr: errRepository}, projects, items)
 
 	created, err := manager.Create(1, validName, validStart, validEnd, validGoal)
 
@@ -545,7 +546,8 @@ func TestCreate_ErrorDelRepositorioAlConsultarElSprintAbiertoSeDevuelve(t *testi
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
 		t.Fatalf("crear el proyecto de prueba: %v", err)
 	}
-	manager := NewManager(failingRepository{openErr: errRepository}, projects)
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	manager := NewManager(failingRepository{openErr: errRepository}, projects, items)
 
 	created, err := manager.Create(1, validName, validStart, validEnd, validGoal)
 

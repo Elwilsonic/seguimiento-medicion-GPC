@@ -33,3 +33,15 @@ func (r *MemoryRepository) OpenByProject(projectID int) (Sprint, bool, error) {
 	}
 	return Sprint{}, false, nil
 }
+
+// GetByID devuelve el sprint con ese ID (RN-11.1) o ErrSprintNotFound si no
+// existe, incluidos los IDs 0 y negativos. Sprint no tiene slices ni mapas,
+// así que devolver la copia del rango alcanza (RN-10.8).
+func (r *MemoryRepository) GetByID(id int) (Sprint, error) {
+	for _, sprint := range r.sprints {
+		if sprint.ID == id {
+			return sprint, nil
+		}
+	}
+	return Sprint{}, ErrSprintNotFound
+}

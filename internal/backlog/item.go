@@ -36,6 +36,9 @@ type Item struct {
 	// EstimatedHours son las horas estimadas del ítem; 0 significa sin
 	// asignar (RN-07.5).
 	EstimatedHours float64
+	// SprintID es el sprint al que el ítem está asignado; 0 significa sin
+	// asignar (RN-11.4: el primer ID de sprint es 1).
+	SprintID int
 }
 
 var (

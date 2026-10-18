@@ -2,6 +2,7 @@ package backlog
 
 import (
 	"errors"
+	"reflect"
 	"slices"
 	"testing"
 
@@ -116,8 +117,15 @@ func TestAssignToSprint_NoCambiaNingunOtroCampo(t *testing.T) {
 
 	assigned := savedItem(t, repo, created.ID)
 	assigned.SprintID = created.SprintID
-	if assigned != created {
+	// Item contiene una lista, así que se compara como en el contrato de
+	// TEC-05: los criterios con slices.Equal y el resto con DeepEqual.
+	assignedCriteria, createdCriteria := assigned.AcceptanceCriteria, created.AcceptanceCriteria
+	assigned.AcceptanceCriteria, created.AcceptanceCriteria = nil, nil
+	if !reflect.DeepEqual(assigned, created) {
 		t.Errorf("ítem guardado cambió: %+v, se esperaba %+v", assigned, created)
+	}
+	if !slices.Equal(assignedCriteria, createdCriteria) {
+		t.Errorf("criterios guardados = %q, se esperaban %q", assignedCriteria, createdCriteria)
 	}
 }
 

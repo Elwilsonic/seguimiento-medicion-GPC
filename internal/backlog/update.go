@@ -13,7 +13,8 @@ var ErrInvalidEstimatedHours = errors.New("las horas estimadas deben ser un núm
 // Update modifica un ítem existente identificado por su ID (HU-07) y
 // devuelve una copia. Reemplaza el título, la descripción, la prioridad, los
 // criterios de aceptación y las horas estimadas; conserva el ID, el
-// ProjectID, el estado y los story points (los cambian HU-08 y HU-20).
+// ProjectID, el estado, los story points y el sprint asignado (los cambian
+// HU-08, HU-20 y HU-11).
 //
 // El orden de validación es: título, prioridad, criterios y horas, sin
 // consultar el repositorio; después, con el mutex, la existencia del ítem
@@ -66,6 +67,7 @@ func (m *Manager) Update(id int, title, description, priority string, criteria [
 		Status:             current.Status,
 		StoryPoints:        current.StoryPoints,
 		EstimatedHours:     estimatedHours,
+		SprintID:           current.SprintID,
 	}
 	return m.repo.Update(item)
 }

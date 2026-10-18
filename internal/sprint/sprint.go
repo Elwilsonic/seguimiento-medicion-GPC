@@ -39,4 +39,13 @@ var (
 	ErrEndNotAfterStart = errors.New("la fecha de fin debe ser posterior a la de inicio")
 	// ErrOpenSprintExists indica que ya existe un sprint ABIERTO en el proyecto (RN-10.5).
 	ErrOpenSprintExists = errors.New("ya existe un sprint abierto en el proyecto")
+	// ErrSprintNotFound indica que no existe un sprint con el ID recibido,
+	// incluidos los IDs 0 y negativos (RN-11.1).
+	ErrSprintNotFound = errors.New("no existe un sprint con ese id")
+	// ErrSprintClosed indica que el sprint está CERRADO y no acepta
+	// asignaciones (RN-11.1).
+	ErrSprintClosed = errors.New("el sprint está cerrado")
+	// ErrItemFromAnotherProject indica que el ítem pertenece a otro proyecto
+	// distinto del sprint (RN-11.2).
+	ErrItemFromAnotherProject = errors.New("el ítem pertenece a otro proyecto")
 )

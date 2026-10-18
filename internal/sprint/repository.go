@@ -9,4 +9,8 @@ type Repository interface {
 	// OpenByProject devuelve una copia del sprint ABIERTO del proyecto y si
 	// existe (RN-10.5). HU-11 a HU-14 agregan las operaciones que necesiten.
 	OpenByProject(projectID int) (Sprint, bool, error)
+
+	// GetByID devuelve el sprint con ese ID o ErrSprintNotFound si no existe
+	// (RN-11.1).
+	GetByID(id int) (Sprint, error)
 }

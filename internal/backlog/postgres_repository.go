@@ -23,17 +23,17 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // itemColumns son las columnas de un ítem, en el orden de scanItem.
-const itemColumns = "id, project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours"
+const itemColumns = "id, project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours, sprint_id"
 
 // Save guarda el ítem; la base asigna el siguiente ID correlativo global
 // (RN-04.6). Devuelve el ítem tal como quedó guardado, con una lista de
 // criterios propia (RN-04.9).
 func (r *PostgresRepository) Save(item Item) (Item, error) {
 	row := r.pool.QueryRow(context.Background(),
-		`INSERT INTO backlog_items (project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING `+itemColumns,
+		`INSERT INTO backlog_items (project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours, sprint_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING `+itemColumns,
 		item.ProjectID, item.Title, item.Description, item.Priority, criteriaParam(item.AcceptanceCriteria),
-		item.Status, item.StoryPoints, item.EstimatedHours)
+		item.Status, item.StoryPoints, item.EstimatedHours, item.SprintID)
 	saved, err := scanItem(row)
 	if err != nil {
 		return Item{}, fmt.Errorf("guardar el ítem: %w", err)
@@ -60,10 +60,10 @@ func (r *PostgresRepository) GetByID(id int) (Item, error) {
 func (r *PostgresRepository) Update(item Item) (Item, error) {
 	row := r.pool.QueryRow(context.Background(),
 		`UPDATE backlog_items SET project_id = $2, title = $3, description = $4, priority = $5,
-		acceptance_criteria = $6, status = $7, story_points = $8, estimated_hours = $9
+		acceptance_criteria = $6, status = $7, story_points = $8, estimated_hours = $9, sprint_id = $10
 		WHERE id = $1 RETURNING `+itemColumns,
 		item.ID, item.ProjectID, item.Title, item.Description, item.Priority, criteriaParam(item.AcceptanceCriteria),
-		item.Status, item.StoryPoints, item.EstimatedHours)
+		item.Status, item.StoryPoints, item.EstimatedHours, item.SprintID)
 	updated, err := scanItem(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Item{}, ErrItemNotFound
@@ -107,6 +107,6 @@ func criteriaParam(criteria []string) []string {
 func scanItem(row pgx.Row) (Item, error) {
 	var item Item
 	err := row.Scan(&item.ID, &item.ProjectID, &item.Title, &item.Description, &item.Priority,
-		&item.AcceptanceCriteria, &item.Status, &item.StoryPoints, &item.EstimatedHours)
+		&item.AcceptanceCriteria, &item.Status, &item.StoryPoints, &item.EstimatedHours, &item.SprintID)
 	return item, err
 }

@@ -212,7 +212,7 @@ func TestNewRepositories_PostgresConservaLosDatosAlReabrir(t *testing.T) {
 		t.Fatalf("crear el ítem: %v", err)
 	}
 	start := time.Date(2026, 10, 16, 0, 0, 0, 0, time.UTC)
-	s, err := sprint.NewManager(repos.sprints, projects).Create(p.ID, "Sprint 1", start, start.AddDate(0, 0, 6), "Persistir los datos")
+	s, err := sprint.NewManager(repos.sprints, projects, backlog.NewManager(repos.items, projects)).Create(p.ID, "Sprint 1", start, start.AddDate(0, 0, 6), "Persistir los datos")
 	if err != nil {
 		t.Fatalf("crear el sprint: %v", err)
 	}

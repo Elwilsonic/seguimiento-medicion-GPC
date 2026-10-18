@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS projects (
 
 -- Ítems del Product Backlog (HU-04). El ID es correlativo y global
 -- (RN-04.6). Los criterios de aceptación se guardan en orden en un arreglo.
+-- sprint_id es el sprint asignado por HU-11; 0 significa sin asignar
+-- (RN-11.4). No hay clave foránea porque el 0 no es un sprint.
 CREATE TABLE IF NOT EXISTS backlog_items (
     id                  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     project_id          INTEGER NOT NULL REFERENCES projects (id),
@@ -23,7 +25,8 @@ CREATE TABLE IF NOT EXISTS backlog_items (
     acceptance_criteria TEXT[] NOT NULL,
     status              TEXT NOT NULL,
     story_points        INTEGER NOT NULL,
-    estimated_hours     DOUBLE PRECISION NOT NULL
+    estimated_hours     DOUBLE PRECISION NOT NULL,
+    sprint_id            INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS backlog_items_project_id_idx ON backlog_items (project_id);

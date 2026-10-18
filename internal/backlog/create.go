@@ -44,6 +44,7 @@ func (m *Manager) Create(projectID int, title, description, priority string, cri
 		AcceptanceCriteria: criteria,
 		Status:             StatusPending,
 		StoryPoints:        0,
+		SprintID:           0,
 	}
 
 	m.mu.Lock()
