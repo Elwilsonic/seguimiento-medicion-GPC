@@ -1,10 +1,14 @@
 package project
 
 import (
+	"context"
+	"errors"
+	"os"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"seguimiento-medicion-gpc/internal/postgres"
 	"seguimiento-medicion-gpc/internal/postgrestest"
 )
 
@@ -27,4 +31,27 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, func(t *testing.T) Repository {
 		return newPostgresTestRepository(t, pool)
 	})
+}
+
+// Un error de la base (acá, un pool cerrado) se devuelve como error y no se
+// confunde con ErrProjectNotFound: el proyecto puede existir aunque la base
+// no responda. Se usa un pool propio, no el de Pool(t), que tiene tomado el
+// lock hasta que termina el test.
+func TestPostgresRepository_ErrorDeLaBaseNoEsNotFound(t *testing.T) {
+	postgrestest.Pool(t)
+	closed, err := postgres.Open(context.Background(), os.Getenv(postgrestest.EnvVar))
+	if err != nil {
+		t.Fatalf("abrir el pool: %v", err)
+	}
+	closed.Close()
+	repo := NewPostgresRepository(closed)
+
+	_, getErr := repo.GetByID(1)
+	_, updateErr := repo.Update(Project{ID: 1, Name: "Alfa", Status: StatusPlanned})
+
+	for op, err := range map[string]error{"GetByID": getErr, "Update": updateErr} {
+		if err == nil || errors.Is(err, ErrProjectNotFound) {
+			t.Errorf("%s: err = %v, se esperaba un error de la base distinto de %v", op, err, ErrProjectNotFound)
+		}
+	}
 }

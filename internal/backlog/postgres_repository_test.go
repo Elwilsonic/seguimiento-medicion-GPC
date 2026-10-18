@@ -1,12 +1,15 @@
 package backlog
 
 import (
+	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"seguimiento-medicion-gpc/internal/postgres"
 	"seguimiento-medicion-gpc/internal/postgrestest"
 	"seguimiento-medicion-gpc/internal/project"
 )
@@ -50,5 +53,30 @@ func TestPostgresRepository_SaveConProyectoInexistenteFalla(t *testing.T) {
 	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) || pgErr.Code != "23503" {
 		t.Errorf("err = %v, se esperaba una violación de clave foránea (23503)", err)
+	}
+}
+
+// Un error de la base (acá, un pool cerrado) se devuelve como error y no se
+// confunde con ErrItemNotFound: el ítem puede existir aunque la base no
+// responda. Se usa un pool propio, no el de Pool(t), que tiene tomado el lock
+// hasta que termina el test.
+func TestPostgresRepository_ErrorDeLaBaseNoEsNotFound(t *testing.T) {
+	postgrestest.Pool(t)
+	closed, err := postgres.Open(context.Background(), os.Getenv(postgrestest.EnvVar))
+	if err != nil {
+		t.Fatalf("abrir el pool: %v", err)
+	}
+	closed.Close()
+	repo := NewPostgresRepository(closed)
+	item := contractItem(contractProjectA, "Login")
+	item.ID = 1
+
+	_, getErr := repo.GetByID(1)
+	_, updateErr := repo.Update(item)
+
+	for op, err := range map[string]error{"GetByID": getErr, "Update": updateErr} {
+		if err == nil || errors.Is(err, ErrItemNotFound) {
+			t.Errorf("%s: err = %v, se esperaba un error de la base distinto de %v", op, err, ErrItemNotFound)
+		}
 	}
 }
