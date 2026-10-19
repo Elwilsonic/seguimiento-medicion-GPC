@@ -32,3 +32,6 @@ desktop.ini
 go.work
 go.work.sum
 vendor/
+
+# Configuración local de cada integrante (no se comparte)
+.claude/settings.local.json

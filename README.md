@@ -12,7 +12,7 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 - **Prácticas:** SDD (Specification-Driven Development), BDD (Behavior-Driven Development), TDD (Test-Driven Development)
 - **Tests:** paquete `testing` de Go (TDD) y godog para ejecutar los escenarios BDD
 - **Control de versiones:** Git
-- **Integración continua:** Cada Pull Request hacia `main` corre `gofmt`, `go vet ./...` y `go test -race ./...` con GitHub Actions
+- **Integración continua:** Cada Pull Request hacia `main` corre `gofmt`, `go vet ./...` y `go test -race ./...` con GitHub Actions, y muestra la cobertura total
 - **Persistencia:** en memoria (valor por defecto) o PostgreSQL 17 en Docker (TEC-05), con el driver `github.com/jackc/pgx/v5`; ver [Persistencia con PostgreSQL](#persistencia-con-postgresql)
 
 ## Requisitos
