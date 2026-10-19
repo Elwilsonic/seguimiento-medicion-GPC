@@ -12,7 +12,7 @@ const (
 )
 
 // Status es el estado de un ítem del backlog (RN-04.7). Las transiciones
-// entre estados las define HU-08.
+// permitidas y su validación están en status.go (HU-08).
 type Status string
 
 const (
