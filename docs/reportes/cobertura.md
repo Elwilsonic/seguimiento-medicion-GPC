@@ -4,25 +4,25 @@ Cobertura de los tests automatizados (`go test -cover ./...`), actualizada al ce
 
 ## Cobertura actual
 
-- **Fecha:** 17/10/2026
-- **Última tarea con cobertura medida:** TEC-05 · Persistencia con PostgreSQL en Docker (rama `feature/TEC-05-persistencia-postgres`, pendiente de integrar a `main` por Pull Request)
+- **Fecha:** 18/10/2026
+- **Última historia con cobertura medida:** HU-11 · Asignar historias del backlog a un sprint (rama `feature/HU-11-asignar-item-sprint`, pendiente de integrar a `main` por Pull Request)
 - **Comando:** `go test -cover ./...`, sin base (como en el CI) y con `TEST_DATABASE_URL` apuntando a la base de pruebas `gpc_test`
 
 | Paquete | Sin base (CI) | Con base |
 |---|---|---|
 | `cmd/server` | 39.0% | 41.5% |
-| `internal/backlog` | 75.5% | 98.6% |
+| `internal/backlog` | 77.7% | 98.7% |
 | `internal/httpapi` | 100.0% | 100.0% |
-| `internal/postgres` (nuevo) | 83.3% | 83.3% |
-| `internal/postgrestest` (nuevo) | 36.8% | 36.8% |
+| `internal/postgres` | 83.3% | 83.3% |
+| `internal/postgrestest` | 36.8% | 36.8% |
 | `internal/project` | 67.4% | 96.8% |
-| `internal/sprint` | 69.0% | 98.3% |
+| `internal/sprint` | 69.5% | 97.6% |
 
 Desde TEC-05, `internal/backlog`, `internal/project` e `internal/sprint` tienen un repositorio PostgreSQL además del de memoria. En el CI no hay base, así que sus tests de integración hacen `t.Skip` y ese código queda sin ejecutar: por eso bajan la cobertura de la columna "Sin base". **La cobertura de la parte de PostgreSQL se mide localmente, con la base levantada** (ver la [evidencia de TEC-05](../evidencias/TEC-05-tdd.md)).
 
 - `go test -cover` mide cada paquete solo con sus propios tests. `internal/postgrestest` queda en 36.8% porque su `Pool`, su lock y su `Reset` los usan los tests de los otros paquetes.
-- Con `-coverpkg=./...` (todos los paquetes medidos juntos, con base) el total es **92.1%**.
-- Lo que queda sin cubrir son ramas de error que necesitan que la base falle en un momento puntual, y `main()`.
+- Con `-coverpkg=./...` (todos los paquetes medidos juntos, con base) el total es **92.5%**.
+- Lo que queda sin cubrir son ramas de error que necesitan que la base falle en un momento puntual (el `GetByID` de sprints en PostgreSQL queda en 85.7% por la misma rama de error genérico que `OpenByProject`), y `main()`.
 
 `cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario. La lógica con decisiones está separada en `address`, `storageConfig` y `newRepositories`, las tres con cobertura total.
 
@@ -55,11 +55,12 @@ internal/project/postgres_repository.go:87:	scanProject		100.0%
 internal/sprint/postgres_repository.go:21:	NewPostgresRepository	100.0%
 internal/sprint/postgres_repository.go:31:	Save			100.0%
 internal/sprint/postgres_repository.go:45:	OpenByProject		85.7%
-internal/sprint/postgres_repository.go:61:	scanSprint		100.0%
-total:									(statements)		92.1%
+internal/sprint/postgres_repository.go:61:	GetByID			85.7%
+internal/sprint/postgres_repository.go:76:	scanSprint		100.0%
+total:									(statements)		92.5%
 ```
 
-Las funciones de las historias anteriores (`Manager`, `MemoryRepository` y `httpapi`) siguen en 100% en esta medición.
+Las funciones de las historias anteriores (`Manager`, `MemoryRepository` y `httpapi`) siguen en 100% en esta medición, y las funciones nuevas de HU-11 también: `AssignItem` y `AssignToSprint` al 100.0% en memoria, y los `GetByID` de sprints (memoria y PostgreSQL) y el `GetByID` de backlog en PostgreSQL con la base levantada.
 
 ## Historial
 
@@ -76,3 +77,4 @@ Las funciones de las historias anteriores (`Manager`, `MemoryRepository` y `http
 | 17/10/2026 | HU-10 | `internal/sprint` (nuevo) | 100.0% | Nuevo paquete de sprints con cobertura total (`Create`, `Save`, `OpenByProject`); sin regresiones en el resto de los paquetes; `-race` (CA-10.6) lo verifica el CI porque el entorno local no tiene cgo, y la revisión de la rama sobre Linux queda a cargo de Peñalbé Hernán |
 | 17/10/2026 | HU-07 | `internal/backlog` | 100.0% | `Manager.Update` y `validateEstimatedHours` (`update.go`) y `MemoryRepository.Update` entran con cobertura total; el campo `EstimatedHours` entra en `Item` sin bajas; sin regresiones en HU-04, HU-05, HU-06 ni en el resto de los paquetes; `-race` (CA-07.6) lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
 | 17/10/2026 | TEC-05 | `internal/postgres` (nuevo), `internal/postgrestest` (nuevo), `internal/project`, `internal/backlog`, `internal/sprint` y `cmd/server` | Con base: 83.3%, 36.8%, 96.8%, 98.6%, 98.3% y 41.5%; sin base (CI): 83.3%, 36.8%, 67.4%, 75.5%, 69.0% y 39.0% | Repositorios PostgreSQL detrás de las mismas interfaces; en el CI sus tests hacen `t.Skip`, así que la cobertura de PostgreSQL se mide localmente con la base levantada (con `-coverpkg=./...`: 92.1%); sin cubrir quedan ramas de error que necesitan una falla puntual de la base; `-race` lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
+| 18/10/2026 | HU-11 | `internal/sprint` y `internal/backlog` | Con base: 97.6% y 98.7%; sin base (CI): 69.5% y 77.7% | `AssignItem`, `AssignToSprint` y los `GetByID` de sprints entran con cobertura total en memoria; la parte de PostgreSQL (`GetByID` de sprints al 85.7%, por la rama de error genérico igual que `OpenByProject`, y `sprint_id` en el repositorio de backlog) se mide con la base levantada, recreada para la columna nueva (`docker compose down -v`); total con `-coverpkg=./...`: 92.5%; `-race` (CA-11.6) lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
