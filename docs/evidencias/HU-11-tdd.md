@@ -13,7 +13,7 @@
 
 Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
 
-**26 funciones de test cubriendo 20 ejecuciones de escenario BDD (12 escenarios y 3 esquemas del escenario con 2, 3 y 3 ejemplos; 119 pasos)**: 25 tests unitarios (`internal/sprint/assign_test.go` y `internal/backlog/assign_test.go`, que con sus 13 subtests hacen 38 ejecuciones) y 1 test que ejecuta los escenarios BDD con godog (`internal/sprint/assign_features_test.go`, runner `TestFeatures_HU11AsignarItemSprint`, en el paquete `sprint` porque la historia es de E3 y orquesta los dos paquetes). El conteo sale del comando:
+**27 funciones de test cubriendo 20 ejecuciones de escenario BDD (12 escenarios y 3 esquemas del escenario con 2, 3 y 3 ejemplos; 119 pasos)**: 26 tests unitarios (17 en `internal/sprint/assign_test.go` y 9 en `internal/backlog/assign_test.go`, que con sus 13 subtests hacen 39 ejecuciones) y 1 test que ejecuta los escenarios BDD con godog (`internal/sprint/assign_features_test.go`, runner `TestFeatures_HU11AsignarItemSprint`, en el paquete `sprint` porque la historia es de E3 y orquesta los dos paquetes). El conteo sale del comando:
 
 ```
 $ findstr /R "^func.Test" internal\sprint\assign_test.go internal\sprint\assign_features_test.go internal\backlog\assign_test.go
