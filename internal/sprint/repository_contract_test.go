@@ -1,6 +1,7 @@
 package sprint
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -47,6 +48,29 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 		}
 		if exists || got != (Sprint{}) {
 			t.Errorf("OpenByProject = %+v, %v; se esperaba un sprint vacío y false", got, exists)
+		}
+	})
+
+	// HU-11: GetByID es la operación de lectura que usa AssignItem (RN-11.1).
+	t.Run("GetByID devuelve el sprint guardado", func(t *testing.T) {
+		repo := newRepo(t)
+		want := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))
+
+		got, err := repo.GetByID(want.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertSprint(t, "GetByID", got, want)
+	})
+
+	// HU-11: la validación de la existencia del sprint (RN-11.1).
+	t.Run("GetByID de un ID inexistente da ErrSprintNotFound", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))
+
+		_, err := repo.GetByID(99)
+		if !errors.Is(err, ErrSprintNotFound) {
+			t.Errorf("err = %v, se esperaba %v", err, ErrSprintNotFound)
 		}
 	})
 

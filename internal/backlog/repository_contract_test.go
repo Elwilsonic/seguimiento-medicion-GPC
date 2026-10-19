@@ -225,6 +225,34 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 			t.Errorf("err = %v, se esperaba %v", err, ErrItemNotFound)
 		}
 	})
+
+	// HU-11: el SprintID asignado se guarda, se actualiza y se lee igual en
+	// memoria y en PostgreSQL.
+	t.Run("Save y Update conservan el SprintID del ítem", func(t *testing.T) {
+		repo := newRepo(t)
+		item := contractItem(contractProjectA, "Login")
+		item.SprintID = 7
+
+		saved := contractSave(t, repo, item)
+		if saved.SprintID != 7 {
+			t.Errorf("SprintID guardado = %d, se esperaba 7", saved.SprintID)
+		}
+		saved.Title = "Login modificado"
+		updated, err := repo.Update(saved)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		if updated.SprintID != 7 {
+			t.Errorf("SprintID actualizado = %d, se esperaba 7", updated.SprintID)
+		}
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		if got.SprintID != 7 {
+			t.Errorf("SprintID leído = %d, se esperaba 7", got.SprintID)
+		}
+	})
 }
 
 // contractItem devuelve un ítem válido del proyecto con ese título.

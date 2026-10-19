@@ -3,6 +3,7 @@ package sprint
 import (
 	"sync"
 
+	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/project"
 )
 
@@ -15,10 +16,12 @@ type Manager struct {
 	mu       sync.Mutex
 	repo     Repository
 	projects *project.Manager
+	items    *backlog.Manager
 }
 
-// NewManager crea un Manager que guarda los sprints en repo y valida los
-// proyectos con projects (HU-10).
-func NewManager(repo Repository, projects *project.Manager) *Manager {
-	return &Manager{repo: repo, projects: projects}
+// NewManager crea un Manager que guarda los sprints en repo, valida los
+// proyectos con projects (HU-10) y asigna ítems del backlog con items
+// (HU-11).
+func NewManager(repo Repository, projects *project.Manager, items *backlog.Manager) *Manager {
+	return &Manager{repo: repo, projects: projects, items: items}
 }

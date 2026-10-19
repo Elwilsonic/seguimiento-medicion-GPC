@@ -10,6 +10,7 @@ import (
 
 	"github.com/cucumber/godog"
 
+	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/project"
 )
 
@@ -33,6 +34,8 @@ func TestFeatures_HU10CrearSprint(t *testing.T) {
 type createSprintScenario struct {
 	projectRepo *project.MemoryRepository
 	projects    *project.Manager
+	itemRepo    *backlog.MemoryRepository
+	items       *backlog.Manager
 	repo        *MemoryRepository
 	manager     *Manager
 
@@ -49,8 +52,10 @@ func initializeCreateSprintScenario(ctx *godog.ScenarioContext) {
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 		s.projectRepo = project.NewMemoryRepository()
 		s.projects = project.NewManager(s.projectRepo)
+		s.itemRepo = backlog.NewMemoryRepository()
+		s.items = backlog.NewManager(s.itemRepo, s.projects)
 		s.repo = NewMemoryRepository()
-		s.manager = NewManager(s.repo, s.projects)
+		s.manager = NewManager(s.repo, s.projects, s.items)
 		s.projectIDs = map[string]int{}
 		s.created = Sprint{}
 		s.createdSprints = nil
