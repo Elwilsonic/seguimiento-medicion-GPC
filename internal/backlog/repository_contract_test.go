@@ -253,6 +253,39 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 			t.Errorf("SprintID leído = %d, se esperaba 7", got.SprintID)
 		}
 	})
+
+	// HU-08: un cambio de estado se guarda con Update y conserva el SprintID y
+	// las horas estimadas, igual en memoria y en PostgreSQL.
+	t.Run("Update que cambia solo el estado conserva SprintID y EstimatedHours", func(t *testing.T) {
+		repo := newRepo(t)
+		item := contractItem(contractProjectA, "Login")
+		item.SprintID = 7
+		item.EstimatedHours = 6.5
+		saved := contractSave(t, repo, item)
+
+		saved.Status = StatusInProgress
+		updated, err := repo.Update(saved)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		if updated.Status != StatusInProgress {
+			t.Errorf("Status actualizado = %q, se esperaba %q", updated.Status, StatusInProgress)
+		}
+		if updated.SprintID != 7 {
+			t.Errorf("SprintID actualizado = %d, se esperaba 7", updated.SprintID)
+		}
+		if updated.EstimatedHours != 6.5 {
+			t.Errorf("EstimatedHours actualizadas = %v, se esperaban 6.5", updated.EstimatedHours)
+		}
+
+		stored, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		if stored.Status != StatusInProgress || stored.SprintID != 7 || stored.EstimatedHours != 6.5 {
+			t.Errorf("lo guardado = %+v, se esperaba el estado EN_CURSO con SprintID 7 y 6.5 horas", stored)
+		}
+	})
 }
 
 // contractItem devuelve un ítem válido del proyecto con ese título.
