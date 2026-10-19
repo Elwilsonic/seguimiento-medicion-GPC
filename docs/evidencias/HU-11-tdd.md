@@ -137,6 +137,10 @@ ok  	seguimiento-medicion-gpc/internal/sprint	1.739s
 
 No se hizo: el código nuevo es mínimo y sigue los patrones existentes (`AssignItem` valida y delega como `Create` de HU-10; `AssignToSprint` hace lectura-modificación-escritura bajo el mutex como `Update` de HU-07; los `GetByID` nuevos son como los de proyectos e ítems). No hay lógica duplicada ni ramas sin test.
 
+## Desviaciones
+
+En el GREEN se corrigieron `TestAssignToSprint_NoCambiaNingunOtroCampo` (`internal/backlog/assign_test.go`) y `TestAssignItem_NoCambiaNingunOtroCampoNiElSprint` (`internal/sprint/assign_test.go`), que comparaban `Item` con `!=`: no compila porque el struct contiene la lista `AcceptanceCriteria`, y en el RED ese error quedó tapado por los demás errores de compilación de la funcionalidad nueva. La comparación ahora se hace como en el contrato de TEC-05 (los criterios con `slices.Equal` y el resto con `reflect.DeepEqual`, con los criterios en nil de los dos lados), y la corrección entró antes del commit GREEN: no hay código de producción sin test.
+
 ## Pruebas de mutación
 
 Una por vez, restaurando el código después de cada una (ninguna forma parte de un commit):
