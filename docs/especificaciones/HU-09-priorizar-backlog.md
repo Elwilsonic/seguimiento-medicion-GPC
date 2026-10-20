@@ -106,8 +106,6 @@ HU-09 referencia una entidad por ID: el proyecto cuyo backlog se lista. **Sí se
 
 El acta del Sprint 2 (`docs/actas/sprint-2/planning.md`) describe HU-09 como "Priorizar los ítems del backlog" (Issue #22, prioridad MEDIA, 3 Story Points, responsable Cardozo Leandro), dependiente de "HU-06. El orden por ID de RN-06.6 sigue siendo el predeterminado; el orden por prioridad es una opción (CA-09.1 'puede ordenarse')", y en la estimación como "Orden por prioridad estable, como opción del listado de HU-06". **El alcance coincide:** esta SDD agrega el orden por prioridad como un método aparte (`ListItemsByPriority`), deja `ListItems` y su orden por ID sin cambios (RN-09.5, CA-09.5) y define el orden estable a igual prioridad (RN-09.2, CA-09.2). No hay diferencias entre el acta y esta SDD.
 
-Notas del acta que no cambian el alcance: HU-09 es la primera historia que pasa a "si hay tiempo" si el Sprint se atrasa, y el orden de trabajo preveía su SDD para el 18/10.
-
 ## Comparación con los criterios del Issue #22 (borrador)
 
 | CA en el Issue #22 (borrador) | En esta SDD | Ajuste |
