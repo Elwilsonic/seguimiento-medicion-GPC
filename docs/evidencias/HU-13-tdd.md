@@ -182,7 +182,11 @@ Los tests de concurrencia (`TestClose_CierresSimultaneosDejanUnSoloCierreExitoso
 
 ### PostgreSQL
 
-**Pendiente:** completar con el resultado que comente Buttini o Cardozo, con `TEST_DATABASE_URL` y la base levantada. Los 3 casos de contrato de `Update` y el test específico de PostgreSQL quedan omitidos sin esa variable.
+Verificado por Cardozo Leandro en Windows con Docker, sobre `feature/HU-13-cerrar-sprint` en `8c96b44`, con `TEST_DATABASE_URL` apuntando a `gpc_test` (la base se recreó con `docker compose down -v && docker compose up -d --wait` porque era anterior a HU-11). El resultado está en el comentario de Cardozo en el Pull Request #101:
+
+- `TestPostgresRepository_Contrato`: 10 casos PASS, incluidos los 3 de `Update`.
+- `TestPostgresRepository_FechasEnUTCConMicrosegundos`, `TestPostgresRepository_SaveConProyectoInexistenteFalla` y `TestPostgresRepository_UpdatePersisteElEstadoYDevuelveFechasUTC`: PASS.
+- 0 SKIP y 0 FAIL; `go test ./...` en verde con la base levantada.
 
 ## Commits
 
