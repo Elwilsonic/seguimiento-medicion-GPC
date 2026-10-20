@@ -5,7 +5,7 @@
 - **Responsable:** García Santiago
 - **Rama:** `feature/HU-13-cerrar-sprint`
 - **Fecha:** 20/10/2026
-- **Go:** go1.27.2 windows/amd64 (el entorno local no tiene cgo, así que `go test -race` lo verifica Hernán sobre Linux; ver la sección pendiente)
+- **Go:** go1.27.2 windows/amd64 (el entorno local no tiene cgo, así que `go test -race` lo verificó Hernán sobre Linux; ver la sección de `go test -race`)
 - **Especificación SDD:** [`docs/especificaciones/HU-13-cerrar-sprint.md`](../especificaciones/HU-13-cerrar-sprint.md)
 - **Escenarios BDD:** [`features/HU-13-cerrar-sprint.feature`](../../features/HU-13-cerrar-sprint.feature) (ejecutados con godog v0.16.0)
 
@@ -144,7 +144,25 @@ Los 10 escenarios pasan con los 71 pasos y sin esquemas del escenario. Con `Stri
 
 ### Cobertura
 
-**Pendiente:** completar con el log del CI del Pull Request (Linux), job "gofmt y tests". No se usan valores medidos en Windows.
+Valores tomados del log del CI del PR #101 (Linux), job "gofmt y tests":
+
+```
+$ go test -race -coverprofile=coverage.out ./...
+ok  	seguimiento-medicion-gpc/cmd/server	1.034s	coverage: 39.0% of statements
+ok  	seguimiento-medicion-gpc/internal/backlog	1.498s	coverage: 80.9% of statements
+ok  	seguimiento-medicion-gpc/internal/httpapi	1.055s	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/postgres	1.025s	coverage: 83.3% of statements
+ok  	seguimiento-medicion-gpc/internal/postgrestest	1.023s	coverage: 36.8% of statements
+ok  	seguimiento-medicion-gpc/internal/project	1.233s	coverage: 67.4% of statements
+ok  	seguimiento-medicion-gpc/internal/sprint	1.403s	coverage: 77.3% of statements
+```
+
+```
+$ go tool cover -func=coverage.out | tail -n 1
+total:									(statements)		74.8%
+```
+
+`internal/sprint` sube de 76.9% en `main` (HU-12) a 77.3% con HU-13. El total del perfil es **74.8%**. La medición local en Windows queda fuera de este reporte; el CI (Linux) es la fuente autoritativa. La cobertura con base de PostgreSQL para el nuevo `Update` queda pendiente de la verificación de Buttini o Cardozo.
 
 ### go test -race (CA-13.8)
 
