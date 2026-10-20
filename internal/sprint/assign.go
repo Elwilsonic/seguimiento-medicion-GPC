@@ -11,12 +11,14 @@ import "seguimiento-medicion-gpc/internal/backlog"
 // proyecto, ya asignado y escritura; se informa el primer error encontrado.
 // Si falla cualquiera, no se modifica ni el ítem ni el sprint.
 func (m *Manager) AssignItem(sprintID, itemID int) (backlog.Item, error) {
-	// RN-11.1: el sprint tiene que existir y estar ABIERTO. La consulta va
-	// bajo el mutex y se suelta antes de llamar al Manager de backlog: nunca
-	// se toman dos mutex a la vez.
+	// RN-11.1 y RN-13.9: el sprint tiene que existir y estar ABIERTO. El
+	// mutex del sprint se mantiene durante toda la operación, incluida la
+	// escritura en backlog, con orden sprint → backlog, para que el cierre no
+	// ocurra entre la validación y la asignación.
 	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	sprint, err := m.repo.GetByID(sprintID)
-	m.mu.Unlock()
 	if err != nil {
 		return backlog.Item{}, err
 	}
@@ -24,9 +26,9 @@ func (m *Manager) AssignItem(sprintID, itemID int) (backlog.Item, error) {
 		return backlog.Item{}, ErrSprintClosed
 	}
 
-	// RN-11.2: el ítem tiene que pertenecer al proyecto del sprint. Es seguro
-	// comparar afuera del mutex de backlog porque el ProjectID de un ítem
-	// nunca cambia.
+	// RN-11.2: el ítem tiene que pertenecer al proyecto del sprint. El
+	// ProjectID de un ítem nunca cambia, pero la lectura también va bajo el
+	// mutex del sprint para serializar con Close.
 	item, err := m.items.GetItem(itemID)
 	if err != nil {
 		return backlog.Item{}, err
@@ -36,6 +38,7 @@ func (m *Manager) AssignItem(sprintID, itemID int) (backlog.Item, error) {
 	}
 
 	// RN-11.3 y RN-11.4: la verificación de "ya asignado" y la escritura van
-	// juntas bajo el mutex de backlog (CA-11.6).
+	// juntas bajo el mutex de backlog (CA-11.6). El mutex del sprint sigue
+	// tomado hasta terminar la escritura.
 	return m.items.AssignToSprint(itemID, sprintID)
 }

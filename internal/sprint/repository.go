@@ -13,4 +13,8 @@ type Repository interface {
 	// GetByID devuelve el sprint con ese ID o ErrSprintNotFound si no existe
 	// (RN-11.1).
 	GetByID(id int) (Sprint, error)
+
+	// Update reemplaza el sprint con ese ID, lo devuelve como copia o da
+	// ErrSprintNotFound si no existe (RN-13.4).
+	Update(sprint Sprint) (Sprint, error)
 }
