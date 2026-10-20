@@ -149,7 +149,22 @@ La mutación c) muestra para qué sirven los subtests por endpoint: con un solo 
 
 ### Cobertura
 
-**Pendiente:** se completa con el log del CI del Pull Request (job "gofmt y tests").
+Valores tomados del log del CI del PR #104 (Linux), job "gofmt y tests":
+
+```
+$ go test -race -coverprofile=coverage.out ./...
+ok  	seguimiento-medicion-gpc/cmd/server	coverage: 40.5% of statements
+ok  	seguimiento-medicion-gpc/internal/backlog	coverage: 82.0% of statements
+ok  	seguimiento-medicion-gpc/internal/httpapi	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/postgres	coverage: 83.3% of statements
+ok  	seguimiento-medicion-gpc/internal/postgrestest	coverage: 36.8% of statements
+ok  	seguimiento-medicion-gpc/internal/project	coverage: 67.4% of statements
+ok  	seguimiento-medicion-gpc/internal/sprint	coverage: 77.3% of statements
+$ go tool cover -func=coverage.out | tail -n 1
+total:									(statements)		75.8%
+```
+
+`cmd/server` sube de 39.0% en `main` a 40.5% con `newServer`, e `internal/httpapi` sigue en 100.0% con `decodeJSON` y `bodyError`. El total pasa de 75.3% (`main` con HU-09) a 75.8%. Las funciones nuevas quedan al 100.0% (`go tool cover -func`): `newServer`, `decodeJSON` y `bodyError`. TEC-04 no toca PostgreSQL.
 
 ### Commits
 
