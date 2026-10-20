@@ -5,8 +5,8 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 ## Cobertura actual
 
 - **Fecha:** 20/10/2026
-- **Última historia con cobertura medida:** HU-12 · Registrar historias completadas (rama `feature/HU-12-registrar-completadas`, pendiente de integrar a `main` por Pull Request)
-- **Comando:** `go test -race -coverprofile=coverage.out ./...` en el CI (job "gofmt y tests" del PR #100), sin base. Los valores de la columna "Sin base (CI)" salen del log del CI del PR #100: [job 118444923147](https://github.com/Elwilsonic/seguimiento-medicion-GPC/actions/runs/39366654421/job/118444923147).
+- **Última historia con cobertura medida:** HU-13 — Cerrar sprint (rama `feature/HU-13-cerrar-sprint`, PR #101)
+- **Comando:** `go test -race -coverprofile=coverage.out ./...` en el CI (job "gofmt y tests" del PR #101), sin base. Los valores de la columna "Sin base (CI)" salen del log del CI del PR #101: [job 118819086182](https://github.com/Elwilsonic/seguimiento-medicion-GPC/actions/runs/39478058254/job/118819086182).
 
 | Paquete | Sin base (CI) | Con base (HU-11, última medición con base) |
 |---|---|---|
@@ -16,16 +16,16 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 | `internal/postgres` | 83.3% | 83.3% |
 | `internal/postgrestest` | 36.8% | 36.8% |
 | `internal/project` | 67.4% | 96.8% |
-| `internal/sprint` | 76.9% | 97.6% |
+| `internal/sprint` | 77.3% | 97.6% |
 
-Los valores de "Sin base (CI)" son los del log del CI del PR #100. `internal/sprint` sube de 69.5% en `main` a 76.9% con HU-12. El total del perfil de `go test -race -coverprofile=coverage.out ./...` es **74.6%**, también tomado del CI del PR #100. La columna "Con base" conserva la última medición con base (HU-11), porque HU-12 no modifica PostgreSQL y no se repitió esa medición. La medición local en Windows queda fuera del reporte: el CI (Linux) es la fuente autoritativa.
+Los valores de "Sin base (CI)" son los del log del CI del PR #101. `internal/sprint` sube de 76.9% con HU-12 a 77.3% con HU-13. El total del perfil de `go test -race -coverprofile=coverage.out ./...` es **74.8%**, también tomado del CI del PR #101. La columna "Con base" conserva la última medición con base (HU-11); HU-13 agrega el `Update` de PostgreSQL, así que esa medición queda pendiente de Buttini o Cardozo. La medición local en Windows queda fuera del reporte: el CI (Linux) es la fuente autoritativa.
 
 Desde TEC-05, `internal/backlog`, `internal/project` e `internal/sprint` tienen un repositorio PostgreSQL además del de memoria. En el CI no hay base, así que sus tests de integración hacen `t.Skip` y ese código queda sin ejecutar: por eso bajan la cobertura de la columna "Sin base". **La cobertura de la parte de PostgreSQL se mide localmente, con la base levantada** (ver la [evidencia de TEC-05](../evidencias/TEC-05-tdd.md)).
 
 - `go test -cover` mide cada paquete solo con sus propios tests. `internal/postgrestest` queda en 36.8% porque su `Pool`, su lock y su `Reset` los usan los tests de los otros paquetes.
-- El total del perfil de `go test -race -coverprofile=coverage.out ./...` en el CI del PR #100 es **74.6%**.
-- Con `-coverpkg=./...` (todos los paquetes medidos juntos, con base) el total fue **92.5%** en la última medición con base (HU-11). HU-12 no modifica PostgreSQL, así que no se repitió esa medición.
-- Lo que queda sin cubrir son ramas de error que necesitan que la base falle en un momento puntual (el `GetByID` de sprints en PostgreSQL queda en 85.7% por la misma rama de error genérico que `OpenByProject`), y `main()`.
+- El total del perfil de `go test -race -coverprofile=coverage.out ./...` en el CI del PR #101 es **74.8%**.
+- Con `-coverpkg=./...` (todos los paquetes medidos juntos, con base) el total fue **92.5%** en la última medición con base (HU-11). HU-13 agrega el `Update` de PostgreSQL, así que esa medición queda pendiente.
+- Lo que queda sin cubrir son ramas de error que necesitan que la base falle en un momento puntual (el `GetByID` de sprints en PostgreSQL queda en 85.7% por la misma rama de error genérico que `OpenByProject`), la parte PostgreSQL de `Update` (que se omite sin base) y `main()`.
 
 `cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario. La lógica con decisiones está separada en `address`, `storageConfig` y `newRepositories`, las tres con cobertura total.
 
@@ -63,7 +63,7 @@ internal/sprint/postgres_repository.go:76:	scanSprint		100.0%
 total:									(statements)		92.5%
 ```
 
-Las funciones nuevas de HU-12 entran con cobertura total en memoria: `CompleteItem` y `ListCompletedItems` quedan al 100.0% en `internal/sprint/complete.go`. HU-12 no agrega operaciones al repositorio ni columnas a PostgreSQL (RN-12.9).
+HU-13 agrega `Close` y `Update` en memoria y PostgreSQL. En el CI, `internal/sprint` sube a 77.3% y el total a 74.8%. La cobertura de `Update` en PostgreSQL queda pendiente de la medición con base de Buttini o Cardozo.
 
 ## Historial
 
@@ -83,3 +83,4 @@ Las funciones nuevas de HU-12 entran con cobertura total en memoria: `CompleteIt
 | 18/10/2026 | HU-11 | `internal/sprint` y `internal/backlog` | Con base: 97.6% y 98.7%; sin base (CI): 69.5% y 77.7% | `AssignItem`, `AssignToSprint` y los `GetByID` de sprints entran con cobertura total en memoria; la parte de PostgreSQL (`GetByID` de sprints al 85.7%, por la rama de error genérico igual que `OpenByProject`, y `sprint_id` en el repositorio de backlog) se mide con la base levantada, recreada para la columna nueva (`docker compose down -v`); total con `-coverpkg=./...`: 92.5%; `-race` (CA-11.6) lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
 | 19/10/2026 | HU-08 | `internal/backlog` | 80.9% (sin base) | `ChangeStatus`, `normalizeStatus` e `isTransitionAllowed` entran con tests de las cuatro transiciones válidas, las dos no permitidas, el no-op y los errores del repositorio; sin base (CI) el total del perfil con `-coverprofile=cover.out` es 73.4%; el contrato contra PostgreSQL hizo SKIP por no tener `TEST_DATABASE_URL` y se mide localmente con la base levantada; `-race` (CA-08.9) lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
 | 20/10/2026 | HU-12 | `internal/sprint` | 76.9% (CI, sin base); total 74.6% | `internal/sprint` sube de 69.5% en `main` a 76.9% con HU-12; `CompleteItem` y `ListCompletedItems` entran con cobertura total (100.0%) en memoria; no se agregaron operaciones al repositorio ni columnas a PostgreSQL; la medición con base no se repitió porque HU-12 no toca la persistencia y se conserva la de HU-11; `-race` (CA-12.9) lo verifica el CI del Pull Request porque el entorno local no tiene cgo |
+| 20/10/2026 | HU-13 | `internal/sprint` | 77.3% (CI, sin base); total 74.8% | `internal/sprint` sube de 76.9% a 77.3% con HU-13; `Close` y `Update` en memoria entran con tests; la parte PostgreSQL de `Update` queda pendiente de la medición con base; `-race` (CA-13.8) verificado por el CI y por Hernán sobre Linux con dos pruebas de mutación |

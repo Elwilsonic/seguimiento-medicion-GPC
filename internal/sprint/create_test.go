@@ -501,6 +501,7 @@ type failingRepository struct {
 	openErr    error
 	saveErr    error
 	getByIDErr error
+	updateErr  error
 }
 
 func (r failingRepository) OpenByProject(projectID int) (Sprint, bool, error) {
@@ -517,6 +518,11 @@ func (r failingRepository) Save(sprint Sprint) (Sprint, error) {
 // GetByID falla si se configuró un error de búsqueda (HU-11).
 func (r failingRepository) GetByID(id int) (Sprint, error) {
 	return Sprint{}, r.getByIDErr
+}
+
+// Update falla si se configuró un error de escritura (HU-13).
+func (r failingRepository) Update(sprint Sprint) (Sprint, error) {
+	return Sprint{}, r.updateErr
 }
 
 var errRepository = errors.New("falla del repositorio")

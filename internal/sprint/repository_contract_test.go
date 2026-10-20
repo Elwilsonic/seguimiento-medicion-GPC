@@ -74,6 +74,71 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 		}
 	})
 
+	// HU-13: Update persiste el sprint y devuelve una copia (RN-13.4).
+	t.Run("Update actualiza el sprint existente y devuelve una copia", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))
+
+		updated := saved
+		updated.Name = "Sprint cerrado"
+		updated.Goal = "Cerrar la iteración"
+		updated.Status = StatusClosed
+		updated.StartDate = contractEnd
+		updated.EndDate = contractEnd.AddDate(0, 0, 7)
+
+		got, err := repo.Update(updated)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		contractAssertSprint(t, "Update", got, updated)
+
+		got.Name = "Mutado"
+		stored, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID después de Update devolvió un error inesperado: %v", err)
+		}
+		contractAssertSprint(t, "GetByID después de Update", stored, updated)
+	})
+
+	// HU-13: el ID identifica el sprint y no se altera; los demás no cambian.
+	t.Run("Update conserva el ID y no altera otros sprints", func(t *testing.T) {
+		repo := newRepo(t)
+		first := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))
+		second := contractSave(t, repo, contractSprint(contractProjectB, "Sprint 2", StatusOpen))
+
+		updated := first
+		updated.Name = "Sprint 1 actualizado"
+		updated.Status = StatusClosed
+
+		got, err := repo.Update(updated)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		if got.ID != first.ID {
+			t.Errorf("ID devuelto = %d, se esperaba %d", got.ID, first.ID)
+		}
+
+		storedSecond, err := repo.GetByID(second.ID)
+		if err != nil {
+			t.Fatalf("GetByID del segundo sprint devolvió un error inesperado: %v", err)
+		}
+		contractAssertSprint(t, "segundo sprint después de Update", storedSecond, second)
+	})
+
+	// HU-13: Update de un ID inexistente no crea ni modifica nada.
+	t.Run("Update de un ID inexistente da ErrSprintNotFound", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))
+
+		missing := contractSprint(contractProjectA, "Inexistente", StatusOpen)
+		missing.ID = 99
+
+		_, err := repo.Update(missing)
+		if !errors.Is(err, ErrSprintNotFound) {
+			t.Errorf("err = %v, se esperaba %v", err, ErrSprintNotFound)
+		}
+	})
+
 	t.Run("OpenByProject devuelve el sprint ABIERTO del proyecto", func(t *testing.T) {
 		repo := newRepo(t)
 		contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusClosed))

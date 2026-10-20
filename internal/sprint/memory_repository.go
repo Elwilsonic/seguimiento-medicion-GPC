@@ -45,3 +45,15 @@ func (r *MemoryRepository) GetByID(id int) (Sprint, error) {
 	}
 	return Sprint{}, ErrSprintNotFound
 }
+
+// Update reemplaza el sprint con ese ID y devuelve una copia (RN-13.4). Si no
+// existe, devuelve ErrSprintNotFound y no modifica nada.
+func (r *MemoryRepository) Update(sprint Sprint) (Sprint, error) {
+	for i := range r.sprints {
+		if r.sprints[i].ID == sprint.ID {
+			r.sprints[i] = sprint
+			return sprint, nil
+		}
+	}
+	return Sprint{}, ErrSprintNotFound
+}

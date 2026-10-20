@@ -10,12 +10,14 @@ import "seguimiento-medicion-gpc/internal/backlog"
 // El orden de validación es: sprint (existencia), estado del sprint, ítem
 // (existencia), pertenencia al sprint y cambio de estado (RN-12.1 a RN-12.5).
 func (m *Manager) CompleteItem(sprintID, itemID int) (backlog.Item, error) {
-	// RN-12.4 y RN-12.5: el sprint tiene que existir y estar ABIERTO. La
-	// consulta va bajo el mutex del sprint y se suelta antes de llamar al
-	// Manager de backlog: nunca se toman dos mutex a la vez.
+	// RN-12.4, RN-12.5 y RN-13.9: el sprint tiene que existir y estar
+	// ABIERTO. El mutex del sprint se mantiene durante toda la operación,
+	// incluida la escritura en backlog, con orden sprint → backlog, para que
+	// el cierre no ocurra entre la validación y el completado.
 	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	sprint, err := m.repo.GetByID(sprintID)
-	m.mu.Unlock()
 	if err != nil {
 		return backlog.Item{}, err
 	}
@@ -24,6 +26,7 @@ func (m *Manager) CompleteItem(sprintID, itemID int) (backlog.Item, error) {
 	}
 
 	// RN-12.3 y RN-12.5: el ítem tiene que existir y pertenecer a este sprint.
+	// La lectura va bajo el mutex del sprint para serializar con Close.
 	item, err := m.items.GetItem(itemID)
 	if err != nil {
 		return backlog.Item{}, err
@@ -33,7 +36,8 @@ func (m *Manager) CompleteItem(sprintID, itemID int) (backlog.Item, error) {
 	}
 
 	// RN-12.2: ChangeStatus conserva el no-op de TERMINADO sin escribir y
-	// valida la transición. Además serializa las marcaciones simultáneas.
+	// valida la transición. Además serializa las marcaciones simultáneas. El
+	// mutex del sprint sigue tomado hasta terminar la escritura.
 	return m.items.ChangeStatus(itemID, string(backlog.StatusFinished))
 }
 
