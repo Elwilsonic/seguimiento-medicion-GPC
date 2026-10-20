@@ -139,7 +139,7 @@ No se hizo: el código nuevo es mínimo y sigue los patrones existentes (`Assign
 
 ## Desviaciones
 
-En el GREEN se corrigieron `TestAssignToSprint_NoCambiaNingunOtroCampo` (`internal/backlog/assign_test.go`) y `TestAssignItem_NoCambiaNingunOtroCampoNiElSprint` (`internal/sprint/assign_test.go`), que comparaban `Item` con `!=`: no compila porque el struct contiene la lista `AcceptanceCriteria`, y en el RED ese error quedó tapado por los demás errores de compilación de la funcionalidad nueva. La comparación ahora se hace como en el contrato de TEC-05 (los criterios con `slices.Equal` y el resto con `reflect.DeepEqual`, con los criterios en nil de los dos lados), y la corrección entró antes del commit GREEN: no hay código de producción sin test.
+En el GREEN se corrigieron `TestAssignToSprint_NoCambiaNingunOtroCampo` (`internal/backlog/assign_test.go`) y `TestAssignItem_NoCambiaNingunOtroCampoNiElSprint` (`internal/sprint/assign_test.go`), que comparaban `Item` con `!=`: no compila porque el struct contiene la lista `AcceptanceCriteria`, y en el RED ese error quedó tapado por los demás errores de compilación de la funcionalidad nueva. La comparación ahora se hace como en el contrato de TEC-05 (los criterios con `slices.Equal` y el resto con `reflect.DeepEqual`, con los criterios en nil de los dos lados), y la corrección entró en el commit GREEN (`805f6c9`), junto con el código de producción.
 
 ## Pruebas de mutación
 
