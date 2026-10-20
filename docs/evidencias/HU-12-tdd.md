@@ -142,27 +142,27 @@ ok  	seguimiento-medicion-gpc/internal/sprint	1.077s
 
 ### Cobertura
 
+Valores tomados del log del CI del PR #100 (Linux), job "gofmt y tests":
+
 ```
-$ go test -count=1 -cover ./...      (terminal nueva, sin STORAGE, DATABASE_URL ni TEST_DATABASE_URL)
-ok  	seguimiento-medicion-gpc/cmd/server	0.716s	coverage: 55.2% of statements
-ok  	seguimiento-medicion-gpc/internal/backlog	0.979s	coverage: 76.8% of statements
-ok  	seguimiento-medicion-gpc/internal/httpapi	0.482s	coverage: 100.0% of statements
-ok  	seguimiento-medicion-gpc/internal/postgres	0.564s	coverage: 83.3% of statements
-ok  	seguimiento-medicion-gpc/internal/postgrestest	0.579s	coverage: 36.8% of statements
-ok  	seguimiento-medicion-gpc/internal/project	0.876s	coverage: 64.4% of statements
-ok  	seguimiento-medicion-gpc/internal/sprint	0.944s	coverage: 75.5% of statements
+$ go test -race -coverprofile=coverage.out ./...
+ok  	seguimiento-medicion-gpc/cmd/server	(cached)	coverage: 39.0% of statements
+ok  	seguimiento-medicion-gpc/internal/backlog	1.294s	coverage: 80.9% of statements
+ok  	seguimiento-medicion-gpc/internal/httpapi	(cached)	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/postgres	(cached)	coverage: 83.3% of statements
+ok  	seguimiento-medicion-gpc/internal/postgrestest	(cached)	coverage: 36.8% of statements
+ok  	seguimiento-medicion-gpc/internal/project	1.175s	coverage: 67.4% of statements
+ok  	seguimiento-medicion-gpc/internal/sprint	1.268s	coverage: 76.9% of statements
 ```
 
 ```
-$ go test -count=1 -coverprofile=cover.out ./... && go tool cover -func=cover.out
-seguimiento-medicion-gpc/internal/sprint/complete.go:12:	CompleteItem		100.0%
-seguimiento-medicion-gpc/internal/sprint/complete.go:43:	ListCompletedItems	100.0%
-total:									(statements)		74.1%
+$ go tool cover -func=coverage.out | tail -n 1
+total:									(statements)		74.6%
 ```
 
-Los paquetes fuera de `internal/sprint` coinciden exactamente con `origin/main` (`5ea4ebb`): `cmd/server` 55.2%, `internal/backlog` 76.8% e `internal/project` 64.4%. `internal/sprint` sube de 67.1% en `main` a 75.5% por los tests de HU-12. Las cifras 39.0%, 80.9% y 67.4% citadas como "main" provienen de reportes anteriores (HU-11/HU-08), no de la medición actual de `origin/main`.
+`internal/sprint` sube de 69.5% en `main` a 76.9% con HU-12. El total del perfil es **74.6%**. Las funciones nuevas entran con cobertura total en memoria: `CompleteItem` y `ListCompletedItems` quedan al 100.0% en `internal/sprint/complete.go`. La medición local en Windows queda fuera de este reporte; el CI (Linux) es la fuente autoritativa.
 
-Sin regresiones: las dos funciones nuevas entran con cobertura total en memoria. La medición se hizo sin base (en este entorno Docker no estaba disponible); HU-12 no agrega columnas ni operaciones a PostgreSQL (RN-12.9), así que no cambia el esquema ni los contratos de TEC-05.
+Sin regresiones: HU-12 no agrega columnas ni operaciones a PostgreSQL (RN-12.9), así que no cambia el esquema ni los contratos de TEC-05. La columna "Con base" del reporte conserva la última medición con base (HU-11).
 
 ### go test -race (CA-12.9)
 
@@ -173,7 +173,7 @@ $ go test -race ./...
 go: -race requires cgo; enable cgo by setting CGO_ENABLED=1
 ```
 
-La verificación con `-race` la corre el CI de TEC-02 en cada Pull Request hacia main, igual que en las historias anteriores. Los tests de concurrencia (50 marcaciones simultáneas del mismo ítem en el test unitario y 10 en el escenario BDD) corren y pasan también sin `-race` en el entorno local.
+La verificación con `-race`: "verificado por el CI del PR y por Hernán en Linux, con prueba de mutación (sin el mutex de `ChangeStatus` aparecen `DATA RACE` y fallan `TestCompleteItem_MarcacionesSimultaneasDejanUnSoloUpdate` y el escenario BDD)". Los tests de concurrencia (50 marcaciones simultáneas del mismo ítem en el test unitario y 10 en el escenario BDD) corren y pasan también sin `-race` en el entorno local.
 
 ### Ejecución de los escenarios BDD
 
