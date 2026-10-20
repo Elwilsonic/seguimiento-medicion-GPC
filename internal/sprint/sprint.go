@@ -48,4 +48,7 @@ var (
 	// ErrItemFromAnotherProject indica que el ítem pertenece a otro proyecto
 	// distinto del sprint (RN-11.2).
 	ErrItemFromAnotherProject = errors.New("el ítem pertenece a otro proyecto")
+	// ErrItemNotAssignedToSprint indica que el ítem no está asignado al sprint
+	// indicado (RN-12.3).
+	ErrItemNotAssignedToSprint = errors.New("el ítem no está asignado al sprint")
 )
