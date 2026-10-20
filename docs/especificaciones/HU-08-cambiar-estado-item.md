@@ -130,7 +130,7 @@ El acta del Sprint 2 (`docs/actas/sprint-2/planning.md`) describe HU-08 como "Ca
 
 **Texto definitivo para reemplazar la sección "Criterios de aceptación" del Issue #20** (se actualiza a mano después de aprobar la SDD):
 
-- [ ] CA-08.1 Cambiar un ítem PENDIENTE a EN_CURSO actualiza su estado y devuelve el ítem con el estado nuevo y el resto de los campos intactos.
+- [ ] CA-08.1 Cambiar un ítem PENDIENTE a EN_CURSO actualiza su estado y devuelve el ítem con el estado nuevo y el resto de los campos intactos (incluido el sprint asignado).
 - [ ] CA-08.2 Cambiar un ítem EN_CURSO a TERMINADO actualiza su estado.
 - [ ] CA-08.3 Volver atrás (EN_CURSO → PENDIENTE) y reabrir (TERMINADO → EN_CURSO) son transiciones válidas.
 - [ ] CA-08.4 PENDIENTE → TERMINADO y TERMINADO → PENDIENTE se rechazan con `ErrInvalidTransition` y el ítem conserva su estado anterior.
@@ -150,3 +150,4 @@ El acta del Sprint 2 (`docs/actas/sprint-2/planning.md`) describe HU-08 como "Ca
 5. Orden de validación: estado (sin consultar el repositorio), existencia, mismo estado, transición y escritura.
 6. Persistencia con el `Update` del repositorio de HU-07; la interfaz `Repository` no cambia.
 7. Mutex sí, justificado por CA-08.9 y su test con `-race`.
+8. Después de la aprobación del 18/10, durante la implementación, se agregó el sprint asignado (`SprintID`, que incorporó HU-11) a lo que no cambia (RN-08.5, CA-08.1 y casos límite) y la restricción "Sin cambios de esquema", con un caso nuevo en el contrato de repositorio de TEC-05. El Agile Enabler aprobó estos cambios el 20/10, en la revisión del Pull Request #99.
