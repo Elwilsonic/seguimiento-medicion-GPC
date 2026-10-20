@@ -71,6 +71,25 @@ func (r *PostgresRepository) GetByID(id int) (Sprint, error) {
 	return sprint, nil
 }
 
+// Update reemplaza el sprint con ese ID y devuelve el guardado (RN-13.4). Si
+// no existe, devuelve ErrSprintNotFound sin crear ni modificar nada. Las
+// fechas se normalizan a UTC como en Save.
+func (r *PostgresRepository) Update(sprint Sprint) (Sprint, error) {
+	row := r.pool.QueryRow(context.Background(),
+		`UPDATE sprints
+		SET project_id = $2, name = $3, start_date = $4, end_date = $5, goal = $6, status = $7
+		WHERE id = $1 RETURNING `+sprintColumns,
+		sprint.ID, sprint.ProjectID, sprint.Name, sprint.StartDate, sprint.EndDate, sprint.Goal, sprint.Status)
+	updated, err := scanSprint(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Sprint{}, ErrSprintNotFound
+	}
+	if err != nil {
+		return Sprint{}, fmt.Errorf("actualizar el sprint: %w", err)
+	}
+	return updated, nil
+}
+
 // scanSprint lee un sprint con las columnas de sprintColumns y normaliza las
 // fechas a UTC: pgx devuelve timestamptz en la zona local de la máquina.
 func scanSprint(row pgx.Row) (Sprint, error) {
