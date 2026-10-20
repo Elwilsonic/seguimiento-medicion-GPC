@@ -274,13 +274,13 @@ ok  	seguimiento-medicion-gpc/internal/backlog	3.801s	coverage: 82.0% of stateme
 
 ```
 $ go test -count=1 -coverprofile=cover.out ./...
-ok  	seguimiento-medicion-gpc/cmd/server	1.262s	coverage: 39.0% of statements
-ok  	seguimiento-medicion-gpc/internal/backlog	0.533s	coverage: 82.0% of statements
-ok  	seguimiento-medicion-gpc/internal/httpapi	1.068s	coverage: 100.0% of statements
-ok  	seguimiento-medicion-gpc/internal/postgres	0.171s	coverage: 83.3% of statements
-ok  	seguimiento-medicion-gpc/internal/postgrestest	0.187s	coverage: 36.8% of statements
-ok  	seguimiento-medicion-gpc/internal/project	0.395s	coverage: 67.4% of statements
-ok  	seguimiento-medicion-gpc/internal/sprint	3.684s	coverage: 76.9% of statements
+ok  	seguimiento-medicion-gpc/cmd/server	20.921s	coverage: 39.0% of statements
+ok  	seguimiento-medicion-gpc/internal/backlog	0.382s	coverage: 82.0% of statements
+ok  	seguimiento-medicion-gpc/internal/httpapi	0.149s	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/postgres	0.169s	coverage: 83.3% of statements
+ok  	seguimiento-medicion-gpc/internal/postgrestest	0.170s	coverage: 36.8% of statements
+ok  	seguimiento-medicion-gpc/internal/project	0.328s	coverage: 67.4% of statements
+ok  	seguimiento-medicion-gpc/internal/sprint	22.889s	coverage: 77.3% of statements
 exit=0
 
 $ go tool cover -func=cover.out | grep priority.go
@@ -288,7 +288,7 @@ seguimiento-medicion-gpc/internal/backlog/priority.go:13:		ListItemsByPriority	1
 seguimiento-medicion-gpc/internal/backlog/priority.go:26:		priorityRank		100.0%
 
 $ go tool cover -func=cover.out | tail -1
-total:									(statements)		75.1%
+total:									(statements)		75.3%
 ```
 
 Para comparar, `internal/backlog` medido sobre `main` (`46a2e8a`, el merge del PR #100) en un worktree temporal, borrado después:
@@ -303,7 +303,7 @@ $ git worktree remove <ruta temporal>
 
 (La última línea de `go test` es el aviso de Windows descripto en "Desviaciones"; el paquete dio `ok`.)
 
-Las dos funciones de `priority.go` quedan al 100.0%: `ListItemsByPriority` 100.0% y `priorityRank` 100.0%. Sin base (como en el CI, sin `TEST_DATABASE_URL`), `internal/backlog` sube de 80.9% en `main` a 82.0% y el total del perfil queda en 75.1%. La parte de PostgreSQL no se ejecuta sin base; HU-09 no la modifica, así que no se repitió la medición con base. El archivo `cover.out` se generó fuera del repositorio y no se versiona.
+Las dos funciones de `priority.go` quedan al 100.0%: `ListItemsByPriority` 100.0% y `priorityRank` 100.0%. Sin base (como en el CI, sin `TEST_DATABASE_URL`), `internal/backlog` sube de 80.9% en `main` a 82.0% y el total del perfil queda en 75.3%. La parte de PostgreSQL no se ejecuta sin base; HU-09 no la modifica, así que no se repitió la medición con base. El archivo `cover.out` se generó fuera del repositorio y no se versiona.
 
 ### go test -race (CA-09.9)
 
