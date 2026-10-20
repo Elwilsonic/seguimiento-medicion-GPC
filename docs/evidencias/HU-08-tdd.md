@@ -154,7 +154,10 @@ No se hizo refactor: `status.go` es chico, sigue los patrones existentes (`Creat
 
 ## Desviaciones
 
-No hubo desviaciones de código. El único ajuste fue en el RED, antes del push: `gofmt -l .` marcaba `status_test.go` y una fila del esquema de CA-08.5 no probaba espacios en los extremos; ambas correcciones entraron con `--amend` en el commit RED, detallado arriba.
+No hubo desviaciones de código. Hubo dos ajustes:
+
+- En el RED, antes del push: `gofmt -l .` marcaba `status_test.go` y una fila del esquema de CA-08.5 no probaba espacios en los extremos; ambas correcciones entraron con `--amend` en el commit RED, detallado arriba.
+- En la SDD, después de su aprobación del 18/10: se agregó el sprint asignado (`SprintID`, de HU-11) a lo que no cambia (RN-08.5, CA-08.1 y casos límite) y la restricción "Sin cambios de esquema", con un caso nuevo en el contrato de repositorio de TEC-05. El Agile Enabler aprobó el cambio el 20/10 en la revisión del Pull Request #99; queda registrado como decisión 8 de la SDD.
 
 ## Pruebas de mutación
 
