@@ -360,3 +360,103 @@ func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
+
+// TEC-04 · Interfaz usable (Issue #34)
+//
+// Trazabilidad: las mejoras del servidor citan su criterio de TEC-04:
+//   - CA-TEC04.5: un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
+//   - CA-TEC04.6: un cuerpo con texto después del JSON se rechaza con 400 y no
+//     se procesa.
+// Cada criterio se prueba en los tres endpoints que reciben un cuerpo.
+
+// bodyEndpoint es un endpoint que recibe un cuerpo JSON. untouched verifica
+// que el pedido rechazado no creó ni modificó nada.
+type bodyEndpoint struct {
+	name      string
+	method    string
+	path      string
+	untouched func(t *testing.T, h http.Handler)
+}
+
+// bodyEndpoints parte de un proyecto 1 "Sistema de ventas" sin ítems.
+var bodyEndpoints = []bodyEndpoint{
+	{
+		name:   "crear proyecto",
+		method: http.MethodPost,
+		path:   "/proyectos",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodGet, "/proyectos/2", "")
+			expectStatus(t, rec, http.StatusNotFound)
+		},
+	},
+	{
+		name:   "modificar proyecto",
+		method: http.MethodPut,
+		path:   "/proyectos/1",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodGet, "/proyectos/1", "")
+			expectStatus(t, rec, http.StatusOK)
+			var p projectJSON
+			decode(t, rec, &p)
+			if p.Nombre != "Sistema de ventas" || p.Descripcion != "" {
+				t.Errorf("proyecto = %+v, se esperaba sin cambios", p)
+			}
+		},
+	},
+	{
+		name:   "crear ítem",
+		method: http.MethodPost,
+		path:   "/proyectos/1/backlog",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodGet, "/proyectos/1/backlog", "")
+			expectStatus(t, rec, http.StatusOK)
+			if got := strings.TrimSpace(rec.Body.String()); got != "[]" {
+				t.Errorf("backlog = %s, se esperaba []", got)
+			}
+		},
+	},
+}
+
+// validBody es un cuerpo válido para cualquiera de los tres endpoints: los
+// campos que un endpoint no usa se ignoran.
+func validBody(description string) string {
+	return `{"nombre":"Portal de clientes","descripcion":"` + description +
+		`","estado":"PLANIFICADO","titulo":"Login de usuarios","prioridad":"ALTA","criterios":["Ok"]}`
+}
+
+// CA-TEC04.5 · Un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
+// El relleno son espacios dentro del JSON: el cuerpo sigue siendo válido y la
+// respuesta no repite el MiB de datos si el test falla.
+func TestHandler_CuerpoMayorA1MiBDa413(t *testing.T) {
+	body := "{" + strings.Repeat(" ", 1<<20) + validBody("Otro proyecto")[1:]
+
+	for _, e := range bodyEndpoints {
+		t.Run(e.name, func(t *testing.T) {
+			h := newHandler()
+			createProject(t, h, "Sistema de ventas")
+
+			rec := do(t, h, e.method, e.path, body)
+
+			expectError(t, rec, http.StatusRequestEntityTooLarge, "el cuerpo del pedido supera el tamaño máximo de 1 MiB")
+			e.untouched(t, h)
+		})
+	}
+}
+
+// CA-TEC04.6 · Un cuerpo con texto después del JSON se rechaza como JSON
+// inválido y no se procesa.
+func TestHandler_TextoDespuesDelJSONDa400(t *testing.T) {
+	body := validBody("Otro proyecto") + ` basura`
+
+	for _, e := range bodyEndpoints {
+		t.Run(e.name, func(t *testing.T) {
+			h := newHandler()
+			createProject(t, h, "Sistema de ventas")
+
+			rec := do(t, h, e.method, e.path, body)
+
+			expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
+			e.untouched(t, h)
+		})
+	}
+}

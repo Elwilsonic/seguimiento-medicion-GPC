@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -232,5 +233,37 @@ func TestNewRepositories_PostgresConservaLosDatosAlReabrir(t *testing.T) {
 	}
 	if got, exists, err := reopened.sprints.OpenByProject(p.ID); err != nil || !exists || got.ID != s.ID {
 		t.Errorf("sprint al reabrir = %+v, %v, %v; se esperaba %+v", got, exists, err, s)
+	}
+}
+
+// TEC-04 · Interfaz usable (Issue #34)
+
+// CA-TEC04.7 · El servidor tiene timeouts de lectura de encabezados (5 s),
+// lectura (10 s), escritura (10 s) e inactividad (60 s).
+func TestNewServer_Timeouts(t *testing.T) {
+	handler := http.NewServeMux()
+
+	srv := newServer(":9090", handler)
+
+	if srv.Addr != ":9090" {
+		t.Errorf("Addr = %q, se esperaba %q", srv.Addr, ":9090")
+	}
+	if srv.Handler != handler {
+		t.Error("Handler no es el handler recibido")
+	}
+	timeouts := []struct {
+		name string
+		got  time.Duration
+		want time.Duration
+	}{
+		{"ReadHeaderTimeout", srv.ReadHeaderTimeout, 5 * time.Second},
+		{"ReadTimeout", srv.ReadTimeout, 10 * time.Second},
+		{"WriteTimeout", srv.WriteTimeout, 10 * time.Second},
+		{"IdleTimeout", srv.IdleTimeout, 60 * time.Second},
+	}
+	for _, tt := range timeouts {
+		if tt.got != tt.want {
+			t.Errorf("%s = %v, se esperaba %v", tt.name, tt.got, tt.want)
+		}
 	}
 }
