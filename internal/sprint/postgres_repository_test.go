@@ -86,3 +86,38 @@ func TestPostgresRepository_SaveConProyectoInexistenteFalla(t *testing.T) {
 		t.Errorf("err = %v, se esperaba una violación de clave foránea (23503)", err)
 	}
 }
+
+// HU-13: Update persiste el estado, conserva las fechas en UTC con precisión
+// de microsegundos y devuelve una copia (CA-13.1 y RN-13.4). Necesita la base
+// levantada; sin TEST_DATABASE_URL se omite.
+func TestPostgresRepository_UpdatePersisteElEstadoYDevuelveFechasUTC(t *testing.T) {
+	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
+	saved := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))
+
+	updated := saved
+	updated.Name = "Sprint cerrado"
+	updated.Goal = "Cerrar la iteración"
+	updated.Status = StatusClosed
+
+	got, err := repo.Update(updated)
+	if err != nil {
+		t.Fatalf("Update devolvió un error inesperado: %v", err)
+	}
+	if got.ID != saved.ID {
+		t.Errorf("ID devuelto = %d, se esperaba %d", got.ID, saved.ID)
+	}
+	if got.Name != updated.Name || got.Goal != updated.Goal || got.Status != StatusClosed {
+		t.Errorf("sprint devuelto = %+v, se esperaba %+v", got, updated)
+	}
+	if got.StartDate != contractStart.UTC() || got.EndDate != contractEnd.UTC() {
+		t.Errorf("fechas devueltas = %v a %v, se esperaban %v a %v", got.StartDate, got.EndDate, contractStart.UTC(), contractEnd.UTC())
+	}
+
+	stored, err := repo.GetByID(saved.ID)
+	if err != nil {
+		t.Fatalf("GetByID después de Update devolvió un error inesperado: %v", err)
+	}
+	if stored.Status != StatusClosed || stored.Name != updated.Name {
+		t.Errorf("sprint guardado = %+v, se esperaba %+v", stored, updated)
+	}
+}
