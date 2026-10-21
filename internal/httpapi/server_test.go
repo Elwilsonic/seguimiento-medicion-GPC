@@ -21,6 +21,9 @@ import (
 //     backlog (HU-04, HU-06).
 //   - CA-TEC01.3: estos tests son las pruebas automatizadas de los endpoints.
 //   - CA-TEC01.5: los datos se guardan en los repositorios en memoria.
+//
+// TEC-04 (Issue #34), CA-TEC04.8: la API responde bajo /api/…, así que todos
+// los pedidos de estos tests usan rutas con ese prefijo.
 
 // projectJSON y itemJSON son las respuestas que devuelve la API.
 type projectJSON struct {
@@ -94,7 +97,7 @@ func expectError(t *testing.T, rec *httptest.ResponseRecorder, wantStatus int, w
 // createProject crea un proyecto por la API y devuelve su ID.
 func createProject(t *testing.T, h http.Handler, name string) int {
 	t.Helper()
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"`+name+`","descripcion":""}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"`+name+`","descripcion":""}`)
 	expectStatus(t, rec, http.StatusCreated)
 	var p projectJSON
 	decode(t, rec, &p)
@@ -107,7 +110,7 @@ const validItem = `{"titulo":"Login de usuarios","descripcion":"Acceso","priorid
 func TestCrearProyecto_Devuelve201ConElProyectoCreado(t *testing.T) {
 	h := newHandler()
 
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"  Sistema de ventas  ","descripcion":"Gestión de ventas"}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"  Sistema de ventas  ","descripcion":"Gestión de ventas"}`)
 
 	expectStatus(t, rec, http.StatusCreated)
 	var p projectJSON
@@ -119,7 +122,7 @@ func TestCrearProyecto_Devuelve201ConElProyectoCreado(t *testing.T) {
 }
 
 func TestCrearProyecto_NombreVacioDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/proyectos", `{"nombre":"   ","descripcion":""}`)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos", `{"nombre":"   ","descripcion":""}`)
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrEmptyName.Error())
 }
@@ -128,13 +131,13 @@ func TestCrearProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"SISTEMA DE VENTAS","descripcion":""}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"SISTEMA DE VENTAS","descripcion":""}`)
 
 	expectError(t, rec, http.StatusConflict, project.ErrDuplicateName.Error())
 }
 
 func TestCrearProyecto_JSONInvalidoDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/proyectos", `{"nombre":`)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos", `{"nombre":`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -144,7 +147,7 @@ func TestConsultarProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandler()
 	id := createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/proyectos/1", "")
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
@@ -155,7 +158,7 @@ func TestConsultarProyecto_Devuelve200ConElProyecto(t *testing.T) {
 }
 
 func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
-	for _, path := range []string{"/proyectos/999", "/proyectos/0", "/proyectos/-1"} {
+	for _, path := range []string{"/api/proyectos/999", "/api/proyectos/0", "/api/proyectos/-1"} {
 		t.Run(path, func(t *testing.T) {
 			rec := do(t, newHandler(), http.MethodGet, path, "")
 
@@ -165,7 +168,7 @@ func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
 }
 
 func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/proyectos/abc", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc", "")
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
@@ -175,9 +178,9 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 	casos := []struct {
 		nombre, method, path, body string
 	}{
-		{"modificar proyecto", http.MethodPut, "/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
-		{"crear ítem", http.MethodPost, "/proyectos/abc/backlog", validItem},
-		{"listar backlog", http.MethodGet, "/proyectos/abc/backlog", ""},
+		{"modificar proyecto", http.MethodPut, "/api/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
+		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
+		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
@@ -193,7 +196,7 @@ func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"Nueva versión","estado":"en_curso"}`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"Nueva versión","estado":"en_curso"}`)
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
@@ -204,7 +207,7 @@ func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	}
 
 	// La consulta posterior devuelve los datos modificados.
-	rec = do(t, h, http.MethodGet, "/proyectos/1", "")
+	rec = do(t, h, http.MethodGet, "/api/proyectos/1", "")
 	decode(t, rec, &p)
 	if p != want {
 		t.Errorf("proyecto consultado = %+v, se esperaba %+v", p, want)
@@ -215,7 +218,7 @@ func TestModificarProyecto_EstadoInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PAUSADO"}`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PAUSADO"}`)
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrInvalidStatus.Error())
 }
@@ -225,13 +228,13 @@ func TestModificarProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	createProject(t, h, "Portal de clientes")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/2", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PLANIFICADO"}`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/2", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PLANIFICADO"}`)
 
 	expectError(t, rec, http.StatusConflict, project.ErrDuplicateName.Error())
 }
 
 func TestModificarProyecto_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPut, "/proyectos/999", `{"nombre":"Otro","descripcion":"","estado":"PLANIFICADO"}`)
+	rec := do(t, newHandler(), http.MethodPut, "/api/proyectos/999", `{"nombre":"Otro","descripcion":"","estado":"PLANIFICADO"}`)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -240,7 +243,7 @@ func TestModificarProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/1", `no es json`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `no es json`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -250,7 +253,7 @@ func TestCrearItem_Devuelve201ConElItemCreado(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/proyectos/1/backlog", validItem)
+	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem)
 
 	expectStatus(t, rec, http.StatusCreated)
 	var it itemJSON
@@ -276,7 +279,7 @@ func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 			h := newHandler()
 			createProject(t, h, "Sistema de ventas")
 
-			rec := do(t, h, http.MethodPost, "/proyectos/1/backlog", tc.body)
+			rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", tc.body)
 
 			expectError(t, rec, http.StatusBadRequest, tc.want.Error())
 		})
@@ -284,7 +287,7 @@ func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 }
 
 func TestCrearItem_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/proyectos/999/backlog", validItem)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/999/backlog", validItem)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -293,7 +296,7 @@ func TestCrearItem_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/proyectos/1/backlog", `{"titulo":`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -303,11 +306,11 @@ func TestListarBacklog_Devuelve200ConLosItemsDelProyecto(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 	createProject(t, h, "Portal de clientes")
-	do(t, h, http.MethodPost, "/proyectos/1/backlog", validItem)
-	do(t, h, http.MethodPost, "/proyectos/2/backlog", `{"titulo":"Otro proyecto","prioridad":"BAJA","criterios":["Ok"]}`)
-	do(t, h, http.MethodPost, "/proyectos/1/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem)
+	do(t, h, http.MethodPost, "/api/proyectos/2/backlog", `{"titulo":"Otro proyecto","prioridad":"BAJA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
 
-	rec := do(t, h, http.MethodGet, "/proyectos/1/backlog", "")
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
@@ -321,7 +324,7 @@ func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/proyectos/1/backlog", "")
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	if got := strings.TrimSpace(rec.Body.String()); got != "[]" {
@@ -330,7 +333,7 @@ func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 }
 
 func TestListarBacklog_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/proyectos/999/backlog", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/999/backlog", "")
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -356,7 +359,7 @@ func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
 	h := httpapi.NewHandler(projects, backlog.NewManager(backlog.NewMemoryRepository(), projects))
 
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"Sistema de ventas"}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas"}`)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
@@ -383,18 +386,18 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "crear proyecto",
 		method: http.MethodPost,
-		path:   "/proyectos",
+		path:   "/api/proyectos",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/proyectos/2", "")
+			rec := do(t, h, http.MethodGet, "/api/proyectos/2", "")
 			expectStatus(t, rec, http.StatusNotFound)
 		},
 	},
 	{
 		name:   "modificar proyecto",
 		method: http.MethodPut,
-		path:   "/proyectos/1",
+		path:   "/api/proyectos/1",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/proyectos/1", "")
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
 			expectStatus(t, rec, http.StatusOK)
 			var p projectJSON
 			decode(t, rec, &p)
@@ -406,9 +409,9 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "crear ítem",
 		method: http.MethodPost,
-		path:   "/proyectos/1/backlog",
+		path:   "/api/proyectos/1/backlog",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/proyectos/1/backlog", "")
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
 			expectStatus(t, rec, http.StatusOK)
 			if got := strings.TrimSpace(rec.Body.String()); got != "[]" {
 				t.Errorf("backlog = %s, se esperaba []", got)
