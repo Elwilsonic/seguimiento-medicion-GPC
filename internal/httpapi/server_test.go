@@ -11,6 +11,7 @@ import (
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/project"
+	"seguimiento-medicion-gpc/internal/sprint"
 )
 
 // TEC-01 · Punto de entrada ejecutable mínimo (Issue #23)
@@ -56,7 +57,8 @@ type errorJSON struct {
 func newHandler() http.Handler {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
-	return httpapi.NewHandler(projects, items)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	return httpapi.NewHandler(projects, items, sprints)
 }
 
 // do hace un pedido a la API y verifica que la respuesta sea JSON.
@@ -189,6 +191,14 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"consultar ítem", http.MethodGet, "/api/items/abc", ""},
 		{"modificar ítem", http.MethodPut, "/api/items/abc", validItem},
 		{"cambiar estado", http.MethodPatch, "/api/items/abc/estado", `{"estado":"EN_CURSO"}`},
+		// TEC-04, CA-TEC04.9: endpoints de sprints.
+		{"crear sprint", http.MethodPost, "/api/proyectos/abc/sprints", validSprint},
+		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
+		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc", ""},
+		{"completar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1/completar", ""},
+		{"completar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc/completar", ""},
+		{"listar completados", http.MethodGet, "/api/sprints/abc/completados", ""},
+		{"cerrar sprint", http.MethodPost, "/api/sprints/abc/cerrar", ""},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
@@ -365,7 +375,8 @@ func (brokenRepository) Update(project.Project) (project.Project, error) {
 // CA-TEC01.2 · Un error inesperado devuelve 500 sin exponer el detalle interno.
 func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
-	h := httpapi.NewHandler(projects, backlog.NewManager(backlog.NewMemoryRepository(), projects))
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	h := httpapi.NewHandler(projects, items, sprint.NewManager(sprint.NewMemoryRepository(), projects, items))
 
 	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas"}`)
 
@@ -442,6 +453,16 @@ var bodyEndpoints = []bodyEndpoint{
 		path:      "/api/items/1/estado",
 		untouched: expectItemUntouched,
 	},
+	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
+	{
+		name:   "crear sprint",
+		method: http.MethodPost,
+		path:   "/api/proyectos/1/sprints",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
+			expectStatus(t, rec, http.StatusNotFound)
+		},
+	},
 }
 
 // expectItemUntouched verifica que el ítem 1 siga como lo creó validItem.
@@ -461,7 +482,8 @@ func expectItemUntouched(t *testing.T, h http.Handler) {
 // el proyecto como para el ítem.
 func validBody(description string) string {
 	return `{"nombre":"Portal de clientes","descripcion":"` + description +
-		`","estado":"EN_CURSO","titulo":"Login de usuarios","prioridad":"ALTA","criterios":["Ok"]}`
+		`","estado":"EN_CURSO","titulo":"Login de usuarios","prioridad":"ALTA","criterios":["Ok"]` +
+		`,"fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Ok"}`
 }
 
 // CA-TEC04.5 · Un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
