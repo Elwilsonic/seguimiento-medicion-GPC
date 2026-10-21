@@ -5,6 +5,7 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -12,10 +13,14 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// maxBodyBytes es el tamaño máximo del cuerpo de un pedido: 1 MiB (CA-TEC04.5).
+const maxBodyBytes = 1 << 20
+
 var (
-	errInvalidJSON = errors.New("el cuerpo del pedido no es un JSON válido")
-	errInvalidID   = errors.New("el id debe ser un número entero")
-	errInternal    = errors.New("error interno del servidor")
+	errInvalidJSON  = errors.New("el cuerpo del pedido no es un JSON válido")
+	errBodyTooLarge = errors.New("el cuerpo del pedido supera el tamaño máximo de 1 MiB")
+	errInvalidID    = errors.New("el id debe ser un número entero")
+	errInternal     = errors.New("error interno del servidor")
 )
 
 type projectRequest struct {
@@ -74,8 +79,8 @@ func NewHandler(projects *project.Manager, items *backlog.Manager) http.Handler 
 // HU-01
 func (s *server) createProject(w http.ResponseWriter, r *http.Request) {
 	var req projectRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, errInvalidJSON)
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
 		return
 	}
 	p, err := s.projects.Create(req.Nombre, req.Descripcion)
@@ -109,8 +114,8 @@ func (s *server) updateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req projectRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, errInvalidJSON)
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
 		return
 	}
 	p, err := s.projects.Update(id, req.Nombre, req.Descripcion, req.Estado)
@@ -129,8 +134,8 @@ func (s *server) createItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req itemRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, errInvalidJSON)
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
 		return
 	}
 	it, err := s.items.Create(projectID, req.Titulo, req.Descripcion, req.Prioridad, req.Criterios)
@@ -161,6 +166,31 @@ func (s *server) listItems(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+// decodeJSON lee el cuerpo del pedido en v. Rechaza un cuerpo de más de 1 MiB
+// (CA-TEC04.5) y un cuerpo con texto después del JSON (CA-TEC04.6).
+func decodeJSON(w http.ResponseWriter, r *http.Request, v any) error {
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxBodyBytes))
+	if err := dec.Decode(v); err != nil {
+		return bodyError(err)
+	}
+	// Después del JSON solo pueden quedar espacios: el siguiente Decode tiene
+	// que llegar al final del cuerpo.
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		return bodyError(err)
+	}
+	return nil
+}
+
+// bodyError traduce un error de lectura del cuerpo: si se pasó del tamaño
+// máximo es errBodyTooLarge y, si no, errInvalidJSON.
+func bodyError(err error) error {
+	var tooLarge *http.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		return errBodyTooLarge
+	}
+	return errInvalidJSON
+}
+
 // pathID lee el {id} de la ruta.
 func pathID(r *http.Request) (int, error) {
 	id, err := strconv.Atoi(r.PathValue("id"))
@@ -183,6 +213,8 @@ func statusFor(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, project.ErrDuplicateName):
 		return http.StatusConflict
+	case errors.Is(err, errBodyTooLarge):
+		return http.StatusRequestEntityTooLarge
 	default:
 		return http.StatusInternalServerError
 	}

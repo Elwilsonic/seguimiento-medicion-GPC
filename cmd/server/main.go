@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/httpapi"
@@ -30,7 +31,20 @@ func main() {
 
 	addr := address(os.Getenv)
 	log.Printf("servidor escuchando en %s (almacenamiento: %s)", addr, cfg.kind)
-	log.Fatal(http.ListenAndServe(addr, httpapi.NewHandler(projects, items)))
+	log.Fatal(newServer(addr, httpapi.NewHandler(projects, items)).ListenAndServe())
+}
+
+// newServer arma el servidor HTTP con timeouts, para que una conexión lenta o
+// colgada no lo bloquee (CA-TEC04.7).
+func newServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 }
 
 // address devuelve la dirección donde escucha el servidor: el puerto de la
