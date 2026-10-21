@@ -1,0 +1,193 @@
+/* Estilos de la interfaz web (TEC-04). Sin frameworks ni recursos externos. */
+
+:root {
+  --fondo: #f5f6f8;
+  --panel: #ffffff;
+  --texto: #1f2933;
+  --suave: #616e7c;
+  --borde: #d3d8de;
+  --primario: #2457a6;
+  --primario-oscuro: #1b4280;
+  --error-fondo: #fdecea;
+  --error-texto: #8a1c12;
+  --ok-fondo: #e8f5ec;
+  --ok-texto: #1d5f34;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* hidden tiene que ganarle al display de form y label. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  line-height: 1.4;
+}
+
+header {
+  background: var(--primario);
+  color: #fff;
+  padding: 1rem 1.5rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+header p {
+  margin: 0.25rem 0 0;
+  opacity: 0.85;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+section {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+form,
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  gap: 0.2rem;
+  font-size: 0.9rem;
+  color: var(--suave);
+}
+
+.contexto form {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: var(--texto);
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--borde);
+  border-radius: 4px;
+  background: #fff;
+}
+
+button {
+  font: inherit;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--primario);
+  border-radius: 4px;
+  background: var(--primario);
+  color: #fff;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+button:hover {
+  background: var(--primario-oscuro);
+}
+
+button.secundario {
+  background: #fff;
+  color: var(--primario);
+}
+
+button.secundario:hover {
+  background: #eef3fb;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.barra {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.tabla {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--borde);
+  vertical-align: middle;
+}
+
+th {
+  color: var(--suave);
+  font-weight: 600;
+}
+
+.vacio {
+  color: var(--suave);
+  font-style: italic;
+}
+
+.mensaje {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
+
+.mensaje.error {
+  background: var(--error-fondo);
+  color: var(--error-texto);
+  border: 1px solid #f3b8b1;
+}
+
+.mensaje.ok {
+  background: var(--ok-fondo);
+  color: var(--ok-texto);
+  border: 1px solid #b5dcc1;
+}
