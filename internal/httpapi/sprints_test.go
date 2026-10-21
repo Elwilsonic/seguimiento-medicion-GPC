@@ -71,7 +71,9 @@ func TestCrearSprint_DatosInvalidosDevuelven400(t *testing.T) {
 		"sin fecha de inicio": {`{"nombre":"Sprint 1","fecha_fin":"2026-10-14","objetivo":"Ok"}`, sprint.ErrMissingStartDate.Error()},
 		"sin fecha de fin":    {`{"nombre":"Sprint 1","fecha_inicio":"2026-10-01","objetivo":"Ok"}`, sprint.ErrMissingEndDate.Error()},
 		"fin antes de inicio": {`{"nombre":"Sprint 1","fecha_inicio":"2026-10-14","fecha_fin":"2026-10-01","objetivo":"Ok"}`, sprint.ErrEndNotAfterStart.Error()},
-		"fecha con otro formato": {`{"nombre":"Sprint 1","fecha_inicio":"01/10/2026","fecha_fin":"2026-10-14","objetivo":"Ok"}`,
+		"fecha de inicio con otro formato": {`{"nombre":"Sprint 1","fecha_inicio":"01/10/2026","fecha_fin":"2026-10-14","objetivo":"Ok"}`,
+			"las fechas deben tener el formato AAAA-MM-DD"},
+		"fecha de fin con otro formato": {`{"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"14/10/2026","objetivo":"Ok"}`,
 			"las fechas deben tener el formato AAAA-MM-DD"},
 	}
 	for name, tc := range cases {
