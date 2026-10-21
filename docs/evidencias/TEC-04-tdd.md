@@ -6,7 +6,7 @@ TEC-04 es una tarea técnica: no tiene historia de usuario, especificación SDD 
 
 1. **Mejoras del servidor HTTP** (CA-TEC04.5 a CA-TEC04.7): esta sección.
 2. **Prefijo `/api` y endpoints de lo que ya está en `main`** (CA-TEC04.8 y CA-TEC04.9): [sección del PR 2](#pr-2--prefijo-api-y-endpoints-del-sprint-2).
-3. Interfaz web (CA-TEC04.1 a CA-TEC04.4): pendiente.
+3. **Interfaz web** (CA-TEC04.1 a CA-TEC04.4 y la interfaz en `/` de CA-TEC04.8): [sección del PR 3](#pr-3--interfaz-web).
 
 ## PR 1 · Mejoras del servidor HTTP
 
@@ -416,3 +416,201 @@ total:									(statements)		79.3%
 | GREEN | `bbfa0eb` | `feat(TEC-04): exponer los endpoints de sprints en la API (GREEN)` |
 | Test (desviación) | `9ac78da` | `test(TEC-04): cubrir el formato de la fecha de fin del sprint` |
 | Refactor | `341a985` | `refactor(TEC-04): separar los handlers de la API por tema` |
+
+## PR 3 · Interfaz web
+
+- **Responsable:** Peñalbé Hernán
+- **Revisor:** Buttini Cristobal
+- **Rama:** `feature/TEC-04-interfaz-web` (creada desde `main` en `4c5e9cf`, el merge del PR #105)
+- **Fecha:** 21/10/2026
+- **Go:** go1.27.1 linux/amd64
+- **Origen:** CA-TEC04.1 a CA-TEC04.4 del Issue #34 y la parte "interfaz web en `/`" de CA-TEC04.8. El enfoque lo fija el tema decidido 5 del [acta de Planning del Sprint 2](../actas/sprint-2/planning.md): HTML y JavaScript sin frameworks, servidos con la librería estándar (`embed` y `http.FileServer` en el mismo `ServeMux` de TEC-01).
+
+### Decisiones aprobadas antes del RED
+
+1. **Proyecto y sprint se eligen por su ID.** No hay endpoints para listar proyectos ni sprints y ninguna historia los pide (HU-14 es del Sprint 3), así que no se agregan. Al crear un proyecto o un sprint, la interfaz completa su ID como "actual".
+2. **Dos tests en Go**, para lo que el paquete `testing` puede verificar: que la interfaz responda en `/` y que sus archivos se sirvan desde el binario. No se agrega un test de que `/` no tapa la API: los 49 tests de la API pasan por el mismo handler y fallarían si eso ocurriera.
+3. **CA-TEC04.1 y CA-TEC04.2 se verifican en el navegador.** El JavaScript no se puede probar con `testing` sin agregar librerías, así que se hizo el recorrido completo en Chromium, con capturas de cada funcionalidad y de los errores. El script del recorrido (Playwright) no se commitea, para no sumar Node al repositorio.
+
+### Trazabilidad
+
+Issue #34 → Criterios de Aceptación → Tests → Código Go
+
+**2 funciones de test nuevas con 2 subtests**, en `internal/httpapi/web_test.go`. En total, `internal/httpapi` tiene 51 funciones de test.
+
+```
+$ grep -n "^func Test" internal/httpapi/web_test.go
+internal/httpapi/web_test.go:28:func TestInterfaz_RaizDevuelveLaPaginaHTML(t *testing.T) {
+internal/httpapi/web_test.go:42:func TestInterfaz_SirveLosArchivosEstaticos(t *testing.T) {
+```
+
+| Criterio | Verificación | Código |
+|---|---|---|
+| CA-TEC04.1 Desde el navegador se pueden usar las funcionalidades ya integradas (proyectos, backlog y sprints) | Recorrido en el navegador: las 13 operaciones de HU-01 a HU-13 (ver abajo) | `internal/web/index.html` y `internal/web/app.js` |
+| CA-TEC04.2 Los errores de validación se muestran de forma entendible | Recorrido en el navegador: 6 errores, con el mensaje de la API en un recuadro junto al formulario | `app.js`: `api`, `mostrar` y `accion`; `styles.css`: `.mensaje.error` |
+| CA-TEC04.3 El README explica cómo ejecutarla y usarla | Sección [Interfaz web](../../README.md#interfaz-web) del README | — |
+| CA-TEC04.4 No se usan librerías externas de Go, salvo las aprobadas | `TestInterfaz_SirveLosArchivosEstaticos` (subtests `/app.js` y `/styles.css`): los archivos salen del binario; `go.mod` y `go.sum` sin cambios; sin URLs externas en `internal/web/` | `internal/web/web.go`: `//go:embed` y `Handler` |
+| CA-TEC04.8 (parte de la interfaz) La interfaz web responde en `/` | `TestInterfaz_RaizDevuelveLaPaginaHTML` | `internal/httpapi/server.go`: `mux.Handle("GET /", web.Handler())` |
+
+### Fase RED
+
+Tests escritos antes del código de producción (commit `686f977`), solo en `internal/httpapi/web_test.go`:
+
+```
+$ go test ./...
+ok  	seguimiento-medicion-gpc/cmd/server
+ok  	seguimiento-medicion-gpc/internal/backlog
+--- FAIL: TestInterfaz_RaizDevuelveLaPaginaHTML (0.00s)
+    web_test.go:31: código = 404, se esperaba 200; cuerpo: 404 page not found
+--- FAIL: TestInterfaz_SirveLosArchivosEstaticos (0.00s)
+    --- FAIL: TestInterfaz_SirveLosArchivosEstaticos//app.js (0.00s)
+        web_test.go:51: código = 404, se esperaba 200; cuerpo: 404 page not found
+    --- FAIL: TestInterfaz_SirveLosArchivosEstaticos//styles.css (0.00s)
+        web_test.go:51: código = 404, se esperaba 200; cuerpo: 404 page not found
+FAIL
+FAIL	seguimiento-medicion-gpc/internal/httpapi
+ok  	seguimiento-medicion-gpc/internal/postgres
+ok  	seguimiento-medicion-gpc/internal/postgrestest
+ok  	seguimiento-medicion-gpc/internal/project
+ok  	seguimiento-medicion-gpc/internal/sprint
+FAIL
+```
+
+Fallan solo los 2 tests nuevos, porque todavía no había nada servido en `/`. Los 49 tests de la API y los demás paquetes siguen en verde.
+
+### Fase GREEN
+
+Código de producción (commit `613d5d2`), sin tocar tests:
+
+- `internal/web/web.go`: `//go:embed index.html app.js styles.css` y `Handler()`, que devuelve `http.FileServerFS` sobre esos archivos. Quedan junto a `web.go`, sin la subcarpeta `static/` del plan: con la subcarpeta hacía falta `fs.Sub`, cuya rama de error nunca se ejecuta y ningún test cubriría.
+- `internal/web/index.html`, `app.js` y `styles.css`: una sola página con los campos "Proyecto actual" y "Sprint actual" y tres secciones (Proyectos, Product Backlog y Sprints). `app.js` llama a la API con `fetch`, muestra el `error` de la API junto al formulario que falló y escribe todos los datos con `textContent`, nunca como HTML.
+- `internal/httpapi/server.go`: `NewHandler` registra `mux.Handle("GET /", web.Handler())`. Las rutas `/api/…` son más específicas que `GET /`, así que la interfaz no las tapa.
+
+```
+$ go test ./...
+ok  	seguimiento-medicion-gpc/cmd/server
+ok  	seguimiento-medicion-gpc/internal/backlog
+ok  	seguimiento-medicion-gpc/internal/httpapi
+ok  	seguimiento-medicion-gpc/internal/postgres
+ok  	seguimiento-medicion-gpc/internal/postgrestest
+ok  	seguimiento-medicion-gpc/internal/project
+ok  	seguimiento-medicion-gpc/internal/sprint
+?   	seguimiento-medicion-gpc/internal/web	[no test files]
+```
+
+### Recorrido en el navegador (CA-TEC04.1 y CA-TEC04.2)
+
+Servidor compilado desde `613d5d2` (`go build ./cmd/server`, datos en memoria) y Chromium manejado con Playwright, en una ventana de 1280 × 1400. Salida del recorrido; las filas de HU-06 y HU-09 están resumidas (el script imprime el texto completo de la tabla):
+
+```
+HU-01 crear proyecto: Proyecto 1 creado.
+CA-TEC04.2 nombre repetido: ya existe un proyecto con ese nombre
+HU-02 modificar proyecto: Proyecto 1 guardado.
+HU-02 datos: Proyecto 1: Sistema de ventas (EN_CURSO)
+CA-TEC04.2 ítem sin criterios: el ítem necesita al menos un criterio de aceptación
+HU-04 crear ítem: Ítem 3 creado.
+HU-06 backlog por ID: (resumido) ítems 1, 2 y 3
+HU-09 backlog por prioridad: (resumido) ítems 3 (ALTA), 2 (MEDIA) y 1 (BAJA)
+HU-07 modificar ítem: Ítem 1 guardado.
+HU-10 crear sprint: Sprint 1 creado.
+HU-10 datos: Sprint 1: Sprint 1 (ABIERTO), del 2026-10-01 al 2026-10-14. Goal: Vender y facturar
+CA-TEC04.2 segundo sprint abierto: ya existe un sprint abierto en el proyecto
+HU-11 asignar: Ítem 1 asignado al sprint 1.
+CA-TEC04.2 completar PENDIENTE: la transición de estado no está permitida
+HU-08 cambiar estado: Ítem 3 en estado EN_CURSO.
+HU-12 completar: Ítem 3 completado en el sprint 1.
+HU-12 completados: 3 · Emitir factura
+HU-13 cerrar sprint: Sprint 1: Sprint 1 (CERRADO), del 2026-10-01 al 2026-10-14. Goal: Vender y facturar
+HU-03 consultar proyecto: Proyecto 1: Sistema de ventas (EN_CURSO)
+CA-TEC04.2 proyecto inexistente: no existe un proyecto con ese id
+errores de consola: los 4 avisos de Chromium por las respuestas 409 y 400 que el recorrido provoca a propósito; ningún error de JavaScript
+```
+
+"Editar" consulta el ítem con `GET /api/items/{id}` (HU-05) antes de mostrar el formulario. Además del recorrido, si se toca una acción que necesita un proyecto o un sprint sin haberlo elegido, la propia interfaz muestra "Elegí un proyecto: creá uno o escribí su ID en «Proyecto actual»." (o el equivalente para el sprint).
+
+| Captura | Qué muestra |
+|---|---|
+| [01-inicio](img/TEC-04/01-inicio.png) | La página al abrirla en `/` |
+| [02-error-nombre-repetido](img/TEC-04/02-error-nombre-repetido.png) | CA-TEC04.2: proyecto con nombre repetido (HU-01) |
+| [03-proyecto-modificado](img/TEC-04/03-proyecto-modificado.png) | HU-02: proyecto pasado a `EN_CURSO` |
+| [04-error-item-sin-criterios](img/TEC-04/04-error-item-sin-criterios.png) | CA-TEC04.2: ítem sin criterios de aceptación (HU-04) |
+| [05-backlog-por-prioridad](img/TEC-04/05-backlog-por-prioridad.png) | HU-04, HU-06 y HU-09: tres ítems ordenados por prioridad |
+| [06-editar-item](img/TEC-04/06-editar-item.png) | HU-05 y HU-07: ítem cargado en el formulario de edición, con horas estimadas |
+| [07-error-sprint-abierto](img/TEC-04/07-error-sprint-abierto.png) | CA-TEC04.2: segundo sprint abierto en el proyecto (HU-10) |
+| [08-error-completar-pendiente](img/TEC-04/08-error-completar-pendiente.png) | CA-TEC04.2: completar un ítem `PENDIENTE` (HU-12 con las transiciones de HU-08); los ítems 1 y 3 ya están en el sprint 1 (HU-11) |
+| [09-backlog-con-sprint](img/TEC-04/09-backlog-con-sprint.png) | HU-08 y HU-12: ítem 3 `TERMINADO` en el sprint 1 |
+| [10-sprint-cerrado](img/TEC-04/10-sprint-cerrado.png) | HU-12 y HU-13: ítems completados y sprint `CERRADO` |
+| [11-pagina-completa](img/TEC-04/11-pagina-completa.png) | La página entera al final del recorrido |
+
+Un problema del script, no de la interfaz: en un primer intento, el recorrido se trababa al guardar el ítem editado. Registrando `mousedown` y `mouseup` se vio que el click empezaba en "Guardar ítem" y terminaba en otro elemento porque el scroll saltaba de 895 a 711 px. La causa era la captura de página completa de Playwright (`fullPage`), que cambia el tamaño de la ventana y deja que Chromium restaure el scroll recién con el click siguiente. Con capturas limitadas a la ventana visible, el recorrido pasa entero. Haciendo el mismo click sin captura previa, el formulario guardaba bien.
+
+### Refactor
+
+No se hizo: `web.go` tiene una sola función, y `app.js` ya está separado por sección (proyectos, backlog y sprints), con las partes comunes en `api`, `mostrar`, `accion` e `idActual`.
+
+### Validación final
+
+```
+$ gofmt -l .
+(sin salida)
+
+$ go vet ./...
+(sin salida)
+
+$ go test -race ./...
+(los 7 paquetes con tests ok; internal/web no tiene tests propios)
+
+$ git diff --stat main -- go.mod go.sum
+(sin salida)
+
+$ grep -rn "http://\|https://\|//cdn\|@import" internal/web/
+(sin salida)
+```
+
+### Pruebas de mutación
+
+Una por vez, rompiendo el código a propósito y restaurándolo con `git checkout` (ninguna forma parte de un commit):
+
+| Mutación | Tests que fallan |
+|---|---|
+| a) No registrar la interfaz en `/` | `TestInterfaz_RaizDevuelveLaPaginaHTML` y los 2 subtests de `TestInterfaz_SirveLosArchivosEstaticos` |
+| b) Sacar `styles.css` del `//go:embed` | `TestInterfaz_SirveLosArchivosEstaticos//styles.css` |
+| c) Sacar `<script src="app.js"></script>` de `index.html` | `TestInterfaz_RaizDevuelveLaPaginaHTML` |
+
+### Cobertura
+
+Medición local con el mismo comando del CI, sin base (go1.27.1 linux/amd64):
+
+```
+$ go test -race -coverprofile=coverage.out ./...
+ok  	seguimiento-medicion-gpc/cmd/server	coverage: 37.8% of statements
+ok  	seguimiento-medicion-gpc/internal/backlog	coverage: 82.0% of statements
+ok  	seguimiento-medicion-gpc/internal/httpapi	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/postgres	coverage: 83.3% of statements
+ok  	seguimiento-medicion-gpc/internal/postgrestest	coverage: 36.8% of statements
+ok  	seguimiento-medicion-gpc/internal/project	coverage: 67.4% of statements
+ok  	seguimiento-medicion-gpc/internal/sprint	coverage: 77.3% of statements
+	seguimiento-medicion-gpc/internal/web		coverage: 0.0% of statements
+$ go tool cover -func=coverage.out | tail -n 1
+total:									(statements)		79.7%
+```
+
+`go test -cover` mide cada paquete solo con sus propios tests, y a `web.Handler` lo ejecutan los tests de `internal/httpapi`; por eso `internal/web` figura en 0.0%. Midiendo los dos paquetes juntos, `Handler` queda al 100.0%:
+
+```
+$ go test -coverpkg=./internal/web,./internal/httpapi -coverprofile=cp.out ./internal/httpapi/
+$ go tool cover -func=cp.out | grep -E "web.go|total"
+internal/web/web.go:16:		Handler			100.0%
+total:								(statements)		100.0%
+```
+
+El total del perfil sube de 79.3% (PR 2) a 79.7%. El JavaScript no entra en la cobertura de Go; se verificó con el recorrido en el navegador.
+
+### Commits
+
+| Fase | Commit | Mensaje |
+|---|---|---|
+| RED | `686f977` | `test(TEC-04): agregar tests de la interfaz web (RED)` |
+| GREEN | `613d5d2` | `feat(TEC-04): servir la interfaz web con embed (GREEN)` |
+
+No hubo commit de refactor porque no se hizo refactor.
