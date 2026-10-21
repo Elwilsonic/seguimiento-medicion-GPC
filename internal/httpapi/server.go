@@ -68,11 +68,11 @@ type server struct {
 func NewHandler(projects *project.Manager, items *backlog.Manager) http.Handler {
 	s := &server{projects: projects, items: items}
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /proyectos", s.createProject)
-	mux.HandleFunc("GET /proyectos/{id}", s.getProject)
-	mux.HandleFunc("PUT /proyectos/{id}", s.updateProject)
-	mux.HandleFunc("POST /proyectos/{id}/backlog", s.createItem)
-	mux.HandleFunc("GET /proyectos/{id}/backlog", s.listItems)
+	mux.HandleFunc("POST /api/proyectos", s.createProject)
+	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
+	mux.HandleFunc("PUT /api/proyectos/{id}", s.updateProject)
+	mux.HandleFunc("POST /api/proyectos/{id}/backlog", s.createItem)
+	mux.HandleFunc("GET /api/proyectos/{id}/backlog", s.listItems)
 	return mux
 }
 
