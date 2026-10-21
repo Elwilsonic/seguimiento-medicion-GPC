@@ -42,6 +42,10 @@ type itemJSON struct {
 	Criterios   []string `json:"criterios"`
 	Estado      string   `json:"estado"`
 	StoryPoints int      `json:"story_points"`
+	// TEC-04, CA-TEC04.9: la respuesta suma las horas estimadas (HU-07) y el
+	// sprint asignado (HU-11).
+	HorasEstimadas float64 `json:"horas_estimadas"`
+	SprintID       int     `json:"sprint_id"`
 }
 
 type errorJSON struct {
@@ -181,6 +185,10 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"modificar proyecto", http.MethodPut, "/api/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
 		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
+		// TEC-04, CA-TEC04.9: endpoints de ítems.
+		{"consultar ítem", http.MethodGet, "/api/items/abc", ""},
+		{"modificar ítem", http.MethodPut, "/api/items/abc", validItem},
+		{"cambiar estado", http.MethodPatch, "/api/items/abc/estado", `{"estado":"EN_CURSO"}`},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
@@ -370,7 +378,7 @@ func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 //   - CA-TEC04.5: un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
 //   - CA-TEC04.6: un cuerpo con texto después del JSON se rechaza con 400 y no
 //     se procesa.
-// Cada criterio se prueba en los tres endpoints que reciben un cuerpo.
+// Cada criterio se prueba en todos los endpoints que reciben un cuerpo.
 
 // bodyEndpoint es un endpoint que recibe un cuerpo JSON. untouched verifica
 // que el pedido rechazado no creó ni modificó nada.
@@ -381,7 +389,8 @@ type bodyEndpoint struct {
 	untouched func(t *testing.T, h http.Handler)
 }
 
-// bodyEndpoints parte de un proyecto 1 "Sistema de ventas" sin ítems.
+// bodyEndpoints parte de un proyecto 1 "Sistema de ventas" con su ítem 1
+// creado con validItem (newHandlerWithItem).
 var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "crear proyecto",
@@ -413,18 +422,46 @@ var bodyEndpoints = []bodyEndpoint{
 		untouched: func(t *testing.T, h http.Handler) {
 			rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
 			expectStatus(t, rec, http.StatusOK)
-			if got := strings.TrimSpace(rec.Body.String()); got != "[]" {
-				t.Errorf("backlog = %s, se esperaba []", got)
+			var items []itemJSON
+			decode(t, rec, &items)
+			if len(items) != 1 {
+				t.Errorf("backlog = %+v, se esperaba solo el ítem 1", items)
 			}
 		},
 	},
+	// TEC-04, CA-TEC04.9: endpoints de ítems que reciben un cuerpo.
+	{
+		name:      "modificar ítem",
+		method:    http.MethodPut,
+		path:      "/api/items/1",
+		untouched: expectItemUntouched,
+	},
+	{
+		name:      "cambiar estado",
+		method:    http.MethodPatch,
+		path:      "/api/items/1/estado",
+		untouched: expectItemUntouched,
+	},
 }
 
-// validBody es un cuerpo válido para cualquiera de los tres endpoints: los
-// campos que un endpoint no usa se ignoran.
+// expectItemUntouched verifica que el ítem 1 siga como lo creó validItem.
+func expectItemUntouched(t *testing.T, h http.Handler) {
+	t.Helper()
+	rec := do(t, h, http.MethodGet, "/api/items/1", "")
+	expectStatus(t, rec, http.StatusOK)
+	var it itemJSON
+	decode(t, rec, &it)
+	if it.Descripcion != "Acceso" || it.Estado != "PENDIENTE" {
+		t.Errorf("ítem = %+v, se esperaba sin cambios", it)
+	}
+}
+
+// validBody es un cuerpo válido para cualquiera de los endpoints: los campos
+// que un endpoint no usa se ignoran. EN_CURSO es un estado válido tanto para
+// el proyecto como para el ítem.
 func validBody(description string) string {
 	return `{"nombre":"Portal de clientes","descripcion":"` + description +
-		`","estado":"PLANIFICADO","titulo":"Login de usuarios","prioridad":"ALTA","criterios":["Ok"]}`
+		`","estado":"EN_CURSO","titulo":"Login de usuarios","prioridad":"ALTA","criterios":["Ok"]}`
 }
 
 // CA-TEC04.5 · Un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
@@ -435,8 +472,7 @@ func TestHandler_CuerpoMayorA1MiBDa413(t *testing.T) {
 
 	for _, e := range bodyEndpoints {
 		t.Run(e.name, func(t *testing.T) {
-			h := newHandler()
-			createProject(t, h, "Sistema de ventas")
+			h := newHandlerWithItem(t)
 
 			rec := do(t, h, e.method, e.path, body)
 
@@ -453,8 +489,7 @@ func TestHandler_TextoDespuesDelJSONDa400(t *testing.T) {
 
 	for _, e := range bodyEndpoints {
 		t.Run(e.name, func(t *testing.T) {
-			h := newHandler()
-			createProject(t, h, "Sistema de ventas")
+			h := newHandlerWithItem(t)
 
 			rec := do(t, h, e.method, e.path, body)
 
