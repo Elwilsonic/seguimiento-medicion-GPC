@@ -11,6 +11,7 @@ import (
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/project"
+	"seguimiento-medicion-gpc/internal/sprint"
 )
 
 // TEC-01 · Punto de entrada ejecutable mínimo (Issue #23)
@@ -21,6 +22,9 @@ import (
 //     backlog (HU-04, HU-06).
 //   - CA-TEC01.3: estos tests son las pruebas automatizadas de los endpoints.
 //   - CA-TEC01.5: los datos se guardan en los repositorios en memoria.
+//
+// TEC-04 (Issue #34), CA-TEC04.8: la API responde bajo /api/…, así que todos
+// los pedidos de estos tests usan rutas con ese prefijo.
 
 // projectJSON y itemJSON son las respuestas que devuelve la API.
 type projectJSON struct {
@@ -39,6 +43,10 @@ type itemJSON struct {
 	Criterios   []string `json:"criterios"`
 	Estado      string   `json:"estado"`
 	StoryPoints int      `json:"story_points"`
+	// TEC-04, CA-TEC04.9: la respuesta suma las horas estimadas (HU-07) y el
+	// sprint asignado (HU-11).
+	HorasEstimadas float64 `json:"horas_estimadas"`
+	SprintID       int     `json:"sprint_id"`
 }
 
 type errorJSON struct {
@@ -49,7 +57,8 @@ type errorJSON struct {
 func newHandler() http.Handler {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
-	return httpapi.NewHandler(projects, items)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	return httpapi.NewHandler(projects, items, sprints)
 }
 
 // do hace un pedido a la API y verifica que la respuesta sea JSON.
@@ -94,7 +103,7 @@ func expectError(t *testing.T, rec *httptest.ResponseRecorder, wantStatus int, w
 // createProject crea un proyecto por la API y devuelve su ID.
 func createProject(t *testing.T, h http.Handler, name string) int {
 	t.Helper()
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"`+name+`","descripcion":""}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"`+name+`","descripcion":""}`)
 	expectStatus(t, rec, http.StatusCreated)
 	var p projectJSON
 	decode(t, rec, &p)
@@ -107,7 +116,7 @@ const validItem = `{"titulo":"Login de usuarios","descripcion":"Acceso","priorid
 func TestCrearProyecto_Devuelve201ConElProyectoCreado(t *testing.T) {
 	h := newHandler()
 
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"  Sistema de ventas  ","descripcion":"Gestión de ventas"}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"  Sistema de ventas  ","descripcion":"Gestión de ventas"}`)
 
 	expectStatus(t, rec, http.StatusCreated)
 	var p projectJSON
@@ -119,7 +128,7 @@ func TestCrearProyecto_Devuelve201ConElProyectoCreado(t *testing.T) {
 }
 
 func TestCrearProyecto_NombreVacioDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/proyectos", `{"nombre":"   ","descripcion":""}`)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos", `{"nombre":"   ","descripcion":""}`)
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrEmptyName.Error())
 }
@@ -128,13 +137,13 @@ func TestCrearProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"SISTEMA DE VENTAS","descripcion":""}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"SISTEMA DE VENTAS","descripcion":""}`)
 
 	expectError(t, rec, http.StatusConflict, project.ErrDuplicateName.Error())
 }
 
 func TestCrearProyecto_JSONInvalidoDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/proyectos", `{"nombre":`)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos", `{"nombre":`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -144,7 +153,7 @@ func TestConsultarProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandler()
 	id := createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/proyectos/1", "")
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
@@ -155,7 +164,7 @@ func TestConsultarProyecto_Devuelve200ConElProyecto(t *testing.T) {
 }
 
 func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
-	for _, path := range []string{"/proyectos/999", "/proyectos/0", "/proyectos/-1"} {
+	for _, path := range []string{"/api/proyectos/999", "/api/proyectos/0", "/api/proyectos/-1"} {
 		t.Run(path, func(t *testing.T) {
 			rec := do(t, newHandler(), http.MethodGet, path, "")
 
@@ -165,7 +174,7 @@ func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
 }
 
 func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/proyectos/abc", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc", "")
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
@@ -175,9 +184,21 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 	casos := []struct {
 		nombre, method, path, body string
 	}{
-		{"modificar proyecto", http.MethodPut, "/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
-		{"crear ítem", http.MethodPost, "/proyectos/abc/backlog", validItem},
-		{"listar backlog", http.MethodGet, "/proyectos/abc/backlog", ""},
+		{"modificar proyecto", http.MethodPut, "/api/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
+		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
+		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
+		// TEC-04, CA-TEC04.9: endpoints de ítems.
+		{"consultar ítem", http.MethodGet, "/api/items/abc", ""},
+		{"modificar ítem", http.MethodPut, "/api/items/abc", validItem},
+		{"cambiar estado", http.MethodPatch, "/api/items/abc/estado", `{"estado":"EN_CURSO"}`},
+		// TEC-04, CA-TEC04.9: endpoints de sprints.
+		{"crear sprint", http.MethodPost, "/api/proyectos/abc/sprints", validSprint},
+		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
+		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc", ""},
+		{"completar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1/completar", ""},
+		{"completar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc/completar", ""},
+		{"listar completados", http.MethodGet, "/api/sprints/abc/completados", ""},
+		{"cerrar sprint", http.MethodPost, "/api/sprints/abc/cerrar", ""},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
@@ -193,7 +214,7 @@ func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"Nueva versión","estado":"en_curso"}`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"Nueva versión","estado":"en_curso"}`)
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
@@ -204,7 +225,7 @@ func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	}
 
 	// La consulta posterior devuelve los datos modificados.
-	rec = do(t, h, http.MethodGet, "/proyectos/1", "")
+	rec = do(t, h, http.MethodGet, "/api/proyectos/1", "")
 	decode(t, rec, &p)
 	if p != want {
 		t.Errorf("proyecto consultado = %+v, se esperaba %+v", p, want)
@@ -215,7 +236,7 @@ func TestModificarProyecto_EstadoInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PAUSADO"}`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PAUSADO"}`)
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrInvalidStatus.Error())
 }
@@ -225,13 +246,13 @@ func TestModificarProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	createProject(t, h, "Portal de clientes")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/2", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PLANIFICADO"}`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/2", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PLANIFICADO"}`)
 
 	expectError(t, rec, http.StatusConflict, project.ErrDuplicateName.Error())
 }
 
 func TestModificarProyecto_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPut, "/proyectos/999", `{"nombre":"Otro","descripcion":"","estado":"PLANIFICADO"}`)
+	rec := do(t, newHandler(), http.MethodPut, "/api/proyectos/999", `{"nombre":"Otro","descripcion":"","estado":"PLANIFICADO"}`)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -240,7 +261,7 @@ func TestModificarProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/proyectos/1", `no es json`)
+	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `no es json`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -250,7 +271,7 @@ func TestCrearItem_Devuelve201ConElItemCreado(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/proyectos/1/backlog", validItem)
+	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem)
 
 	expectStatus(t, rec, http.StatusCreated)
 	var it itemJSON
@@ -276,7 +297,7 @@ func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 			h := newHandler()
 			createProject(t, h, "Sistema de ventas")
 
-			rec := do(t, h, http.MethodPost, "/proyectos/1/backlog", tc.body)
+			rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", tc.body)
 
 			expectError(t, rec, http.StatusBadRequest, tc.want.Error())
 		})
@@ -284,7 +305,7 @@ func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 }
 
 func TestCrearItem_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/proyectos/999/backlog", validItem)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/999/backlog", validItem)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -293,7 +314,7 @@ func TestCrearItem_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/proyectos/1/backlog", `{"titulo":`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -303,11 +324,11 @@ func TestListarBacklog_Devuelve200ConLosItemsDelProyecto(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 	createProject(t, h, "Portal de clientes")
-	do(t, h, http.MethodPost, "/proyectos/1/backlog", validItem)
-	do(t, h, http.MethodPost, "/proyectos/2/backlog", `{"titulo":"Otro proyecto","prioridad":"BAJA","criterios":["Ok"]}`)
-	do(t, h, http.MethodPost, "/proyectos/1/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem)
+	do(t, h, http.MethodPost, "/api/proyectos/2/backlog", `{"titulo":"Otro proyecto","prioridad":"BAJA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
 
-	rec := do(t, h, http.MethodGet, "/proyectos/1/backlog", "")
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
@@ -321,7 +342,7 @@ func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/proyectos/1/backlog", "")
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	if got := strings.TrimSpace(rec.Body.String()); got != "[]" {
@@ -330,7 +351,7 @@ func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 }
 
 func TestListarBacklog_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/proyectos/999/backlog", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/999/backlog", "")
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -354,9 +375,10 @@ func (brokenRepository) Update(project.Project) (project.Project, error) {
 // CA-TEC01.2 · Un error inesperado devuelve 500 sin exponer el detalle interno.
 func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
-	h := httpapi.NewHandler(projects, backlog.NewManager(backlog.NewMemoryRepository(), projects))
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	h := httpapi.NewHandler(projects, items, sprint.NewManager(sprint.NewMemoryRepository(), projects, items))
 
-	rec := do(t, h, http.MethodPost, "/proyectos", `{"nombre":"Sistema de ventas"}`)
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas"}`)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
@@ -367,7 +389,7 @@ func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 //   - CA-TEC04.5: un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
 //   - CA-TEC04.6: un cuerpo con texto después del JSON se rechaza con 400 y no
 //     se procesa.
-// Cada criterio se prueba en los tres endpoints que reciben un cuerpo.
+// Cada criterio se prueba en todos los endpoints que reciben un cuerpo.
 
 // bodyEndpoint es un endpoint que recibe un cuerpo JSON. untouched verifica
 // que el pedido rechazado no creó ni modificó nada.
@@ -378,23 +400,24 @@ type bodyEndpoint struct {
 	untouched func(t *testing.T, h http.Handler)
 }
 
-// bodyEndpoints parte de un proyecto 1 "Sistema de ventas" sin ítems.
+// bodyEndpoints parte de un proyecto 1 "Sistema de ventas" con su ítem 1
+// creado con validItem (newHandlerWithItem).
 var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "crear proyecto",
 		method: http.MethodPost,
-		path:   "/proyectos",
+		path:   "/api/proyectos",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/proyectos/2", "")
+			rec := do(t, h, http.MethodGet, "/api/proyectos/2", "")
 			expectStatus(t, rec, http.StatusNotFound)
 		},
 	},
 	{
 		name:   "modificar proyecto",
 		method: http.MethodPut,
-		path:   "/proyectos/1",
+		path:   "/api/proyectos/1",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/proyectos/1", "")
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
 			expectStatus(t, rec, http.StatusOK)
 			var p projectJSON
 			decode(t, rec, &p)
@@ -406,22 +429,61 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "crear ítem",
 		method: http.MethodPost,
-		path:   "/proyectos/1/backlog",
+		path:   "/api/proyectos/1/backlog",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/proyectos/1/backlog", "")
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
 			expectStatus(t, rec, http.StatusOK)
-			if got := strings.TrimSpace(rec.Body.String()); got != "[]" {
-				t.Errorf("backlog = %s, se esperaba []", got)
+			var items []itemJSON
+			decode(t, rec, &items)
+			if len(items) != 1 {
+				t.Errorf("backlog = %+v, se esperaba solo el ítem 1", items)
 			}
+		},
+	},
+	// TEC-04, CA-TEC04.9: endpoints de ítems que reciben un cuerpo.
+	{
+		name:      "modificar ítem",
+		method:    http.MethodPut,
+		path:      "/api/items/1",
+		untouched: expectItemUntouched,
+	},
+	{
+		name:      "cambiar estado",
+		method:    http.MethodPatch,
+		path:      "/api/items/1/estado",
+		untouched: expectItemUntouched,
+	},
+	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
+	{
+		name:   "crear sprint",
+		method: http.MethodPost,
+		path:   "/api/proyectos/1/sprints",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
+			expectStatus(t, rec, http.StatusNotFound)
 		},
 	},
 }
 
-// validBody es un cuerpo válido para cualquiera de los tres endpoints: los
-// campos que un endpoint no usa se ignoran.
+// expectItemUntouched verifica que el ítem 1 siga como lo creó validItem.
+func expectItemUntouched(t *testing.T, h http.Handler) {
+	t.Helper()
+	rec := do(t, h, http.MethodGet, "/api/items/1", "")
+	expectStatus(t, rec, http.StatusOK)
+	var it itemJSON
+	decode(t, rec, &it)
+	if it.Descripcion != "Acceso" || it.Estado != "PENDIENTE" {
+		t.Errorf("ítem = %+v, se esperaba sin cambios", it)
+	}
+}
+
+// validBody es un cuerpo válido para cualquiera de los endpoints: los campos
+// que un endpoint no usa se ignoran. EN_CURSO es un estado válido tanto para
+// el proyecto como para el ítem.
 func validBody(description string) string {
 	return `{"nombre":"Portal de clientes","descripcion":"` + description +
-		`","estado":"PLANIFICADO","titulo":"Login de usuarios","prioridad":"ALTA","criterios":["Ok"]}`
+		`","estado":"EN_CURSO","titulo":"Login de usuarios","prioridad":"ALTA","criterios":["Ok"]` +
+		`,"fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Ok"}`
 }
 
 // CA-TEC04.5 · Un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
@@ -432,8 +494,7 @@ func TestHandler_CuerpoMayorA1MiBDa413(t *testing.T) {
 
 	for _, e := range bodyEndpoints {
 		t.Run(e.name, func(t *testing.T) {
-			h := newHandler()
-			createProject(t, h, "Sistema de ventas")
+			h := newHandlerWithItem(t)
 
 			rec := do(t, h, e.method, e.path, body)
 
@@ -450,8 +511,7 @@ func TestHandler_TextoDespuesDelJSONDa400(t *testing.T) {
 
 	for _, e := range bodyEndpoints {
 		t.Run(e.name, func(t *testing.T) {
-			h := newHandler()
-			createProject(t, h, "Sistema de ventas")
+			h := newHandlerWithItem(t)
 
 			rec := do(t, h, e.method, e.path, body)
 

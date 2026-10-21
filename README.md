@@ -30,27 +30,45 @@ go run ./cmd/server
 
 El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de entorno `PORT` (en PowerShell: `$env:PORT="9090"; go run ./cmd/server`; en Linux o macOS: `PORT=9090 go run ./cmd/server`). Por defecto los datos se guardan en memoria y se pierden al detener el servidor; para conservarlos, usá PostgreSQL (ver [Persistencia con PostgreSQL](#persistencia-con-postgresql)).
 
+La API responde bajo el prefijo `/api` (TEC-04).
+
 | Método | Ruta | Operación |
 |---|---|---|
-| `POST` | `/proyectos` | Crear un proyecto (HU-01) |
-| `GET` | `/proyectos/{id}` | Consultar un proyecto (HU-03) |
-| `PUT` | `/proyectos/{id}` | Modificar nombre, descripción y estado (HU-02) |
-| `POST` | `/proyectos/{id}/backlog` | Crear un ítem del Product Backlog (HU-04) |
-| `GET` | `/proyectos/{id}/backlog` | Listar el Product Backlog del proyecto (HU-06) |
+| `POST` | `/api/proyectos` | Crear un proyecto (HU-01) |
+| `GET` | `/api/proyectos/{id}` | Consultar un proyecto (HU-03) |
+| `PUT` | `/api/proyectos/{id}` | Modificar nombre, descripción y estado (HU-02) |
+| `POST` | `/api/proyectos/{id}/backlog` | Crear un ítem del Product Backlog (HU-04) |
+| `GET` | `/api/proyectos/{id}/backlog` | Listar el Product Backlog del proyecto, ordenado por ID (HU-06) |
+| `GET` | `/api/proyectos/{id}/backlog?orden=prioridad` | Listar el Product Backlog ordenado por prioridad: ALTA, MEDIA y BAJA (HU-09) |
+| `GET` | `/api/items/{id}` | Consultar un ítem (HU-05) |
+| `PUT` | `/api/items/{id}` | Modificar título, descripción, prioridad, criterios y horas estimadas (HU-07) |
+| `PATCH` | `/api/items/{id}/estado` | Cambiar el estado de un ítem (HU-08) |
+| `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
+| `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
+| `POST` | `/api/sprints/{id}/items/{itemId}/completar` | Marcar como TERMINADO un ítem del sprint (HU-12) |
+| `GET` | `/api/sprints/{id}/completados` | Listar los ítems terminados del sprint (HU-12) |
+| `POST` | `/api/sprints/{id}/cerrar` | Cerrar el sprint (HU-13) |
 
 Ejemplo con `curl` (en Windows, desde Git Bash):
 
 ```
-curl -X POST localhost:8080/proyectos -d '{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas"}'
-curl localhost:8080/proyectos/1
-curl -X PUT localhost:8080/proyectos/1 -d '{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}'
-curl -X POST localhost:8080/proyectos/1/backlog -d '{"titulo":"Registrar venta","descripcion":"Alta de una venta","prioridad":"ALTA","criterios":["Se guarda la venta"]}'
-curl localhost:8080/proyectos/1/backlog
+curl -X POST localhost:8080/api/proyectos -d '{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas"}'
+curl localhost:8080/api/proyectos/1
+curl -X PUT localhost:8080/api/proyectos/1 -d '{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}'
+curl -X POST localhost:8080/api/proyectos/1/backlog -d '{"titulo":"Registrar venta","descripcion":"Alta de una venta","prioridad":"ALTA","criterios":["Se guarda la venta"]}'
+curl "localhost:8080/api/proyectos/1/backlog?orden=prioridad"
+curl -X PUT localhost:8080/api/items/1 -d '{"titulo":"Registrar venta","descripcion":"Alta de una venta","prioridad":"ALTA","criterios":["Se guarda la venta"],"horas_estimadas":6}'
+curl -X POST localhost:8080/api/proyectos/1/sprints -d '{"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Registrar ventas"}'
+curl -X POST localhost:8080/api/sprints/1/items/1
+curl -X PATCH localhost:8080/api/items/1/estado -d '{"estado":"EN_CURSO"}'
+curl -X POST localhost:8080/api/sprints/1/items/1/completar
+curl localhost:8080/api/sprints/1/completados
+curl -X POST localhost:8080/api/sprints/1/cerrar
 ```
 
-`PUT /proyectos/{id}` reemplaza los tres campos (nombre, descripción y estado): un campo que no se envía queda vacío, así que hay que mandar también los que no cambian.
+`PUT /api/proyectos/{id}` y `PUT /api/items/{id}` reemplazan todos sus campos: un campo que no se envía queda vacío (o en 0, las horas estimadas), así que hay que mandar también los que no cambian. Las fechas de un sprint usan el formato `AAAA-MM-DD`. Para completar un ítem, antes tiene que estar `EN_CURSO`: el cambio de estado respeta las transiciones de HU-08.
 
-Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto inexistente), 409 (nombre repetido) o 500 (error interno).
+Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem o sprint inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
 
 Para correr los tests: `go test ./...` (no necesita Docker: los tests de PostgreSQL se omiten si no hay base de pruebas).
 
