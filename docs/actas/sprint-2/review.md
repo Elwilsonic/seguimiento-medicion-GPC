@@ -135,7 +135,7 @@ Los profesores no participaron de la Review, así que no hubo observaciones.
 
 ## Línea base
 
-Al integrar esta acta se crea el tag `sprint-2` sobre `main`.
+Al integrar esta acta se crea el tag `sprint-2` sobre `main`. El tag queda sobre el merge commit de este Pull Request, que solo agrega documentación; el código es el mismo de `79087f9`, donde se midió la calidad al cierre.
 
 ## Próximo paso
 
