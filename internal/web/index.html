@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Software Metrics &amp; Estimation</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Software Metrics &amp; Estimation</h1>
+    <p>Gestión de proyectos, Product Backlog y sprints.</p>
+  </header>
+
+  <main>
+    <!-- Proyecto y sprint actuales: no hay listados (ninguna historia los pide), así que se eligen por su ID. -->
+    <section class="contexto" aria-label="Proyecto y sprint actuales">
+      <form id="form-contexto">
+        <label>Proyecto actual (ID)
+          <input id="proyecto-actual" type="number" min="1" placeholder="Ej.: 1">
+        </label>
+        <label>Sprint actual (ID)
+          <input id="sprint-actual" type="number" min="1" placeholder="Ej.: 1">
+        </label>
+        <button type="submit">Cargar proyecto</button>
+      </form>
+      <p class="mensaje" id="msg-contexto" role="alert" hidden></p>
+    </section>
+
+    <section id="proyectos">
+      <h2>Proyectos</h2>
+      <div class="columnas">
+        <form id="form-crear-proyecto">
+          <h3>Crear proyecto</h3>
+          <label>Nombre <input name="nombre" required></label>
+          <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
+          <button type="submit">Crear</button>
+        </form>
+
+        <form id="form-modificar-proyecto">
+          <h3>Proyecto actual</h3>
+          <p class="vacio" id="sin-proyecto">Creá un proyecto o cargá uno por su ID.</p>
+          <label>Nombre <input name="nombre"></label>
+          <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
+          <label>Estado
+            <select name="estado">
+              <option>PLANIFICADO</option>
+              <option>EN_CURSO</option>
+              <option>FINALIZADO</option>
+            </select>
+          </label>
+          <button type="submit">Guardar cambios</button>
+        </form>
+      </div>
+      <p class="mensaje" id="msg-proyectos" role="alert" hidden></p>
+    </section>
+
+    <section id="backlog">
+      <h2>Product Backlog</h2>
+      <div class="columnas">
+        <form id="form-crear-item">
+          <h3>Crear ítem</h3>
+          <label>Título <input name="titulo"></label>
+          <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
+          <label>Prioridad
+            <select name="prioridad">
+              <option>ALTA</option>
+              <option selected>MEDIA</option>
+              <option>BAJA</option>
+            </select>
+          </label>
+          <label>Criterios de aceptación (uno por línea) <textarea name="criterios" rows="3"></textarea></label>
+          <button type="submit">Crear ítem</button>
+        </form>
+
+        <form id="form-editar-item" hidden>
+          <h3>Editar ítem <span id="editar-item-id"></span></h3>
+          <label>Título <input name="titulo"></label>
+          <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
+          <label>Prioridad
+            <select name="prioridad">
+              <option>ALTA</option>
+              <option>MEDIA</option>
+              <option>BAJA</option>
+            </select>
+          </label>
+          <label>Criterios de aceptación (uno por línea) <textarea name="criterios" rows="3"></textarea></label>
+          <label>Horas estimadas <input name="horas_estimadas" type="number" step="0.5"></label>
+          <div class="acciones">
+            <button type="submit">Guardar ítem</button>
+            <button type="button" id="cancelar-edicion" class="secundario">Cancelar</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="barra">
+        <label>Ordenar por
+          <select id="orden">
+            <option value="">ID</option>
+            <option value="prioridad">Prioridad</option>
+          </select>
+        </label>
+        <button type="button" id="actualizar-backlog" class="secundario">Actualizar</button>
+      </div>
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Título</th><th>Prioridad</th><th>Estado</th><th>Horas</th><th>Sprint</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="items"></tbody>
+        </table>
+      </div>
+      <p class="mensaje" id="msg-backlog" role="alert" hidden></p>
+    </section>
+
+    <section id="sprints">
+      <h2>Sprints</h2>
+      <div class="columnas">
+        <form id="form-crear-sprint">
+          <h3>Crear sprint en el proyecto actual</h3>
+          <label>Nombre <input name="nombre"></label>
+          <label>Fecha de inicio <input name="fecha_inicio" type="date"></label>
+          <label>Fecha de fin <input name="fecha_fin" type="date"></label>
+          <label>Sprint goal <textarea name="objetivo" rows="2"></textarea></label>
+          <button type="submit">Crear sprint</button>
+        </form>
+
+        <div>
+          <h3>Sprint actual</h3>
+          <p id="datos-sprint" class="vacio">Creá un sprint o escribí su ID arriba.</p>
+          <div class="acciones">
+            <button type="button" id="ver-completados" class="secundario">Ver ítems completados</button>
+            <button type="button" id="cerrar-sprint">Cerrar sprint</button>
+          </div>
+          <ul id="completados"></ul>
+        </div>
+      </div>
+      <p class="mensaje" id="msg-sprints" role="alert" hidden></p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // Package httpapi expone por HTTP las operaciones de proyectos y de backlog
-// ya integradas (TEC-01) y, desde TEC-04, las de ítems y sprints, usando solo
-// la librería estándar (net/http).
+// ya integradas (TEC-01) y, desde TEC-04, las de ítems y sprints bajo /api/… y
+// la interfaz web en /, usando solo la librería estándar (net/http).
 package httpapi
 
 import (
@@ -13,6 +13,7 @@ import (
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
+	"seguimiento-medicion-gpc/internal/web"
 )
 
 // maxBodyBytes es el tamaño máximo del cuerpo de un pedido: 1 MiB (CA-TEC04.5).
@@ -54,6 +55,9 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)
 	mux.HandleFunc("GET /api/sprints/{id}/completados", s.listCompletedItems)
 	mux.HandleFunc("POST /api/sprints/{id}/cerrar", s.closeSprint)
+	// La interfaz web responde en / (CA-TEC04.8); las rutas /api/… son más
+	// específicas, así que no la tapan.
+	mux.Handle("GET /", web.Handler())
 	return mux
 }
 

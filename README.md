@@ -13,6 +13,7 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 - **Tests:** paquete `testing` de Go (TDD) y godog para ejecutar los escenarios BDD
 - **Control de versiones:** Git
 - **Integración continua:** Cada Pull Request hacia `main` corre `gofmt`, `go vet ./...` y `go test -race ./...` con GitHub Actions, y muestra la cobertura total
+- **Interfaz web:** HTML, JavaScript y CSS sin frameworks, embebidos en el binario con `embed` y servidos por el mismo servidor (TEC-04); ver [Interfaz web](#interfaz-web)
 - **Persistencia:** en memoria (valor por defecto) o PostgreSQL 17 en Docker (TEC-05), con el driver `github.com/jackc/pgx/v5`; ver [Persistencia con PostgreSQL](#persistencia-con-postgresql)
 
 ## Requisitos
@@ -29,6 +30,23 @@ go run ./cmd/server
 ```
 
 El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de entorno `PORT` (en PowerShell: `$env:PORT="9090"; go run ./cmd/server`; en Linux o macOS: `PORT=9090 go run ./cmd/server`). Por defecto los datos se guardan en memoria y se pierden al detener el servidor; para conservarlos, usá PostgreSQL (ver [Persistencia con PostgreSQL](#persistencia-con-postgresql)).
+
+### Interfaz web
+
+Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con tres secciones:
+
+1. **Proyectos:** crear un proyecto (queda como "proyecto actual"), modificar su nombre, descripción y estado.
+2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarlo al sprint actual o completarlo.
+3. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados y cerrarlo.
+
+Un recorrido típico: crear un proyecto, cargar sus ítems, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", completarlos, ver los completados y cerrar el sprint.
+
+- **Proyecto y sprint actuales:** la aplicación todavía no tiene listados de proyectos ni de sprints (ninguna historia los pide), así que se eligen por su ID en los campos de arriba. Al crear un proyecto o un sprint, su ID se completa solo; para volver a un proyecto existente, escribí su ID y tocá "Cargar proyecto".
+- **Errores:** si la aplicación rechaza un dato (por ejemplo, un nombre de proyecto repetido o un ítem sin criterios de aceptación), el mensaje aparece en un recuadro rojo debajo de la sección.
+
+![Interfaz web con el Product Backlog ordenado por prioridad](docs/evidencias/img/TEC-04/05-backlog-por-prioridad.png)
+
+### API
 
 La API responde bajo el prefijo `/api` (TEC-04).
 
@@ -210,7 +228,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-11 | [#25](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/25) | Asignar historias a un sprint | [SDD](docs/especificaciones/HU-11-asignar-item-sprint.md) | [BDD](features/HU-11-asignar-item-sprint.feature) | [Evidencia](docs/evidencias/HU-11-tdd.md) | [#97](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/97) |
 | HU-12 | [#26](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/26) | Registrar historias completadas | [SDD](docs/especificaciones/HU-12-registrar-completadas.md) | [BDD](features/HU-12-registrar-completadas.feature) | [Evidencia](docs/evidencias/HU-12-tdd.md) | [#100](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/100) |
 | HU-13 | [#27](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/27) | Cerrar sprint | [SDD](docs/especificaciones/HU-13-cerrar-sprint.md) | [BDD](features/HU-13-cerrar-sprint.feature) | [Evidencia](docs/evidencias/HU-13-tdd.md) | [#101](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/101) |
-| TEC-04 | [#34](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/34) | Interfaz usable | — | — | [Evidencia](docs/evidencias/TEC-04-tdd.md) | [#104](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/104) |
+| TEC-04 | [#34](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/34) | Interfaz usable | — | — | [Evidencia](docs/evidencias/TEC-04-tdd.md) | [#104](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/104), [#105](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/105), [#106](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/106) |
 | TEC-05 | [#35](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/35) | Persistencia con PostgreSQL en Docker | — | — | [Evidencia](docs/evidencias/TEC-05-tdd.md) | [#96](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/96) |
 
 ## Estructura del repositorio
@@ -222,7 +240,7 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `AGENTS.md` | Instrucciones del flujo de trabajo (SDD → BDD → TDD) |
 | `.github/` | Workflow de CI, plantillas de Issue (historia, tarea técnica, ceremonia y defecto) y plantilla de Pull Request |
 | `cmd/` | Punto de entrada ejecutable de la aplicación |
-| `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests; `internal/postgres` abre la conexión a PostgreSQL e `internal/postgrestest` prepara la base de las pruebas de integración |
+| `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests; `internal/httpapi` expone la API, `internal/web` tiene la interfaz web (TEC-04), `internal/postgres` abre la conexión a PostgreSQL e `internal/postgrestest` prepara la base de las pruebas de integración |
 | `docker-compose.yml` | Base de datos PostgreSQL en Docker (TEC-05) |
 | `db/init/` | Scripts que crean el esquema de la base y la base de pruebas la primera vez que arranca |
 | `.env.example` | Valores de ejemplo de las variables de entorno (el `.env` real no se sube) |
