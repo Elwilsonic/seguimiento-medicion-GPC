@@ -275,8 +275,10 @@ Las épicas se estimaron por Planning Poker con talles de ropa (XS, S, M, L, XL)
 
 ## Estado del proyecto
 
-🟡 En desarrollo — Sprint 1 (El MVP) cerrado el 15/10 y Sprint 2 (La Interfaz) cerrado el 22/10; el Sprint 3 empieza el 23/10
+🟡 En desarrollo — Sprint 1 (El MVP) cerrado el 15/10, Sprint 2 (La Interfaz) cerrado el 22/10 y Sprint 3 (La Estimación) en curso, del 23/10 al 29/10
 
 **Sprint 1:** se cumplió el Sprint Goal ("Poder crear, modificar y consultar proyectos y cargar y listar su Product Backlog desde una aplicación ejecutable, con cada cambio validado por integración continua"), con 21 de 21 Story Points completados y la historia opcional HU-05. La aplicación se ejecuta como indica la sección [Cómo ejecutar](#cómo-ejecutar). Ver las actas de [Planning](docs/actas/sprint-1/planning.md), [Review](docs/actas/sprint-1/review.md) y [Retrospectiva](docs/actas/sprint-1/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-1/daily.md).
 
 **Sprint 2:** se cumplió el Sprint Goal ("Usar la aplicación desde el navegador para gestionar proyectos, su Product Backlog y sus sprints, con los datos guardados en PostgreSQL"), con 25 de 25 Story Points completados (HU-07 a HU-13) y las tareas técnicas TEC-04 (interfaz web) y TEC-05 (PostgreSQL en Docker). La interfaz se usa como indica la sección [Interfaz web](#interfaz-web). Ver las actas de [Planning](docs/actas/sprint-2/planning.md), [Review](docs/actas/sprint-2/review.md) y [Retrospectiva](docs/actas/sprint-2/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-2/daily.md).
+
+**Sprint 3 (en curso):** Sprint Goal "Estimar ítems con Planning Poker y registrar el esfuerzo y los defectos de cada sprint, con las fórmulas de las métricas definidas para el Sprint 4", con 29 Story Points comprometidos (HU-18, HU-20 a HU-23, HU-25 a HU-27 y HU-29) y TEC-03. Ver el acta de [Planning](docs/actas/sprint-3/planning.md).
