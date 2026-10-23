@@ -1,16 +1,14 @@
 # Acta de Planning — Sprint 3 (La Estimación)
 
-> **Borrador con propuestas para debatir en el Planning.** Lo marcado como propuesta se confirma o se cambia en la reunión; después se saca este aviso.
-
 > Issue del repositorio: #110
 
 ## Datos generales
 
 - **Proyecto:** Software Metrics & Estimation
-- **Sprint:** Sprint 3 — La Estimación (nombre propuesto, en la línea de «El MVP» y «La Interfaz»)
+- **Sprint:** Sprint 3 — La Estimación
 - **Fecha del Planning:** 23/10/2026
 - **Período del Sprint:** 23/10/2026 al 29/10/2026 (1 semana)
-- **Sprint Goal:** Estimar ítems con Planning Poker y registrar el esfuerzo y los defectos de cada sprint, con las fórmulas de las métricas definidas para el Sprint 4 (propuesta, a confirmar en el Planning).
+- **Sprint Goal:** Estimar ítems con Planning Poker y registrar el esfuerzo y los defectos de cada sprint, con las fórmulas de las métricas definidas para el Sprint 4.
 
 ## Participantes
 
@@ -68,7 +66,7 @@ Pendiente: confirmar con los profesores en este Planning. Los Issues nuevos y lo
 
 Escala Fibonacci, con HU-03 (2 SP) como referencia y las historias de los Sprints 1 y 2 como comparación: HU-04 y HU-10, crear con paquete nuevo, 5 SP; HU-07, modificar, 3 SP; HU-13, cambio de estado, 3 SP. Las tareas técnicas no se estiman en Story Points.
 
-Los Story Points son la propuesta para arrancar el Planning Poker; si la votación da otros valores, se reemplazan en esta tabla y en la de responsables.
+Los Story Points de la tabla son los que el equipo aprobó en el Planning Poker.
 
 | ID | Historia | Story Points | Justificación |
 |---|---|---|---|
@@ -118,7 +116,7 @@ Los Story Points son la propuesta para arrancar el Planning Poker; si la votaci�
 4. **TEC-03 primero:** las fórmulas de las métricas se cierran en este Sprint, porque E9, el dashboard y TEC-08 dependen de ellas.
 5. **Interfaz (TEC-04):** cada historia nueva suma su endpoint bajo `/api/…` y su pantalla en la interfaz web, con los mismos criterios de tests de TEC-04 (un caso exitoso y un test por código de error).
 6. **Acciones de la Retrospectiva del Sprint 2**, todas con trabajo en este Sprint (ver "Definition of Done").
-7. **Mejoras al flujo de trabajo** (propuestas, a confirmar):
+7. **Mejoras al flujo de trabajo:**
    - Un comando de "ponerse al día" para los agentes de IA (traer `main`, leer las reglas, ver PR e Issues abiertos y frenar antes de escribir), para evitar trabajar sobre una copia vieja, como pasó con la SDD de HU-12.
    - El criterio de aceptación en el nombre de cada escenario BDD, por ejemplo "Escenario: … (CA-20.3)", para ver la trazabilidad en la salida de godog.
    - Un documento único de decisiones técnicas con su "por qué" (`docs/decisiones-tecnicas.md`), dentro de TEC-06.
@@ -136,13 +134,11 @@ La del Sprint 2, más las acciones de su Retrospectiva:
 - Toda aprobación de un Pull Request dice qué se ejecutó y qué se revisó; quien ayuda a revisar también deja su comentario (acción 2).
 - Antes de cerrar una historia, el Issue tiene los criterios tildados y la "## Trazabilidad" con el formato de `AGENTS.md` (acción 3).
 - La Daily se publica antes del mediodía y sin campos de la plantilla sin completar (acción 4).
-- Propuestas nuevas, a confirmar en este Planning: línea "Aprobada por" en cada SDD y `go vet ./...` antes del commit RED.
+- Aprobado en este Planning: línea "Aprobada por" en cada SDD y `go vet ./...` antes del commit RED.
 
 ## Responsables
 
 Un responsable por historia o tarea, con las cadenas en una sola persona para que haya menos traspasos, y las historias que bloquean a otras para quien tiene más capacidad según las horas de las Dailys del Sprint 2.
-
-Propuesta, a confirmar en el Planning.
 
 | Integrante | Ítems | Story Points | Motivo |
 |---|---|---|---|
