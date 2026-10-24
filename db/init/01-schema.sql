@@ -58,3 +58,16 @@ CREATE TABLE IF NOT EXISTS efforts (
 
 CREATE INDEX IF NOT EXISTS efforts_sprint_id_idx ON efforts (sprint_id);
 CREATE INDEX IF NOT EXISTS efforts_item_id_idx ON efforts (item_id);
+
+-- Sesiones de Planning Poker (HU-21). Cada sesión pertenece a un ítem del
+-- backlog y guarda sus votos como JSON; el ID es correlativo global
+-- (RN-21.7).
+CREATE TABLE IF NOT EXISTS poker_sessions (
+    id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    item_id      INTEGER NOT NULL REFERENCES backlog_items (id),
+    status       TEXT NOT NULL,
+    round_number INTEGER NOT NULL,
+    votes        JSONB NOT NULL DEFAULT '[]'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS poker_sessions_item_id_idx ON poker_sessions (item_id);

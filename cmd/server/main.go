@@ -13,6 +13,7 @@ import (
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
+	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
 )
@@ -32,10 +33,11 @@ func main() {
 	items := backlog.NewManager(repos.items, projects)
 	sprints := sprint.NewManager(repos.sprints, projects, items)
 	efforts := effort.NewManager(repos.efforts, sprints, items)
+	pokerManager := poker.NewManager(repos.poker, items)
 
 	addr := address(os.Getenv)
 	log.Printf("servidor escuchando en %s (almacenamiento: %s)", addr, cfg.kind)
-	log.Fatal(newServer(addr, httpapi.NewHandler(projects, items, sprints, efforts)).ListenAndServe())
+	log.Fatal(newServer(addr, httpapi.NewHandler(projects, items, sprints, efforts, pokerManager)).ListenAndServe())
 }
 
 // newServer arma el servidor HTTP con timeouts, para que una conexión lenta o
