@@ -122,7 +122,11 @@ $("form-modificar-proyecto").addEventListener("submit", (e) => {
   });
 });
 
-// --- Product Backlog (HU-04 a HU-09) ---
+// --- Product Backlog (HU-04 a HU-09 y HU-20) ---
+
+// escalaStoryPoints es la escala de backlog.StoryPointScale() (HU-20). Un test
+// de internal/httpapi verifica que coincida con la del paquete Go.
+const escalaStoryPoints = [1, 2, 3, 5, 8, 13, 21];
 
 async function cargarBacklog() {
   const orden = $("orden").value;
@@ -132,7 +136,7 @@ async function cargarBacklog() {
   if (items.length === 0) {
     const tr = document.createElement("tr");
     const td = celda("El backlog del proyecto no tiene ítems.");
-    td.colSpan = 7;
+    td.colSpan = 8;
     td.className = "vacio";
     tr.append(td);
     tbody.append(tr);
@@ -157,7 +161,8 @@ function boton(texto, fn, clase) {
 }
 
 // filaItem arma la fila de un ítem con sus acciones: editar (HU-07), cambiar
-// estado (HU-08), asignar al sprint actual (HU-11) y completar (HU-12).
+// estado (HU-08), asignar story points (HU-20), asignar al sprint actual
+// (HU-11) y completar (HU-12).
 function filaItem(it) {
   const tr = document.createElement("tr");
   tr.append(
@@ -165,6 +170,8 @@ function filaItem(it) {
     celda(it.titulo),
     celda(it.prioridad),
     celda(it.estado),
+    // 0 significa sin estimar (TEC-03).
+    celda(it.story_points === 0 ? "—" : it.story_points),
     celda(it.horas_estimadas),
     celda(it.sprint_id === 0 ? "—" : it.sprint_id),
   );
@@ -173,6 +180,12 @@ function filaItem(it) {
   estado.setAttribute("aria-label", "Nuevo estado del ítem " + it.id);
   for (const s of ["PENDIENTE", "EN_CURSO", "TERMINADO"]) {
     estado.append(new Option(s, s, false, s === it.estado));
+  }
+
+  const puntos = document.createElement("select");
+  puntos.setAttribute("aria-label", "Story points del ítem " + it.id);
+  for (const p of escalaStoryPoints) {
+    puntos.append(new Option(p, p, false, p === it.story_points));
   }
 
   const acciones = document.createElement("td");
@@ -184,6 +197,13 @@ function filaItem(it) {
       await api("PATCH", "/items/" + it.id + "/estado", { estado: estado.value });
       await cargarBacklog();
       mostrar("msg-backlog", "Ítem " + it.id + " en estado " + estado.value + ".", false);
+    }, "secundario"),
+    puntos,
+    boton("Asignar SP", async () => {
+      const valor = Number(puntos.value);
+      await api("PATCH", "/items/" + it.id + "/story-points", { story_points: valor });
+      await cargarBacklog();
+      mostrar("msg-backlog", "Ítem " + it.id + " con " + valor + " story points.", false);
     }, "secundario"),
     boton("Asignar al sprint", async () => {
       const sprint = sprintActual();
