@@ -43,3 +43,18 @@ CREATE TABLE IF NOT EXISTS sprints (
 );
 
 CREATE INDEX IF NOT EXISTS sprints_project_id_idx ON sprints (project_id);
+
+-- Esfuerzos reales (HU-26). Las claves foraneas apuntan a items y sprints; la
+-- pertenencia del item al sprint la valida el Manager (RN-26.6).
+CREATE TABLE IF NOT EXISTS efforts (
+    id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    member      TEXT NOT NULL,
+    effort_date TIMESTAMPTZ NOT NULL,
+    activity    TEXT NOT NULL,
+    item_id     INTEGER NOT NULL REFERENCES backlog_items (id),
+    sprint_id   INTEGER NOT NULL REFERENCES sprints (id),
+    hours       DOUBLE PRECISION NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS efforts_sprint_id_idx ON efforts (sprint_id);
+CREATE INDEX IF NOT EXISTS efforts_item_id_idx ON efforts (item_id);

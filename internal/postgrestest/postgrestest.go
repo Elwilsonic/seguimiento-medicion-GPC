@@ -99,7 +99,7 @@ func lock(t testing.TB, pool *pgxpool.Pool) {
 // con cualquier otro pool borraría los datos de esa base.
 func Reset(t testing.TB, pool *pgxpool.Pool) {
 	t.Helper()
-	_, err := pool.Exec(context.Background(), "TRUNCATE sprints, backlog_items, projects RESTART IDENTITY CASCADE")
+	_, err := pool.Exec(context.Background(), "TRUNCATE efforts, sprints, backlog_items, projects RESTART IDENTITY CASCADE")
 	if err != nil {
 		t.Fatalf("vaciar la base de pruebas: %v", err)
 	}

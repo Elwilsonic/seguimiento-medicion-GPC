@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
 	"seguimiento-medicion-gpc/internal/web"
@@ -36,11 +37,12 @@ type server struct {
 	projects *project.Manager
 	items    *backlog.Manager
 	sprints  *sprint.Manager
+	efforts  *effort.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
-func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager) http.Handler {
-	s := &server{projects: projects, items: items, sprints: sprints}
+func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager) http.Handler {
+	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
@@ -54,6 +56,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)
+	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/esfuerzos", s.registerEffort)
 	mux.HandleFunc("GET /api/sprints/{id}/completados", s.listCompletedItems)
 	mux.HandleFunc("POST /api/sprints/{id}/cerrar", s.closeSprint)
 	// La interfaz web responde en / (CA-TEC04.8); las rutas /api/… son más
@@ -113,7 +116,9 @@ func statusFor(err error) int {
 		errors.Is(err, errInvalidDate),
 		errors.Is(err, sprint.ErrEmptyName), errors.Is(err, sprint.ErrEmptyGoal),
 		errors.Is(err, sprint.ErrMissingStartDate), errors.Is(err, sprint.ErrMissingEndDate),
-		errors.Is(err, sprint.ErrEndNotAfterStart):
+		errors.Is(err, sprint.ErrEndNotAfterStart),
+		errors.Is(err, effort.ErrEmptyMember), errors.Is(err, effort.ErrEmptyActivity),
+		errors.Is(err, effort.ErrMissingDate), errors.Is(err, effort.ErrInvalidHours):
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
 		errors.Is(err, sprint.ErrSprintNotFound):

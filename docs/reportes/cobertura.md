@@ -4,31 +4,32 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 
 ## Cobertura actual
 
-- **Fecha:** 23/10/2026
-- **Última historia con cobertura medida:** HU-20 — Asignar story points a un ítem del backlog (rama `feature/HU-20-asignar-story-points`)
-- **Comando:** `go test -race -coverprofile=coverage.out ./...`, sin base, el mismo del CI (job "gofmt y tests"). Los valores de TEC-04 en la columna "Sin base (CI)" se midieron con go1.27.1 linux/amd64, igual que el CI; la medición anterior, del PR #104, sale del log de su CI: [job 118939867266](https://github.com/Elwilsonic/seguimiento-medicion-GPC/actions/runs/39513465321/job/118939867266). Los de HU-20 (`internal/backlog` y el total) se midieron localmente con go1.27.1 windows/amd64 y `go test -count=1 -cover ./...` / `-coverprofile`, sin `-race` (el entorno no tiene cgo); las cifras 83.3% / 100.0% / 80.6% se confirmaron en el CI del PR #118 (job "gofmt y tests", ejecución #59, `go test -race -cover ./...`, Linux).
+- **Fecha:** 24/10/2026
+- **Última historia con cobertura medida:** HU-26 — Registrar esfuerzo (rama `feature/HU-26-registrar-esfuerzo`)
+- **Comando:** `go test -race -coverprofile=coverage.out ./...`, sin base, el mismo del CI (job "gofmt y tests"). HU-26 se midió localmente con go1.27.2 windows/amd64 y `go test -count=1 -cover ./...` / `-coverprofile`, sin `-race` (el entorno no tiene cgo) y sin `TEST_DATABASE_URL`; la comparación con `main` (`ef2c361`) se hizo con el mismo Go en una copia temporal (`git worktree`). Queda pendiente confirmar las cifras en el CI del Pull Request y medir la parte de PostgreSQL con la base levantada. El cambio de go1.27.1 a go1.27.2 alteró el conteo de sentencias: por eso `internal/backlog`, `internal/project` e `internal/sprint` difieren de las cifras de HU-20 y no son comparables con ellas.
 
-| Paquete | Sin base (CI) | Con base (HU-11, última medición con base) |
+| Paquete | Sin base (HU-26, local) | Con base (HU-11, última medición con base) |
 |---|---|---|
-| `cmd/server` | 37.8% | 41.5% |
-| `internal/backlog` | 83.3% | 98.7% |
+| `cmd/server` | 53.1% | 41.5% |
+| `internal/backlog` | 79.9% | 98.7% |
+| `internal/effort` | 74.4% | — |
 | `internal/httpapi` | 100.0% | 100.0% |
 | `internal/web` | 0.0% (100.0% medido junto con `internal/httpapi`) | — |
 | `internal/postgres` | 83.3% | 83.3% |
 | `internal/postgrestest` | 36.8% | 36.8% |
-| `internal/project` | 67.4% | 96.8% |
-| `internal/sprint` | 77.3% | 97.6% |
+| `internal/project` | 64.4% | 96.8% |
+| `internal/sprint` | 75.6% | 97.6% |
 
-`cmd/server` baja de 40.5% a 37.8% porque `main()`, que no tiene tests unitarios, suma las dos líneas que arman el `sprint.Manager` (TEC-04, PR 2); `internal/backlog` (82.0%) incluye HU-09; `internal/httpapi` sigue en 100.0% con los endpoints de ítems y de sprints y la ruta de la interfaz web. `internal/web` (TEC-04, PR 3) figura en 0.0% porque no tiene tests propios: a su única función, `Handler`, la ejecutan los tests de `internal/httpapi`, y con `-coverpkg=./internal/web,./internal/httpapi` queda al 100.0%. El total del perfil de `go test -race -coverprofile=coverage.out ./...` sube de 75.8% (PR #104) a 79.3% (PR #105) y a **79.7%** con la interfaz web. La columna "Con base" conserva la última medición con base (HU-11); HU-13 agrega el `Update` de PostgreSQL, así que esa medición queda pendiente de Buttini o Cardozo. La medición local en Windows queda fuera del reporte: el CI (Linux) es la fuente autoritativa.
+Con HU-26, `internal/effort` entra en 74.4% y `internal/sprint` sube de 74.0% en `main` (`ef2c361`, mismo Go) a 75.6% con `WithOpenSprint`; `internal/httpapi` sigue en 100.0% con el endpoint y la interfaz nuevos. `cmd/server` baja de 54.8% a 53.1% porque `main()` y `newRepositories` suman código nuevo (el `effort.Manager` y la rama de esfuerzos de PostgreSQL) que no se ejecuta sin base. `internal/backlog` (79.9%) e `internal/project` (64.4%) no cambian. El total del perfil sube de 80.0% a **80.4%**. `internal/web` (TEC-04, PR 3) figura en 0.0% porque no tiene tests propios: a su única función, `Handler`, la ejecutan los tests de `internal/httpapi`, y con `-coverpkg=./internal/web,./internal/httpapi` queda al 100.0%. La columna "Con base" conserva la última medición por paquete (HU-11); la medición con base de HU-26 es **94.8%** con `-coverpkg=./...` (total, verificada por Hernán), no por paquete. La medición local en Windows queda fuera del reporte: el CI (Linux) es la fuente autoritativa.
 
 Desde TEC-05, `internal/backlog`, `internal/project` e `internal/sprint` tienen un repositorio PostgreSQL además del de memoria. En el CI no hay base, así que sus tests de integración hacen `t.Skip` y ese código queda sin ejecutar: por eso bajan la cobertura de la columna "Sin base". **La cobertura de la parte de PostgreSQL se mide localmente, con la base levantada** (ver la [evidencia de TEC-05](../evidencias/TEC-05-tdd.md)).
 
 - `go test -cover` mide cada paquete solo con sus propios tests. `internal/postgrestest` queda en 36.8% porque su `Pool`, su lock y su `Reset` los usan los tests de los otros paquetes.
-- El total del perfil sin base es **80.6%** con HU-20 (medido localmente y confirmado en el CI del PR #118, con `-race`; 79.7% en `main` con el mismo comando), después de 79.7% con el PR 3 de TEC-04 (79.3% en el CI del PR #105 y 75.8% en el del PR #104).
-- Con `-coverpkg=./...` (todos los paquetes medidos juntos, con base) el total fue **92.5%** en la última medición con base (HU-11). HU-13 agrega el `Update` de PostgreSQL, así que esa medición queda pendiente.
-- Lo que queda sin cubrir son ramas de error que necesitan que la base falle en un momento puntual (el `GetByID` de sprints en PostgreSQL queda en 85.7% por la misma rama de error genérico que `OpenByProject`), la parte PostgreSQL de `Update` (que se omite sin base) y `main()`.
+- El total del perfil sin base es **80.4%** con HU-26 (medido localmente con go1.27.2; 80.0% en `main` `ef2c361` con el mismo comando), después de 80.6% con HU-20 (go1.27.1, confirmado en el CI del PR #118 con `-race`).
+- Con `-coverpkg=./...` (todos los paquetes medidos juntos, con base) el total fue **94.8%** con HU-26 (medido por Hernán con la base levantada, incluye `postgres_repository.go` de esfuerzos), por encima del 92.5% de la última medición con base (HU-11).
+- Lo que queda sin cubrir son ramas de error que necesitan que la base falle en un momento puntual (el `GetByID` de sprints en PostgreSQL queda en 85.7% por la misma rama de error genérico que `OpenByProject`), la parte PostgreSQL de `Update` y de `Save` de esfuerzos (que se omite sin base) y `main()`.
 
-`cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario. La lógica con decisiones está separada en `address`, `storageConfig`, `newRepositories` y `newServer` (TEC-04), las cuatro con cobertura total.
+`cmd/server` no llega al 100% porque `main()` arranca el servidor y bloquea en `http.ListenAndServe`, así que no se prueba con un test unitario. La lógica con decisiones está separada en `address`, `storageConfig`, `newRepositories` y `newServer` (TEC-04): `address`, `storageConfig` y `newServer` están al 100.0%, y `newRepositories` queda en 83.3% por la rama de PostgreSQL que no se ejecuta sin base.
 
 ```
 $ go test -count=1 -coverpkg=./... -coverprofile=cover.out ./...      (con TEST_DATABASE_URL)
@@ -90,3 +91,4 @@ HU-13 agrega `Close` y `Update` en memoria y PostgreSQL. En el CI, `internal/spr
 | 21/10/2026 | TEC-04 (PR 2) | `internal/httpapi` y `cmd/server` | 100.0% y 37.8% (sin base, mismo comando del CI); total 79.3% | Los endpoints de ítems (HU-05, HU-07, HU-08, HU-09) y de sprints (HU-10 a HU-13) entran con cobertura total, separados en `projects.go`, `items.go` y `sprints.go`; `cmd/server` baja de 40.5% a 37.8% porque `main()` arma el `sprint.Manager`; el total sube de 75.8% a 79.3%; no cambia PostgreSQL |
 | 21/10/2026 | TEC-04 (PR 3) | `internal/web` (nuevo) e `internal/httpapi` | 0.0% propio (100.0% con `-coverpkg` junto a `internal/httpapi`) y 100.0%; total 79.7% | La interfaz web (HTML, JavaScript y CSS embebidos) se sirve en `/`; `web.Handler` lo cubren los tests de `internal/httpapi`; el JavaScript no entra en la cobertura de Go y se verificó con el recorrido en el navegador de la evidencia; el total sube de 79.3% a 79.7%; no cambia PostgreSQL |
 | 23/10/2026 | HU-20 | `internal/backlog` e `internal/httpapi` | 83.3% y 100.0% (sin base); total 80.6%; confirmadas en el CI del PR #118 (con `-race`) | `StoryPointScale`, `AssignStoryPoints` (`story_points.go`), el handler `assignStoryPoints` y `statusFor` entran con cobertura total (100.0%); `internal/backlog` sube de 82.0% en `main` (`e04c875`, medido con el mismo comando en una copia temporal) a 83.3% y el total de 79.7% a 80.6%; medido localmente en Windows con `go test -count=1 -cover ./...` y `-coverprofile`, sin `TEST_DATABASE_URL`; HU-20 no cambia la interfaz `Repository` ni el esquema de PostgreSQL, así que no se repitió la medición con base; `-race` (CA-20.7) no se corrió localmente (sin cgo) y el CI del PR #118 (ejecución #59, Linux) pasó con `go test -race -cover ./...`, sin carreras y con las mismas cifras |
+| 24/10/2026 | HU-26 | `internal/effort` (nuevo), `internal/sprint`, `internal/httpapi` y `cmd/server` | 74.4%, 75.6%, 100.0% y 53.1% (local, sin base); total 80.4%; con base: 94.8% con `-coverpkg=./...` | `Register`, `NewManager`, `Save` en memoria y `WithOpenSprint` entran con cobertura total (100.0%); `internal/effort` queda en 74.4% sin base porque `postgres_repository.go` no se ejecuta sin `TEST_DATABASE_URL`; `internal/sprint` sube de 74.0% en `main` (`ef2c361`, mismo Go) a 75.6%, `internal/httpapi` sigue en 100.0% y el total sube de 80.0% a 80.4%; `cmd/server` baja de 54.8% a 53.1% por el código nuevo de `main()` y `newRepositories`; con la base levantada, Hernán midió 94.8% con `-coverpkg=./...`; la confirmación en el CI del PR queda pendiente; `-race` (CA-26.10) lo corrió Hernán contra la base y lo verifica el CI del Pull Request |

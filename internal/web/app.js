@@ -327,3 +327,25 @@ $("cerrar-sprint").addEventListener("click", () =>
     mostrar("msg-sprints", "Sprint " + s.id + " cerrado.", false);
   }),
 );
+
+// HU-26 · Registrar esfuerzo (CA-26.11). Usa el sprint actual y el ítem
+// indicado; al terminar recarga el backlog y muestra el ID del esfuerzo.
+const formEsfuerzo = $("form-registrar-esfuerzo");
+formEsfuerzo.setAttribute("aria-label", "Registrar esfuerzo");
+formEsfuerzo.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-sprints", async () => {
+    const sprint = sprintActual();
+    const item = form.item_id.value.trim();
+    const esfuerzo = await api("POST", "/sprints/" + sprint + "/items/" + item + "/esfuerzos", {
+      integrante: form.integrante.value,
+      fecha: form.fecha.value,
+      actividad: form.actividad.value,
+      horas: Number(form.horas.value),
+    });
+    form.reset();
+    await cargarBacklog();
+    mostrar("msg-sprints", "Esfuerzo " + esfuerzo.id + " registrado para el ítem " + esfuerzo.item_id + ".", false);
+  });
+});
