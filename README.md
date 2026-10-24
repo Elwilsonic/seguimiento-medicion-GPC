@@ -33,13 +33,14 @@ El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de 
 
 ### Interfaz web
 
-Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con tres secciones:
+Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con cuatro secciones:
 
 1. **Proyectos:** crear un proyecto (queda como "proyecto actual"), modificar su nombre, descripción y estado.
-2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarle story points de la escala 1, 2, 3, 5, 8, 13 o 21 con "Asignar SP" (columna SP; "—" si no está estimado, HU-20), asignarlo al sprint actual o completarlo.
-3. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo y registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26).
+2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarle story points de la escala 1, 2, 3, 5, 8, 13 o 21 con "Asignar SP" (columna SP; "—" si no está estimado, HU-20), abrir una sesión de Planning Poker con "Abrir Poker" (HU-21), asignarlo al sprint actual o completarlo.
+3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21).
+4. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo y registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26).
 
-Un recorrido típico: crear un proyecto, cargar sus ítems, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", completarlos, ver los completados y cerrar el sprint.
+Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de Planning Poker para un ítem, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", completarlos, ver los completados y cerrar el sprint.
 
 - **Proyecto y sprint actuales:** la aplicación todavía no tiene listados de proyectos ni de sprints (ninguna historia los pide), así que se eligen por su ID en los campos de arriba. Al crear un proyecto o un sprint, su ID se completa solo; para volver a un proyecto existente, escribí su ID y tocá "Cargar proyecto".
 - **Errores:** si la aplicación rechaza un dato (por ejemplo, un nombre de proyecto repetido o un ítem sin criterios de aceptación), el mensaje aparece en un recuadro rojo debajo de la sección.
@@ -62,6 +63,7 @@ La API responde bajo el prefijo `/api` (TEC-04).
 | `PUT` | `/api/items/{id}` | Modificar título, descripción, prioridad, criterios y horas estimadas (HU-07) |
 | `PATCH` | `/api/items/{id}/estado` | Cambiar el estado de un ítem (HU-08) |
 | `PATCH` | `/api/items/{id}/story-points` | Asignar o reestimar los story points de un ítem: 1, 2, 3, 5, 8, 13 o 21 (HU-20) |
+| `POST` | `/api/items/{id}/poker-sessions` | Abrir una sesión de Planning Poker para un ítem (HU-21) |
 | `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
 | `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
 | `POST` | `/api/sprints/{id}/items/{itemId}/completar` | Marcar como TERMINADO un ítem del sprint (HU-12) |
@@ -114,7 +116,7 @@ docker compose up -d --wait
 Levanta PostgreSQL 17 con la configuración del archivo `.env`, si existe. Si no existe, usa los valores de desarrollo de [`.env.example`](.env.example) (usuario `gpc`, base `gpc`). Para cambiarlos, copiá `.env.example` como `.env`: el `.env` real no se sube al repositorio.
 
 - **Puerto 5433:** la base se publica en `127.0.0.1:5433`, no en el 5432, para no chocar con un PostgreSQL instalado en el sistema, que normalmente usa el 5432. Si el 5433 también está ocupado, cambiá `POSTGRES_PORT` en el `.env` (y el puerto en las URL).
-- **Esquema:** los scripts de [`db/init/`](db/init/) crean las tablas en la base `gpc` y una base de pruebas `gpc_test` con el mismo esquema. **Solo corren la primera vez, cuando el volumen de datos está vacío.** Si después cambia el esquema, hay que borrar el volumen con `docker compose down -v` (eso **borra todos los datos**) y volver a levantar la base. **HU-11 agrega la columna `sprint_id` a `backlog_items` y HU-26 la tabla `efforts`:** una base creada antes de esas historias no las tiene, así que hay que recrearla (`docker compose down -v` y después `docker compose up -d --wait`).
+- **Esquema:** los scripts de [`db/init/`](db/init/) crean las tablas en la base `gpc` y una base de pruebas `gpc_test` con el mismo esquema. **Solo corren la primera vez, cuando el volumen de datos está vacío.** Si después cambia el esquema, hay que borrar el volumen con `docker compose down -v` (eso **borra todos los datos**) y volver a levantar la base. **HU-11 agrega la columna `sprint_id` a `backlog_items`, HU-26 la tabla `efforts` y HU-21 la tabla `poker_sessions`:** una base creada antes de esas historias no las tiene, así que hay que recrearla (`docker compose down -v` y después `docker compose up -d --wait`).
 - **Datos:** quedan en el volumen `gpc-data`, así que se conservan al reiniciar la aplicación y al hacer `docker compose down` (sin `-v`).
 
 Para ver que la base está lista: `docker compose ps` (estado `healthy`) y `docker compose port postgres 5432` (tiene que mostrar `127.0.0.1:5433`).
@@ -240,6 +242,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
 | HU-20 | [#38](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/38) | Asignar story points a un ítem del backlog | [SDD](docs/especificaciones/HU-20-asignar-story-points.md) | [BDD](features/HU-20-asignar-story-points.feature) | [Evidencia](docs/evidencias/HU-20-tdd.md) | [#118](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/118) |
+| HU-21 | [#39](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/39) | Abrir una sesión de Planning Poker | [SDD](docs/especificaciones/HU-21-abrir-sesion-planning-poker.md) | [BDD](features/HU-21-abrir-sesion-planning-poker.feature) | [Evidencia](docs/evidencias/HU-21-tdd.md) | — |
 | HU-26 | [#44](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/44) | Registrar esfuerzo realizado en una historia | [SDD](docs/especificaciones/HU-26-registrar-esfuerzo.md) | [BDD](features/HU-26-registrar-esfuerzo.feature) | [Evidencia](docs/evidencias/HU-26-tdd.md) | [#120](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/120) |
 
 ## Estructura del repositorio
