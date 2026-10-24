@@ -26,8 +26,9 @@ La especificación SDD se aprobó antes de escribir los tests. El ciclo se ejecu
 - **7 escenarios BDD** en `features/HU-21-abrir-sesion-planning-poker.feature` (37 pasos), automatizados con godog.
 - **23 funciones `Test` nuevas**, incluida la que ejecuta los escenarios BDD.
 - **16 subtests explícitos**: 2 de `TestOpenSession_ErrorDelRepositorioSEPropaga`, 7 del contrato en memoria y 7 del contrato PostgreSQL.
-- En el RED, **18 funciones fallan, 3 se omiten y 2 pasan**. Las omitidas son las que necesitan `TEST_DATABASE_URL`; las dos que pasan ya tenían el comportamiento esperado (`TestAbrirSesionPoker_IDNoNumericoDevuelve400` y `TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle`).
-- De los 16 subtests, **9 fallan** (los 2 del error de repositorio y los 7 del contrato en memoria) y **7 se omiten** (el contrato PostgreSQL).
+- En la corrida local sin base del RED, **18 funciones fallan, 3 se omiten y 2 pasan**. Las omitidas son las que necesitan `TEST_DATABASE_URL`; las dos que pasan son `TestAbrirSesionPoker_IDNoNumericoDevuelve400` y `TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle`.
+- En la corrida con base del RED, **20 funciones fallan y 3 pasan**: fallan 14 de `internal/poker` (incluidos los 2 de PostgreSQL) y 6 de `internal/httpapi`; pasan los 2 tests HTTP anteriores y `TestNewRepositories_PostgresUsaElRepositorioDePoker`.
+- De los 16 subtests, **9 fallan** (los 2 del error de repositorio y los 7 del contrato en memoria) y **7 se omiten** (el contrato PostgreSQL) sin base.
 
 ## Fase RED
 
@@ -132,6 +133,12 @@ ok  	seguimiento-medicion-gpc/internal/poker	5.140s
 
 No se modificaron los tests entre el RED y el GREEN.
 
+## Desviación del ciclo TDD
+
+`TestNewRepositories_PostgresUsaElRepositorioDePoker` ya pasa en el RED con base porque `02c6b82` incluía `poker.NewPostgresRepository(pool)` en `cmd/server/repositories.go`, aunque `PostgresRepository.Save` y `OpenByItem` todavía devolvían el stub. No es comportamiento preexistente de otra historia: es el wiring de HU-21 adelantado en el commit RED. Sin base, ese test se omite.
+
+En la corrida local sin base, los 2 tests que pasaban en el RED eran `TestAbrirSesionPoker_IDNoNumericoDevuelve400` y `TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle`; con base, el tercero que pasa es `TestNewRepositories_PostgresUsaElRepositorioDePoker`. Los tests no se modificaron para que el RED pasara.
+
 ## Refactor
 
 No se hizo. El paquete `internal/poker` sigue el patrón de `internal/backlog` y `internal/sprint` (manager con mutex, repositorios detrás de una interfaz y validaciones en el manager), y el handler reutiliza `pathID`, `writeError` y `writeJSON`. No había duplicación ni una mejora estructural que justificara un commit separado.
@@ -203,13 +210,21 @@ cmd/server/storage.go:32:			storageConfig		100.0%
 total:									(statements)		79.1%
 ```
 
-`internal/poker` queda en 54.4% porque `postgres_repository.go` no se ejecuta sin `TEST_DATABASE_URL`; con la base levantada se miden sus tests de integración. `openPokerSession` queda en 75.0% por la rama defensiva de método no permitido, que la ruta ya resuelve con `methodNotAllowed`. `main()` queda en 0.0% porque bloquea en `ListenAndServe` y `newRepositories` en 83.3% por la rama PostgreSQL.
+`internal/poker` queda en 54.4% sin base porque `postgres_repository.go` no se ejecuta sin `TEST_DATABASE_URL`; con la base levantada se miden sus tests de integración. `openPokerSession` queda en 75.0% por la rama defensiva de método no permitido, que la ruta ya resuelve con `methodNotAllowed`. `main()` queda en 0.0% porque bloquea en `ListenAndServe` y `newRepositories` en 83.3% por la rama PostgreSQL.
 
-Comparación con `main` (`194ebe4`) medida con el mismo go1.27.1 en una copia temporal: el total pasa de **80.9%** a **79.1%**. `internal/httpapi` baja de 100.0% a 98.6% por el handler nuevo, `cmd/server` de 35.4% a 33.3% por el wiring de poker y el paquete nuevo `internal/poker` entra en 54.4%. `internal/backlog`, `internal/effort`, `internal/postgres`, `internal/postgrestest`, `internal/project` e `internal/sprint` conservan sus porcentajes.
+Comparación con `main` (`194ebe4`) medida con el mismo go1.27.1 en una copia temporal: el total sin base pasa de **80.9%** a **79.1%**. `internal/httpapi` baja de 100.0% a 98.6% por el handler nuevo, `cmd/server` de 35.4% a 33.3% por el wiring de poker y el paquete nuevo `internal/poker` entra en 54.4%. `internal/backlog`, `internal/effort`, `internal/postgres`, `internal/postgrestest`, `internal/project` e `internal/sprint` conservan sus porcentajes.
+
+### Corrida con base (Hernán)
+
+Hernán corrió el ciclo con PostgreSQL 16 y `TEST_DATABASE_URL`:
+
+- RED (`02c6b82`): fallan 14 tests de `internal/poker` (incluidos los 2 de PostgreSQL) y 6 de `internal/httpapi`; pasan los 2 tests HTTP que ya tenían el comportamiento esperado y `TestNewRepositories_PostgresUsaElRepositorioDePoker`.
+- GREEN (`053c5da`): pasa todo, sin ningún SKIP, y `go test -race ./...` también pasa.
+- Cobertura con base: `internal/poker` **94.7%** y **94.2%** de total con `-coverpkg=./...`.
 
 ### go test -race
 
-En este entorno (Windows, `CGO_ENABLED=0`) `-race` no está disponible. El test de concurrencia `TestOpenSession_ConcurrenteSoloUnaSesionAbierta` pasa sin `-race` localmente; la verificación con `-race` (CA-21.6) queda a cargo del CI del Pull Request.
+En este entorno local (Windows, `CGO_ENABLED=0`) `-race` no está disponible. Hernán verificó `go test -race ./...` con PostgreSQL 16 sobre `053c5da`, sin SKIP y sin condiciones de carrera. El test de concurrencia `TestOpenSession_ConcurrenteSoloUnaSesionAbierta` también pasa sin `-race` localmente; CA-21.6 queda verificado por esa corrida y por el CI del Pull Request.
 
 ## Commits
 
