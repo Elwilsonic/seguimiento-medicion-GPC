@@ -12,6 +12,7 @@ import (
 
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/effort"
+	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
 	"seguimiento-medicion-gpc/internal/web"
@@ -38,11 +39,12 @@ type server struct {
 	items    *backlog.Manager
 	sprints  *sprint.Manager
 	efforts  *effort.Manager
+	poker    *poker.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
-func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager) http.Handler {
-	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts}
+func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager) http.Handler {
+	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
@@ -53,6 +55,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PUT /api/items/{id}", s.updateItem)
 	mux.HandleFunc("PATCH /api/items/{id}/estado", s.changeItemStatus)
 	mux.HandleFunc("PATCH /api/items/{id}/story-points", s.assignStoryPoints)
+	mux.HandleFunc("POST /api/items/{id}/poker-sessions", s.openPokerSession)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)

@@ -5,6 +5,7 @@ import (
 
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/effort"
+	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/postgres"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
@@ -17,6 +18,7 @@ type repositories struct {
 	items    backlog.Repository
 	sprints  sprint.Repository
 	efforts  effort.Repository
+	poker    poker.Repository
 }
 
 // newRepositories arma los repositorios según cfg y devuelve la función que
@@ -34,6 +36,7 @@ func newRepositories(ctx context.Context, cfg storage) (repositories, func(), er
 			items:    backlog.NewPostgresRepository(pool),
 			sprints:  sprint.NewPostgresRepository(pool),
 			efforts:  effort.NewPostgresRepository(pool),
+			poker:    poker.NewPostgresRepository(pool),
 		}, pool.Close, nil
 	}
 	return repositories{
@@ -41,5 +44,6 @@ func newRepositories(ctx context.Context, cfg storage) (repositories, func(), er
 		items:    backlog.NewMemoryRepository(),
 		sprints:  sprint.NewMemoryRepository(),
 		efforts:  effort.NewMemoryRepository(),
+		poker:    poker.NewMemoryRepository(),
 	}, func() {}, nil
 }

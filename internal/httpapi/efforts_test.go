@@ -8,6 +8,7 @@ import (
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
+	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
 )
@@ -220,7 +221,8 @@ func TestRegistrarEsfuerzo_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	efforts := effort.NewManager(brokenEffortRepository{}, sprints, items)
-	h := httpapi.NewHandler(projects, items, sprints, efforts)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager)
 
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)

@@ -126,3 +126,26 @@ func TestInterfaz_SelectDeStoryPointsUsaLaEscalaDelBacklog(t *testing.T) {
 		t.Errorf("app.js no define %s", want)
 	}
 }
+
+// HU-21 · Abrir una sesión de Planning Poker (Issue #39)
+//
+// Trazabilidad: CA-21.7, desde el backlog se abre una sesión y la interfaz
+// muestra sus datos y las cartas. El recorrido en el navegador queda en la
+// evidencia TDD.
+
+func TestInterfaz_BacklogPermiteAbrirPlanningPoker(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{"Planning Poker", `id="datos-poker"`, `id="cartas-poker"`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/poker-sessions"`, `"Abrir Poker"`, "s.cartas"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
