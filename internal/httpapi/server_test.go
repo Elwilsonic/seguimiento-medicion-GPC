@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
@@ -58,7 +59,8 @@ func newHandler() http.Handler {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	return httpapi.NewHandler(projects, items, sprints)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	return httpapi.NewHandler(projects, items, sprints, efforts)
 }
 
 // do hace un pedido a la API y verifica que la respuesta sea JSON.
@@ -376,7 +378,9 @@ func (brokenRepository) Update(project.Project) (project.Project, error) {
 func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
-	h := httpapi.NewHandler(projects, items, sprint.NewManager(sprint.NewMemoryRepository(), projects, items))
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	h := httpapi.NewHandler(projects, items, sprints, efforts)
 
 	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas"}`)
 

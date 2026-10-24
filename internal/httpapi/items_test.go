@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
@@ -290,7 +291,9 @@ func (brokenItemRepository) Update(backlog.Item) (backlog.Item, error) {
 func TestAsignarStoryPoints_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(brokenItemRepository{}, projects)
-	h := httpapi.NewHandler(projects, items, sprint.NewManager(sprint.NewMemoryRepository(), projects, items))
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	h := httpapi.NewHandler(projects, items, sprints, efforts)
 
 	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":5}`)
 

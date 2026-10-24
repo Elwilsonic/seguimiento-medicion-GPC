@@ -86,6 +86,29 @@ func TestInterfaz_TablaDelBacklogMuestraYAsignaStoryPoints(t *testing.T) {
 // CA-20.8 y SDD de HU-20 ("Escala de Story Points"): el select de app.js usa
 // los mismos valores que backlog.StoryPointScale(), para que la interfaz no se
 // desincronice de la escala del paquete.
+// HU-26 · Registrar esfuerzo (Issue #44)
+//
+// Trazabilidad: CA-26.11. La interfaz tiene un formulario para registrar el
+// esfuerzo y el campo Horas acepta cualquier decimal positivo (step="any"),
+// igual que la API.
+
+func TestInterfaz_FormularioDeEsfuerzoUsaStepAny(t *testing.T) {
+	h := newHandler()
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{`id="form-registrar-esfuerzo"`, `name="horas"`, `type="number"`, `step="any"`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %s", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/esfuerzos"`, `"Registrar esfuerzo"`, `"Esfuerzo "`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %s", want)
+		}
+	}
+}
+
 func TestInterfaz_SelectDeStoryPointsUsaLaEscalaDelBacklog(t *testing.T) {
 	scale := backlog.StoryPointScale()
 	if len(scale) == 0 {
