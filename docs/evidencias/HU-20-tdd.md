@@ -5,7 +5,7 @@
 - **Responsable:** Cardozo Leandro
 - **Rama:** `feature/HU-20-asignar-story-points`
 - **Fecha:** 23/10/2026
-- **Go:** go1.27.1 windows/amd64 (el entorno local no tiene cgo, así que `go test -race` lo verifica el CI del Pull Request; ver la sección de `go test -race`)
+- **Go:** go1.27.1 windows/amd64 (el entorno local no tiene cgo, así que `go test -race` se verificó en el CI del Pull Request #118; ver la sección de `go test -race`)
 - **Especificación SDD:** [`docs/especificaciones/HU-20-asignar-story-points.md`](../especificaciones/HU-20-asignar-story-points.md), aprobada por Peñalbé Hernán (Agile Enabler) el 23/10/2026
 - **Escenarios BDD:** [`features/HU-20-asignar-story-points.feature`](../../features/HU-20-asignar-story-points.feature) (ejecutados con godog v0.16.0)
 
@@ -231,11 +231,15 @@ $ go tool cover -func=cover-main.out | tail -n 1
 total:									(statements)		79.7%
 ```
 
-`internal/backlog` sube de 82.0% a 83.3% e `internal/httpapi` sigue en 100.0%. El total del perfil sin base sube de 79.7% a **80.6%**. Las mediciones son locales (Windows, sin `TEST_DATABASE_URL`, sin `-race`); los valores del CI del Pull Request (Linux, con `-race`) son la fuente autoritativa. HU-20 no cambia la interfaz `Repository` ni el esquema de PostgreSQL (la columna `story_points` ya existía y `Update` ya la escribía), así que no se repitió la medición con base.
+`internal/backlog` sube de 82.0% a 83.3% e `internal/httpapi` sigue en 100.0%. El total del perfil sin base sube de 79.7% a **80.6%**. Esas mediciones fueron locales (Windows, sin `TEST_DATABASE_URL`, sin `-race`).
+
+**Resultado del CI del Pull Request #118** (Linux, con `-race`; job "gofmt y tests", ejecución #59, `go test -race -cover ./...`): todos los paquetes en `ok` y sin carreras, con `internal/backlog` en **83.3%**, `internal/httpapi` en **100.0%** y un total de **80.6%**, las mismas cifras que la medición local. HU-20 no cambia la interfaz `Repository` ni el esquema de PostgreSQL (la columna `story_points` ya existía y `Update` ya la escribía), así que no se repitió la medición con base.
 
 ### go test -race (CA-20.7)
 
-En este entorno (Windows, `CGO_ENABLED=0`, sin compilador C) `-race` no está disponible. Lo verifica el job "gofmt y tests" del CI del Pull Request, que corre `go test -race -coverprofile=coverage.out ./...`. Sin `-race`, los tests de concurrencia pasan 30 de 30 veces (ver la fase GREEN).
+En este entorno (Windows, `CGO_ENABLED=0`, sin compilador C) `-race` no está disponible. Localmente, sin `-race`, los tests de concurrencia pasaron 30 de 30 veces (ver la fase GREEN).
+
+**Resultado del CI del Pull Request #118** (Linux; job "gofmt y tests", ejecución #59, `go test -race -cover ./...`): en verde, todos los paquetes en `ok` y sin carreras reportadas, con `internal/backlog` en 83.3%, `internal/httpapi` en 100.0% y un total de 80.6%.
 
 ### Recorrido en el navegador (CA-20.8)
 

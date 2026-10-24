@@ -237,7 +237,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
-| HU-20 | [#38](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/38) | Asignar story points a un ítem del backlog | [SDD](docs/especificaciones/HU-20-asignar-story-points.md) | [BDD](features/HU-20-asignar-story-points.feature) | [Evidencia](docs/evidencias/HU-20-tdd.md) | (pendiente) |
+| HU-20 | [#38](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/38) | Asignar story points a un ítem del backlog | [SDD](docs/especificaciones/HU-20-asignar-story-points.md) | [BDD](features/HU-20-asignar-story-points.feature) | [Evidencia](docs/evidencias/HU-20-tdd.md) | [#118](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/118) |
 
 ## Estructura del repositorio
 
