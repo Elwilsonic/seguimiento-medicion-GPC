@@ -3,8 +3,11 @@ package httpapi_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
+
+	"seguimiento-medicion-gpc/internal/backlog"
 )
 
 // TEC-04 · Interfaz usable (Issue #34)
@@ -56,5 +59,47 @@ func TestInterfaz_SirveLosArchivosEstaticos(t *testing.T) {
 				t.Error("el archivo está vacío")
 			}
 		})
+	}
+}
+
+// HU-20 · Asignar story points a un ítem del backlog (Issue #38)
+//
+// Trazabilidad: CA-20.8, la tabla del backlog muestra los story points de cada
+// ítem y permite asignarlos. El recorrido en el navegador queda en la
+// evidencia TDD.
+
+func TestInterfaz_TablaDelBacklogMuestraYAsignaStoryPoints(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	if !strings.Contains(page, "<th>SP</th>") {
+		t.Error("la tabla del backlog no tiene la columna SP")
+	}
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/story-points"`, `"Asignar SP"`, "it.story_points"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %s", want)
+		}
+	}
+}
+
+// CA-20.8 y SDD de HU-20 ("Escala de Story Points"): el select de app.js usa
+// los mismos valores que backlog.StoryPointScale(), para que la interfaz no se
+// desincronice de la escala del paquete.
+func TestInterfaz_SelectDeStoryPointsUsaLaEscalaDelBacklog(t *testing.T) {
+	scale := backlog.StoryPointScale()
+	if len(scale) == 0 {
+		t.Fatal("backlog.StoryPointScale() devolvió una lista vacía")
+	}
+	values := make([]string, len(scale))
+	for i, v := range scale {
+		values[i] = strconv.Itoa(v)
+	}
+	want := "const escalaStoryPoints = [" + strings.Join(values, ", ") + "];"
+
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if !strings.Contains(js, want) {
+		t.Errorf("app.js no define %s", want)
 	}
 }

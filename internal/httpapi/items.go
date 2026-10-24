@@ -1,10 +1,12 @@
 package httpapi
 
-// Handlers del Product Backlog y sus ítems: HU-04 y HU-06 desde TEC-01, y
-// HU-05, HU-07, HU-08 y HU-09 desde TEC-04 (CA-TEC04.9).
+// Handlers del Product Backlog y sus ítems: HU-04 y HU-06 desde TEC-01,
+// HU-05, HU-07, HU-08 y HU-09 desde TEC-04 (CA-TEC04.9), y HU-20 (CA-20.8).
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"seguimiento-medicion-gpc/internal/backlog"
 )
@@ -20,6 +22,13 @@ type itemRequest struct {
 
 type statusRequest struct {
 	Estado string `json:"estado"`
+}
+
+// storyPointsRequest lee story_points como json.Number para que un decimal,
+// un número enorme, null o el campo ausente respondan con el error de la
+// escala y no con el de JSON inválido (SDD de HU-20).
+type storyPointsRequest struct {
+	StoryPoints json.Number `json:"story_points"`
 }
 
 type itemResponse struct {
@@ -129,6 +138,32 @@ func (s *server) changeItemStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	it, err := s.items.ChangeStatus(id, req.Estado)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toItemResponse(it))
+}
+
+// HU-20
+func (s *server) assignStoryPoints(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var req storyPointsRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
+		return
+	}
+	// Lo que no es un entero representable no puede estar en la escala.
+	points, err := strconv.Atoi(req.StoryPoints.String())
+	if err != nil {
+		writeError(w, backlog.ErrInvalidStoryPoints)
+		return
+	}
+	it, err := s.items.AssignStoryPoints(id, points)
 	if err != nil {
 		writeError(w, err)
 		return

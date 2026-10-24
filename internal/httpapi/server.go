@@ -50,6 +50,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("GET /api/items/{id}", s.getItem)
 	mux.HandleFunc("PUT /api/items/{id}", s.updateItem)
 	mux.HandleFunc("PATCH /api/items/{id}/estado", s.changeItemStatus)
+	mux.HandleFunc("PATCH /api/items/{id}/story-points", s.assignStoryPoints)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)
@@ -108,7 +109,8 @@ func statusFor(err error) int {
 		errors.Is(err, project.ErrEmptyName), errors.Is(err, project.ErrInvalidStatus),
 		errors.Is(err, backlog.ErrEmptyTitle), errors.Is(err, backlog.ErrInvalidPriority),
 		errors.Is(err, backlog.ErrNoAcceptanceCriteria), errors.Is(err, backlog.ErrInvalidEstimatedHours),
-		errors.Is(err, backlog.ErrInvalidStatus), errors.Is(err, errInvalidDate),
+		errors.Is(err, backlog.ErrInvalidStatus), errors.Is(err, backlog.ErrInvalidStoryPoints),
+		errors.Is(err, errInvalidDate),
 		errors.Is(err, sprint.ErrEmptyName), errors.Is(err, sprint.ErrEmptyGoal),
 		errors.Is(err, sprint.ErrMissingStartDate), errors.Is(err, sprint.ErrMissingEndDate),
 		errors.Is(err, sprint.ErrEndNotAfterStart):
@@ -117,7 +119,8 @@ func statusFor(err error) int {
 		errors.Is(err, sprint.ErrSprintNotFound):
 		return http.StatusNotFound
 	case errors.Is(err, project.ErrDuplicateName), errors.Is(err, backlog.ErrInvalidTransition),
-		errors.Is(err, backlog.ErrItemAlreadyAssigned), errors.Is(err, sprint.ErrOpenSprintExists),
+		errors.Is(err, backlog.ErrItemAlreadyAssigned), errors.Is(err, backlog.ErrItemFinished),
+		errors.Is(err, sprint.ErrOpenSprintExists),
 		errors.Is(err, sprint.ErrItemFromAnotherProject), errors.Is(err, sprint.ErrSprintClosed),
 		errors.Is(err, sprint.ErrItemNotAssignedToSprint):
 		return http.StatusConflict

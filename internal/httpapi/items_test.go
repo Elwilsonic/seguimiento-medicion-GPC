@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/project"
+	"seguimiento-medicion-gpc/internal/sprint"
 )
 
 // TEC-04 · Interfaz usable (Issue #34)
@@ -164,4 +166,145 @@ func TestListarBacklogPorPrioridad_ProyectoInexistenteDevuelve404(t *testing.T) 
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/999/backlog?orden=prioridad", "")
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
+}
+
+// HU-20 · Asignar story points a un ítem del backlog (Issue #38)
+//
+// Trazabilidad: CA-20.8, PATCH /api/items/{id}/story-points expone HU-20.
+// Hay un caso exitoso y un test por código de error (400, 404, 409, 413 y
+// 500); el 413 y el texto después del JSON están en bodyEndpoints
+// (server_test.go).
+
+func TestAsignarStoryPoints_Devuelve200ConLosStoryPointsAsignados(t *testing.T) {
+	h := newHandlerWithItem(t)
+
+	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":5}`)
+
+	expectStatus(t, rec, http.StatusOK)
+	var it itemJSON
+	decode(t, rec, &it)
+	if it.ID != 1 || it.StoryPoints != 5 || it.Titulo != "Login de usuarios" || it.Estado != "PENDIENTE" {
+		t.Errorf("ítem = %+v, se esperaba el ítem 1 con 5 story points", it)
+	}
+
+	// La consulta posterior devuelve los story points asignados.
+	rec = do(t, h, http.MethodGet, "/api/items/1", "")
+	var got itemJSON
+	decode(t, rec, &got)
+	if got.StoryPoints != 5 {
+		t.Errorf("story points consultados = %d, se esperaban 5", got.StoryPoints)
+	}
+}
+
+// SDD de HU-20, caso límite: con json.Number, el texto "5" se acepta como 5.
+func TestAsignarStoryPoints_TextoNumericoSeAceptaComoNumero(t *testing.T) {
+	h := newHandlerWithItem(t)
+
+	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":"8"}`)
+
+	expectStatus(t, rec, http.StatusOK)
+	var it itemJSON
+	decode(t, rec, &it)
+	if it.StoryPoints != 8 {
+		t.Errorf("story points = %d, se esperaban 8", it.StoryPoints)
+	}
+}
+
+func TestAsignarStoryPoints_ValorFueraDeLaEscalaDevuelve400(t *testing.T) {
+	cases := map[string]string{
+		"cero":          `{"story_points":0}`,
+		"negativo":      `{"story_points":-1}`,
+		"intermedio":    `{"story_points":4}`,
+		"mayor que 21":  `{"story_points":22}`,
+		"decimal":       `{"story_points":2.5}`,
+		"número enorme": `{"story_points":1e400}`,
+		"null":          `{"story_points":null}`,
+		"campo ausente": `{}`,
+	}
+	for name, body := range cases {
+		t.Run(name, func(t *testing.T) {
+			h := newHandlerWithItem(t)
+
+			rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", body)
+
+			expectError(t, rec, http.StatusBadRequest, backlog.ErrInvalidStoryPoints.Error())
+			expectItemWithoutStoryPoints(t, h)
+		})
+	}
+}
+
+func TestAsignarStoryPoints_JSONInvalidoDevuelve400(t *testing.T) {
+	cases := map[string]string{
+		"no es JSON":        `story_points=5`,
+		"valor no numérico": `{"story_points":true}`,
+	}
+	for name, body := range cases {
+		t.Run(name, func(t *testing.T) {
+			h := newHandlerWithItem(t)
+
+			rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", body)
+
+			expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
+			expectItemWithoutStoryPoints(t, h)
+		})
+	}
+}
+
+func TestAsignarStoryPoints_IDNoNumericoDevuelve400(t *testing.T) {
+	rec := do(t, newHandlerWithItem(t), http.MethodPatch, "/api/items/abc/story-points", `{"story_points":5}`)
+
+	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+}
+
+func TestAsignarStoryPoints_InexistenteDevuelve404(t *testing.T) {
+	rec := do(t, newHandler(), http.MethodPatch, "/api/items/999/story-points", `{"story_points":5}`)
+
+	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
+}
+
+func TestAsignarStoryPoints_ItemTerminadoDevuelve409(t *testing.T) {
+	h := newHandlerWithItem(t)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/items/1/estado", `{"estado":"EN_CURSO"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/items/1/estado", `{"estado":"TERMINADO"}`), http.StatusOK)
+
+	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":8}`)
+
+	expectError(t, rec, http.StatusConflict, backlog.ErrItemFinished.Error())
+	expectItemWithoutStoryPoints(t, h)
+}
+
+// brokenItemRepository es un repositorio de ítems que siempre falla.
+type brokenItemRepository struct{}
+
+func (brokenItemRepository) Save(backlog.Item) (backlog.Item, error) {
+	return backlog.Item{}, errStorage
+}
+func (brokenItemRepository) ListByProject(int) ([]backlog.Item, error) { return nil, errStorage }
+func (brokenItemRepository) GetByID(int) (backlog.Item, error) {
+	return backlog.Item{}, errStorage
+}
+func (brokenItemRepository) Update(backlog.Item) (backlog.Item, error) {
+	return backlog.Item{}, errStorage
+}
+
+func TestAsignarStoryPoints_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(brokenItemRepository{}, projects)
+	h := httpapi.NewHandler(projects, items, sprint.NewManager(sprint.NewMemoryRepository(), projects, items))
+
+	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":5}`)
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}
+
+// expectItemWithoutStoryPoints verifica que el ítem 1 siga sin estimar.
+func expectItemWithoutStoryPoints(t *testing.T, h http.Handler) {
+	t.Helper()
+	rec := do(t, h, http.MethodGet, "/api/items/1", "")
+	expectStatus(t, rec, http.StatusOK)
+	var it itemJSON
+	decode(t, rec, &it)
+	if it.StoryPoints != 0 {
+		t.Errorf("story points = %d, se esperaba el ítem sin estimar", it.StoryPoints)
+	}
 }

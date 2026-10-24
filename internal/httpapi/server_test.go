@@ -453,6 +453,13 @@ var bodyEndpoints = []bodyEndpoint{
 		path:      "/api/items/1/estado",
 		untouched: expectItemUntouched,
 	},
+	// HU-20, CA-20.8: asignar story points.
+	{
+		name:      "asignar story points",
+		method:    http.MethodPatch,
+		path:      "/api/items/1/story-points",
+		untouched: expectItemWithoutStoryPoints,
+	},
 	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
 	{
 		name:   "crear sprint",
