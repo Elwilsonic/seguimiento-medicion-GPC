@@ -412,13 +412,13 @@ $ go tool cover -func=cover-main.out | tail -n 1
 total:						(statements)		80.0%
 ```
 
-`internal/effort` entra en 74.4% (nuevo), `internal/sprint` sube de 74.0% a 75.6% con `WithOpenSprint`, `internal/httpapi` sigue en 100.0% y el total sube de 80.0% a **80.4%**. `cmd/server` baja de 54.8% a 53.1% porque `main()` y `newRepositories` suman código nuevo que no se ejecuta sin base. La diferencia con las cifras de HU-20 (83.3% de `internal/backlog`, 80.6% del total) se debe al cambio de go1.27.1 a go1.27.2, que alteró el conteo de sentencias; la comparación válida es contra `main` con el mismo Go. La cifra autoritativa sigue siendo el CI (Linux) del Pull Request, pendiente.
+`internal/effort` entra en 74.4% (nuevo), `internal/sprint` sube de 74.0% a 75.6% con `WithOpenSprint`, `internal/httpapi` sigue en 100.0% y el total sube de 80.0% a **80.4%**. `cmd/server` baja de 54.8% a 53.1% porque `main()` y `newRepositories` suman código nuevo que no se ejecuta sin base. La diferencia con las cifras de HU-20 (83.3% de `internal/backlog`, 80.6% del total) se debe al cambio de go1.27.1 a go1.27.2, que alteró el conteo de sentencias; la comparación válida es contra `main` con el mismo Go. El check "gofmt y tests" del PR #120 pasó en verde sobre `1a8b8bf` ([job 120962343788](https://github.com/Elwilsonic/seguimiento-medicion-GPC/actions/runs/40124311691/job/120962343788?pr=120)); las cifras de arriba son la medición local.
 
 ### go test -race (CA-26.10)
 
 En este entorno (Windows, `CGO_ENABLED=0`, sin compilador C) `-race` no está disponible. Los tests de concurrencia (`TestRegister_Concurrente`, `TestRegister_ConcurrenteConCierre` y `TestWithOpenSprint_SerializaConClose`) pasan sin `-race` localmente.
 
-Hernán corrió `go test -race` contra la base (corrida 4, arriba). El resultado del CI del Pull Request queda pendiente.
+Hernán corrió `go test -race` contra la base (corrida 4, arriba). El check "gofmt y tests" del PR #120 pasó en verde (gofmt, go vet, `go test -race` y cobertura): https://github.com/Elwilsonic/seguimiento-medicion-GPC/actions/runs/40124311691/job/120962343788
 
 ## Commits
 
