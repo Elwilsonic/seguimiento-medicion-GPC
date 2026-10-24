@@ -82,9 +82,6 @@ func TestPostgresRepository_GuardaElEsfuerzo(t *testing.T) {
 		t.Fatalf("leer el esfuerzo guardado: %v", err)
 	}
 	contractAssertEffort(t, "esfuerzo guardado", got, saved)
-	if got.Date.Location() != time.UTC {
-		t.Errorf("zona de la fecha = %v, se esperaba UTC", got.Date.Location())
-	}
 }
 
 // La fecha se guarda y se devuelve normalizada a UTC, como en los sprints.
