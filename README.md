@@ -193,6 +193,7 @@ Cada historia sigue la cadena: **Historia de Usuario → Especificación SDD →
 | Actas de Planning, Daily, Review y Retrospective (una carpeta por Sprint) | [`docs/actas/`](docs/actas/) |
 | Registro de uso de IA | [`docs/ia/registro.md`](docs/ia/registro.md) |
 | Flujo de trabajo (SDD → BDD → TDD) | [`AGENTS.md`](AGENTS.md) |
+| Antes de empezar una historia | [`docs/antes-de-empezar.md`](docs/antes-de-empezar.md) |
 
 Cada Issue de historia incluye una sección **Trazabilidad** con los links a su especificación, sus escenarios y su evidencia.
 
@@ -255,6 +256,7 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `features/` | Escenarios BDD en Gherkin (`HU-XX-nombre.feature`) |
 | `docs/actas/` | Actas de cada Sprint, en una carpeta por Sprint (`sprint-N/planning.md`, `daily.md`, `review.md`, `retrospectiva.md`) |
 | `docs/actas/_plantillas/` | Plantillas de las actas de Planning, Review y Retrospectiva y del comentario de la Daily |
+| `docs/antes-de-empezar.md` | Checklist para ponerse al día antes de empezar una historia, con o sin IA |
 | `docs/definition-of-ready-done.md` | Definition of Ready y Definition of Done vigentes |
 | `docs/especificaciones/` | Especificaciones SDD (`HU-XX-nombre.md`) |
 | `docs/evidencias/` | Evidencia TDD por historia (`HU-XX-tdd.md`) |

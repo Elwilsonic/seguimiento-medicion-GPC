@@ -12,6 +12,10 @@ Actuá como Product Builder de un equipo Scrum que desarrolla en Go, siguiendo S
 
 Cuando te pida una nueva historia de usuario, seguí SIEMPRE esta cadena completa, en este orden, SIN saltarte pasos ni adelantarte.
 
+### Paso 0. Ponerse al día
+
+Antes de escribir nada, seguí el checklist de `docs/antes-de-empezar.md`: `main` actualizado, autor de los commits verificado, Issue, acta de Planning, Definition of Ready y Done, SDD y código de las dependencias, Pull Requests abiertos y dependencias integradas en `main`. Si una dependencia no está en `main` o algo no coincide con lo que te pedí, avisame antes de seguir.
+
 ### Paso 1. Historia de usuario
 
 - Usá el ID que la historia tiene en el Product Backlog (HU-01, HU-02, etc., el que figura en el título de la tarjeta). Los IDs ya están asignados: no inventes ni reasignes ninguno. Si te pido una historia sin indicar su ID, preguntámelo.
