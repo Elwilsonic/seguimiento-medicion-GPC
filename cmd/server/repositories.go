@@ -23,7 +23,7 @@ type repositories struct {
 
 // newRepositories arma los repositorios según cfg y devuelve la función que
 // libera la conexión. Con memoria no necesita ninguna base. Con PostgreSQL
-// abre un solo pool, compartido por los tres repositorios; si la base no
+// abre un solo pool, compartido por todos los repositorios; si la base no
 // responde, devuelve el error de postgres.Open, que no incluye la URL.
 func newRepositories(ctx context.Context, cfg storage) (repositories, func(), error) {
 	if cfg.kind == storagePostgres {

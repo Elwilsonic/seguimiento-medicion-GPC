@@ -160,9 +160,19 @@ function boton(texto, fn, clase) {
   return b;
 }
 
+// mostrarPoker muestra la última sesión de Planning Poker abierta (HU-21) con
+// sus cartas.
+function mostrarPoker(s) {
+  $("datos-poker").textContent =
+    "Sesión " + s.id + " · ítem " + s.item_id + " · " + s.estado + " · ronda " + s.ronda;
+  $("datos-poker").className = "";
+  $("cartas-poker").textContent = "Cartas: " + s.cartas.join(", ");
+  $("cartas-poker").className = "";
+}
+
 // filaItem arma la fila de un ítem con sus acciones: editar (HU-07), cambiar
-// estado (HU-08), asignar story points (HU-20), asignar al sprint actual
-// (HU-11) y completar (HU-12).
+// estado (HU-08), asignar story points (HU-20), abrir Planning Poker (HU-21),
+// asignar al sprint actual (HU-11) y completar (HU-12).
 function filaItem(it) {
   const tr = document.createElement("tr");
   tr.append(
@@ -205,6 +215,11 @@ function filaItem(it) {
       await cargarBacklog();
       mostrar("msg-backlog", "Ítem " + it.id + " con " + valor + " story points.", false);
     }, "secundario"),
+    boton("Abrir Poker", async () => {
+      const sesion = await api("POST", "/items/" + it.id + "/poker-sessions");
+      mostrarPoker(sesion);
+      mostrar("msg-backlog", "Sesión " + sesion.id + " abierta para el ítem " + sesion.item_id + ".", false);
+    }),
     boton("Asignar al sprint", async () => {
       const sprint = sprintActual();
       await api("POST", "/sprints/" + sprint + "/items/" + it.id);

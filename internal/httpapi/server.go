@@ -55,6 +55,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PUT /api/items/{id}", s.updateItem)
 	mux.HandleFunc("PATCH /api/items/{id}/estado", s.changeItemStatus)
 	mux.HandleFunc("PATCH /api/items/{id}/story-points", s.assignStoryPoints)
+	mux.HandleFunc("GET /api/items/{id}/poker-sessions", methodNotAllowed)
 	mux.HandleFunc("POST /api/items/{id}/poker-sessions", s.openPokerSession)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
@@ -130,7 +131,8 @@ func statusFor(err error) int {
 		errors.Is(err, backlog.ErrItemAlreadyAssigned), errors.Is(err, backlog.ErrItemFinished),
 		errors.Is(err, sprint.ErrOpenSprintExists),
 		errors.Is(err, sprint.ErrItemFromAnotherProject), errors.Is(err, sprint.ErrSprintClosed),
-		errors.Is(err, sprint.ErrItemNotAssignedToSprint):
+		errors.Is(err, sprint.ErrItemNotAssignedToSprint),
+		errors.Is(err, poker.ErrSessionAlreadyOpen), errors.Is(err, poker.ErrItemFinished):
 		return http.StatusConflict
 	case errors.Is(err, errBodyTooLarge):
 		return http.StatusRequestEntityTooLarge

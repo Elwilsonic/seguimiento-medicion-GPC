@@ -20,9 +20,22 @@ type pokerVoteResponse struct {
 	Puntos     int    `json:"puntos"`
 }
 
+// methodNotAllowed responde 405 a los métodos distintos de POST en la ruta de
+// sesiones de Planning Poker (CA-21.7).
+func methodNotAllowed(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Allow", http.MethodPost)
+	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+}
+
 // openPokerSession atiende POST /api/items/{id}/poker-sessions: abre una
 // sesión de Planning Poker para el ítem (HU-21, CA-21.7).
 func (s *server) openPokerSession(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
 	id, err := pathID(r)
 	if err != nil {
 		writeError(w, err)

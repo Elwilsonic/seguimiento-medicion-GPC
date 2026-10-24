@@ -1,6 +1,9 @@
 package poker
 
-import "errors"
+import (
+	"errors"
+	"slices"
+)
 
 // Status es el estado de una sesión de Planning Poker (RN-21.3). Esta
 // historia solo define ABIERTA; HU-23 y HU-25 agregan los demás estados.
@@ -30,6 +33,16 @@ type Session struct {
 	Votes  []Vote
 }
 
+// cloneSession devuelve una copia por valor con su propia lista de votos. Una
+// lista nil se normaliza a una lista vacía no nil (RN-21.5 y RN-21.8).
+func cloneSession(session Session) Session {
+	session.Votes = slices.Clone(session.Votes)
+	if session.Votes == nil {
+		session.Votes = []Vote{}
+	}
+	return session
+}
+
 var (
 	// ErrSessionAlreadyOpen indica que ya hay una sesión ABIERTA para el ítem
 	// (RN-21.2).
@@ -37,8 +50,4 @@ var (
 	// ErrItemFinished indica que el ítem está TERMINADO y no se puede abrir una
 	// sesión para él (RN-21.6).
 	ErrItemFinished = errors.New("no se puede abrir una sesión de Planning Poker para un ítem terminado")
-
-	// errNotImplemented marca la fase RED de TDD: los tests describen el
-	// comportamiento esperado y la implementación llega en la fase GREEN.
-	errNotImplemented = errors.New("funcionalidad de Planning Poker no implementada")
 )

@@ -15,11 +15,20 @@ func NewMemoryRepository() *MemoryRepository {
 // Save asigna el siguiente ID correlativo global, guarda la sesión y devuelve
 // una copia.
 func (r *MemoryRepository) Save(session Session) (Session, error) {
-	return Session{}, errNotImplemented
+	r.lastID++
+	session.ID = r.lastID
+	session = cloneSession(session)
+	r.sessions = append(r.sessions, session)
+	return cloneSession(session), nil
 }
 
 // OpenByItem devuelve una copia de la sesión ABIERTA del ítem y si existe
 // (RN-21.2).
 func (r *MemoryRepository) OpenByItem(itemID int) (Session, bool, error) {
-	return Session{}, false, errNotImplemented
+	for _, session := range r.sessions {
+		if session.ItemID == itemID && session.Status == StatusOpen {
+			return cloneSession(session), true, nil
+		}
+	}
+	return Session{}, false, nil
 }
