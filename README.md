@@ -242,7 +242,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
 | HU-20 | [#38](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/38) | Asignar story points a un ítem del backlog | [SDD](docs/especificaciones/HU-20-asignar-story-points.md) | [BDD](features/HU-20-asignar-story-points.feature) | [Evidencia](docs/evidencias/HU-20-tdd.md) | [#118](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/118) |
-| HU-21 | [#39](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/39) | Abrir una sesión de Planning Poker | [SDD](docs/especificaciones/HU-21-abrir-sesion-planning-poker.md) | [BDD](features/HU-21-abrir-sesion-planning-poker.feature) | [Evidencia](docs/evidencias/HU-21-tdd.md) | — |
+| HU-21 | [#39](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/39) | Abrir una sesión de Planning Poker | [SDD](docs/especificaciones/HU-21-abrir-sesion-planning-poker.md) | [BDD](features/HU-21-abrir-sesion-planning-poker.feature) | [Evidencia](docs/evidencias/HU-21-tdd.md) | [#122](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/122) |
 | HU-26 | [#44](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/44) | Registrar esfuerzo realizado en una historia | [SDD](docs/especificaciones/HU-26-registrar-esfuerzo.md) | [BDD](features/HU-26-registrar-esfuerzo.feature) | [Evidencia](docs/evidencias/HU-26-tdd.md) | [#120](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/120) |
 
 ## Estructura del repositorio
