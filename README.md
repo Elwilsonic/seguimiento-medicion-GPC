@@ -36,7 +36,7 @@ El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de 
 Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con tres secciones:
 
 1. **Proyectos:** crear un proyecto (queda como "proyecto actual"), modificar su nombre, descripción y estado.
-2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarlo al sprint actual o completarlo.
+2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarle story points de la escala 1, 2, 3, 5, 8, 13 o 21 con "Asignar SP" (columna SP; "—" si no está estimado, HU-20), asignarlo al sprint actual o completarlo.
 3. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados y cerrarlo.
 
 Un recorrido típico: crear un proyecto, cargar sus ítems, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", completarlos, ver los completados y cerrar el sprint.
@@ -61,6 +61,7 @@ La API responde bajo el prefijo `/api` (TEC-04).
 | `GET` | `/api/items/{id}` | Consultar un ítem (HU-05) |
 | `PUT` | `/api/items/{id}` | Modificar título, descripción, prioridad, criterios y horas estimadas (HU-07) |
 | `PATCH` | `/api/items/{id}/estado` | Cambiar el estado de un ítem (HU-08) |
+| `PATCH` | `/api/items/{id}/story-points` | Asignar o reestimar los story points de un ítem: 1, 2, 3, 5, 8, 13 o 21 (HU-20) |
 | `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
 | `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
 | `POST` | `/api/sprints/{id}/items/{itemId}/completar` | Marcar como TERMINADO un ítem del sprint (HU-12) |
@@ -78,6 +79,7 @@ curl "localhost:8080/api/proyectos/1/backlog?orden=prioridad"
 curl -X PUT localhost:8080/api/items/1 -d '{"titulo":"Registrar venta","descripcion":"Alta de una venta","prioridad":"ALTA","criterios":["Se guarda la venta"],"horas_estimadas":6}'
 curl -X POST localhost:8080/api/proyectos/1/sprints -d '{"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Registrar ventas"}'
 curl -X POST localhost:8080/api/sprints/1/items/1
+curl -X PATCH localhost:8080/api/items/1/story-points -d '{"story_points":5}'
 curl -X PATCH localhost:8080/api/items/1/estado -d '{"estado":"EN_CURSO"}'
 curl -X POST localhost:8080/api/sprints/1/items/1/completar
 curl localhost:8080/api/sprints/1/completados
@@ -86,7 +88,7 @@ curl -X POST localhost:8080/api/sprints/1/cerrar
 
 `PUT /api/proyectos/{id}` y `PUT /api/items/{id}` reemplazan todos sus campos: un campo que no se envía queda vacío (o en 0, las horas estimadas), así que hay que mandar también los que no cambian. Las fechas de un sprint usan el formato `AAAA-MM-DD`. Para completar un ítem, antes tiene que estar `EN_CURSO`: el cambio de estado respeta las transiciones de HU-08.
 
-Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem o sprint inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
+Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem o sprint inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint, o story points de un ítem terminado), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
 
 Para correr los tests: `go test ./...` (no necesita Docker: los tests de PostgreSQL se omiten si no hay base de pruebas).
 
@@ -230,6 +232,12 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-13 | [#27](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/27) | Cerrar sprint | [SDD](docs/especificaciones/HU-13-cerrar-sprint.md) | [BDD](features/HU-13-cerrar-sprint.feature) | [Evidencia](docs/evidencias/HU-13-tdd.md) | [#101](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/101) |
 | TEC-04 | [#34](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/34) | Interfaz usable | — | — | [Evidencia](docs/evidencias/TEC-04-tdd.md) | [#104](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/104), [#105](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/105), [#106](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/106) |
 | TEC-05 | [#35](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/35) | Persistencia con PostgreSQL en Docker | — | — | [Evidencia](docs/evidencias/TEC-05-tdd.md) | [#96](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/96) |
+
+### Sprint 3 — La Estimación (23/10 al 29/10) · [Planning](docs/actas/sprint-3/planning.md)
+
+| ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
+|---|---|---|---|---|---|---|
+| HU-20 | [#38](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/38) | Asignar story points a un ítem del backlog | [SDD](docs/especificaciones/HU-20-asignar-story-points.md) | [BDD](features/HU-20-asignar-story-points.feature) | [Evidencia](docs/evidencias/HU-20-tdd.md) | (pendiente) |
 
 ## Estructura del repositorio
 
