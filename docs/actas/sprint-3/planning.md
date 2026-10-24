@@ -60,7 +60,7 @@ Se aplica desde este Sprint, sin tocar las historias ya terminadas. La historia 
 | HU-16 · Modificar los datos o el rol de un integrante | HU-16 Modificar datos · HU-48 Cambiar rol | Si hay tiempo |
 | HU-37 · Ver las métricas en el dashboard con gráficos | Una historia por gráfico, según TEC-03 (IDs a partir de HU-49) | 4 |
 
-Pendiente: confirmar con los profesores en este Planning. Los Issues nuevos y los cambios de título se hacen con autorización del Agile Enabler.
+Pendiente: confirmar con los profesores en la próxima clase, porque no asistieron al Planning. Los Issues nuevos y los cambios de título se hacen con autorización del Agile Enabler.
 
 ## Estimación de las historias del Sprint 3 (Planning Poker)
 
