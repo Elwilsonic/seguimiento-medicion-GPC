@@ -116,7 +116,9 @@ func statusFor(err error) int {
 		errors.Is(err, errInvalidDate),
 		errors.Is(err, sprint.ErrEmptyName), errors.Is(err, sprint.ErrEmptyGoal),
 		errors.Is(err, sprint.ErrMissingStartDate), errors.Is(err, sprint.ErrMissingEndDate),
-		errors.Is(err, sprint.ErrEndNotAfterStart):
+		errors.Is(err, sprint.ErrEndNotAfterStart),
+		errors.Is(err, effort.ErrEmptyMember), errors.Is(err, effort.ErrEmptyActivity),
+		errors.Is(err, effort.ErrMissingDate), errors.Is(err, effort.ErrInvalidHours):
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
 		errors.Is(err, sprint.ErrSprintNotFound):

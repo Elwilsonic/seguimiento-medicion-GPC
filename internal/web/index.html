@@ -137,6 +137,17 @@
           <ul id="completados"></ul>
         </div>
       </div>
+
+      <form id="form-registrar-esfuerzo">
+        <h3>Registrar esfuerzo</h3>
+        <label>Ítem (ID) <input name="item_id" type="number" min="1" placeholder="Ej.: 1"></label>
+        <label>Integrante <input name="integrante"></label>
+        <label>Fecha <input name="fecha" type="date"></label>
+        <label>Actividad <input name="actividad"></label>
+        <label>Horas <input name="horas" type="number" step="any" placeholder="Ej.: 2.5"></label>
+        <button type="submit">Registrar esfuerzo</button>
+      </form>
+
       <p class="mensaje" id="msg-sprints" role="alert" hidden></p>
     </section>
   </main>

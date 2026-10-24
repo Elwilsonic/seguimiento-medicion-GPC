@@ -3,12 +3,20 @@ package effort
 // MemoryRepository guarda los esfuerzos en memoria.
 type MemoryRepository struct {
 	efforts []Effort
+	lastID  int
 }
 
 func NewMemoryRepository() *MemoryRepository {
 	return &MemoryRepository{}
 }
 
-func (r *MemoryRepository) Save(Effort) (Effort, error) {
-	return Effort{}, errNotImplemented
+// Save asigna el siguiente ID correlativo global, guarda el esfuerzo y
+// devuelve una copia. Effort no tiene slices ni mapas, así que copiar el
+// struct alcanza (RN-26.9).
+func (r *MemoryRepository) Save(effort Effort) (Effort, error) {
+	r.lastID++
+	stored := effort
+	stored.ID = r.lastID
+	r.efforts = append(r.efforts, stored)
+	return stored, nil
 }
