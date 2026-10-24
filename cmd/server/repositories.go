@@ -33,7 +33,7 @@ func newRepositories(ctx context.Context, cfg storage) (repositories, func(), er
 			projects: project.NewPostgresRepository(pool),
 			items:    backlog.NewPostgresRepository(pool),
 			sprints:  sprint.NewPostgresRepository(pool),
-			efforts:  nil,
+			efforts:  effort.NewPostgresRepository(pool),
 		}, pool.Close, nil
 	}
 	return repositories{

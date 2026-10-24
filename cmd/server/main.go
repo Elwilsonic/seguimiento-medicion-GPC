@@ -31,7 +31,7 @@ func main() {
 	projects := project.NewManager(repos.projects)
 	items := backlog.NewManager(repos.items, projects)
 	sprints := sprint.NewManager(repos.sprints, projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	efforts := effort.NewManager(repos.efforts, sprints, items)
 
 	addr := address(os.Getenv)
 	log.Printf("servidor escuchando en %s (almacenamiento: %s)", addr, cfg.kind)
