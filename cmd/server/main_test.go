@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/postgrestest"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
@@ -153,6 +154,27 @@ func TestNewRepositories_MemoriaNoNecesitaBase(t *testing.T) {
 	}
 	if _, ok := repos.sprints.(*sprint.MemoryRepository); !ok {
 		t.Errorf("sprints es %T, se esperaba *sprint.MemoryRepository", repos.sprints)
+	}
+	if _, ok := repos.efforts.(*effort.MemoryRepository); !ok {
+		t.Errorf("efforts es %T, se esperaba *effort.MemoryRepository", repos.efforts)
+	}
+}
+
+// HU-26 · Registrar esfuerzo (Issue #44): con STORAGE=postgres, los esfuerzos
+// se guardan en el repositorio PostgreSQL, no en memoria. Necesita
+// TEST_DATABASE_URL; sin ella se omite (CA-TEC05.7).
+func TestNewRepositories_PostgresUsaElRepositorioDeEsfuerzos(t *testing.T) {
+	postgrestest.Pool(t)
+	cfg := storage{kind: storagePostgres, databaseURL: os.Getenv(postgrestest.EnvVar)}
+
+	repos, closeRepos, err := newRepositories(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("newRepositories devolvió un error inesperado: %v", err)
+	}
+	defer closeRepos()
+
+	if _, ok := repos.efforts.(*effort.PostgresRepository); !ok {
+		t.Errorf("efforts es %T, se esperaba *effort.PostgresRepository", repos.efforts)
 	}
 }
 
