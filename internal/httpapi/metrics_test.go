@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/poker"
@@ -154,7 +155,8 @@ func TestMetricas_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
 

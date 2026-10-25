@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/poker"
@@ -62,7 +63,8 @@ func newHandler() http.Handler {
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
-	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
 }
 
 // do hace un pedido a la API y verifica que la respuesta sea JSON.
@@ -386,7 +388,8 @@ func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
 
 	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas"}`)
 

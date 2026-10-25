@@ -386,3 +386,26 @@ $("ver-metricas").addEventListener("click", () =>
     $("datos-metricas").className = "";
   }),
 );
+
+// HU-29 · Registrar defecto (CA-29.11). Usa el ítem y el sprint de detección
+// indicados en el formulario; al terminar muestra el ID del defecto.
+const severidadesDefecto = ["CRITICA", "ALTA", "MEDIA", "BAJA"];
+const formDefecto = $("form-registrar-defecto");
+formDefecto.setAttribute("aria-label", "Registrar defecto");
+for (const severidad of severidadesDefecto) {
+  formDefecto.severidad.append(new Option(severidad, severidad));
+}
+formDefecto.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-defectos", async () => {
+    const item = form.item_id.value.trim();
+    const defecto = await api("POST", "/items/" + item + "/defectos", {
+      descripcion: form.descripcion.value,
+      severidad: form.severidad.value,
+      sprint_deteccion_id: Number(form.sprint_deteccion_id.value),
+    });
+    form.reset();
+    mostrar("msg-defectos", "Defecto " + defecto.id + " registrado para el ítem " + defecto.item_id + ".", false);
+  });
+});

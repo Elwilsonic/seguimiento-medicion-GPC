@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/postgrestest"
@@ -162,6 +163,9 @@ func TestNewRepositories_MemoriaNoNecesitaBase(t *testing.T) {
 	if _, ok := repos.poker.(*poker.MemoryRepository); !ok {
 		t.Errorf("poker es %T, se esperaba *poker.MemoryRepository", repos.poker)
 	}
+	if _, ok := repos.defects.(*defect.MemoryRepository); !ok {
+		t.Errorf("defects es %T, se esperaba *defect.MemoryRepository", repos.defects)
+	}
 }
 
 // HU-21 · Abrir una sesión de Planning Poker (Issue #39): con
@@ -197,6 +201,24 @@ func TestNewRepositories_PostgresUsaElRepositorioDeEsfuerzos(t *testing.T) {
 
 	if _, ok := repos.efforts.(*effort.PostgresRepository); !ok {
 		t.Errorf("efforts es %T, se esperaba *effort.PostgresRepository", repos.efforts)
+	}
+}
+
+// HU-29 · Registrar defecto (Issue #47): con STORAGE=postgres, los defectos
+// se guardan en el repositorio PostgreSQL, no en memoria. Necesita
+// TEST_DATABASE_URL; sin ella se omite (CA-TEC05.7).
+func TestNewRepositories_PostgresUsaElRepositorioDeDefectos(t *testing.T) {
+	postgrestest.Pool(t)
+	cfg := storage{kind: storagePostgres, databaseURL: os.Getenv(postgrestest.EnvVar)}
+
+	repos, closeRepos, err := newRepositories(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("newRepositories devolvió un error inesperado: %v", err)
+	}
+	defer closeRepos()
+
+	if _, ok := repos.defects.(*defect.PostgresRepository); !ok {
+		t.Errorf("defects es %T, se esperaba *defect.PostgresRepository", repos.defects)
 	}
 }
 
