@@ -166,6 +166,31 @@
         <button type="submit">Registrar esfuerzo</button>
       </form>
 
+      <form id="form-consultar-esfuerzos">
+        <h3>Consultar esfuerzos</h3>
+        <label>Ver por
+          <select name="tipo">
+            <option value="sprint">Sprint</option>
+            <option value="item">Historia</option>
+          </select>
+        </label>
+        <label>ID <input name="referencia" type="number" min="1" required placeholder="Ej.: 1"></label>
+        <button type="submit">Consultar</button>
+      </form>
+
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Fecha</th><th>Integrante</th><th>Actividad</th><th>Ítem</th><th>Sprint</th><th>Horas</th>
+            </tr>
+          </thead>
+          <tbody id="esfuerzos"></tbody>
+        </table>
+      </div>
+      <p id="total-esfuerzos" class="vacio">Total: 0.0 horas</p>
+      <p class="mensaje" id="msg-esfuerzos" role="alert" hidden></p>
+
       <p class="mensaje" id="msg-sprints" role="alert" hidden></p>
     </section>
 

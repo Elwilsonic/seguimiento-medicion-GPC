@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -25,6 +26,11 @@ type effortResponse struct {
 	Fecha      string  `json:"fecha"`
 	Actividad  string  `json:"actividad"`
 	Horas      float64 `json:"horas"`
+}
+
+type effortListResponse struct {
+	Esfuerzos  []effortResponse `json:"esfuerzos"`
+	TotalHoras float64          `json:"total_horas"`
 }
 
 // registerEffort atiende POST /api/sprints/{id}/items/{itemId}/esfuerzos. El
@@ -60,6 +66,48 @@ func (s *server) registerEffort(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, toEffortResponse(saved))
+}
+
+// listEffortsByItem atiende GET /api/items/{id}/esfuerzos (HU-27).
+func (s *server) listEffortsByItem(w http.ResponseWriter, r *http.Request) {
+	itemID, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	summary, err := s.efforts.ListByItem(itemID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toEffortListResponse(summary))
+}
+
+// listEffortsBySprint atiende GET /api/sprints/{id}/esfuerzos (HU-27).
+func (s *server) listEffortsBySprint(w http.ResponseWriter, r *http.Request) {
+	sprintID, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	summary, err := s.efforts.ListBySprint(sprintID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toEffortListResponse(summary))
+}
+
+func toEffortListResponse(summary effort.Summary) effortListResponse {
+	efforts := make([]effortResponse, 0, len(summary.Efforts))
+	for _, effort := range summary.Efforts {
+		efforts = append(efforts, toEffortResponse(effort))
+	}
+	return effortListResponse{
+		Esfuerzos: efforts,
+		// La API redondea solo la presentación del total (RN-27.8).
+		TotalHoras: math.Round(summary.TotalHours*10) / 10,
+	}
 }
 
 func toEffortResponse(e effort.Effort) effortResponse {

@@ -39,10 +39,10 @@ Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-0
 2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarle story points de la escala 1, 2, 3, 5, 8, 13 o 21 con "Asignar SP" (columna SP; "—" si no está estimado, HU-20), abrir una sesión de Planning Poker con "Abrir Poker" (HU-21), asignarlo al sprint actual o completarlo.
 3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21), y permite votar una carta indicando el nombre del integrante sin mostrar los votos (HU-22).
 4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32).
-5. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo y registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26).
+5. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo, registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26) y consultar los esfuerzos por sprint o por historia, con su tabla y total, con el formulario "Consultar esfuerzos" (HU-27).
 6. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29).
 
-Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de Planning Poker para un ítem, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", completarlos, ver los completados y cerrar el sprint.
+Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de Planning Poker para un ítem, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", consultar los esfuerzos con "Consultar esfuerzos", completarlos, ver los completados y cerrar el sprint.
 
 - **Proyecto y sprint actuales:** la aplicación todavía no tiene listados de proyectos ni de sprints (ninguna historia los pide), así que se eligen por su ID en los campos de arriba. Al crear un proyecto o un sprint, su ID se completa solo; para volver a un proyecto existente, escribí su ID y tocá "Cargar proyecto".
 - **Errores:** si la aplicación rechaza un dato (por ejemplo, un nombre de proyecto repetido o un ítem sin criterios de aceptación), el mensaje aparece en un recuadro rojo debajo de la sección.
@@ -67,10 +67,12 @@ La API responde bajo el prefijo `/api` (TEC-04).
 | `PATCH` | `/api/items/{id}/story-points` | Asignar o reestimar los story points de un ítem: 1, 2, 3, 5, 8, 13 o 21 (HU-20) |
 | `POST` | `/api/items/{id}/poker-sessions` | Abrir una sesión de Planning Poker para un ítem (HU-21) |
 | `POST` | `/api/items/{id}/defectos` | Registrar un defecto de una historia, con descripción, severidad y sprint de detección abierto (HU-29) |
+| `GET` | `/api/items/{id}/esfuerzos` | Listar los esfuerzos de una historia, ordenados por ID, con el total de horas (HU-27) |
 | `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
 | `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
 | `POST` | `/api/sprints/{id}/items/{itemId}/completar` | Marcar como TERMINADO un ítem del sprint (HU-12) |
 | `POST` | `/api/sprints/{id}/items/{itemId}/esfuerzos` | Registrar el esfuerzo de un integrante en una historia del sprint (HU-26) |
+| `GET` | `/api/sprints/{id}/esfuerzos` | Listar los esfuerzos de un sprint, ordenados por ID, con el total de horas (HU-27) |
 | `GET` | `/api/sprints/{id}/completados` | Listar los ítems terminados del sprint (HU-12) |
 | `POST` | `/api/sprints/{id}/cerrar` | Cerrar el sprint (HU-13) |
 | `GET` | `/api/sprints/{id}/metricas` | Story points planificados y completados del sprint, e ítems sin estimar (HU-32) |
@@ -251,6 +253,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-21 | [#39](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/39) | Abrir una sesión de Planning Poker | [SDD](docs/especificaciones/HU-21-abrir-sesion-planning-poker.md) | [BDD](features/HU-21-abrir-sesion-planning-poker.feature) | [Evidencia](docs/evidencias/HU-21-tdd.md) | [#122](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/122) |
 | HU-22 | [#40](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/40) | Votar de forma oculta | [SDD](docs/especificaciones/HU-22-votar-oculto.md) | [BDD](features/HU-22-votar-oculto.feature) | [Evidencia](docs/evidencias/HU-22-tdd.md) | [#125](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/125) |
 | HU-26 | [#44](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/44) | Registrar esfuerzo realizado en una historia | [SDD](docs/especificaciones/HU-26-registrar-esfuerzo.md) | [BDD](features/HU-26-registrar-esfuerzo.feature) | [Evidencia](docs/evidencias/HU-26-tdd.md) | [#120](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/120) |
+| HU-27 | [#45](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/45) | Consultar los registros de esfuerzo | [SDD](docs/especificaciones/HU-27-consultar-esfuerzos.md) | [BDD](features/HU-27-consultar-esfuerzos.feature) | [Evidencia](docs/evidencias/HU-27-tdd.md) | [#126](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/126) |
 | HU-29 | [#47](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/47) | Registrar un defecto | [SDD](docs/especificaciones/HU-29-registrar-defecto.md) | [BDD](features/HU-29-registrar-defecto.feature) | [Evidencia](docs/evidencias/HU-29-tdd.md) | [#124](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/124) |
 | HU-32 | [#50](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/50) | Calcular Story Points planificados, completados y velocidad | [SDD](docs/especificaciones/HU-32-sp-velocidad.md) | [BDD](features/HU-32-sp-velocidad.feature) | [Evidencia](docs/evidencias/HU-32-tdd.md) | [#123](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/123) |
 

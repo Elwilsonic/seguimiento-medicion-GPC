@@ -242,3 +242,11 @@ type brokenEffortRepository struct{}
 func (brokenEffortRepository) Save(effort.Effort) (effort.Effort, error) {
 	return effort.Effort{}, errStorage
 }
+
+func (brokenEffortRepository) ListByItem(int) ([]effort.Effort, error) {
+	return nil, errStorage
+}
+
+func (brokenEffortRepository) ListBySprint(int) ([]effort.Effort, error) {
+	return nil, errStorage
+}
