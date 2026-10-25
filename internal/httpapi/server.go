@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
@@ -40,11 +41,16 @@ type server struct {
 	sprints  *sprint.Manager
 	efforts  *effort.Manager
 	poker    *poker.Manager
+	defects  *defect.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
 func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager) http.Handler {
-	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager}
+	return newHandler(projects, items, sprints, efforts, pokerManager, nil)
+}
+
+func newHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager) http.Handler {
+	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
