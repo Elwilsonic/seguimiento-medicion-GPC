@@ -66,14 +66,44 @@ func (r *PostgresRepository) OpenByItem(itemID int) (Session, bool, error) {
 
 // GetByID devuelve una sesión por ID. La implementación se completará en
 // GREEN.
-func (r *PostgresRepository) GetByID(_ int) (Session, error) {
-	return Session{}, ErrSessionNotFound
+func (r *PostgresRepository) GetByID(id int) (Session, error) {
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+pokerSessionColumns+" FROM poker_sessions WHERE id = $1", id)
+	session, err := scanSession(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Session{}, ErrSessionNotFound
+	}
+	if err != nil {
+		return Session{}, fmt.Errorf("buscar la sesión de Planning Poker: %w", err)
+	}
+	return session, nil
 }
 
 // Update reemplaza una sesión existente. La implementación se completará en
 // GREEN.
-func (r *PostgresRepository) Update(_ Session) (Session, error) {
-	return Session{}, ErrSessionNotFound
+func (r *PostgresRepository) Update(session Session) (Session, error) {
+	votes := session.Votes
+	if votes == nil {
+		votes = []Vote{}
+	}
+	encoded, err := json.Marshal(votes)
+	if err != nil {
+		return Session{}, fmt.Errorf("codificar los votos de la sesión: %w", err)
+	}
+	row := r.pool.QueryRow(context.Background(),
+		`UPDATE poker_sessions
+		SET status = $2, round_number = $3, votes = $4::jsonb
+		WHERE id = $1
+		RETURNING `+pokerSessionColumns,
+		session.ID, session.Status, session.Round, string(encoded))
+	updated, err := scanSession(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Session{}, ErrSessionNotFound
+	}
+	if err != nil {
+		return Session{}, fmt.Errorf("actualizar la sesión de Planning Poker: %w", err)
+	}
+	return updated, nil
 }
 
 // scanSession lee una sesión con las columnas de pokerSessionColumns y

@@ -6,6 +6,11 @@ import (
 	"seguimiento-medicion-gpc/internal/poker"
 )
 
+type pokerVoteRequest struct {
+	Integrante string `json:"integrante"`
+	Puntos     int    `json:"puntos"`
+}
+
 type pokerSessionResponse struct {
 	ID     int                 `json:"id"`
 	ItemID int                 `json:"item_id"`
@@ -59,5 +64,32 @@ func (s *server) openPokerSession(w http.ResponseWriter, r *http.Request) {
 		Ronda:  session.Round,
 		Votos:  votos,
 		Cartas: poker.Cards(),
+	})
+}
+
+func (s *server) votePokerSession(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var request pokerVoteRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, err)
+		return
+	}
+	session, err := s.poker.Vote(id, request.Integrante, request.Puntos)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, pokerSessionResponse{
+		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+		Ronda: session.Round, Votos: []pokerVoteResponse{}, Cartas: poker.Cards(),
 	})
 }

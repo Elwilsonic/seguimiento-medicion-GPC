@@ -130,3 +130,38 @@ func TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
+
+func TestVotarPoker_VotoNuevoYReemplazoDevuelven200SinVotos(t *testing.T) {
+	h := newHandlerWithItem(t)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/poker-sessions", ""), http.StatusCreated)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
+	expectStatus(t, rec, http.StatusOK)
+	var first pokerSessionJSON
+	decode(t, rec, &first)
+	if len(first.Votos) != 0 {
+		t.Errorf("votos del primer voto = %+v, se esperaba ocultamiento", first.Votos)
+	}
+
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":" ana ","puntos":8}`)
+	expectStatus(t, rec, http.StatusOK)
+	var replacement pokerSessionJSON
+	decode(t, rec, &replacement)
+	if len(replacement.Votos) != 0 {
+		t.Errorf("votos del reemplazo = %+v, se esperaba ocultamiento", replacement.Votos)
+	}
+}
+
+func TestVotarPoker_ErroresDevuelvenCodigoCorrespondiente(t *testing.T) {
+	h := newHandlerWithItem(t)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/poker-sessions", ""), http.StatusCreated)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":" ","puntos":5}`)
+	expectError(t, rec, http.StatusBadRequest, poker.ErrEmptyVoter.Error())
+
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":4}`)
+	expectError(t, rec, http.StatusBadRequest, poker.ErrInvalidCard.Error())
+
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/999/votes", `{"integrante":"Ana","puntos":5}`)
+	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
+}

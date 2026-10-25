@@ -168,6 +168,21 @@ function mostrarPoker(s) {
   $("datos-poker").className = "";
   $("cartas-poker").textContent = "Cartas: " + s.cartas.join(", ");
   $("cartas-poker").className = "";
+  const form = $("form-votar-poker");
+  form.hidden = false;
+  form.dataset.sessionId = s.id;
+  const botones = $("botones-cartas-poker");
+  botones.replaceChildren();
+  for (const carta of s.cartas) {
+    botones.append(boton("Votar " + carta, async () => {
+      const integrante = form.integrante.value;
+      await api("POST", "/poker-sessions/" + form.dataset.sessionId + "/votes", {
+        integrante,
+        puntos: carta,
+      });
+      mostrar("msg-poker", "Voto registrado en la sesión " + s.id + ".", false);
+    }, "secundario"));
+  }
 }
 
 // filaItem arma la fila de un ítem con sus acciones: editar (HU-07), cambiar
