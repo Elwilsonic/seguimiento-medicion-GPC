@@ -365,6 +365,28 @@ formEsfuerzo.addEventListener("submit", (e) => {
   });
 });
 
+// HU-32 · Métricas (CA-32.9). Muestra los story points planificados y
+// completados, los ítems sin estimar y la velocidad del proyecto actual, y si
+// hay sprint actual, los de ese sprint.
+$("ver-metricas").addEventListener("click", () =>
+  accion("msg-metricas", async () => {
+    const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
+    const velocidad = p.velocidad === null ? "sin datos" : p.velocidad.toFixed(1) + " SP por sprint";
+    let texto =
+      "Proyecto " + p.proyecto_id + ": " + p.sp_planificados + " SP planificados, " +
+      p.sp_completados + " SP completados, " + p.items_sin_estimar + " ítem(s) sin estimar. " +
+      "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)).";
+    if ($("sprint-actual").value.trim() !== "") {
+      const s = await api("GET", "/sprints/" + sprintActual() + "/metricas");
+      texto +=
+        " Sprint " + s.sprint_id + ": " + s.sp_planificados + " SP planificados, " +
+        s.sp_completados + " SP completados, " + s.items_sin_estimar + " ítem(s) sin estimar.";
+    }
+    $("datos-metricas").textContent = texto;
+    $("datos-metricas").className = "";
+  }),
+);
+
 // HU-29 · Registrar defecto (CA-29.11). Usa el ítem y el sprint de detección
 // indicados en el formulario; al terminar muestra el ID del defecto.
 const severidadesDefecto = ["CRITICA", "ALTA", "MEDIA", "BAJA"];

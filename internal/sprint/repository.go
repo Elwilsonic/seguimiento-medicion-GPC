@@ -17,4 +17,9 @@ type Repository interface {
 	// Update reemplaza el sprint con ese ID, lo devuelve como copia o da
 	// ErrSprintNotFound si no existe (RN-13.4).
 	Update(sprint Sprint) (Sprint, error)
+
+	// ListByProject devuelve una lista nueva, ordenada por ID ascendente, con
+	// copias de los sprints de un proyecto. Un proyecto sin sprints devuelve
+	// una lista vacía, no nil (HU-32).
+	ListByProject(projectID int) ([]Sprint, error)
 }

@@ -57,3 +57,16 @@ func (r *MemoryRepository) Update(sprint Sprint) (Sprint, error) {
 	}
 	return Sprint{}, ErrSprintNotFound
 }
+
+// ListByProject devuelve una lista nueva con los sprints del proyecto, en el
+// orden en que se guardaron, que es el de ID ascendente (HU-32). Sprint no
+// tiene slices ni mapas, así que copiar cada elemento alcanza.
+func (r *MemoryRepository) ListByProject(projectID int) ([]Sprint, error) {
+	sprints := make([]Sprint, 0)
+	for _, sprint := range r.sprints {
+		if sprint.ProjectID == projectID {
+			sprints = append(sprints, sprint)
+		}
+	}
+	return sprints, nil
+}

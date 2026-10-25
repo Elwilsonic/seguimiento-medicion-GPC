@@ -90,6 +90,25 @@ func (r *PostgresRepository) Update(sprint Sprint) (Sprint, error) {
 	return updated, nil
 }
 
+// ListByProject devuelve una lista nueva con los sprints del proyecto, en
+// orden de ID ascendente (HU-32). Un proyecto sin sprints devuelve una lista
+// vacía, no nil.
+func (r *PostgresRepository) ListByProject(projectID int) ([]Sprint, error) {
+	rows, err := r.pool.Query(context.Background(),
+		"SELECT "+sprintColumns+" FROM sprints WHERE project_id = $1 ORDER BY id", projectID)
+	if err != nil {
+		return nil, fmt.Errorf("listar los sprints: %w", err)
+	}
+	sprints := make([]Sprint, 0)
+	sprints, err = pgx.AppendRows(sprints, rows, func(row pgx.CollectableRow) (Sprint, error) {
+		return scanSprint(row)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listar los sprints: %w", err)
+	}
+	return sprints, nil
+}
+
 // scanSprint lee un sprint con las columnas de sprintColumns y normaliza las
 // fechas a UTC: pgx devuelve timestamptz en la zona local de la máquina.
 func scanSprint(row pgx.Row) (Sprint, error) {
