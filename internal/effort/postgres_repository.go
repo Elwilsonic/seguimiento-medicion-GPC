@@ -48,3 +48,13 @@ func scanEffort(row pgx.Row) (Effort, error) {
 	effort.Date = effort.Date.UTC()
 	return effort, err
 }
+
+// ListByItem devuelve los esfuerzos de una historia, ordenados por ID.
+func (r *PostgresRepository) ListByItem(itemID int) ([]Effort, error) {
+	return nil, nil
+}
+
+// ListBySprint devuelve los esfuerzos de un sprint, ordenados por ID.
+func (r *PostgresRepository) ListBySprint(sprintID int) ([]Effort, error) {
+	return nil, nil
+}

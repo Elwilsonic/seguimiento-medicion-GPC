@@ -253,3 +253,72 @@ func TestInterfaz_ListaDeSeveridadesDeDefectosCoincideConElPaquete(t *testing.T)
 		t.Errorf("app.js no define %s", want)
 	}
 }
+
+// HU-27 — Consultar los registros de esfuerzo (Issue #45)
+//
+// Trazabilidad: CA-27.10. La interfaz tiene un formulario "Consultar
+// esfuerzos" con selector Sprint/Historia, una tabla y el total con un
+// decimal. El recorrido en el navegador queda en la evidencia TDD.
+
+func TestInterfaz_FormularioDeConsultaDeEsfuerzos(t *testing.T) {
+	h := newHandler()
+	page := get(t, h, "/").Body.String()
+
+	for _, want := range []string{
+		`id="form-consultar-esfuerzos"`,
+		"Consultar esfuerzos",
+		`<option value="sprint">Sprint</option>`,
+		`<option value="item">Historia</option>`,
+		`name="referencia" type="number" min="1"`,
+		`id="esfuerzos"`,
+		`id="total-esfuerzos"`,
+		`id="msg-esfuerzos"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{
+		`$("form-consultar-esfuerzos")`,
+		`"/esfuerzos"`,
+		`"Consultar esfuerzos"`,
+		`"total-esfuerzos"`,
+		".toFixed(1)",
+		`"No hay esfuerzos registrados."`,
+		`accion("msg-esfuerzos"`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_TablaDeEsfuerzosTieneLasColumnas(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+	indice := strings.Index(page, `<form id="form-consultar-esfuerzos">`)
+	if indice == -1 {
+		t.Fatal("la página no contiene el formulario de consulta de esfuerzos")
+	}
+	seccion := page[indice:]
+
+	for _, want := range []string{"<th>ID</th>", "<th>Fecha</th>", "<th>Integrante</th>", "<th>Actividad</th>", "<th>Ítem</th>", "<th>Sprint</th>", "<th>Horas</th>"} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la tabla de esfuerzos no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_ConsultaDeEsfuerzosMuestraElError(t *testing.T) {
+	h := newHandler()
+	page := get(t, h, "/").Body.String()
+	if !strings.Contains(page, `<p class="mensaje" id="msg-esfuerzos" role="alert" hidden></p>`) {
+		t.Error("la página no tiene el mensaje de consulta de esfuerzos")
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	if !strings.Contains(js, `accion("msg-esfuerzos"`) {
+		t.Error("app.js no muestra los errores de la consulta con accion")
+	}
+}

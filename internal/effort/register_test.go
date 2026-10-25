@@ -500,6 +500,14 @@ func (r failingEffortRepository) Save(Effort) (Effort, error) {
 	return Effort{}, r.err
 }
 
+func (r failingEffortRepository) ListByItem(int) ([]Effort, error) {
+	return nil, r.err
+}
+
+func (r failingEffortRepository) ListBySprint(int) ([]Effort, error) {
+	return nil, r.err
+}
+
 // eventLog registra el orden de las escrituras de un escenario concurrente.
 type eventLog struct {
 	mu     sync.Mutex

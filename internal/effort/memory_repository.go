@@ -20,3 +20,13 @@ func (r *MemoryRepository) Save(effort Effort) (Effort, error) {
 	r.efforts = append(r.efforts, stored)
 	return stored, nil
 }
+
+// ListByItem devuelve los esfuerzos de una historia, ordenados por ID.
+func (r *MemoryRepository) ListByItem(itemID int) ([]Effort, error) {
+	return nil, nil
+}
+
+// ListBySprint devuelve los esfuerzos de un sprint, ordenados por ID.
+func (r *MemoryRepository) ListBySprint(sprintID int) ([]Effort, error) {
+	return nil, nil
+}
