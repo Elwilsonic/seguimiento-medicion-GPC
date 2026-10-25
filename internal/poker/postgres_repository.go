@@ -64,8 +64,7 @@ func (r *PostgresRepository) OpenByItem(itemID int) (Session, bool, error) {
 	return session, true, nil
 }
 
-// GetByID devuelve una sesión por ID. La implementación se completará en
-// GREEN.
+// GetByID devuelve una sesión por ID.
 func (r *PostgresRepository) GetByID(id int) (Session, error) {
 	row := r.pool.QueryRow(context.Background(),
 		"SELECT "+pokerSessionColumns+" FROM poker_sessions WHERE id = $1", id)
@@ -79,8 +78,7 @@ func (r *PostgresRepository) GetByID(id int) (Session, error) {
 	return session, nil
 }
 
-// Update reemplaza una sesión existente. La implementación se completará en
-// GREEN.
+// Update reemplaza una sesión existente.
 func (r *PostgresRepository) Update(session Session) (Session, error) {
 	votes := session.Votes
 	if votes == nil {
