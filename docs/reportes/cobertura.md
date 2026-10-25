@@ -6,7 +6,7 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 
 - **Fecha:** 25/10/2026
 - **Última historia con cobertura medida:** HU-32 — Calcular Story Points planificados, completados y velocidad (rama `feature/HU-32-sp-velocidad`). HU-32 se midió en Linux con go1.27.1 y `go test -count=1 -cover ./...` / `-coverprofile`, sin base; la comparación con `main` (`86c0c5f`) se hizo con el mismo Go en una copia aparte. Con base se usó PostgreSQL 16. Las cifras de la tabla son las de la rama después de traer `main` con HU-29 (`9225ff6`).
-- **Comando:** `go test -race -coverprofile=coverage.out ./...`, sin base, el mismo del CI (job "gofmt y tests"). HU-21 se midió localmente con go1.27.1 windows/amd64 y `go test -count=1 -cover ./...` / `-coverprofile`, sin `-race` (el entorno no tiene cgo) y sin `TEST_DATABASE_URL`; la comparación con `main` (`194ebe4`) se hizo con el mismo Go en una copia temporal (`git worktree`). Las cifras de la tabla son la medición local; el CI (Linux) es la fuente autoritativa.
+- **Comando:** `go test -race -coverprofile=coverage.out ./...`, sin base, el mismo del CI (job "gofmt y tests"). HU-32 se midió localmente con go1.27.1 linux/amd64 y `go test -count=1 -cover ./...` / `-coverprofile`, sin `TEST_DATABASE_URL`; la comparación con `main` (`9225ff6`) se hizo con el mismo Go en una copia temporal (`git worktree`). Con base, PostgreSQL 16 y `go test -race -count=1 ./...` y `-coverpkg=./...`. Las cifras de la tabla son la medición local; el CI (Linux) es la fuente autoritativa.
 
 | Paquete | Sin base (HU-32, local) | Con base (HU-11; `internal/poker` en HU-21) |
 |---|---|---|
