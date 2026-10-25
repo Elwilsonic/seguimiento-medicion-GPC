@@ -35,7 +35,7 @@ func main() {
 	sprints := sprint.NewManager(repos.sprints, projects, items)
 	efforts := effort.NewManager(repos.efforts, sprints, items)
 	pokerManager := poker.NewManager(repos.poker, items)
-	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	defects := defect.NewManager(repos.defects, items, sprints)
 
 	addr := address(os.Getenv)
 	log.Printf("servidor escuchando en %s (almacenamiento: %s)", addr, cfg.kind)

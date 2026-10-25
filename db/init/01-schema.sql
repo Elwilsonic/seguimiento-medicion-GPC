@@ -59,6 +59,23 @@ CREATE TABLE IF NOT EXISTS efforts (
 CREATE INDEX IF NOT EXISTS efforts_sprint_id_idx ON efforts (sprint_id);
 CREATE INDEX IF NOT EXISTS efforts_item_id_idx ON efforts (item_id);
 
+-- Defectos (HU-29). Las claves foraneas apuntan al item y al sprint de
+-- deteccion. resolution_sprint_id vale 0 mientras el defecto sigue abierto;
+-- ese 0 no puede ser una clave foranea (RN-29.4).
+CREATE TABLE IF NOT EXISTS defects (
+    id                   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    description          TEXT NOT NULL,
+    severity             TEXT NOT NULL,
+    status               TEXT NOT NULL,
+    item_id              INTEGER NOT NULL REFERENCES backlog_items (id),
+    detection_sprint_id  INTEGER NOT NULL REFERENCES sprints (id),
+    resolution_sprint_id INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS defects_item_id_idx ON defects (item_id);
+CREATE INDEX IF NOT EXISTS defects_detection_sprint_id_idx ON defects (detection_sprint_id);
+CREATE INDEX IF NOT EXISTS defects_resolution_sprint_id_idx ON defects (resolution_sprint_id);
+
 -- Sesiones de Planning Poker (HU-21). Cada sesión pertenece a un ítem del
 -- backlog y guarda sus votos como JSON; el ID es correlativo global
 -- (RN-21.7).
