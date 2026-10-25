@@ -109,6 +109,12 @@ func (brokenPokerRepository) Save(poker.Session) (poker.Session, error) {
 func (brokenPokerRepository) OpenByItem(int) (poker.Session, bool, error) {
 	return poker.Session{}, false, errStorage
 }
+func (brokenPokerRepository) GetByID(int) (poker.Session, error) {
+	return poker.Session{}, errStorage
+}
+func (brokenPokerRepository) Update(poker.Session) (poker.Session, error) {
+	return poker.Session{}, errStorage
+}
 
 func TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())

@@ -32,3 +32,15 @@ func (r *MemoryRepository) OpenByItem(itemID int) (Session, bool, error) {
 	}
 	return Session{}, false, nil
 }
+
+// GetByID devuelve una sesión por ID. La implementación se completará en
+// GREEN.
+func (r *MemoryRepository) GetByID(_ int) (Session, error) {
+	return Session{}, ErrSessionNotFound
+}
+
+// Update reemplaza una sesión existente. La implementación se completará en
+// GREEN.
+func (r *MemoryRepository) Update(_ Session) (Session, error) {
+	return Session{}, ErrSessionNotFound
+}

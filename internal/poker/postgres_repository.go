@@ -64,6 +64,18 @@ func (r *PostgresRepository) OpenByItem(itemID int) (Session, bool, error) {
 	return session, true, nil
 }
 
+// GetByID devuelve una sesión por ID. La implementación se completará en
+// GREEN.
+func (r *PostgresRepository) GetByID(_ int) (Session, error) {
+	return Session{}, ErrSessionNotFound
+}
+
+// Update reemplaza una sesión existente. La implementación se completará en
+// GREEN.
+func (r *PostgresRepository) Update(_ Session) (Session, error) {
+	return Session{}, ErrSessionNotFound
+}
+
 // scanSession lee una sesión con las columnas de pokerSessionColumns y
 // decodifica los votos con encoding/json.
 func scanSession(row pgx.Row) (Session, error) {

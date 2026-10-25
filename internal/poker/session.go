@@ -50,4 +50,12 @@ var (
 	// ErrItemFinished indica que el ítem está TERMINADO y no se puede abrir una
 	// sesión para él (RN-21.6).
 	ErrItemFinished = errors.New("no se puede abrir una sesión de Planning Poker para un ítem terminado")
+	// ErrSessionNotFound indica que la sesión solicitada no existe.
+	ErrSessionNotFound = errors.New("no existe la sesión de Planning Poker")
+	// ErrSessionNotOpen indica que la sesión no acepta votos.
+	ErrSessionNotOpen = errors.New("la sesión de Planning Poker no está abierta")
+	// ErrEmptyVoter indica que el nombre del votante está vacío.
+	ErrEmptyVoter = errors.New("el votante no puede estar vacío")
+	// ErrInvalidCard indica que los puntos no pertenecen a la escala.
+	ErrInvalidCard = errors.New("la carta no pertenece a la escala de Planning Poker")
 )

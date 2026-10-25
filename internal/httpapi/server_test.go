@@ -197,6 +197,7 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"consultar ítem", http.MethodGet, "/api/items/abc", ""},
 		{"modificar ítem", http.MethodPut, "/api/items/abc", validItem},
 		{"cambiar estado", http.MethodPatch, "/api/items/abc/estado", `{"estado":"EN_CURSO"}`},
+		{"votar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/votes", `{"integrante":"Ana","puntos":5}`},
 		// TEC-04, CA-TEC04.9: endpoints de sprints.
 		{"crear sprint", http.MethodPost, "/api/proyectos/abc/sprints", validSprint},
 		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
@@ -472,6 +473,14 @@ var bodyEndpoints = []bodyEndpoint{
 		method:    http.MethodPatch,
 		path:      "/api/items/1/story-points",
 		untouched: expectItemWithoutStoryPoints,
+	},
+	{
+		name:   "votar Planning Poker",
+		method: http.MethodPost,
+		path:   "/api/poker-sessions/1/votes",
+		untouched: func(t *testing.T, h http.Handler) {
+			t.Helper()
+		},
 	},
 	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
 	{

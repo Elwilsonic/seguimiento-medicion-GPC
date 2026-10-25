@@ -285,6 +285,14 @@ func (r failingRepository) OpenByItem(itemID int) (Session, bool, error) {
 	return r.base.OpenByItem(itemID)
 }
 
+func (r failingRepository) GetByID(id int) (Session, error) {
+	return r.base.GetByID(id)
+}
+
+func (r failingRepository) Update(session Session) (Session, error) {
+	return r.base.Update(session)
+}
+
 // CA-21.4 · Los errores del repositorio se propagan sin convertir.
 func TestOpenSession_ErrorDelRepositorioSEPropaga(t *testing.T) {
 	env := newTestEnv(t)

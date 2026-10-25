@@ -1,6 +1,7 @@
 package poker
 
 import (
+	"errors"
 	"sync"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -21,4 +22,10 @@ type Manager struct {
 // ítems con items (HU-21).
 func NewManager(repo Repository, items *backlog.Manager) *Manager {
 	return &Manager{repo: repo, items: items}
+}
+
+// Vote registra un voto de forma oculta. La implementación se completará en
+// la fase GREEN de HU-22.
+func (m *Manager) Vote(_ int, _ string, _ int) (Session, error) {
+	return Session{}, errors.New("Vote no implementado")
 }
