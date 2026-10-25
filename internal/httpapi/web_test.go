@@ -149,3 +149,22 @@ func TestInterfaz_BacklogPermiteAbrirPlanningPoker(t *testing.T) {
 		}
 	}
 }
+
+// HU-32, CA-32.9 · La sección "Métricas" muestra los Story Points del
+// proyecto y del sprint actual, y la velocidad.
+func TestInterfaz_SeccionDeMetricas(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{"Métricas", "Ver métricas", `id="datos-metricas"`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/metricas"`, "sp_planificados", "sp_completados", "items_sin_estimar", "velocidad"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}

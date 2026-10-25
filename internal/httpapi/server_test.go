@@ -203,6 +203,9 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"completar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc/completar", ""},
 		{"listar completados", http.MethodGet, "/api/sprints/abc/completados", ""},
 		{"cerrar sprint", http.MethodPost, "/api/sprints/abc/cerrar", ""},
+		// HU-32, CA-32.9: métricas de un sprint y de un proyecto.
+		{"métricas del sprint", http.MethodGet, "/api/sprints/abc/metricas", ""},
+		{"métricas del proyecto", http.MethodGet, "/api/proyectos/abc/metricas", ""},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {

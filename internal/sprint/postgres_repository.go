@@ -90,6 +90,11 @@ func (r *PostgresRepository) Update(sprint Sprint) (Sprint, error) {
 	return updated, nil
 }
 
+// ListByProject devuelve los sprints del proyecto (HU-32).
+func (r *PostgresRepository) ListByProject(projectID int) ([]Sprint, error) {
+	return nil, errNotImplemented
+}
+
 // scanSprint lee un sprint con las columnas de sprintColumns y normaliza las
 // fechas a UTC: pgx devuelve timestamptz en la zona local de la máquina.
 func scanSprint(row pgx.Row) (Sprint, error) {

@@ -57,3 +57,8 @@ func (r *MemoryRepository) Update(sprint Sprint) (Sprint, error) {
 	}
 	return Sprint{}, ErrSprintNotFound
 }
+
+// ListByProject devuelve los sprints del proyecto (HU-32).
+func (r *MemoryRepository) ListByProject(projectID int) ([]Sprint, error) {
+	return nil, errNotImplemented
+}

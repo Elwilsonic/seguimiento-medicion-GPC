@@ -564,3 +564,9 @@ func TestCreate_ErrorDelRepositorioAlConsultarElSprintAbiertoSeDevuelve(t *testi
 		t.Errorf("sprint devuelto = %+v, se esperaba un sprint vacío", created)
 	}
 }
+
+// ListByProject no se usa en los tests que arman failingRepository (HU-32
+// agregó la operación a la interfaz).
+func (r failingRepository) ListByProject(projectID int) ([]Sprint, error) {
+	return []Sprint{}, nil
+}

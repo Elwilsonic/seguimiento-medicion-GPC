@@ -179,6 +179,55 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 			t.Error("OpenByProject encontró un sprint CERRADO")
 		}
 	})
+
+	// HU-32 (CA-32.8): ListByProject lee los sprints de un proyecto, para
+	// encontrar los sprints cerrados de la velocidad.
+	t.Run("ListByProject sin sprints devuelve una lista vacía", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractSprint(contractProjectB, "Sprint 1", StatusOpen))
+
+		got, err := repo.ListByProject(contractProjectA)
+		if err != nil {
+			t.Fatalf("ListByProject devolvió un error inesperado: %v", err)
+		}
+		if got == nil || len(got) != 0 {
+			t.Errorf("ListByProject = %#v, se esperaba una lista vacía, no nil", got)
+		}
+	})
+
+	t.Run("ListByProject devuelve los sprints del proyecto ordenados por ID", func(t *testing.T) {
+		repo := newRepo(t)
+		first := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusClosed))
+		contractSave(t, repo, contractSprint(contractProjectB, "Sprint 1", StatusOpen))
+		third := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 2", StatusOpen))
+
+		got, err := repo.ListByProject(contractProjectA)
+		if err != nil {
+			t.Fatalf("ListByProject devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 2 {
+			t.Fatalf("ListByProject devolvió %d sprints, se esperaban 2: %+v", len(got), got)
+		}
+		contractAssertSprint(t, "primer sprint", got[0], first)
+		contractAssertSprint(t, "segundo sprint", got[1], third)
+	})
+
+	t.Run("ListByProject devuelve una lista nueva", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))
+
+		got, err := repo.ListByProject(contractProjectA)
+		if err != nil || len(got) != 1 {
+			t.Fatalf("ListByProject = %+v, %v; se esperaba un sprint", got, err)
+		}
+		got[0].Name = "Cambiado"
+
+		again, err := repo.ListByProject(contractProjectA)
+		if err != nil || len(again) != 1 {
+			t.Fatalf("ListByProject = %+v, %v; se esperaba un sprint", again, err)
+		}
+		contractAssertSprint(t, "sprint guardado", again[0], saved)
+	})
 }
 
 // contractSprint devuelve un sprint válido del proyecto, con las fechas fijas.
