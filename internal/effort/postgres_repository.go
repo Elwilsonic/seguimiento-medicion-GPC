@@ -51,10 +51,34 @@ func scanEffort(row pgx.Row) (Effort, error) {
 
 // ListByItem devuelve los esfuerzos de una historia, ordenados por ID.
 func (r *PostgresRepository) ListByItem(itemID int) ([]Effort, error) {
-	return nil, nil
+	return r.listEfforts("item_id", itemID)
 }
 
 // ListBySprint devuelve los esfuerzos de un sprint, ordenados por ID.
 func (r *PostgresRepository) ListBySprint(sprintID int) ([]Effort, error) {
-	return nil, nil
+	return r.listEfforts("sprint_id", sprintID)
+}
+
+// listEfforts lista los esfuerzos que cumplen el filtro indicado. El filtro es
+// una columna interna del repositorio, nunca un valor recibido del llamador.
+func (r *PostgresRepository) listEfforts(filter string, id int) ([]Effort, error) {
+	rows, err := r.pool.Query(context.Background(),
+		`SELECT `+effortColumns+` FROM efforts WHERE `+filter+` = $1 ORDER BY id`, id)
+	if err != nil {
+		return nil, fmt.Errorf("listar los esfuerzos: %w", err)
+	}
+	defer rows.Close()
+
+	efforts := make([]Effort, 0)
+	for rows.Next() {
+		saved, err := scanEffort(rows)
+		if err != nil {
+			return nil, fmt.Errorf("leer el esfuerzo: %w", err)
+		}
+		efforts = append(efforts, saved)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("listar los esfuerzos: %w", err)
+	}
+	return efforts, nil
 }
