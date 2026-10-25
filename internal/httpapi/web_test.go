@@ -143,8 +143,27 @@ func TestInterfaz_BacklogPermiteAbrirPlanningPoker(t *testing.T) {
 			t.Errorf("la página no contiene %q", want)
 		}
 	}
+
 	js := get(t, h, "/app.js").Body.String()
 	for _, want := range []string{`"/poker-sessions"`, `"Abrir Poker"`, "s.cartas"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// HU-22 · Votar de forma oculta (Issue #40)
+func TestInterfaz_FormularioDeVoto(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{`id="form-votar-poker"`, `name="integrante"`, `id="botones-cartas-poker"`, `id="msg-poker"`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/poker-sessions/"`, `"/votes"`, `"Votar "`} {
 		if !strings.Contains(js, want) {
 			t.Errorf("app.js no contiene %q", want)
 		}
