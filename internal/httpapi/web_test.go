@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 )
 
 // TEC-04 · Interfaz usable (Issue #34)
@@ -147,5 +148,89 @@ func TestInterfaz_BacklogPermiteAbrirPlanningPoker(t *testing.T) {
 		if !strings.Contains(js, want) {
 			t.Errorf("app.js no contiene %q", want)
 		}
+	}
+}
+
+// HU-29 · Registrar defecto (Issue #47)
+//
+// Trazabilidad: CA-29.11. La interfaz tiene una sección "Defectos" con el
+// formulario "Registrar defecto", que llama a POST /items/{id}/defectos con el
+// sprint de detección informado. El mensaje de éxito y el de error usan el
+// mismo mecanismo que los demás formularios.
+
+func TestInterfaz_FormularioDeDefecto(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	indice := strings.Index(page, `<section id="defectos">`)
+	if indice == -1 {
+		t.Fatal("la página no contiene la sección de defectos")
+	}
+	seccionDefectos := page[indice:]
+
+	for _, want := range []string{
+		`<section id="defectos">`,
+		"<h2>Defectos</h2>",
+		`id="form-registrar-defecto"`,
+		"Registrar defecto",
+		`name="sprint_deteccion_id" type="number" min="1" required`,
+		`id="msg-defectos"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+	for _, want := range []string{`name="item_id"`, `name="descripcion"`, `name="severidad"`} {
+		if !strings.Contains(seccionDefectos, want) {
+			t.Errorf("la sección de defectos no contiene %q", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`$("form-registrar-defecto")`, `"/defectos"`, `"Registrar defecto"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_RegistrarDefectoMuestraElMensajeDeExito(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`mostrar("msg-defectos", "Defecto "`, `" registrado para el ítem "`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_RegistrarDefectoMuestraElMensajeDeError(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	if !strings.Contains(page, `<p class="mensaje" id="msg-defectos" role="alert" hidden></p>`) {
+		t.Error("la página no tiene el mensaje de error de defectos")
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	if !strings.Contains(js, `accion("msg-defectos"`) {
+		t.Error("app.js no muestra los errores de defectos con accion")
+	}
+}
+
+// CA-29.11 y SDD de HU-29 ("Interfaz web"): la lista de severidades de app.js
+// usa los mismos valores que defect.SeverityValues(), para que la interfaz no
+// se desincronice de la validación del paquete.
+func TestInterfaz_ListaDeSeveridadesDeDefectosCoincideConElPaquete(t *testing.T) {
+	values := defect.SeverityValues()
+	if len(values) == 0 {
+		t.Fatal("defect.SeverityValues() devolvió una lista vacía")
+	}
+	want := `const severidadesDefecto = ["` + strings.Join(values, `", "`) + `"];`
+
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if !strings.Contains(js, want) {
+		t.Errorf("app.js no define %s", want)
 	}
 }

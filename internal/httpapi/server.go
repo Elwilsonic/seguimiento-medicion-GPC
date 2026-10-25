@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
@@ -40,11 +41,12 @@ type server struct {
 	sprints  *sprint.Manager
 	efforts  *effort.Manager
 	poker    *poker.Manager
+	defects  *defect.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
-func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager) http.Handler {
-	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager}
+func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager) http.Handler {
+	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
@@ -57,6 +59,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PATCH /api/items/{id}/story-points", s.assignStoryPoints)
 	mux.HandleFunc("GET /api/items/{id}/poker-sessions", methodNotAllowed)
 	mux.HandleFunc("POST /api/items/{id}/poker-sessions", s.openPokerSession)
+	mux.HandleFunc("POST /api/items/{id}/defectos", s.registerDefect)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)
@@ -122,7 +125,9 @@ func statusFor(err error) int {
 		errors.Is(err, sprint.ErrMissingStartDate), errors.Is(err, sprint.ErrMissingEndDate),
 		errors.Is(err, sprint.ErrEndNotAfterStart),
 		errors.Is(err, effort.ErrEmptyMember), errors.Is(err, effort.ErrEmptyActivity),
-		errors.Is(err, effort.ErrMissingDate), errors.Is(err, effort.ErrInvalidHours):
+		errors.Is(err, effort.ErrMissingDate), errors.Is(err, effort.ErrInvalidHours),
+		errors.Is(err, defect.ErrEmptyDescription), errors.Is(err, defect.ErrInvalidSeverity),
+		errors.Is(err, defect.ErrMissingDetectionSprint):
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
 		errors.Is(err, sprint.ErrSprintNotFound):
@@ -132,6 +137,7 @@ func statusFor(err error) int {
 		errors.Is(err, sprint.ErrOpenSprintExists),
 		errors.Is(err, sprint.ErrItemFromAnotherProject), errors.Is(err, sprint.ErrSprintClosed),
 		errors.Is(err, sprint.ErrItemNotAssignedToSprint),
+		errors.Is(err, defect.ErrDetectionSprintFromAnotherProject),
 		errors.Is(err, poker.ErrSessionAlreadyOpen), errors.Is(err, poker.ErrItemFinished):
 		return http.StatusConflict
 	case errors.Is(err, errBodyTooLarge):

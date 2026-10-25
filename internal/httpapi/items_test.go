@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
 	"seguimiento-medicion-gpc/internal/poker"
@@ -295,7 +296,8 @@ func TestAsignarStoryPoints_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
 
 	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":5}`)
 

@@ -156,6 +156,21 @@
 
       <p class="mensaje" id="msg-sprints" role="alert" hidden></p>
     </section>
+
+    <section id="defectos">
+      <h2>Defectos</h2>
+      <form id="form-registrar-defecto">
+        <h3>Registrar defecto</h3>
+        <label>Ítem (ID) <input name="item_id" type="number" min="1" placeholder="Ej.: 1"></label>
+        <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
+        <label>Severidad
+          <select name="severidad" required></select>
+        </label>
+        <label>Sprint de detección (ID) <input name="sprint_deteccion_id" type="number" min="1" required placeholder="Ej.: 1"></label>
+        <button type="submit">Registrar defecto</button>
+      </form>
+      <p class="mensaje" id="msg-defectos" role="alert" hidden></p>
+    </section>
   </main>
 
   <script src="app.js"></script>

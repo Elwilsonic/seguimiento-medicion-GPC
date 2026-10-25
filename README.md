@@ -33,12 +33,13 @@ El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de 
 
 ### Interfaz web
 
-Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con cuatro secciones:
+Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con cinco secciones:
 
 1. **Proyectos:** crear un proyecto (queda como "proyecto actual"), modificar su nombre, descripción y estado.
 2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarle story points de la escala 1, 2, 3, 5, 8, 13 o 21 con "Asignar SP" (columna SP; "—" si no está estimado, HU-20), abrir una sesión de Planning Poker con "Abrir Poker" (HU-21), asignarlo al sprint actual o completarlo.
 3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21).
 4. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo y registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26).
+5. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29).
 
 Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de Planning Poker para un ítem, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", completarlos, ver los completados y cerrar el sprint.
 
@@ -64,6 +65,7 @@ La API responde bajo el prefijo `/api` (TEC-04).
 | `PATCH` | `/api/items/{id}/estado` | Cambiar el estado de un ítem (HU-08) |
 | `PATCH` | `/api/items/{id}/story-points` | Asignar o reestimar los story points de un ítem: 1, 2, 3, 5, 8, 13 o 21 (HU-20) |
 | `POST` | `/api/items/{id}/poker-sessions` | Abrir una sesión de Planning Poker para un ítem (HU-21) |
+| `POST` | `/api/items/{id}/defectos` | Registrar un defecto de una historia, con descripción, severidad y sprint de detección abierto (HU-29) |
 | `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
 | `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
 | `POST` | `/api/sprints/{id}/items/{itemId}/completar` | Marcar como TERMINADO un ítem del sprint (HU-12) |
@@ -85,13 +87,14 @@ curl -X POST localhost:8080/api/sprints/1/items/1
 curl -X PATCH localhost:8080/api/items/1/story-points -d '{"story_points":5}'
 curl -X PATCH localhost:8080/api/items/1/estado -d '{"estado":"EN_CURSO"}'
 curl -X POST localhost:8080/api/sprints/1/items/1/completar
+curl -X POST localhost:8080/api/items/1/defectos -d '{"descripcion":"El total no suma el IVA","severidad":"ALTA","sprint_deteccion_id":1}'
 curl localhost:8080/api/sprints/1/completados
 curl -X POST localhost:8080/api/sprints/1/cerrar
 ```
 
 `PUT /api/proyectos/{id}` y `PUT /api/items/{id}` reemplazan todos sus campos: un campo que no se envía queda vacío (o en 0, las horas estimadas), así que hay que mandar también los que no cambian. Las fechas de un sprint usan el formato `AAAA-MM-DD`. Para completar un ítem, antes tiene que estar `EN_CURSO`: el cambio de estado respeta las transiciones de HU-08.
 
-Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem o sprint inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint, o story points de un ítem terminado), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
+Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem o sprint inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint, story points de un ítem terminado, o sprint de detección de otro proyecto), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
 
 Para correr los tests: `go test ./...` (no necesita Docker: los tests de PostgreSQL se omiten si no hay base de pruebas).
 
@@ -116,7 +119,7 @@ docker compose up -d --wait
 Levanta PostgreSQL 17 con la configuración del archivo `.env`, si existe. Si no existe, usa los valores de desarrollo de [`.env.example`](.env.example) (usuario `gpc`, base `gpc`). Para cambiarlos, copiá `.env.example` como `.env`: el `.env` real no se sube al repositorio.
 
 - **Puerto 5433:** la base se publica en `127.0.0.1:5433`, no en el 5432, para no chocar con un PostgreSQL instalado en el sistema, que normalmente usa el 5432. Si el 5433 también está ocupado, cambiá `POSTGRES_PORT` en el `.env` (y el puerto en las URL).
-- **Esquema:** los scripts de [`db/init/`](db/init/) crean las tablas en la base `gpc` y una base de pruebas `gpc_test` con el mismo esquema. **Solo corren la primera vez, cuando el volumen de datos está vacío.** Si después cambia el esquema, hay que borrar el volumen con `docker compose down -v` (eso **borra todos los datos**) y volver a levantar la base. **HU-11 agrega la columna `sprint_id` a `backlog_items`, HU-26 la tabla `efforts` y HU-21 la tabla `poker_sessions`:** una base creada antes de esas historias no las tiene, así que hay que recrearla (`docker compose down -v` y después `docker compose up -d --wait`).
+- **Esquema:** los scripts de [`db/init/`](db/init/) crean las tablas en la base `gpc` y una base de pruebas `gpc_test` con el mismo esquema. **Solo corren la primera vez, cuando el volumen de datos está vacío.** Si después cambia el esquema, hay que borrar el volumen con `docker compose down -v` (eso **borra todos los datos**) y volver a levantar la base. **HU-11 agrega la columna `sprint_id` a `backlog_items`, HU-26 la tabla `efforts`, HU-21 la tabla `poker_sessions` y HU-29 la tabla `defects`:** una base creada antes de esas historias no las tiene, así que hay que recrearla (`docker compose down -v` y después `docker compose up -d --wait`).
 - **Datos:** quedan en el volumen `gpc-data`, así que se conservan al reiniciar la aplicación y al hacer `docker compose down` (sin `-v`).
 
 Para ver que la base está lista: `docker compose ps` (estado `healthy`) y `docker compose port postgres 5432` (tiene que mostrar `127.0.0.1:5433`).
@@ -244,6 +247,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-20 | [#38](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/38) | Asignar story points a un ítem del backlog | [SDD](docs/especificaciones/HU-20-asignar-story-points.md) | [BDD](features/HU-20-asignar-story-points.feature) | [Evidencia](docs/evidencias/HU-20-tdd.md) | [#118](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/118) |
 | HU-21 | [#39](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/39) | Abrir una sesión de Planning Poker | [SDD](docs/especificaciones/HU-21-abrir-sesion-planning-poker.md) | [BDD](features/HU-21-abrir-sesion-planning-poker.feature) | [Evidencia](docs/evidencias/HU-21-tdd.md) | [#122](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/122) |
 | HU-26 | [#44](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/44) | Registrar esfuerzo realizado en una historia | [SDD](docs/especificaciones/HU-26-registrar-esfuerzo.md) | [BDD](features/HU-26-registrar-esfuerzo.feature) | [Evidencia](docs/evidencias/HU-26-tdd.md) | [#120](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/120) |
+| HU-29 | [#47](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/47) | Registrar un defecto | [SDD](docs/especificaciones/HU-29-registrar-defecto.md) | [BDD](features/HU-29-registrar-defecto.feature) | [Evidencia](docs/evidencias/HU-29-tdd.md) | [#124](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/124) |
 
 ## Estructura del repositorio
 
