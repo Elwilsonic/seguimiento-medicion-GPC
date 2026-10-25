@@ -56,10 +56,8 @@ func initializeVoteScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^"([^"]*)" vota (\d+) puntos$`, s.vote)
 	ctx.Step(`^que "([^"]*)" votó (\d+) puntos$`, s.previousVote)
 	ctx.Step(`^"([^"]*)" vota (\d+) puntos en la sesión (\d+)$`, s.voteInSession)
-	ctx.Step(`^"([^"]*)" vota simultáneamente (\d+) puntos$`, s.voteConcurrent)
 	ctx.Step(`^"([^"]*)" y "([^"]*)" votan simultáneamente (\d+) puntos$`, s.voteTwoConcurrent)
-	ctx.Step(`^"([^"]*)" vota (\d+) puntos mediante la API$`, s.vote)
-	ctx.Step(`^la sesión tiene un estado distinto de "ABIERTA"$`, s.closeSession)
+	ctx.Step(`^que la sesión tiene un estado distinto de "ABIERTA"$`, s.closeSession)
 	ctx.Step(`^el voto es exitoso$`, s.voteSucceeded)
 	ctx.Step(`^la sesión sigue sin mostrar votos$`, s.votesHidden)
 	ctx.Step(`^la sesión sigue teniendo un solo voto guardado$`, s.oneStoredVote)
@@ -70,8 +68,6 @@ func initializeVoteScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el voto falla porque la sesión no está abierta$`, s.failsNotOpen)
 	ctx.Step(`^la sesión no tiene votos guardados$`, s.noStoredVotes)
 	ctx.Step(`^ambos votos quedan guardados$`, s.twoStoredVotes)
-	ctx.Step(`^la respuesta es 200 y no muestra votos$`, s.voteSucceeded)
-	ctx.Step(`^que la sesión tiene un estado distinto de "ABIERTA"$`, s.closeSession)
 }
 
 func (s *voteScenario) createProject() error {
@@ -135,17 +131,6 @@ func (s *voteScenario) voteInSession(voter string, points, sessionID int) error 
 	return nil
 }
 
-func (s *voteScenario) voteConcurrent(voter string, points int) error {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		_, s.err = s.manager.Vote(s.session.ID, voter, points)
-	}()
-	wg.Wait()
-	return nil
-}
-
 func (s *voteScenario) voteTwoConcurrent(first, second string, points int) error {
 	var wg sync.WaitGroup
 	errs := make(chan error, 2)
@@ -177,6 +162,9 @@ func (s *voteScenario) closeSession() error {
 func (s *voteScenario) voteSucceeded() error {
 	if s.err != nil {
 		return fmt.Errorf("voto falló: %w", s.err)
+	}
+	if s.session.Votes == nil || len(s.session.Votes) != 0 {
+		return fmt.Errorf("votos devueltos = %+v, se esperaba ocultamiento", s.session.Votes)
 	}
 	return nil
 }

@@ -106,6 +106,44 @@ func TestVote_SesionNoAbiertaDevuelveError(t *testing.T) {
 	}
 }
 
+type failingVoteRepository struct {
+	*MemoryRepository
+	failUpdate bool
+}
+
+func (r *failingVoteRepository) Update(session Session) (Session, error) {
+	if r.failUpdate {
+		return Session{}, errRepository
+	}
+	return r.MemoryRepository.Update(session)
+}
+
+func TestVote_ErrorAlGuardarPropagaErrorYSesionNoSeModifica(t *testing.T) {
+	env := newTestEnv(t)
+	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
+	repo := &failingVoteRepository{MemoryRepository: NewMemoryRepository()}
+	manager := NewManager(repo, env.items)
+	session, err := manager.OpenSession(item.ID)
+	if err != nil {
+		t.Fatalf("abrir sesión: %v", err)
+	}
+	repo.failUpdate = true
+
+	_, err = manager.Vote(session.ID, "Ana", 5)
+
+	if !errors.Is(err, errRepository) {
+		t.Fatalf("error = %v, se esperaba errRepository", err)
+	}
+	repo.failUpdate = false
+	stored, err := repo.GetByID(session.ID)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if len(stored.Votes) != 0 {
+		t.Errorf("votos guardados = %+v, se esperaba que la sesión no se modificara", stored.Votes)
+	}
+}
+
 func TestVote_ConcurrenteConservaVotosDeIntegrantesDistintos(t *testing.T) {
 	env, session := openTestSession(t)
 	var wg sync.WaitGroup

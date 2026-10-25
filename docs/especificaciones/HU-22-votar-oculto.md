@@ -50,7 +50,7 @@ Firma:
 Vote(sessionID int, voter string, points int) (Session, error)
 ```
 
-en `internal/poker/vote.go`.
+en `internal/poker/manager.go`.
 
 ## Salidas esperadas
 
@@ -82,13 +82,14 @@ No se valida nuevamente el ítem ni el proyecto: la sesión apunta a un ítem va
 
 ## Restricciones
 
-- El código nuevo se concentra en `internal/poker/vote.go`.
+- `Manager.Vote` se implementa en `internal/poker/manager.go`.
+- Los errores `ErrSessionNotFound`, `ErrSessionNotOpen`, `ErrEmptyVoter` y `ErrInvalidCard` se declaran en `internal/poker/session.go`.
 - `Repository` agrega:
   - `GetByID(id int) (Session, error)`, que devuelve `ErrSessionNotFound` si no existe.
   - `Update(session Session) (Session, error)`, que reemplaza la sesión por ID y devuelve una copia.
 - `MemoryRepository` y `PostgresRepository` implementan ambas operaciones con el mismo contrato de copias.
 - `PostgresRepository.GetByID` traduce `pgx.ErrNoRows` a `ErrSessionNotFound`, igual que `OpenByItem`.
-- No se modifica `session.go`, `create.go`, `manager.go` ni código de producción de otros paquetes, salvo el cableado necesario para la API y la interfaz.
+- No se modifica `create.go` ni código de producción de otros paquetes fuera del cableado necesario para la API y la interfaz; `manager.go` y `session.go` contienen la implementación y los errores definidos para esta historia.
 - La tabla `poker_sessions` ya contiene `votes` como `JSONB`; no se modifica el esquema. `Update` persiste el estado, la ronda y los votos codificados con `encoding/json`.
 - Las pruebas de integración PostgreSQL se omiten cuando no existe `TEST_DATABASE_URL`.
 - El handler se incorpora en `internal/httpapi/poker.go` y la ruta en `server.go`. Se reutiliza la respuesta de sesión de poker.

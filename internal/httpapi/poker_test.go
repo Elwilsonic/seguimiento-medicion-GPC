@@ -165,3 +165,73 @@ func TestVotarPoker_ErroresDevuelvenCodigoCorrespondiente(t *testing.T) {
 	rec = do(t, h, http.MethodPost, "/api/poker-sessions/999/votes", `{"integrante":"Ana","puntos":5}`)
 	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
 }
+
+func TestVotarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	pokerRepo := poker.NewMemoryRepository()
+	pokerManager := poker.NewManager(pokerRepo, items)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	p, err := projects.Create("Sistema de ventas", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := items.Create(p.ID, "Historia", "Descripción", "MEDIA", []string{"Criterio"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := pokerManager.OpenSession(item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session.Status = poker.Status("REVELADA")
+	if _, err := pokerRepo.Update(session); err != nil {
+		t.Fatal(err)
+	}
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
+
+	expectError(t, rec, http.StatusConflict, poker.ErrSessionNotOpen.Error())
+}
+
+type failingVoteHTTPRepository struct {
+	*poker.MemoryRepository
+	failUpdate bool
+}
+
+func (r *failingVoteHTTPRepository) Update(session poker.Session) (poker.Session, error) {
+	if r.failUpdate {
+		return poker.Session{}, errStorage
+	}
+	return r.MemoryRepository.Update(session)
+}
+
+func TestVotarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
+	pokerManager := poker.NewManager(pokerRepo, items)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	p, err := projects.Create("Sistema de ventas", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := items.Create(p.ID, "Historia", "Descripción", "MEDIA", []string{"Criterio"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pokerManager.OpenSession(item.ID); err != nil {
+		t.Fatal(err)
+	}
+	pokerRepo.failUpdate = true
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}

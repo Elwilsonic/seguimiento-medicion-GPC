@@ -47,7 +47,8 @@ Característica: HU-22 Votar de forma oculta
     Cuando "Ana" y "Bruno" votan simultáneamente 5 puntos
     Entonces ambos votos quedan guardados
 
-  Escenario: La API mantiene el código 200 al reemplazar (CA-22.7)
+  Escenario: El voto reemplazado mantiene los votos ocultos (CA-22.7)
     Dado que "Ana" votó 5 puntos
-    Cuando "Ana" vota 13 puntos mediante la API
-    Entonces la respuesta es 200 y no muestra votos
+    Cuando "Ana" vota 13 puntos
+    Entonces el voto es exitoso
+    Y la sesión sigue sin mostrar votos
