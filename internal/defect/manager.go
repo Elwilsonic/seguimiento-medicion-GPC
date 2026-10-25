@@ -1,12 +1,15 @@
 package defect
 
 import (
+	"sync"
+
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
 // Manager aplica las reglas de negocio de los defectos sobre un Repository.
 type Manager struct {
+	mu      sync.Mutex
 	repo    Repository
 	items   *backlog.Manager
 	sprints *sprint.Manager
