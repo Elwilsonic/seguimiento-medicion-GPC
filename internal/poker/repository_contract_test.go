@@ -2,6 +2,7 @@ package poker
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -196,6 +197,28 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 		}
 		if len(again.Votes) != 1 || again.Votes[0].Points != 5 {
 			t.Errorf("sesión guardada = %+v, la mutación externa no debía afectarla", again)
+		}
+	})
+
+	// HU-23, CA-23.9: el estado revelado se persiste con sus votos.
+	t.Run("Update guarda el estado REVELADA y GetByID lo devuelve con sus votos", func(t *testing.T) {
+		repo, itemID := newRepo(t)
+		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
+		if err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+		saved.Status = StatusRevealed
+		saved.Votes = []Vote{{Voter: "Ana", Points: 5}, {Voter: "Bruno", Points: 8}}
+
+		if _, err := repo.Update(saved); err != nil {
+			t.Fatalf("Update: %v", err)
+		}
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID después de Update: %v", err)
+		}
+		if got.Status != StatusRevealed || got.Round != 1 || !slices.Equal(got.Votes, saved.Votes) {
+			t.Errorf("sesión guardada = %+v, se esperaba REVELADA en la ronda 1 con %+v", got, saved.Votes)
 		}
 	})
 }

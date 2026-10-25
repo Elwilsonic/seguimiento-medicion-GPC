@@ -12,6 +12,9 @@ type Status string
 const (
 	// StatusOpen indica que la sesión está en curso y acepta votos.
 	StatusOpen Status = "ABIERTA"
+	// StatusRevealed indica que los votos se revelaron y la sesión ya no
+	// acepta votos (HU-23).
+	StatusRevealed Status = "REVELADA"
 )
 
 // Vote es un voto de un integrante en una ronda de Planning Poker. El votante
@@ -58,4 +61,6 @@ var (
 	ErrEmptyVoter = errors.New("el votante no puede estar vacío")
 	// ErrInvalidCard indica que los puntos no pertenecen a la escala.
 	ErrInvalidCard = errors.New("la carta no pertenece a la escala de Planning Poker")
+	// ErrNoVotes indica que la sesión no tiene votos para revelar (RN-23.3).
+	ErrNoVotes = errors.New("la sesión de Planning Poker no tiene votos para revelar")
 )

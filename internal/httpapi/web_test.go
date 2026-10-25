@@ -170,6 +170,25 @@ func TestInterfaz_FormularioDeVoto(t *testing.T) {
 	}
 }
 
+// HU-23, CA-23.8 · El botón "Revelar votos" revela la sesión y la interfaz
+// muestra la lista de votos.
+func TestInterfaz_BotonRevelarVotos(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{`id="btn-revelar-poker"`, "Revelar votos", `id="votos-poker"`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/reveal"`, `"Votos revelados en la sesión "`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-32, CA-32.9 · La sección "Métricas" muestra los Story Points del
 // proyecto y del sprint actual, y la velocidad.
 func TestInterfaz_SeccionDeMetricas(t *testing.T) {

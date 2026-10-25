@@ -1,6 +1,7 @@
 package poker
 
 import (
+	"errors"
 	"strings"
 	"sync"
 
@@ -62,6 +63,14 @@ func (m *Manager) Vote(sessionID int, voter string, points int) (Session, error)
 	}
 	session.Votes = []Vote{}
 	return session, nil
+}
+
+// errNotImplemented es el stub del RED de HU-23; se elimina en el GREEN.
+var errNotImplemented = errors.New("no implementado")
+
+// Reveal revela todos los votos de una sesión abierta (HU-23). Stub del RED.
+func (m *Manager) Reveal(sessionID int) (Session, error) {
+	return Session{}, errNotImplemented
 }
 
 func validCard(points int) bool {

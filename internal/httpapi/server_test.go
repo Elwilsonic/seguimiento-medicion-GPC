@@ -198,6 +198,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"modificar ítem", http.MethodPut, "/api/items/abc", validItem},
 		{"cambiar estado", http.MethodPatch, "/api/items/abc/estado", `{"estado":"EN_CURSO"}`},
 		{"votar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/votes", `{"integrante":"Ana","puntos":5}`},
+		// HU-23, CA-23.8: revelar los votos.
+		{"revelar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/reveal", ""},
 		// TEC-04, CA-TEC04.9: endpoints de sprints.
 		{"crear sprint", http.MethodPost, "/api/proyectos/abc/sprints", validSprint},
 		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
