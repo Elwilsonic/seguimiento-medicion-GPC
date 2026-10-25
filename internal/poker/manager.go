@@ -1,6 +1,7 @@
 package poker
 
 import (
+	"strings"
 	"sync"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -21,4 +22,53 @@ type Manager struct {
 // ítems con items (HU-21).
 func NewManager(repo Repository, items *backlog.Manager) *Manager {
 	return &Manager{repo: repo, items: items}
+}
+
+// Vote registra o reemplaza un voto y devuelve la sesión sin exponer sus
+// votos.
+func (m *Manager) Vote(sessionID int, voter string, points int) (Session, error) {
+	voter = strings.TrimSpace(voter)
+	if voter == "" {
+		return Session{}, ErrEmptyVoter
+	}
+	if !validCard(points) {
+		return Session{}, ErrInvalidCard
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, err := m.repo.GetByID(sessionID)
+	if err != nil {
+		return Session{}, err
+	}
+	if session.Status != StatusOpen {
+		return Session{}, ErrSessionNotOpen
+	}
+
+	replaced := false
+	for i, vote := range session.Votes {
+		if strings.EqualFold(vote.Voter, voter) {
+			session.Votes[i] = Vote{Voter: voter, Points: points}
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		session.Votes = append(session.Votes, Vote{Voter: voter, Points: points})
+	}
+	if _, err := m.repo.Update(session); err != nil {
+		return Session{}, err
+	}
+	session.Votes = []Vote{}
+	return session, nil
+}
+
+func validCard(points int) bool {
+	for _, card := range Cards() {
+		if card == points {
+			return true
+		}
+	}
+	return false
 }

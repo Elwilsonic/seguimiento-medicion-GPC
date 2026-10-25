@@ -64,6 +64,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PATCH /api/items/{id}/story-points", s.assignStoryPoints)
 	mux.HandleFunc("GET /api/items/{id}/poker-sessions", methodNotAllowed)
 	mux.HandleFunc("POST /api/items/{id}/poker-sessions", s.openPokerSession)
+	mux.HandleFunc("POST /api/poker-sessions/{id}/votes", s.votePokerSession)
 	mux.HandleFunc("POST /api/items/{id}/defectos", s.registerDefect)
 	mux.HandleFunc("GET /api/items/{id}/esfuerzos", s.listEffortsByItem)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
@@ -136,10 +137,11 @@ func statusFor(err error) int {
 		errors.Is(err, effort.ErrEmptyMember), errors.Is(err, effort.ErrEmptyActivity),
 		errors.Is(err, effort.ErrMissingDate), errors.Is(err, effort.ErrInvalidHours),
 		errors.Is(err, defect.ErrEmptyDescription), errors.Is(err, defect.ErrInvalidSeverity),
-		errors.Is(err, defect.ErrMissingDetectionSprint):
+		errors.Is(err, defect.ErrMissingDetectionSprint),
+		errors.Is(err, poker.ErrEmptyVoter), errors.Is(err, poker.ErrInvalidCard):
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
-		errors.Is(err, sprint.ErrSprintNotFound):
+		errors.Is(err, sprint.ErrSprintNotFound), errors.Is(err, poker.ErrSessionNotFound):
 		return http.StatusNotFound
 	case errors.Is(err, project.ErrDuplicateName), errors.Is(err, backlog.ErrInvalidTransition),
 		errors.Is(err, backlog.ErrItemAlreadyAssigned), errors.Is(err, backlog.ErrItemFinished),
@@ -147,7 +149,8 @@ func statusFor(err error) int {
 		errors.Is(err, sprint.ErrItemFromAnotherProject), errors.Is(err, sprint.ErrSprintClosed),
 		errors.Is(err, sprint.ErrItemNotAssignedToSprint),
 		errors.Is(err, defect.ErrDetectionSprintFromAnotherProject),
-		errors.Is(err, poker.ErrSessionAlreadyOpen), errors.Is(err, poker.ErrItemFinished):
+		errors.Is(err, poker.ErrSessionAlreadyOpen), errors.Is(err, poker.ErrItemFinished),
+		errors.Is(err, poker.ErrSessionNotOpen):
 		return http.StatusConflict
 	case errors.Is(err, errBodyTooLarge):
 		return http.StatusRequestEntityTooLarge

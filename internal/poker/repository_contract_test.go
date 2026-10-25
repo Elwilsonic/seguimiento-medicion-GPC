@@ -1,6 +1,7 @@
 package poker
 
 import (
+	"errors"
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -148,6 +149,53 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 		}
 		if again.Votes[0].Points != 5 {
 			t.Errorf("puntos = %d, la mutación externa no debía afectar la sesión guardada", again.Votes[0].Points)
+		}
+	})
+
+	t.Run("GetByID devuelve la sesión guardada", func(t *testing.T) {
+		repo, itemID := newRepo(t)
+		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
+		if err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID(%d): %v", saved.ID, err)
+		}
+		if got.ID != saved.ID || got.ItemID != itemID || got.Status != StatusOpen || got.Round != 1 {
+			t.Errorf("sesión = %+v, se esperaba %+v", got, saved)
+		}
+	})
+
+	t.Run("GetByID sin sesión devuelve ErrSessionNotFound", func(t *testing.T) {
+		repo, _ := newRepo(t)
+
+		_, err := repo.GetByID(999)
+		if !errors.Is(err, ErrSessionNotFound) {
+			t.Fatalf("error = %v, se esperaba ErrSessionNotFound", err)
+		}
+	})
+
+	t.Run("Update reemplaza la sesión y devuelve una copia", func(t *testing.T) {
+		repo, itemID := newRepo(t)
+		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
+		if err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+		saved.Votes = []Vote{{Voter: "Ana", Points: 5}}
+
+		updated, err := repo.Update(saved)
+		if err != nil {
+			t.Fatalf("Update: %v", err)
+		}
+		updated.Votes[0].Points = 21
+		again, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID después de Update: %v", err)
+		}
+		if len(again.Votes) != 1 || again.Votes[0].Points != 5 {
+			t.Errorf("sesión guardada = %+v, la mutación externa no debía afectarla", again)
 		}
 	})
 }

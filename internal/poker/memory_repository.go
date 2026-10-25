@@ -32,3 +32,24 @@ func (r *MemoryRepository) OpenByItem(itemID int) (Session, bool, error) {
 	}
 	return Session{}, false, nil
 }
+
+// GetByID devuelve una sesión por ID.
+func (r *MemoryRepository) GetByID(id int) (Session, error) {
+	for _, session := range r.sessions {
+		if session.ID == id {
+			return cloneSession(session), nil
+		}
+	}
+	return Session{}, ErrSessionNotFound
+}
+
+// Update reemplaza una sesión existente.
+func (r *MemoryRepository) Update(session Session) (Session, error) {
+	for i, stored := range r.sessions {
+		if stored.ID == session.ID {
+			r.sessions[i] = cloneSession(session)
+			return cloneSession(session), nil
+		}
+	}
+	return Session{}, ErrSessionNotFound
+}
