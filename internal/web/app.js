@@ -365,6 +365,50 @@ formEsfuerzo.addEventListener("submit", (e) => {
   });
 });
 
+// HU-27 · Consultar esfuerzos (CA-27.10). Consulta por sprint o por historia,
+// llena la tabla y muestra el total con un decimal.
+const formConsultaEsfuerzos = $("form-consultar-esfuerzos");
+formConsultaEsfuerzos.setAttribute("aria-label", "Consultar esfuerzos");
+formConsultaEsfuerzos.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-esfuerzos", async () => {
+    const referencia = form.referencia.value.trim();
+    const ruta =
+      form.tipo.value === "sprint"
+        ? "/sprints/" + referencia + "/esfuerzos"
+        : "/items/" + referencia + "/esfuerzos";
+    const resumen = await api("GET", ruta);
+    const tbody = $("esfuerzos");
+    tbody.replaceChildren(...resumen.esfuerzos.map(filaEsfuerzo));
+    if (resumen.esfuerzos.length === 0) {
+      const tr = document.createElement("tr");
+      const td = celda("No hay esfuerzos registrados.");
+      td.colSpan = 7;
+      td.className = "vacio";
+      tr.append(td);
+      tbody.append(tr);
+    }
+    $("total-esfuerzos").textContent = "Total: " + resumen.total_horas.toFixed(1) + " horas";
+    mostrar("msg-esfuerzos", "Se listaron " + resumen.esfuerzos.length + " esfuerzo(s).", false);
+  });
+});
+
+// filaEsfuerzo arma una fila de la tabla de consulta de esfuerzos.
+function filaEsfuerzo(e) {
+  const tr = document.createElement("tr");
+  tr.append(
+    celda(e.id),
+    celda(e.fecha),
+    celda(e.integrante),
+    celda(e.actividad),
+    celda(e.item_id),
+    celda(e.sprint_id),
+    celda(e.horas),
+  );
+  return tr;
+}
+
 // HU-32 · Métricas (CA-32.9). Muestra los story points planificados y
 // completados, los ítems sin estimar y la velocidad del proyecto actual, y si
 // hay sprint actual, los de ese sprint.

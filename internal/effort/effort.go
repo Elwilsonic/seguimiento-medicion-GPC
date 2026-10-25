@@ -17,9 +17,8 @@ type Effort struct {
 }
 
 var (
-	ErrEmptyMember    = errors.New("el integrante es obligatorio")
-	ErrEmptyActivity  = errors.New("la actividad es obligatoria")
-	ErrMissingDate    = errors.New("la fecha del esfuerzo es obligatoria")
-	ErrInvalidHours   = errors.New("las horas trabajadas deben ser un número positivo")
-	errNotImplemented = errors.New("no implementado")
+	ErrEmptyMember   = errors.New("el integrante es obligatorio")
+	ErrEmptyActivity = errors.New("la actividad es obligatoria")
+	ErrMissingDate   = errors.New("la fecha del esfuerzo es obligatoria")
+	ErrInvalidHours  = errors.New("las horas trabajadas deben ser un número positivo")
 )

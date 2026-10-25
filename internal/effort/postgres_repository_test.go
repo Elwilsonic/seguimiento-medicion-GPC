@@ -56,6 +56,30 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 		t.Fatalf("crear el ítem de prueba: %v", err)
 	}
 
+	savedSprint2, err := sprints.Save(sprint.Sprint{
+		ProjectID: 1,
+		Name:      "Sprint 2",
+		StartDate: contractDate.AddDate(0, 0, 7),
+		EndDate:   contractDate.AddDate(0, 0, 13),
+		Goal:      "Cerrar el MVP",
+		Status:    sprint.StatusClosed,
+	})
+	if err != nil {
+		t.Fatalf("crear el segundo sprint de prueba: %v", err)
+	}
+
+	if _, err := items.Save(backlog.Item{
+		ProjectID:          1,
+		Title:              "Cierre de sesión",
+		Description:        "Cerrar la sesión",
+		Priority:           backlog.PriorityMedium,
+		AcceptanceCriteria: []string{"Cierre OK"},
+		Status:             backlog.StatusInProgress,
+		SprintID:           savedSprint2.ID,
+	}); err != nil {
+		t.Fatalf("crear el segundo ítem de prueba: %v", err)
+	}
+
 	return NewPostgresRepository(pool)
 }
 
@@ -128,5 +152,39 @@ func TestPostgresRepository_SaveDeSprintInexistenteFalla(t *testing.T) {
 	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) || pgErr.Code != "23503" {
 		t.Errorf("err = %v, se esperaba una violación de clave foránea (23503)", err)
+	}
+}
+
+// ListByItem devuelve solo los esfuerzos de la historia, ordenados por ID.
+func TestPostgresRepository_ListaPorItem(t *testing.T) {
+	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
+	first := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+	contractSave(t, repo, contractEffortFor(contractOtherItemID, contractSprintID, "Buttini", "Otra historia", 4))
+	third := contractSave(t, repo, contractEffort("García Santiago", "Revisar", 1))
+
+	got, err := repo.ListByItem(contractItemID)
+
+	if err != nil {
+		t.Fatalf("ListByItem devolvió un error inesperado: %v", err)
+	}
+	if len(got) != 2 || got[0].ID != first.ID || got[1].ID != third.ID {
+		t.Errorf("esfuerzos = %+v, se esperaban los IDs %d y %d", got, first.ID, third.ID)
+	}
+}
+
+// ListBySprint devuelve solo los esfuerzos del sprint, ordenados por ID.
+func TestPostgresRepository_ListaPorSprint(t *testing.T) {
+	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
+	first := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+	contractSave(t, repo, contractEffortFor(contractItemID, contractOtherSprintID, "Buttini", "Otro sprint", 4))
+	third := contractSave(t, repo, contractEffort("García Santiago", "Revisar", 1))
+
+	got, err := repo.ListBySprint(contractSprintID)
+
+	if err != nil {
+		t.Fatalf("ListBySprint devolvió un error inesperado: %v", err)
+	}
+	if len(got) != 2 || got[0].ID != first.ID || got[1].ID != third.ID {
+		t.Errorf("esfuerzos = %+v, se esperaban los IDs %d y %d", got, first.ID, third.ID)
 	}
 }

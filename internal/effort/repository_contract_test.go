@@ -12,8 +12,10 @@ import (
 // depende del ID recibido (RN-26.8 y RN-26.9).
 
 const (
-	contractItemID   = 1
-	contractSprintID = 1
+	contractItemID        = 1
+	contractSprintID      = 1
+	contractOtherItemID   = 2
+	contractOtherSprintID = 2
 )
 
 var contractDate = time.Date(2026, 10, 24, 0, 0, 0, 0, time.UTC)
@@ -55,16 +57,146 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 			t.Errorf("horas = %v, se esperaba 0.001", saved.Hours)
 		}
 	})
+
+	t.Run("ListByItem devuelve una lista vacía, no nil", func(t *testing.T) {
+		repo := newRepo(t)
+
+		got, err := repo.ListByItem(contractItemID)
+
+		if err != nil {
+			t.Fatalf("ListByItem devolvió un error inesperado: %v", err)
+		}
+		if got == nil {
+			t.Fatal("la lista es nil, se esperaba una lista vacía")
+		}
+		if len(got) != 0 {
+			t.Errorf("esfuerzos = %d, se esperaban 0", len(got))
+		}
+	})
+
+	t.Run("ListBySprint devuelve una lista vacía, no nil", func(t *testing.T) {
+		repo := newRepo(t)
+
+		got, err := repo.ListBySprint(contractSprintID)
+
+		if err != nil {
+			t.Fatalf("ListBySprint devolvió un error inesperado: %v", err)
+		}
+		if got == nil {
+			t.Fatal("la lista es nil, se esperaba una lista vacía")
+		}
+		if len(got) != 0 {
+			t.Errorf("esfuerzos = %d, se esperaban 0", len(got))
+		}
+	})
+
+	t.Run("ListByItem devuelve los esfuerzos del ítem ordenados por ID", func(t *testing.T) {
+		repo := newRepo(t)
+		first := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+		contractSave(t, repo, contractEffortFor(contractOtherItemID, contractSprintID, "Buttini", "Otra historia", 4))
+		third := contractSave(t, repo, contractEffort("García Santiago", "Revisar", 1))
+
+		got, err := repo.ListByItem(contractItemID)
+
+		if err != nil {
+			t.Fatalf("ListByItem devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 2 {
+			t.Fatalf("esfuerzos = %d, se esperaban 2", len(got))
+		}
+		if got[0].ID != first.ID || got[1].ID != third.ID {
+			t.Errorf("IDs = %d y %d, se esperaban %d y %d", got[0].ID, got[1].ID, first.ID, third.ID)
+		}
+	})
+
+	t.Run("ListBySprint devuelve los esfuerzos del sprint ordenados por ID", func(t *testing.T) {
+		repo := newRepo(t)
+		first := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+		contractSave(t, repo, contractEffortFor(contractItemID, contractOtherSprintID, "Buttini", "Otro sprint", 4))
+		third := contractSave(t, repo, contractEffort("García Santiago", "Revisar", 1))
+
+		got, err := repo.ListBySprint(contractSprintID)
+
+		if err != nil {
+			t.Fatalf("ListBySprint devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 2 {
+			t.Fatalf("esfuerzos = %d, se esperaban 2", len(got))
+		}
+		if got[0].ID != first.ID || got[1].ID != third.ID {
+			t.Errorf("IDs = %d y %d, se esperaban %d y %d", got[0].ID, got[1].ID, first.ID, third.ID)
+		}
+	})
+
+	t.Run("ListByItem aísla los esfuerzos de otra historia", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+		other := contractSave(t, repo, contractEffortFor(contractOtherItemID, contractSprintID, "Buttini", "Otra historia", 4))
+
+		got, err := repo.ListByItem(contractOtherItemID)
+
+		if err != nil {
+			t.Fatalf("ListByItem devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 1 || got[0].ID != other.ID {
+			t.Errorf("esfuerzos = %+v, se esperaba solo el esfuerzo %d", got, other.ID)
+		}
+	})
+
+	t.Run("ListBySprint aísla los esfuerzos de otro sprint", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+		other := contractSave(t, repo, contractEffortFor(contractItemID, contractOtherSprintID, "Buttini", "Otro sprint", 4))
+
+		got, err := repo.ListBySprint(contractOtherSprintID)
+
+		if err != nil {
+			t.Fatalf("ListBySprint devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 1 || got[0].ID != other.ID {
+			t.Errorf("esfuerzos = %+v, se esperaba solo el esfuerzo %d", got, other.ID)
+		}
+	})
+
+	t.Run("Las listas devuelven copias", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+
+		got, err := repo.ListByItem(contractItemID)
+		if err != nil {
+			t.Fatalf("ListByItem devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 1 {
+			t.Fatalf("esfuerzos = %d, se esperaba 1", len(got))
+		}
+		got[0].Member = "Otra persona"
+		got[0].Hours = 99
+
+		again, err := repo.ListByItem(contractItemID)
+		if err != nil {
+			t.Fatalf("ListByItem devolvió un error inesperado: %v", err)
+		}
+		if len(again) != 1 {
+			t.Fatalf("esfuerzos = %d, se esperaba 1", len(again))
+		}
+		if again[0].Member != "García Santiago" || again[0].Hours != 2.5 {
+			t.Errorf("el esfuerzo guardado cambió: %+v", again[0])
+		}
+	})
 }
 
 // contractEffort devuelve un esfuerzo válido con la fecha fija del contrato.
 func contractEffort(member, activity string, hours float64) Effort {
+	return contractEffortFor(contractItemID, contractSprintID, member, activity, hours)
+}
+
+func contractEffortFor(itemID, sprintID int, member, activity string, hours float64) Effort {
 	return Effort{
 		Member:   member,
 		Date:     contractDate,
 		Activity: activity,
-		ItemID:   contractItemID,
-		SprintID: contractSprintID,
+		ItemID:   itemID,
+		SprintID: sprintID,
 		Hours:    hours,
 	}
 }
