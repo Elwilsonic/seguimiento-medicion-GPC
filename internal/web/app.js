@@ -163,11 +163,11 @@ function boton(texto, fn, clase) {
 // mostrarPoker muestra la última sesión de Planning Poker abierta (HU-21) con
 // sus cartas.
 function mostrarPoker(s) {
-  $("datos-poker").textContent =
-    "Sesión " + s.id + " · ítem " + s.item_id + " · " + s.estado + " · ronda " + s.ronda;
-  $("datos-poker").className = "";
+  mostrarDatosPoker(s);
   $("cartas-poker").textContent = "Cartas: " + s.cartas.join(", ");
   $("cartas-poker").className = "";
+  $("votos-poker").hidden = true;
+  $("votos-poker").replaceChildren();
   const form = $("form-votar-poker");
   form.hidden = false;
   form.dataset.sessionId = s.id;
@@ -184,6 +184,30 @@ function mostrarPoker(s) {
     }, "secundario"));
   }
 }
+
+function mostrarDatosPoker(s) {
+  $("datos-poker").textContent =
+    "Sesión " + s.id + " · ítem " + s.item_id + " · " + s.estado + " · ronda " + s.ronda;
+  $("datos-poker").className = "";
+}
+
+// "Revelar votos" revela la sesión mostrada (HU-23): oculta el formulario de
+// voto, porque la sesión ya no acepta votos, y lista todos los votos.
+$("btn-revelar-poker").addEventListener("click", () =>
+  accion("msg-poker", async () => {
+    const form = $("form-votar-poker");
+    const s = await api("POST", "/poker-sessions/" + form.dataset.sessionId + "/reveal");
+    mostrarDatosPoker(s);
+    form.hidden = true;
+    const lista = $("votos-poker");
+    lista.replaceChildren(...s.votos.map((v) => {
+      const li = document.createElement("li");
+      li.textContent = v.integrante + ": " + v.puntos;
+      return li;
+    }));
+    lista.hidden = false;
+    mostrar("msg-poker", "Votos revelados en la sesión " + s.id + ".", false);
+  }));
 
 // filaItem arma la fila de un ítem con sus acciones: editar (HU-07), cambiar
 // estado (HU-08), asignar story points (HU-20), abrir Planning Poker (HU-21),

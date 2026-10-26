@@ -64,6 +64,32 @@ func (m *Manager) Vote(sessionID int, voter string, points int) (Session, error)
 	return session, nil
 }
 
+// Reveal pasa una sesión ABIERTA con votos a REVELADA y devuelve todos sus
+// votos (HU-23). Leer, validar y guardar van bajo el mismo mutex que Vote,
+// así un voto simultáneo queda guardado antes de revelar o se rechaza
+// (RN-23.8).
+func (m *Manager) Reveal(sessionID int) (Session, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, err := m.repo.GetByID(sessionID)
+	if err != nil {
+		return Session{}, err
+	}
+	if session.Status != StatusOpen {
+		return Session{}, ErrSessionNotOpen
+	}
+	if len(session.Votes) == 0 {
+		return Session{}, ErrNoVotes
+	}
+
+	session.Status = StatusRevealed
+	if _, err := m.repo.Update(session); err != nil {
+		return Session{}, err
+	}
+	return cloneSession(session), nil
+}
+
 func validCard(points int) bool {
 	for _, card := range Cards() {
 		if card == points {

@@ -3,6 +3,7 @@ package httpapi_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -234,4 +235,137 @@ func TestVotarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}
+
+// HU-23 · Revelar las estimaciones (Issue #41)
+//
+// CA-23.8 · POST /api/poker-sessions/{id}/reveal expone la revelación. Un
+// caso exitoso y un test por cada código de error.
+
+// openSessionWithVotes abre la sesión 1 del ítem 1 y registra los votos por
+// la API.
+func openSessionWithVotes(t *testing.T, h http.Handler, votes ...string) {
+	t.Helper()
+	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/poker-sessions", ""), http.StatusCreated)
+	for _, body := range votes {
+		expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", body), http.StatusOK)
+	}
+}
+
+func TestRevelarPoker_Devuelve200ConTodosLosVotos(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`, `{"integrante":"Bruno","puntos":8}`)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got pokerSessionJSON
+	decode(t, rec, &got)
+	if got.ID != 1 || got.ItemID != 1 || got.Estado != "REVELADA" || got.Ronda != 1 {
+		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, REVELADA, en la ronda 1", got)
+	}
+	want := []pokerVoteJSON{{Integrante: "Ana", Puntos: 5}, {Integrante: "Bruno", Puntos: 8}}
+	if !slices.Equal(got.Votos, want) {
+		t.Errorf("votos = %+v, se esperaba %+v", got.Votos, want)
+	}
+	if !slices.Equal(got.Cartas, poker.Cards()) {
+		t.Errorf("cartas = %v, se esperaba %v", got.Cartas, poker.Cards())
+	}
+}
+
+func TestRevelarPoker_IDNoNumericoDevuelve400(t *testing.T) {
+	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/reveal", "")
+
+	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+}
+
+func TestRevelarPoker_InexistenteDevuelve404(t *testing.T) {
+	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/999/reveal", "")
+
+	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
+}
+
+func TestRevelarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", ""), http.StatusOK)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
+
+	expectError(t, rec, http.StatusConflict, poker.ErrSessionNotOpen.Error())
+}
+
+func TestRevelarPoker_SinVotosDevuelve409(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
+
+	expectError(t, rec, http.StatusConflict, poker.ErrNoVotes.Error())
+}
+
+func TestRevelarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
+	pokerManager := poker.NewManager(pokerRepo, items)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	p, err := projects.Create("Sistema de ventas", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := items.Create(p.ID, "Historia", "Descripción", "MEDIA", []string{"Criterio"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := pokerManager.OpenSession(item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pokerManager.Vote(session.ID, "Ana", 5); err != nil {
+		t.Fatal(err)
+	}
+	pokerRepo.failUpdate = true
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	stored, err := pokerRepo.GetByID(session.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Status != poker.StatusOpen || len(stored.Votes) != 1 {
+		t.Errorf("sesión guardada = %+v, se esperaba ABIERTA con el voto de Ana", stored)
+	}
+}
+
+func TestRevelarPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
+
+	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodDelete} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(method, "/api/poker-sessions/1/reveal", nil))
+
+		if rec.Code != http.StatusMethodNotAllowed {
+			t.Errorf("%s: código = %d, se esperaba %d", method, rec.Code, http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+func TestRevelarPoker_IgnoraElCuerpo(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", `no es JSON {"estado":"ABIERTA"}`)
+
+	expectStatus(t, rec, http.StatusOK)
+	var got pokerSessionJSON
+	decode(t, rec, &got)
+	if got.Estado != "REVELADA" || len(got.Votos) != 1 {
+		t.Errorf("sesión = %+v, se esperaba REVELADA con el voto de Ana", got)
+	}
 }
