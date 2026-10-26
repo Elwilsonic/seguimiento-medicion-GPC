@@ -221,6 +221,27 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 			t.Errorf("sesión guardada = %+v, se esperaba REVELADA en la ronda 1 con %+v", got, saved.Votes)
 		}
 	})
+
+	// HU-25, CA-25.10: el estado cerrado se persiste con sus votos.
+	t.Run("Update guarda el estado CERRADA y GetByID lo devuelve con sus votos", func(t *testing.T) {
+		repo, itemID := newRepo(t)
+		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusRevealed, Round: 1, Votes: []Vote{{Voter: "Ana", Points: 5}, {Voter: "Bruno", Points: 8}}})
+		if err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+		saved.Status = StatusClosed
+
+		if _, err := repo.Update(saved); err != nil {
+			t.Fatalf("Update: %v", err)
+		}
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID después de Update: %v", err)
+		}
+		if got.Status != StatusClosed || got.Round != 1 || !slices.Equal(got.Votes, saved.Votes) {
+			t.Errorf("sesión guardada = %+v, se esperaba CERRADA en la ronda 1 con %+v", got, saved.Votes)
+		}
+	})
 }
 
 // newMemoryRepo arma un repositorio en memoria con un proyecto y un ítem

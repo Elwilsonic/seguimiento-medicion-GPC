@@ -168,6 +168,7 @@ function mostrarPoker(s) {
   $("cartas-poker").className = "";
   $("votos-poker").hidden = true;
   $("votos-poker").replaceChildren();
+  $("form-estimar-poker").hidden = true;
   const form = $("form-votar-poker");
   form.hidden = false;
   form.dataset.sessionId = s.id;
@@ -206,8 +207,33 @@ $("btn-revelar-poker").addEventListener("click", () =>
       return li;
     }));
     lista.hidden = false;
+    mostrarEstimarPoker(s);
     mostrar("msg-poker", "Votos revelados en la sesión " + s.id + ".", false);
   }));
+
+// mostrarEstimarPoker muestra un botón por carta para registrar la estimación
+// acordada de la sesión revelada (HU-25). Al registrarla, la sesión queda
+// CERRADA y se recarga el backlog para ver los story points en la fila del
+// ítem.
+function mostrarEstimarPoker(s) {
+  const form = $("form-estimar-poker");
+  const botones = $("botones-estimar-poker");
+  botones.replaceChildren(...s.cartas.map((carta) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "secundario";
+    b.textContent = String(carta);
+    b.addEventListener("click", () => accion("msg-poker", async () => {
+      const cerrada = await api("POST", "/poker-sessions/" + s.id + "/estimate", { puntos: carta });
+      mostrarDatosPoker(cerrada);
+      form.hidden = true;
+      await cargarBacklog();
+      mostrar("msg-poker", "Estimación registrada: " + carta + " story points en la sesión " + cerrada.id + ".", false);
+    }));
+    return b;
+  }));
+  form.hidden = false;
+}
 
 // filaItem arma la fila de un ítem con sus acciones: editar (HU-07), cambiar
 // estado (HU-08), asignar story points (HU-20), abrir Planning Poker (HU-21),

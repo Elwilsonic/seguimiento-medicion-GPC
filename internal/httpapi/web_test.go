@@ -189,6 +189,25 @@ func TestInterfaz_BotonRevelarVotos(t *testing.T) {
 	}
 }
 
+// HU-25, CA-25.9 · El formulario "Registrar estimación acordada" registra la
+// carta elegida, muestra el mensaje y recarga el backlog.
+func TestInterfaz_FormularioRegistrarEstimacion(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{`id="form-estimar-poker"`, "Registrar estimación acordada", `id="botones-estimar-poker"`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/estimate"`, `"Estimación registrada: "`, `" story points en la sesión "`, "cargarBacklog"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-32, CA-32.9 · La sección "Métricas" muestra los Story Points del
 // proyecto y del sprint actual, y la velocidad.
 func TestInterfaz_SeccionDeMetricas(t *testing.T) {
