@@ -38,7 +38,7 @@ Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-0
 1. **Proyectos:** crear un proyecto (queda como "proyecto actual"), modificar su nombre, descripción y estado.
 2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarle story points de la escala 1, 2, 3, 5, 8, 13 o 21 con "Asignar SP" (columna SP; "—" si no está estimado, HU-20), abrir una sesión de Planning Poker con "Abrir Poker" (HU-21), asignarlo al sprint actual o completarlo.
 3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21), permite votar una carta indicando el nombre del integrante sin mostrar los votos (HU-22), con "Revelar votos", muestra a la vez la lista de votos (integrante y puntos) y deja la sesión REVELADA, sin más votos (HU-23) y, en "Registrar estimación acordada", con un botón por carta, guarda los story points acordados en el ítem, deja la sesión CERRADA y recarga el backlog para mostrar el valor en la columna SP (HU-25).
-4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32).
+4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32); en los dos niveles, el porcentaje de historias completadas con las cantidades de ítems ("sin datos" si no hay ítems, HU-34).
 5. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo, registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26) y consultar los esfuerzos por sprint o por historia, con su tabla y total, con el formulario "Consultar esfuerzos" (HU-27).
 6. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29).
 
@@ -78,8 +78,8 @@ La API responde bajo el prefijo `/api` (TEC-04).
 | `GET` | `/api/sprints/{id}/esfuerzos` | Listar los esfuerzos de un sprint, ordenados por ID, con el total de horas (HU-27) |
 | `GET` | `/api/sprints/{id}/completados` | Listar los ítems terminados del sprint (HU-12) |
 | `POST` | `/api/sprints/{id}/cerrar` | Cerrar el sprint (HU-13) |
-| `GET` | `/api/sprints/{id}/metricas` | Story points planificados y completados del sprint, e ítems sin estimar (HU-32) |
-| `GET` | `/api/proyectos/{id}/metricas` | Story points planificados y completados de todo el backlog, ítems sin estimar y velocidad de los últimos 3 sprints cerrados, con un decimal o `null` (HU-32) |
+| `GET` | `/api/sprints/{id}/metricas` | Story points planificados y completados del sprint, e ítems sin estimar (HU-32); porcentaje de historias completadas, con un decimal o `null`, e ítems totales y terminados (HU-34) |
+| `GET` | `/api/proyectos/{id}/metricas` | Story points planificados y completados de todo el backlog, ítems sin estimar y velocidad de los últimos 3 sprints cerrados, con un decimal o `null` (HU-32); porcentaje de historias completadas de todo el backlog, con un decimal o `null`, e ítems totales y terminados (HU-34) |
 
 Ejemplo con `curl` (en Windows, desde Git Bash):
 
@@ -261,6 +261,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-27 | [#45](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/45) | Consultar los registros de esfuerzo | [SDD](docs/especificaciones/HU-27-consultar-esfuerzos.md) | [BDD](features/HU-27-consultar-esfuerzos.feature) | [Evidencia](docs/evidencias/HU-27-tdd.md) | [#126](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/126) |
 | HU-29 | [#47](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/47) | Registrar un defecto | [SDD](docs/especificaciones/HU-29-registrar-defecto.md) | [BDD](features/HU-29-registrar-defecto.feature) | [Evidencia](docs/evidencias/HU-29-tdd.md) | [#124](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/124) |
 | HU-32 | [#50](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/50) | Calcular Story Points planificados, completados y velocidad | [SDD](docs/especificaciones/HU-32-sp-velocidad.md) | [BDD](features/HU-32-sp-velocidad.feature) | [Evidencia](docs/evidencias/HU-32-tdd.md) | [#123](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/123) |
+| HU-34 | [#52](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/52) | Calcular el porcentaje de historias completadas | [SDD](docs/especificaciones/HU-34-porcentaje-completadas.md) | [BDD](features/HU-34-porcentaje-completadas.feature) | [Evidencia](docs/evidencias/HU-34-tdd.md) | [#129](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/129) |
 
 ## Estructura del repositorio
 
