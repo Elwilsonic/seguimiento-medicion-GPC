@@ -132,7 +132,7 @@ $ go tool cover -func=cover.out | tail -n 1
 total:									(statements)			80.9%
 ```
 
-Con PostgreSQL 16.15 y `TEST_DATABASE_URL` (base recreada desde `db/init/01-schema.sql`), sin ningún `SKIP`:
+Con PostgreSQL 16.15 instalado en la máquina de la medición (no el contenedor de `docker-compose.yml`, que usa `postgres:17-alpine`) y `TEST_DATABASE_URL` (base recreada desde `db/init/01-schema.sql`), sin ningún `SKIP`:
 
 ```
 $ go test -race -count=1 -p 1 -coverpkg=./... -coverprofile=cover.out ./...

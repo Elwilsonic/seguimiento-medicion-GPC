@@ -41,7 +41,7 @@ Del Planning del Sprint 3 también se cumplieron: la línea "Aprobada por" en la
 - Todos los Pull Requests tuvieron la aprobación de un integrante distinto del autor, CI en verde y merge con "Create a merge commit". Las revisiones encontraron problemas reales antes del merge (tests faltantes de 409 y 500 en HU-22, el wiring adelantado de HU-21, el formato del Issue de HU-23).
 - Los tests con PostgreSQL se corrieron en la revisión de varias historias (HU-21, HU-22, HU-26, HU-29), y la cobertura total con base llegó a 94.8%.
 - Los conflictos entre ramas que tocaban los mismos archivos (README, cobertura, registro de IA, `server.go`) se resolvieron con merge de `main`, sin rebase y sin perder cambios.
-- Los 75 commits del Sprint (sin contar merges) tienen como autor a un integrante y ninguno menciona a la IA.
+- Los 75 commits del Sprint (sin contar merges) tienen como autor a un integrante y ninguno lleva firma ni atribución de la IA.
 
 ## ¿Qué se puede mejorar?
 
@@ -50,7 +50,7 @@ Del Planning del Sprint 3 también se cumplieron: la línea "Aprobada por" en la
 3. **Texto de la aprobación.** En el PR #126 el comentario de aprobación es de otra historia.
 4. **Daily.** Dos de cuatro se publicaron después del mediodía y una quedó con campos sin completar.
 5. **Conflictos por archivos compartidos.** Casi todas las historias tocan `README.md`, `docs/reportes/cobertura.md`, `docs/ia/registro.md` e `internal/httpapi/server.go`; con varias ramas abiertas a la vez, cada merge obligó a resolver conflictos en las demás.
-6. **Registro de IA incompleto.** `docs/ia/registro.md` no tiene filas de HU-22, HU-26, HU-27 ni HU-32.
+6. **Registro de IA incompleto.** `docs/ia/registro.md` no tiene filas de HU-21, HU-22, HU-26, HU-27, HU-32 ni TEC-03.
 
 ## Incidencias del Sprint registradas
 
@@ -74,5 +74,5 @@ El equipo aprobó las seis acciones, sin ajustes. Cada responsable las cumple du
 
 - Tildar los criterios de #36 (HU-18, Sosa Ricardo) y #52 (HU-34, Peñalbé Hernán).
 - Llevar la "## Trazabilidad" de #45 (HU-27, García Santiago) al formato de `AGENTS.md`. La de #43 (HU-25, Cardozo Leandro) ya está en el formato.
-- Agregar las filas de HU-22, HU-26, HU-27 y HU-32 a `docs/ia/registro.md`.
+- Agregar a `docs/ia/registro.md` las filas de HU-22, HU-26, HU-27 y HU-32, y confirmar si se usó IA en HU-21 (Buttini Cristobal) y TEC-03 (Peñalbé Hernán): si se usó, agregar su fila; si no, aclararlo en el registro.
 - Sigue el pendiente de los Sprints 1 y 2 del singular: en `internal/project/features_test.go:209`, el mensaje de error de un paso BDD diría "hay 1 proyectos guardados" si quedara un solo proyecto.
