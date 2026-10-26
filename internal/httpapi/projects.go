@@ -1,6 +1,7 @@
 package httpapi
 
-// Handlers de proyectos (HU-01, HU-02 y HU-03), expuestos desde TEC-01.
+// Handlers de proyectos (HU-01, HU-02 y HU-03), expuestos desde TEC-01, y
+// fecha de inicio (HU-18).
 
 import (
 	"net/http"
@@ -14,11 +15,19 @@ type projectRequest struct {
 	Estado      string `json:"estado"`
 }
 
+// startDateRequest es el cuerpo de PATCH /api/proyectos/{id}/fecha-inicio
+// (HU-18).
+type startDateRequest struct {
+	FechaInicio string `json:"fecha_inicio"`
+}
+
 type projectResponse struct {
 	ID          int    `json:"id"`
 	Nombre      string `json:"nombre"`
 	Descripcion string `json:"descripcion"`
 	Estado      string `json:"estado"`
+	// FechaInicio va en AAAA-MM-DD, o "" si no está registrada (HU-18).
+	FechaInicio string `json:"fecha_inicio"`
 }
 
 // HU-01
@@ -71,6 +80,37 @@ func (s *server) updateProject(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toProjectResponse(p))
 }
 
+// HU-18. La fecha se lee con el formato de las fechas de los sprints; una
+// fecha vacía o ausente llega al Manager en cero (ErrMissingStartDate).
+func (s *server) setProjectStartDate(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var req startDateRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
+		return
+	}
+	date, err := parseDate(req.FechaInicio)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	p, err := s.projects.SetStartDate(id, date)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toProjectResponse(p))
+}
+
 func toProjectResponse(p project.Project) projectResponse {
-	return projectResponse{ID: p.ID, Nombre: p.Name, Descripcion: p.Description, Estado: string(p.Status)}
+	resp := projectResponse{ID: p.ID, Nombre: p.Name, Descripcion: p.Description, Estado: string(p.Status)}
+	// El cero no se formatea: saldría 0001-01-01 (RN-18.7).
+	if !p.StartDate.IsZero() {
+		resp.FechaInicio = p.StartDate.Format(dateLayout)
+	}
+	return resp
 }

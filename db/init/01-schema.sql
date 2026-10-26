@@ -4,12 +4,14 @@
 -- pruebas. Las reglas de negocio las aplica cada Manager: el esquema solo
 -- guarda los datos y las relaciones entre tablas.
 
--- Proyectos (HU-01). El ID es correlativo (RN-01.5).
+-- Proyectos (HU-01). El ID es correlativo (RN-01.5). start_date es la fecha
+-- de inicio de HU-18; NULL significa que no está registrada (RN-18.7).
 CREATE TABLE IF NOT EXISTS projects (
     id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name        TEXT NOT NULL,
     description TEXT NOT NULL,
-    status      TEXT NOT NULL
+    status      TEXT NOT NULL,
+    start_date  TIMESTAMPTZ
 );
 
 -- Ítems del Product Backlog (HU-04). El ID es correlativo y global

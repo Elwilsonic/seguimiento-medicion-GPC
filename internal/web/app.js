@@ -71,7 +71,7 @@ function criterios(texto) {
   return texto.split("\n").map((c) => c.trim()).filter((c) => c !== "");
 }
 
-// --- Proyectos (HU-01, HU-02 y HU-03) ---
+// --- Proyectos (HU-01, HU-02, HU-03 y HU-18) ---
 
 function mostrarProyecto(p) {
   $("proyecto-actual").value = p.id;
@@ -79,7 +79,10 @@ function mostrarProyecto(p) {
   form.nombre.value = p.nombre;
   form.descripcion.value = p.descripcion;
   form.estado.value = p.estado;
-  $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + ")";
+  // HU-18: fecha_inicio es "" si no está registrada.
+  $("form-fecha-inicio-proyecto").fecha_inicio.value = p.fecha_inicio;
+  const inicio = p.fecha_inicio ? "inicio: " + p.fecha_inicio : "sin fecha de inicio";
+  $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + "), " + inicio;
 }
 
 async function cargarProyecto() {
@@ -119,6 +122,20 @@ $("form-modificar-proyecto").addEventListener("submit", (e) => {
     });
     mostrarProyecto(p);
     mostrar("msg-proyectos", "Proyecto " + p.id + " guardado.", false);
+  });
+});
+
+// HU-18: registra la fecha de inicio del proyecto actual. El campo de fecha
+// del navegador ya envía AAAA-MM-DD.
+$("form-fecha-inicio-proyecto").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-proyectos", async () => {
+    const p = await api("PATCH", "/proyectos/" + proyectoActual() + "/fecha-inicio", {
+      fecha_inicio: form.fecha_inicio.value,
+    });
+    mostrarProyecto(p);
+    mostrar("msg-proyectos", "Fecha de inicio del proyecto " + p.id + " registrada: " + p.fecha_inicio + ".", false);
   });
 });
 

@@ -415,3 +415,26 @@ func TestMemoryRepository_UpdateProyectoInexistenteDevuelveErrProjectNotFound(t 
 		t.Errorf("error = %v, se esperaba ErrProjectNotFound", err)
 	}
 }
+
+// HU-18, CA-18.6 (RN-18.6): modificar el proyecto con HU-02 conserva la fecha
+// de inicio registrada, porque Update solo reemplaza nombre, descripción y
+// estado.
+func TestUpdate_ConservaLaFechaDeInicioRegistrada(t *testing.T) {
+	manager, _ := newManager()
+	if _, err := manager.Create("Proyecto A", ""); err != nil {
+		t.Fatalf("Create() devolvió un error inesperado: %v", err)
+	}
+	mustSetStartDate(t, manager, 1, day(t, "2026-10-23"))
+
+	p, err := manager.Update(1, "Proyecto B", "Nueva", "EN_CURSO")
+
+	if err != nil {
+		t.Fatalf("Update() devolvió un error inesperado: %v", err)
+	}
+	if !p.StartDate.Equal(day(t, "2026-10-23")) {
+		t.Errorf("fecha devuelta = %v, se esperaba 2026-10-23", p.StartDate)
+	}
+	if got := mustGet(t, manager, 1).StartDate; !got.Equal(day(t, "2026-10-23")) {
+		t.Errorf("fecha guardada = %v, se esperaba 2026-10-23", got)
+	}
+}

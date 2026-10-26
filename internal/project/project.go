@@ -1,6 +1,9 @@
 package project
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // Status es el estado de un proyecto (RN-01.6).
 type Status string
@@ -18,6 +21,9 @@ type Project struct {
 	Name        string
 	Description string
 	Status      Status
+	// StartDate es la fecha de inicio del proyecto (HU-18); el valor cero
+	// significa que no está registrada (RN-18.7).
+	StartDate time.Time
 }
 
 var (
