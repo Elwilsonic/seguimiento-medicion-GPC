@@ -5,7 +5,7 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 ## Cobertura actual
 
 - **Fecha:** 25/10/2026
-- **Última historia con cobertura medida:** HU-23 — Revelar las estimaciones (rama `feature/HU-23-revelar-estimaciones`), medida sobre `213be95` en Windows con go1.27.1 y `go test -count=1 -cover ./...`, sin base. La comparación con `main` (`8e06191`) se hizo con el mismo Go en una copia temporal (`git worktree`). La medición con PostgreSQL 16 queda pendiente de Hernán.
+- **Última historia con cobertura medida:** HU-23 — Revelar las estimaciones (rama `feature/HU-23-revelar-estimaciones`), medida sobre `213be95` en Windows con go1.27.1 y `go test -count=1 -cover ./...`, sin base. La comparación con `main` (`8e06191`) se hizo con el mismo Go en una copia temporal (`git worktree`). Con base, se midió con PostgreSQL 17.11 (`postgres:17-alpine` del `docker-compose.yml` del repo) sobre `0c1a948`, con total 94.6% con `-coverpkg=./...` y sin SKIP; las mediciones anteriores con base fueron con PostgreSQL 16.
 - **Comando:** `go test -race -coverprofile=coverage.out ./...`, sin base, el mismo del CI (job "gofmt y tests"). HU-23 se midió localmente con go1.27.1 windows/amd64 y `go test -count=1 -cover ./...`, sin `TEST_DATABASE_URL` y sin `-race` (el entorno local no tiene cgo); la comparación con `main` (`8e06191`) se hizo con el mismo Go en una copia temporal (`git worktree`). Con base, PostgreSQL 16, `go test -race -count=1 ./...` y `-coverpkg=./...`. La tabla de abajo conserva la medición de HU-27; las cifras de HU-23 están en su fila del historial. El CI (Linux) es la fuente autoritativa.
 
 | Paquete | Sin base (HU-27, local) | Con base (última medición por paquete) |
