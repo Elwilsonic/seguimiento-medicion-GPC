@@ -93,7 +93,7 @@ El RED falló por las aserciones y no por compilación, solo en `internal/projec
 |---|---|---|
 | GREEN | `67b290a` | `feat(HU-18): implementar registro de la fecha de inicio del proyecto (GREEN)` |
 | Refactor | — | No aplica |
-| Documentación | (propuesto) | `docs(HU-18): agregar evidencia TDD y cobertura` |
+| Documentación | `72217fa` | `docs(HU-18): agregar evidencia TDD y cobertura` |
 
 El GREEN tocó solo 8 archivos de producción: `SetStartDate` completo, el handler `setProjectStartDate` y su ruta, `ErrMissingStartDate` en el 400 de `statusFor`, `fecha_inicio` en `projectResponse`, la columna `start_date` en `db/init/01-schema.sql`, el repositorio PostgreSQL (`projectColumns`, `Save`, `Update`, `scanProject` y `startDateParam`), la interfaz web y `doc.go`. **Ningún archivo `*_test.go` ni el `.feature` cambió en el GREEN**: `git diff --stat HEAD -- '*_test.go' features/` salió vacío antes del commit.
 
@@ -240,6 +240,6 @@ Con `TEST_DATABASE_URL=postgres://gpc:gpc_dev@localhost:5434/gpc_test?sslmode=di
 
 ## Commits
 
-Los commits SDD, RED y GREEN referencian el Issue #36 con `Refs #36`. El commit de documentación queda propuesto hasta que se autorice.
+Los commits SDD, RED, GREEN y de documentación referencian el Issue #36 con `Refs #36`. Todos los commits de la historia están hechos y subidos a la rama `feature/HU-18-fecha-inicio-proyecto`, y el Pull Request es el [#131](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/131).
 
 HU-18: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
