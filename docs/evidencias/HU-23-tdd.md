@@ -148,7 +148,9 @@ Una primera corrida del mismo comando dio las mismas cifras pero salió con cód
 
 `-race` no se corrió localmente: `go: -race requires cgo; enable cgo by setting CGO_ENABLED=1`. El test de concurrencia (`TestReveal_ConcurrenteConVotosNoPierdeVotosAceptados`) y el escenario de CA-23.7 corrieron sin `-race` y pasaron; con `-race` los ejecuta el CI del Pull Request (Linux, `go test -race -coverprofile=coverage.out ./...`).
 
-Las pruebas de integración PostgreSQL se omiten porque no está definida la variable `TEST_DATABASE_URL`. La medición con PostgreSQL 16 queda pendiente de Peñalbé Hernán.
+Las pruebas de integración PostgreSQL se omiten porque no está definida la variable `TEST_DATABASE_URL`. Con base, la medición se hizo con PostgreSQL 17.11 (imagen `postgres:17-alpine` del `docker-compose.yml` del repo, puerto 5433) sobre `0c1a948`, en Windows con go1.27.1, sin SKIP (0 SKIP, 1276 PASS y 0 FAIL con `go test -count=1 -v ./...`): `internal/poker` 93.3%, `internal/httpapi` 98.2%, `cmd/server` 33.3% y total 94.6% con `-coverpkg=./...`. `Reveal` y `revealPokerSession` quedan en 100.0%; `Update` de PostgreSQL de poker queda en 69.2% y `GetByID` en 85.7%, por ramas de error de la base que no se pueden provocar con la base funcionando. El subtest de contrato "Update guarda el estado REVELADA y GetByID lo devuelve con sus votos" corrió contra PostgreSQL sin SKIP (`TestPostgresRepository_Contrato`, 11 subtests).
+
+Comandos de la medición con base: `docker compose down -v`, `docker compose up -d --wait` y, con `TEST_DATABASE_URL=postgres://gpc:gpc_dev@localhost:5433/gpc_test?sslmode=disable`, `go test -count=1 ./...`, `go test -count=1 -cover ./...` y `go test -count=1 -coverpkg=./... ./...`.
 
 ## Commits
 
