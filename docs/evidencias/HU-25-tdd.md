@@ -157,7 +157,8 @@ Antes del commit RED se corrigió el comentario de `revealFailingSession`, que d
 |---|---|---|
 | GREEN | `894c7c2` | `feat(HU-25): implementar el registro de la estimación acordada (GREEN)` |
 | Refactor | — | No aplica |
-| Documentación | este commit | `docs(HU-25): agregar evidencia TDD y cobertura` |
+| Documentación | `5212883` | `docs(HU-25): agregar evidencia TDD y cobertura` |
+| Enlace del PR en el README | este commit | `docs(HU-25): agregar el enlace del PR en el README` |
 
 El GREEN cambió solo `internal/poker/manager.go` (`Estimate`; se borraron el stub `errNotImplemented` y el import `errors`), `internal/httpapi/poker.go` (`estimatePokerSession` y `pokerEstimateRequest`), `internal/httpapi/server.go` (las rutas `POST` y `GET` con `methodNotAllowed`, y `ErrSessionNotRevealed` en el grupo 409 de `statusFor`), `internal/web/index.html` y `internal/web/app.js`. Ningún archivo `*_test.go` ni el `.feature` cambió en el GREEN (`git diff --name-only 6b832f1 894c7c2` lista solo esos 5 archivos). Después del GREEN, `Estimate`, `estimatePokerSession`, `statusFor` y `NewHandler` quedan al 100.0%.
 
@@ -331,6 +332,6 @@ ok  	seguimiento-medicion-gpc/internal/poker	2.316s
 
 ## Commits
 
-Los cuatro commits (SDD, RED, GREEN y documentación) referencian el Issue #43 con `Refs #43` y están en la rama `feature/HU-25-registrar-estimacion-acordada`.
+Los commits de HU-25 referencian el Issue #43 con `Refs #43` y están en la rama `feature/HU-25-registrar-estimacion-acordada`, abierta en el Pull Request #130.
 
 HU-25: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
