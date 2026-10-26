@@ -15,6 +15,9 @@ const (
 	// StatusRevealed indica que los votos se revelaron y la sesión ya no
 	// acepta votos (HU-23).
 	StatusRevealed Status = "REVELADA"
+	// StatusClosed indica que se registró la estimación acordada y la sesión
+	// terminó (HU-25).
+	StatusClosed Status = "CERRADA"
 )
 
 // Vote es un voto de un integrante en una ronda de Planning Poker. El votante
@@ -63,4 +66,7 @@ var (
 	ErrInvalidCard = errors.New("la carta no pertenece a la escala de Planning Poker")
 	// ErrNoVotes indica que la sesión no tiene votos para revelar (RN-23.3).
 	ErrNoVotes = errors.New("la sesión de Planning Poker no tiene votos para revelar")
+	// ErrSessionNotRevealed indica que la sesión no está REVELADA y no se puede
+	// registrar su estimación (RN-25.4).
+	ErrSessionNotRevealed = errors.New("la sesión de Planning Poker no está revelada")
 )

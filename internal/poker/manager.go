@@ -1,6 +1,7 @@
 package poker
 
 import (
+	"errors"
 	"strings"
 	"sync"
 
@@ -88,6 +89,15 @@ func (m *Manager) Reveal(sessionID int) (Session, error) {
 		return Session{}, err
 	}
 	return cloneSession(session), nil
+}
+
+// errNotImplemented es el stub del RED de HU-25; se elimina en el GREEN.
+var errNotImplemented = errors.New("no implementado")
+
+// Estimate registra la estimación acordada de una sesión revelada (HU-25).
+// Stub del RED.
+func (m *Manager) Estimate(sessionID int, points int) (Session, error) {
+	return Session{}, errNotImplemented
 }
 
 func validCard(points int) bool {

@@ -200,6 +200,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"votar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/votes", `{"integrante":"Ana","puntos":5}`},
 		// HU-23, CA-23.8: revelar los votos.
 		{"revelar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/reveal", ""},
+		// HU-25, CA-25.9: registrar la estimación acordada.
+		{"registrar estimación Planning Poker", http.MethodPost, "/api/poker-sessions/abc/estimate", `{"puntos":5}`},
 		// TEC-04, CA-TEC04.9: endpoints de sprints.
 		{"crear sprint", http.MethodPost, "/api/proyectos/abc/sprints", validSprint},
 		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
@@ -486,6 +488,14 @@ var bodyEndpoints = []bodyEndpoint{
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
 		},
+	},
+	// HU-25, CA-25.9: el cuerpo se rechaza antes de llegar al Manager, así
+	// que el ítem 1 sigue sin estimar.
+	{
+		name:      "registrar estimación Planning Poker",
+		method:    http.MethodPost,
+		path:      "/api/poker-sessions/1/estimate",
+		untouched: expectItemWithoutStoryPoints,
 	},
 	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
 	{
