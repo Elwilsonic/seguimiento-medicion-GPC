@@ -79,6 +79,8 @@ El RED falló por las aserciones y no por compilación, solo en `internal/poker`
 |---|---|---|
 | GREEN | `213be95` | `feat(HU-23): implementar la revelación de estimaciones (GREEN)` |
 | Refactor | — | No aplica |
+| Documentación | `2d1a776` | `docs(HU-23): agregar evidencia TDD y cobertura` |
+| Documentación | `22494ee` | `docs(HU-23): enlazar el Pull Request en el README` |
 
 Antes de escribir el código, `go tool cover -func` mostró que la única función de HU-23 existente era el stub `Reveal` (100.0%, llamado por los tests). Después del GREEN, `Reveal`, `revealPokerSession`, `statusFor` y `NewHandler` quedan al 100.0%: no hay código nuevo sin un test que lo pida. Ningún archivo `*_test.go` ni el `.feature` cambió en el GREEN.
 
@@ -150,6 +152,6 @@ Las pruebas de integración PostgreSQL se omiten porque no está definida la var
 
 ## Commits
 
-Los commits SDD, RED y GREEN referencian el Issue #41 con `Refs #41`. El commit documental de esta evidencia y la cobertura queda propuesto hasta autorización.
+Los commits SDD, RED y GREEN referencian el Issue #41 con `Refs #41`. Los commits de la historia, incluidos los de documentación, ya están hechos y subidos a la rama `feature/HU-23-revelar-estimaciones`.
 
 HU-23: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
