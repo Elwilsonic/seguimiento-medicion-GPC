@@ -369,3 +369,196 @@ func TestRevelarPoker_IgnoraElCuerpo(t *testing.T) {
 		t.Errorf("sesión = %+v, se esperaba REVELADA con el voto de Ana", got)
 	}
 }
+
+// HU-25 · Registrar la estimación acordada (Issue #43)
+//
+// CA-25.9 · POST /api/poker-sessions/{id}/estimate expone el registro. Un
+// caso exitoso y un test por cada código de error; el 413 y el texto después
+// del JSON están en bodyEndpoints (server_test.go).
+
+// revealSessionWithVotes abre la sesión 1 del ítem 1, registra los votos de
+// Ana (5) y Bruno (8) y la revela por la API.
+func revealSessionWithVotes(t *testing.T, h http.Handler) {
+	t.Helper()
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`, `{"integrante":"Bruno","puntos":8}`)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", ""), http.StatusOK)
+}
+
+// expectItemStoryPoints verifica los story points del ítem 1 por la API.
+func expectItemStoryPoints(t *testing.T, h http.Handler, want int) {
+	t.Helper()
+	rec := do(t, h, http.MethodGet, "/api/items/1", "")
+	expectStatus(t, rec, http.StatusOK)
+	var it itemJSON
+	decode(t, rec, &it)
+	if it.StoryPoints != want {
+		t.Errorf("story points del ítem = %d, se esperaban %d", it.StoryPoints, want)
+	}
+}
+
+func TestRegistrarEstimacionPoker_Devuelve200ConSesionCerradaYStoryPointsEnElItem(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":13}`)
+
+	expectStatus(t, rec, http.StatusOK)
+	var got pokerSessionJSON
+	decode(t, rec, &got)
+	if got.ID != 1 || got.ItemID != 1 || got.Estado != "CERRADA" || got.Ronda != 1 {
+		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, CERRADA, en la ronda 1", got)
+	}
+	want := []pokerVoteJSON{{Integrante: "Ana", Puntos: 5}, {Integrante: "Bruno", Puntos: 8}}
+	if !slices.Equal(got.Votos, want) {
+		t.Errorf("votos = %+v, se esperaba %+v", got.Votos, want)
+	}
+	if !slices.Equal(got.Cartas, poker.Cards()) {
+		t.Errorf("cartas = %v, se esperaba %v", got.Cartas, poker.Cards())
+	}
+	expectItemStoryPoints(t, h, 13)
+}
+
+func TestRegistrarEstimacionPoker_IDNoNumericoDevuelve400(t *testing.T) {
+	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/estimate", `{"puntos":5}`)
+
+	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+}
+
+func TestRegistrarEstimacionPoker_JSONInvalidoDevuelve400(t *testing.T) {
+	for _, body := range []string{`no es JSON`, `{"puntos":"5"}`, `{"puntos":5.5}`} {
+		t.Run(body, func(t *testing.T) {
+			h := newHandlerWithItem(t)
+			revealSessionWithVotes(t, h)
+
+			rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", body)
+
+			expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
+			expectItemWithoutStoryPoints(t, h)
+		})
+	}
+}
+
+func TestRegistrarEstimacionPoker_CartaFueraDeLaEscalaDevuelve400(t *testing.T) {
+	for _, body := range []string{`{"puntos":4}`, `{"puntos":0}`, `{}`} {
+		t.Run(body, func(t *testing.T) {
+			h := newHandlerWithItem(t)
+			revealSessionWithVotes(t, h)
+
+			rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", body)
+
+			expectError(t, rec, http.StatusBadRequest, poker.ErrInvalidCard.Error())
+			expectItemWithoutStoryPoints(t, h)
+		})
+	}
+}
+
+func TestRegistrarEstimacionPoker_SesionInexistenteDevuelve404(t *testing.T) {
+	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/999/estimate", `{"puntos":5}`)
+
+	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
+}
+
+// newEstimateHandler arma el handler con el repositorio de poker indicado.
+func newEstimateHandler(pokerRepo poker.Repository) http.Handler {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	pokerManager := poker.NewManager(pokerRepo, items)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+}
+
+func TestRegistrarEstimacionPoker_ItemInexistenteDevuelve404(t *testing.T) {
+	pokerRepo := poker.NewMemoryRepository()
+	// La sesión se guarda directamente en el repositorio, apuntando a un ítem
+	// que no existe.
+	session, err := pokerRepo.Save(poker.Session{ItemID: 99, Status: poker.StatusRevealed, Round: 1, Votes: []poker.Vote{{Voter: "Ana", Points: 5}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := newEstimateHandler(pokerRepo)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`)
+
+	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
+	stored, err := pokerRepo.GetByID(session.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Status != poker.StatusRevealed {
+		t.Errorf("estado guardado = %q, se esperaba REVELADA", stored.Status)
+	}
+}
+
+func TestRegistrarEstimacionPoker_SesionNoReveladaDevuelve409(t *testing.T) {
+	t.Run("ABIERTA", func(t *testing.T) {
+		h := newHandlerWithItem(t)
+		openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
+
+		rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`)
+
+		expectError(t, rec, http.StatusConflict, poker.ErrSessionNotRevealed.Error())
+		expectItemWithoutStoryPoints(t, h)
+	})
+	t.Run("CERRADA", func(t *testing.T) {
+		h := newHandlerWithItem(t)
+		revealSessionWithVotes(t, h)
+		expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`), http.StatusOK)
+
+		rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":8}`)
+
+		expectError(t, rec, http.StatusConflict, poker.ErrSessionNotRevealed.Error())
+		expectItemStoryPoints(t, h, 5)
+	})
+}
+
+func TestRegistrarEstimacionPoker_ItemTerminadoDevuelve409(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+	for _, estado := range []string{"EN_CURSO", "TERMINADO"} {
+		expectStatus(t, do(t, h, http.MethodPatch, "/api/items/1/estado", `{"estado":"`+estado+`"}`), http.StatusOK)
+	}
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`)
+
+	expectError(t, rec, http.StatusConflict, backlog.ErrItemFinished.Error())
+	expectItemWithoutStoryPoints(t, h)
+}
+
+// CA-25.6 · Si falla el guardado de la sesión, la API responde 500 sin
+// detalle, el ítem queda estimado y la sesión sigue REVELADA (RN-25.7).
+func TestRegistrarEstimacionPoker_ErrorAlGuardarLaSesionDevuelve500SinDetalle(t *testing.T) {
+	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
+	h := newEstimateHandler(pokerRepo)
+	createProject(t, h, "Sistema de ventas")
+	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
+	revealSessionWithVotes(t, h)
+	pokerRepo.failUpdate = true
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`)
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	expectItemStoryPoints(t, h, 5)
+	stored, err := pokerRepo.GetByID(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Status != poker.StatusRevealed {
+		t.Errorf("estado guardado = %q, se esperaba REVELADA", stored.Status)
+	}
+}
+
+func TestRegistrarEstimacionPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+
+	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodDelete} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(method, "/api/poker-sessions/1/estimate", nil))
+
+		if rec.Code != http.StatusMethodNotAllowed {
+			t.Errorf("%s: código = %d, se esperaba %d", method, rec.Code, http.StatusMethodNotAllowed)
+		}
+	}
+}

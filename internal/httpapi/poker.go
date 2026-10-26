@@ -117,3 +117,36 @@ func (s *server) revealPokerSession(w http.ResponseWriter, r *http.Request) {
 		Ronda: session.Round, Votos: votos, Cartas: poker.Cards(),
 	})
 }
+
+type pokerEstimateRequest struct {
+	Puntos int `json:"puntos"`
+}
+
+// estimatePokerSession atiende POST /api/poker-sessions/{id}/estimate:
+// registra la estimación acordada en el ítem y cierra la sesión (HU-25,
+// CA-25.9). Los story points quedan visibles en el ítem.
+func (s *server) estimatePokerSession(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var request pokerEstimateRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, err)
+		return
+	}
+	session, err := s.poker.Estimate(id, request.Puntos)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	votos := make([]pokerVoteResponse, len(session.Votes))
+	for i, voto := range session.Votes {
+		votos[i] = pokerVoteResponse{Integrante: voto.Voter, Puntos: voto.Points}
+	}
+	writeJSON(w, http.StatusOK, pokerSessionResponse{
+		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+		Ronda: session.Round, Votos: votos, Cartas: poker.Cards(),
+	})
+}
