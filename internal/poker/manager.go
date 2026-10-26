@@ -1,7 +1,6 @@
 package poker
 
 import (
-	"errors"
 	"strings"
 	"sync"
 
@@ -65,12 +64,30 @@ func (m *Manager) Vote(sessionID int, voter string, points int) (Session, error)
 	return session, nil
 }
 
-// errNotImplemented es el stub del RED de HU-23; se elimina en el GREEN.
-var errNotImplemented = errors.New("no implementado")
-
-// Reveal revela todos los votos de una sesión abierta (HU-23). Stub del RED.
+// Reveal pasa una sesión ABIERTA con votos a REVELADA y devuelve todos sus
+// votos (HU-23). Leer, validar y guardar van bajo el mismo mutex que Vote,
+// así un voto simultáneo queda guardado antes de revelar o se rechaza
+// (RN-23.8).
 func (m *Manager) Reveal(sessionID int) (Session, error) {
-	return Session{}, errNotImplemented
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, err := m.repo.GetByID(sessionID)
+	if err != nil {
+		return Session{}, err
+	}
+	if session.Status != StatusOpen {
+		return Session{}, ErrSessionNotOpen
+	}
+	if len(session.Votes) == 0 {
+		return Session{}, ErrNoVotes
+	}
+
+	session.Status = StatusRevealed
+	if _, err := m.repo.Update(session); err != nil {
+		return Session{}, err
+	}
+	return cloneSession(session), nil
 }
 
 func validCard(points int) bool {

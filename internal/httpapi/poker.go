@@ -93,3 +93,27 @@ func (s *server) votePokerSession(w http.ResponseWriter, r *http.Request) {
 		Ronda: session.Round, Votos: []pokerVoteResponse{}, Cartas: poker.Cards(),
 	})
 }
+
+// revealPokerSession atiende POST /api/poker-sessions/{id}/reveal: revela
+// todos los votos de la sesión (HU-23, CA-23.8). La ruta no recibe cuerpo; si
+// llega uno, se ignora.
+func (s *server) revealPokerSession(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	session, err := s.poker.Reveal(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	votos := make([]pokerVoteResponse, len(session.Votes))
+	for i, voto := range session.Votes {
+		votos[i] = pokerVoteResponse{Integrante: voto.Voter, Puntos: voto.Points}
+	}
+	writeJSON(w, http.StatusOK, pokerSessionResponse{
+		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+		Ronda: session.Round, Votos: votos, Cartas: poker.Cards(),
+	})
+}
