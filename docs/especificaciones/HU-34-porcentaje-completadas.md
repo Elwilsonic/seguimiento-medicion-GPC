@@ -143,7 +143,7 @@ No se validan los ítems uno por uno: se leen del backlog del proyecto.
 
 El acta del Sprint 3 deja a HU-34 en el Sprint 4 y propone dividirla en **HU-34** (porcentaje de historias completadas) y **HU-47** (defectos detectados y resueltos). Diferencias con esta SDD:
 
-1. **Sprint.** Se adelanta al final del Sprint 3, como HU-32, por la replanificación del 24/10 (entrega del 02/11). HU-34 no tiene Story Points estimados en un acta: la Definition of Ready los pide, así que hay que estimarla (o registrar que se estima en el Planning del Sprint 4).
+1. **Sprint.** Se adelanta al final del Sprint 3, como HU-32, por la replanificación del 24/10 (entrega del 02/11). HU-34 no tenía Story Points estimados en un acta: el Agile Enabler la estimó en **2 SP** el 26/10/2026, por tamaño comparable con HU-20 y HU-23 (2 SP cada una), y se confirma en el Planning del Sprint 4.
 2. **División.** Se aplica la división del acta: esta SDD es solo M8. M9 y M10 pasan a HU-47, que necesita HU-30 (estado resuelto) y una consulta de defectos que se coordina con HU-31 (Sosa).
 
 ## Comparación con los criterios del Issue #52 (borrador)

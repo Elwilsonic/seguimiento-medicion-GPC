@@ -4,24 +4,26 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 
 ## Cobertura actual
 
-- **Fecha:** 25/10/2026
-- **Última historia con cobertura medida:** HU-23 — Revelar las estimaciones (rama `feature/HU-23-revelar-estimaciones`), medida sobre `213be95` en Windows con go1.27.1 y `go test -count=1 -cover ./...`, sin base. La comparación con `main` (`8e06191`) se hizo con el mismo Go en una copia temporal (`git worktree`). Con base, se midió con PostgreSQL 17.11 (`postgres:17-alpine` del `docker-compose.yml` del repo) sobre `0c1a948`, con total 94.6% con `-coverpkg=./...` y sin SKIP; las mediciones anteriores con base fueron con PostgreSQL 16.
-- **Comando:** `go test -race -coverprofile=coverage.out ./...`, sin base, el mismo del CI (job "gofmt y tests"). HU-23 se midió localmente con go1.27.1 windows/amd64 y `go test -count=1 -cover ./...`, sin `TEST_DATABASE_URL` y sin `-race` (el entorno local no tiene cgo); la comparación con `main` (`8e06191`) se hizo con el mismo Go en una copia temporal (`git worktree`). Con base, PostgreSQL 17.11 (`postgres:17-alpine` del `docker-compose.yml`), con `TEST_DATABASE_URL` de `gpc_test`, `go test -count=1 ./...`, `go test -count=1 -cover ./...` y `go test -count=1 -coverpkg=./... ./...`, sin `-race` (falta cgo en la máquina de medición; lo ejecuta el CI). La tabla de abajo conserva la medición de HU-27; las cifras de HU-23 están en su fila del historial. El CI (Linux) es la fuente autoritativa.
+- **Fecha:** 26/10/2026
+- **Última historia con cobertura medida:** HU-34 — Calcular el porcentaje de historias completadas (rama `feature/HU-34-porcentaje-completadas`), medida sobre `fc2277c` en Linux con go1.27.1 y `go test -count=1 -cover ./...` / `-coverprofile`, sin base. La comparación con `main` (`82e9ed7`) se hizo con el mismo Go en una copia aparte (`git worktree`). Con base, PostgreSQL 16.15 con `-race` y `-coverpkg=./...`.
+- **Comando:** `go test -race -coverprofile=coverage.out ./...`, sin base, el mismo del CI (job "gofmt y tests"). HU-34 se midió localmente en Linux con go1.27.1, `go test -count=1 -cover ./...` y `-coverprofile`, sin `TEST_DATABASE_URL`. Con base: PostgreSQL 16.15, `TEST_DATABASE_URL` de `gpc_test`, `go test -race -count=1 ./...` y `go test -count=1 -coverpkg=./... ./...`. Las cifras de la tabla son la medición local de HU-34; el CI (Linux) es la fuente autoritativa.
 
-| Paquete | Sin base (HU-27, local) | Con base (última medición por paquete) |
+| Paquete | Sin base (HU-34, local) | Con base (última medición por paquete) |
 |---|---|---|
-| `cmd/server` | 50.0% | 41.5% |
-| `internal/backlog` | 79.9% | 98.7% |
-| `internal/defect` | 70.0% | — |
-| `internal/effort` | 71.6% | 97.3% (HU-27, PostgreSQL 16) |
-| `internal/httpapi` | 98.8% | 100.0% |
-| `internal/metrics` | 100.0% | 100.0% (HU-32, PostgreSQL 16) |
-| `internal/poker` | 51.9% | 94.7% (HU-21, PostgreSQL 16) |
+| `cmd/server` | 31.5% | 41.5% |
+| `internal/backlog` | 83.3% | 98.7% |
+| `internal/defect` | 76.6% | — |
+| `internal/effort` | 75.2% | 97.3% (HU-27, PostgreSQL 16) |
+| `internal/httpapi` | 97.3% | 97.3% (HU-34, PostgreSQL 16.15) |
+| `internal/metrics` | 100.0% | 100.0% (HU-34, PostgreSQL 16.15) |
+| `internal/poker` | 65.2% | 94.7% (HU-21, PostgreSQL 16) |
 | `internal/web` | 0.0% (100.0% medido junto con `internal/httpapi`) | — |
 | `internal/postgres` | 83.3% | 83.3% |
 | `internal/postgrestest` | 36.8% | 36.8% |
-| `internal/project` | 64.4% | 96.8% |
-| `internal/sprint` | 72.8% | 97.6% |
+| `internal/project` | 67.4% | 96.8% |
+| `internal/sprint` | 76.3% | 97.6% |
+
+Con HU-34, `SprintCompletion`, `ProjectCompletion`, `completion` y `toCompletionResponse` entran con cobertura total (100.0%) e `internal/metrics` sigue en 100.0%. `internal/httpapi` baja de 98.2% en `main` (`82e9ed7`, mismo Go) a 97.3% porque `sprintMetrics` (84.6%) y `projectMetrics` (86.7%) tienen una rama defensiva sin test: el error de la segunda lectura del backlog (M8) cuando la primera (Story Points) anduvo bien (ver la evidencia de HU-34). El total sin base sube de **80.0%** a **80.2%**; con base y `-coverpkg=./...` es **94.5%**, sin SKIP y con `-race`.
 
 Con HU-27, `ListByItem`, `ListBySprint` y `summarize` entran con cobertura total (100.0%); los listados en memoria y PostgreSQL también, salvo `listEfforts` de PostgreSQL (81.2%, por las ramas de error de la base). Sin base, `postgres_repository.go` no se ejecuta porque los tests de integración se omiten sin `TEST_DATABASE_URL`: `internal/effort` baja de 74.4% en `main` (`b876e6f`, mismo Go) a 71.6%, y con base sube a 97.3%. `internal/httpapi` sube de 98.7% a 98.8%. El total sin base se mantiene en **79.4%** (`main`: **79.4%**, mismo Go); con base y `-coverpkg=./...` es **94.9%**, sin SKIP y con `-race`.
 
@@ -105,3 +107,4 @@ HU-13 agrega `Close` y `Update` en memoria y PostgreSQL. En el CI, `internal/spr
 | 25/10/2026 | HU-27 | `internal/effort`, `internal/httpapi` e `internal/web` | 71.6%, 98.8% y 0.0% (local, sin base); total 79.4%; con base: `internal/effort` 97.3% y total 94.9% con `-coverpkg=./...` | `ListByItem`, `ListBySprint` y `summarize` entran con cobertura total (100.0%); los listados en memoria y PostgreSQL también, salvo `listEfforts` de PostgreSQL (81.2%, ramas de error de la base); sin base, `postgres_repository.go` no se ejecuta y `internal/effort` baja de 74.4% en `main` (`b876e6f`, mismo Go) a 71.6%; `internal/httpapi` sube de 98.7% a 98.8% y el total se mantiene en 79.4%; con PostgreSQL 16, Hernán midió 97.3% en `internal/effort` y 94.9% total con `-coverpkg=./...`, sin SKIP y con `-race`; `-race` local no se corrió por falta de cgo y lo verifica el CI |
 | 25/10/2026 | HU-22 | `internal/poker`, `internal/httpapi` y `cmd/server` | 60.2%, 98.0% y 31.5% (local, sin base); 92.4%, 98.0% y 33.3% con PostgreSQL 16.15 | `go test -count=1 ./...` y `go test -count=1 -coverpkg=./... ./...` pasaron con `TEST_DATABASE_URL=postgres://gpc:***@localhost:5436/gpc_test?sslmode=disable`; los tests contractuales de `GetByID` y `Update` se ejecutaron sin SKIP; PostgreSQL 16.15 en Docker |
 | 25/10/2026 | HU-23 | `internal/poker`, `internal/httpapi` y `cmd/server` | 65.2%, 98.2% y 31.5% (local, sin base); 93.3%, 98.2% y 33.3% con PostgreSQL 17.11; total 94.6% con `-coverpkg=./...` | Medido sobre `213be95` en Windows con go1.27.1 y `go test -count=1 -cover ./...`, sin `TEST_DATABASE_URL`; `Reveal`, `revealPokerSession`, `statusFor` y `NewHandler` quedan en 100.0%; `internal/poker` sube de 60.2% en `main` (`8e06191`, mismo Go, medido en una copia temporal con `git worktree`) a 65.2%, y `internal/httpapi` (98.2%) y `cmd/server` (31.5%) se mantienen; con base, medido con PostgreSQL 17.11 (imagen `postgres:17-alpine` del `docker-compose.yml` del repo, puerto 5433) sobre `0c1a948`, en Windows con go1.27.1, sin SKIP (0 SKIP, 1276 PASS y 0 FAIL con `go test -count=1 -v ./...`): `internal/poker` 93.3%, `internal/httpapi` 98.2%, `cmd/server` 33.3% y total 94.6% con `-coverpkg=./...`; `Reveal` y `revealPokerSession` quedan en 100.0%, y `Update` de PostgreSQL de poker en 69.2% y `GetByID` en 85.7% (ramas de error de la base que no se pueden provocar con la base funcionando); el subtest de contrato "Update guarda el estado REVELADA y GetByID lo devuelve con sus votos" corrió contra PostgreSQL sin SKIP (`TestPostgresRepository_Contrato`, 11 subtests); las mediciones con base de HU-21 y HU-22 se hicieron con PostgreSQL 16, y el `docker-compose.yml` del repo usa `postgres:17-alpine`, por eso esta es con 17.11; `-race` (CA-23.7) sigue sin correrse localmente (sin cgo) y lo verifica el CI del Pull Request |
+| 26/10/2026 | HU-34 | `internal/metrics` e `internal/httpapi` | 100.0% y 97.3% (local, sin base); total 80.2%; con base: 94.5% con `-coverpkg=./...` | `SprintCompletion`, `ProjectCompletion`, `completion` y `toCompletionResponse` entran con cobertura total (100.0%); `internal/httpapi` baja de 98.2% en `main` (`82e9ed7`, mismo go1.27.1) a 97.3% por la rama defensiva de la segunda lectura en `sprintMetrics` y `projectMetrics`; el total sin base sube de 80.0% a 80.2%; con PostgreSQL 16.15, sin SKIP y con `-race`; HU-34 no toca la persistencia |
