@@ -39,7 +39,7 @@ Cada historia suma su endpoint bajo `/api/…` y su sección en la interfaz web 
 
 ## Demo
 
-Se mostró el recorrido de abajo sobre `main` (`4806ad6`, con HU-18). Presentó ⟨completar: integrante que hizo la demo⟩. Asistieron todos los integrantes del equipo; los profesores no asistieron.
+Se mostró el recorrido de abajo sobre `main` (`4806ad6`, con HU-18). Presentó Peñalbé Hernán. Asistieron todos los integrantes del equipo; los profesores no asistieron.
 
 Recorrido sobre `main` (`4806ad6`), siguiendo la sección "Interfaz web" del README:
 
