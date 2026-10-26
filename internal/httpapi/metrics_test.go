@@ -3,6 +3,7 @@ package httpapi_test
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -164,5 +165,76 @@ func TestMetricas_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 		rec := do(t, h, http.MethodGet, path, "")
 
 		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	}
+}
+
+// HU-34 · Calcular el porcentaje de historias completadas (Issue #52)
+//
+// CA-34.6: los endpoints de métricas de HU-32 suman items_totales,
+// items_terminados y porcentaje_completadas, con un decimal o null (RN-34.6 y
+// RN-34.7). Los errores 400, 404 y 500 de esas rutas ya los cubren los tests
+// de HU-32 y TestRutasConID_IDNoNumericoDevuelve400.
+
+type completionJSON struct {
+	ItemsTotales          int      `json:"items_totales"`
+	ItemsTerminados       int      `json:"items_terminados"`
+	PorcentajeCompletadas *float64 `json:"porcentaje_completadas"`
+}
+
+func expectCompletionJSON(t *testing.T, got completionJSON, items, finished int, percent float64) {
+	t.Helper()
+	if got.ItemsTotales != items || got.ItemsTerminados != finished || got.PorcentajeCompletadas == nil || *got.PorcentajeCompletadas != percent {
+		t.Errorf("porcentaje = %v con %d de %d, se esperaba %v con %d de %d", got.PorcentajeCompletadas, got.ItemsTerminados, got.ItemsTotales, percent, finished, items)
+	}
+}
+
+// CA-34.6 · GET /api/sprints/{id}/metricas incluye M8 con el ejemplo de
+// TEC-03: 2 de 4 ítems terminados.
+func TestMetricasSprint_IncluyeElPorcentajeDeHistoriasCompletadas(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	id := metricsSprint(t, h, "Sprint 1", []int{5, 3, 2, 0}, []string{"TERMINADO", "TERMINADO", "EN_CURSO", "PENDIENTE"}, false)
+
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got completionJSON
+	decode(t, rec, &got)
+	expectCompletionJSON(t, got, 4, 2, 50)
+}
+
+// CA-34.6 y RN-34.7 · GET /api/proyectos/{id}/metricas redondea M8 a un
+// decimal: 1 de 3 = 33,333… → 33.3.
+func TestMetricasProyecto_PorcentajeRedondeadoAUnDecimal(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	metricsSprint(t, h, "Sprint 1", []int{1, 1, 1}, []string{"TERMINADO", "PENDIENTE", "EN_CURSO"}, false)
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/metricas", "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got completionJSON
+	decode(t, rec, &got)
+	expectCompletionJSON(t, got, 3, 1, 33.3)
+}
+
+// CA-34.6 y RN-34.6 · Sin ítems, el porcentaje es null en los dos niveles.
+func TestMetricas_SinItemsElPorcentajeEsNull(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	id := metricsSprint(t, h, "Sprint 1", nil, nil, false)
+
+	for _, path := range []string{fmt.Sprintf("/api/sprints/%d/metricas", id), "/api/proyectos/1/metricas"} {
+		rec := do(t, h, http.MethodGet, path, "")
+
+		expectStatus(t, rec, http.StatusOK)
+		var got completionJSON
+		decode(t, rec, &got)
+		if got.PorcentajeCompletadas != nil || got.ItemsTotales != 0 || got.ItemsTerminados != 0 {
+			t.Errorf("%s: porcentaje = %v con %d de %d, se esperaba null con 0 de 0", path, got.PorcentajeCompletadas, got.ItemsTerminados, got.ItemsTotales)
+		}
+		if !strings.Contains(rec.Body.String(), `"porcentaje_completadas":null`) {
+			t.Errorf("%s: la respuesta no tiene porcentaje_completadas en null: %s", path, rec.Body.String())
+		}
 	}
 }

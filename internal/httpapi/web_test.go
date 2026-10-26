@@ -208,6 +208,18 @@ func TestInterfaz_SeccionDeMetricas(t *testing.T) {
 	}
 }
 
+// HU-34, CA-34.6 · La sección "Métricas" muestra el porcentaje de historias
+// completadas con un decimal y las cantidades, o "sin datos" si no hay ítems.
+func TestInterfaz_MetricasMuestraElPorcentajeDeHistoriasCompletadas(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{"porcentaje_completadas", "items_terminados", "items_totales", "Historias completadas", "sin datos"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-29 · Registrar defecto (Issue #47)
 //
 // Trazabilidad: CA-29.11. La interfaz tiene una sección "Defectos" con el
