@@ -35,6 +35,9 @@ type projectJSON struct {
 	Nombre      string `json:"nombre"`
 	Descripcion string `json:"descripcion"`
 	Estado      string `json:"estado"`
+	// HU-18, CA-18.6: fecha de inicio en AAAA-MM-DD, o "" si no está
+	// registrada.
+	FechaInicio string `json:"fecha_inicio"`
 }
 
 type itemJSON struct {
@@ -191,6 +194,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		nombre, method, path, body string
 	}{
 		{"modificar proyecto", http.MethodPut, "/api/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
+		// HU-18, CA-18.10: registrar la fecha de inicio del proyecto.
+		{"registrar fecha de inicio", http.MethodPatch, "/api/proyectos/abc/fecha-inicio", `{"fecha_inicio":"2026-10-23"}`},
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
 		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
 		// TEC-04, CA-TEC04.9: endpoints de ítems.
@@ -281,6 +286,176 @@ func TestModificarProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `no es json`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
+}
+
+// HU-18 · Registrar la fecha de inicio del proyecto (Issue #36)
+//
+// Trazabilidad: CA-18.2, CA-18.3, CA-18.4, CA-18.6 y CA-18.10. PATCH
+// /api/proyectos/{id}/fecha-inicio, con un caso exitoso y un test por código
+// de error; fecha_inicio en las respuestas de POST, GET y PUT.
+
+// fechaInicio arma el cuerpo de PATCH /api/proyectos/{id}/fecha-inicio.
+func fechaInicio(date string) string {
+	return `{"fecha_inicio":"` + date + `"}`
+}
+
+// expectProjectStartDate verifica la fecha de inicio que devuelve la consulta
+// del proyecto.
+func expectProjectStartDate(t *testing.T, h http.Handler, id, want string) {
+	t.Helper()
+	rec := do(t, h, http.MethodGet, "/api/proyectos/"+id, "")
+	expectStatus(t, rec, http.StatusOK)
+	var p projectJSON
+	decode(t, rec, &p)
+	if p.FechaInicio != want {
+		t.Errorf("fecha_inicio consultada = %q, se esperaba %q", p.FechaInicio, want)
+	}
+}
+
+// CA-18.1 y CA-18.10
+func TestRegistrarFechaInicioProyecto_Devuelve200ConElProyecto(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}`)
+
+	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+
+	expectStatus(t, rec, http.StatusOK)
+	var p projectJSON
+	decode(t, rec, &p)
+	want := projectJSON{ID: 1, Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "EN_CURSO", FechaInicio: "2026-10-23"}
+	if p != want {
+		t.Errorf("proyecto = %+v, se esperaba %+v", p, want)
+	}
+	expectProjectStartDate(t, h, "1", "2026-10-23")
+}
+
+// CA-18.5
+func TestRegistrarFechaInicioProyecto_VolverARegistrarReemplazaLaFecha(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+
+	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-11-02"))
+
+	expectStatus(t, rec, http.StatusOK)
+	expectProjectStartDate(t, h, "1", "2026-11-02")
+}
+
+// CA-18.3
+func TestRegistrarFechaInicioProyecto_FechaAusenteDevuelve400(t *testing.T) {
+	bodies := map[string]string{
+		"vacía":   `{"fecha_inicio":""}`,
+		"null":    `{"fecha_inicio":null}`,
+		"ausente": `{}`,
+	}
+	for caseName, body := range bodies {
+		t.Run(caseName, func(t *testing.T) {
+			h := newHandler()
+			createProject(t, h, "Sistema de ventas")
+
+			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", body)
+
+			expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
+			expectProjectStartDate(t, h, "1", "")
+		})
+	}
+}
+
+// CA-18.2
+func TestRegistrarFechaInicioProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T) {
+	for _, date := range []string{"2026-02-30", "2026-13-01", "23/10/2026", "2026-1-5", "2026-10-23T00:00:00Z", " 2026-10-23 "} {
+		t.Run(date, func(t *testing.T) {
+			h := newHandler()
+			createProject(t, h, "Sistema de ventas")
+
+			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio(date))
+
+			expectError(t, rec, http.StatusBadRequest, "las fechas deben tener el formato AAAA-MM-DD")
+			expectProjectStartDate(t, h, "1", "")
+		})
+	}
+}
+
+// CA-18.10: un cuerpo que no es JSON o una fecha que no es texto es JSON
+// inválido.
+func TestRegistrarFechaInicioProyecto_JSONInvalidoDevuelve400(t *testing.T) {
+	for _, body := range []string{`no es json`, `{"fecha_inicio":20261023}`} {
+		t.Run(body, func(t *testing.T) {
+			h := newHandler()
+			createProject(t, h, "Sistema de ventas")
+
+			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", body)
+
+			expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
+		})
+	}
+}
+
+// CA-18.4
+func TestRegistrarFechaInicioProyecto_InexistenteDevuelve404(t *testing.T) {
+	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-inicio", fechaInicio("2026-10-23"))
+
+	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
+}
+
+// CA-18.3 (orden de validación): la fecha se valida antes que el proyecto.
+func TestRegistrarFechaInicioProyecto_FechaVaciaEnProyectoInexistenteDevuelve400(t *testing.T) {
+	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-inicio", fechaInicio(""))
+
+	expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
+}
+
+// CA-18.8 y CA-18.10: una falla del repositorio devuelve 500 sin detalle.
+func TestRegistrarFechaInicioProyecto_ErrorInternoDevuelve500(t *testing.T) {
+	projects := project.NewManager(brokenRepository{})
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+
+	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}
+
+// CA-18.6: POST, GET y PUT devuelven fecha_inicio; "" si no está registrada.
+func TestProyecto_RespuestasIncluyenLaFechaDeInicio(t *testing.T) {
+	h := newHandler()
+
+	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas","descripcion":""}`)
+	expectStatus(t, rec, http.StatusCreated)
+	var created map[string]any
+	decode(t, rec, &created)
+	if got, ok := created["fecha_inicio"]; !ok || got != "" {
+		t.Errorf("POST: fecha_inicio = %v (presente: %t), se esperaba \"\"", got, ok)
+	}
+
+	do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+	expectProjectStartDate(t, h, "1", "2026-10-23")
+
+	rec = do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO"}`)
+	expectStatus(t, rec, http.StatusOK)
+	var p projectJSON
+	decode(t, rec, &p)
+	if p.FechaInicio != "2026-10-23" {
+		t.Errorf("PUT: fecha_inicio = %q, se esperaba 2026-10-23", p.FechaInicio)
+	}
+}
+
+// CA-18.6 (RN-18.6): PUT no recibe la fecha; si un cliente la envía, se
+// ignora y la registrada se conserva.
+func TestModificarProyecto_ConservaLaFechaDeInicio(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+
+	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO","fecha_inicio":"2020-01-01"}`)
+
+	expectStatus(t, rec, http.StatusOK)
+	expectProjectStartDate(t, h, "1", "2026-10-23")
 }
 
 // CA-TEC01.2 · POST /proyectos/{id}/backlog expone HU-04 (crear ítem).
@@ -444,6 +619,22 @@ var bodyEndpoints = []bodyEndpoint{
 			decode(t, rec, &p)
 			if p.Nombre != "Sistema de ventas" || p.Descripcion != "" {
 				t.Errorf("proyecto = %+v, se esperaba sin cambios", p)
+			}
+		},
+	},
+	// HU-18, CA-18.10: el cuerpo se rechaza antes de llegar al Manager, así
+	// que el proyecto 1 sigue sin fecha de inicio.
+	{
+		name:   "registrar fecha de inicio",
+		method: http.MethodPatch,
+		path:   "/api/proyectos/1/fecha-inicio",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			expectStatus(t, rec, http.StatusOK)
+			var p projectJSON
+			decode(t, rec, &p)
+			if p.FechaInicio != "" {
+				t.Errorf("proyecto = %+v, se esperaba sin fecha de inicio", p)
 			}
 		},
 	},

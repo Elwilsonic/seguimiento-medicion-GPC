@@ -391,3 +391,63 @@ func TestInterfaz_ConsultaDeEsfuerzosMuestraElError(t *testing.T) {
 		t.Error("app.js no muestra los errores de la consulta con accion")
 	}
 }
+
+// HU-18 · Registrar la fecha de inicio del proyecto (Issue #36)
+//
+// Trazabilidad: CA-18.10. La sección Proyectos tiene un campo de fecha y el
+// botón "Registrar fecha de inicio" para el proyecto actual, y los datos del
+// proyecto muestran la fecha. El recorrido en el navegador queda en la
+// evidencia TDD.
+
+// seccionProyectos devuelve el HTML de la sección Proyectos.
+func seccionProyectos(t *testing.T, page string) string {
+	t.Helper()
+	inicio := strings.Index(page, `<section id="proyectos">`)
+	fin := strings.Index(page, `<section id="backlog">`)
+	if inicio == -1 || fin < inicio {
+		t.Fatal("la página no contiene la sección de proyectos")
+	}
+	return page[inicio:fin]
+}
+
+func TestInterfaz_FormularioDeFechaDeInicioDelProyecto(t *testing.T) {
+	h := newHandler()
+
+	seccion := seccionProyectos(t, get(t, h, "/").Body.String())
+	for _, want := range []string{
+		`id="form-fecha-inicio-proyecto"`,
+		`name="fecha_inicio" type="date" required`,
+		"Registrar fecha de inicio",
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de proyectos no contiene %q", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`$("form-fecha-inicio-proyecto")`, `"/fecha-inicio"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_RegistrarFechaDeInicioMuestraElMensajeDeExito(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`mostrar("msg-proyectos", "Fecha de inicio del proyecto "`, `" registrada: "`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_DatosDelProyectoMuestranLaFechaDeInicio(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{"p.fecha_inicio", `"sin fecha de inicio"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
