@@ -451,6 +451,16 @@ function filaEsfuerzo(e) {
 // HU-32 · Métricas (CA-32.9). Muestra los story points planificados y
 // completados, los ítems sin estimar y la velocidad del proyecto actual, y si
 // hay sprint actual, los de ese sprint.
+// HU-34 · Porcentaje de historias completadas (CA-34.6), con un decimal y las
+// cantidades, o "sin datos" si no hay ítems.
+function historiasCompletadas(m) {
+  if (m.porcentaje_completadas === null) {
+    return "Historias completadas: sin datos.";
+  }
+  return "Historias completadas: " + m.porcentaje_completadas.toFixed(1) + " % (" +
+    m.items_terminados + " de " + m.items_totales + ").";
+}
+
 $("ver-metricas").addEventListener("click", () =>
   accion("msg-metricas", async () => {
     const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
@@ -458,12 +468,14 @@ $("ver-metricas").addEventListener("click", () =>
     let texto =
       "Proyecto " + p.proyecto_id + ": " + p.sp_planificados + " SP planificados, " +
       p.sp_completados + " SP completados, " + p.items_sin_estimar + " ítem(s) sin estimar. " +
-      "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)).";
+      "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)). " +
+      historiasCompletadas(p);
     if ($("sprint-actual").value.trim() !== "") {
       const s = await api("GET", "/sprints/" + sprintActual() + "/metricas");
       texto +=
         " Sprint " + s.sprint_id + ": " + s.sp_planificados + " SP planificados, " +
-        s.sp_completados + " SP completados, " + s.items_sin_estimar + " ítem(s) sin estimar.";
+        s.sp_completados + " SP completados, " + s.items_sin_estimar + " ítem(s) sin estimar. " +
+        historiasCompletadas(s);
     }
     $("datos-metricas").textContent = texto;
     $("datos-metricas").className = "";
