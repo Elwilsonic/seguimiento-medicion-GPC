@@ -1,7 +1,6 @@
 package poker
 
 import (
-	"errors"
 	"strings"
 	"sync"
 
@@ -91,13 +90,38 @@ func (m *Manager) Reveal(sessionID int) (Session, error) {
 	return cloneSession(session), nil
 }
 
-// errNotImplemented es el stub del RED de HU-25; se elimina en el GREEN.
-var errNotImplemented = errors.New("no implementado")
-
-// Estimate registra la estimación acordada de una sesión revelada (HU-25).
-// Stub del RED.
+// Estimate registra la estimación acordada de una sesión REVELADA (HU-25):
+// asigna los puntos al ítem con AssignStoryPoints (HU-20) y cierra la sesión.
+// Todo va bajo el mutex de poker, así dos registros simultáneos no asignan
+// los dos (RN-25.9). El orden de locks es siempre poker → backlog, y backlog
+// nunca llama a poker, así que no hay deadlock.
 func (m *Manager) Estimate(sessionID int, points int) (Session, error) {
-	return Session{}, errNotImplemented
+	if !validCard(points) {
+		return Session{}, ErrInvalidCard
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, err := m.repo.GetByID(sessionID)
+	if err != nil {
+		return Session{}, err
+	}
+	if session.Status != StatusRevealed {
+		return Session{}, ErrSessionNotRevealed
+	}
+
+	// RN-25.7: primero el ítem y después la sesión. Si falla el guardado de la
+	// sesión, el ítem ya quedó estimado y la sesión sigue REVELADA, así que
+	// repetir el registro es seguro (RN-20.3).
+	if _, err := m.items.AssignStoryPoints(session.ItemID, points); err != nil {
+		return Session{}, err
+	}
+	session.Status = StatusClosed
+	if _, err := m.repo.Update(session); err != nil {
+		return Session{}, err
+	}
+	return cloneSession(session), nil
 }
 
 func validCard(points int) bool {
