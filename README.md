@@ -51,7 +51,7 @@ Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de
 
 ### API
 
-La API responde bajo el prefijo `/api` (TEC-04).
+La API responde bajo el prefijo `/api` (TEC-04). El cuerpo de entrada, la respuesta y los errores de cada endpoint están en la [documentación técnica](docs/documentacion-tecnica.md#3-api-http) (TEC-06).
 
 | Método | Ruta | Operación |
 |---|---|---|
@@ -284,6 +284,7 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `docs/actas/_plantillas/` | Plantillas de las actas de Planning, Review y Retrospectiva y del comentario de la Daily |
 | `docs/antes-de-empezar.md` | Checklist para ponerse al día antes de empezar una historia, con o sin IA |
 | `docs/definition-of-ready-done.md` | Definition of Ready y Definition of Done vigentes |
+| `docs/documentacion-tecnica.md` | Documentación técnica: arquitectura, repositorios, API, cómo ejecutar y probar, y flujo de trabajo (TEC-06) |
 | `docs/especificaciones/` | Especificaciones SDD (`HU-XX-nombre.md`) |
 | `docs/evidencias/` | Evidencia TDD por historia (`HU-XX-tdd.md`) |
 | `docs/reportes/` | Reportes de cobertura y métricas |
