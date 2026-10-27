@@ -6,7 +6,7 @@
 
 - **Proyecto:** Software Metrics & Estimation
 - **Sprint:** Sprint 4 — La Entrega
-- **Fecha del Planning:** 27/10/2026
+- **Fecha del Planning:** 26/10/2026
 - **Período del Sprint:** 27/10/2026 al 02/11/2026 (desarrollo cerrado el 30/10, entrega el 02/11/2026)
 - **Sprint Goal:** Ver las métricas del proyecto en el dashboard y generar sus reportes, con la gestión de defectos completa y la documentación final lista para la entrega.
 
