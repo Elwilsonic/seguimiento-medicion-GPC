@@ -143,6 +143,7 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
   - `internal/httpapi`: `defects.go` (handler `changeDefectStatus` y su request) y `server.go` (ruta y errores nuevos en `statusFor`).
   - `internal/web`: `index.html` (formulario "Cambiar estado de defecto") y `app.js` (llamada a `/defectos/{id}/estado` y lista de estados).
   - `README.md`: la ruta en la tabla de endpoints, la línea de "Defectos" del uso de la interfaz y la fila de HU-30 en "Historias por sprint".
+  - Documentación del paso 7: `docs/evidencias/HU-30-tdd.md` (nuevo), `docs/reportes/cobertura.md` y `docs/ia/registro.md`.
 - **Sin cambios de esquema.** `defects.status` y `defects.resolution_sprint_id` ya existen (HU-29); `resolution_sprint_id` sigue sin clave foránea porque 0 no es un sprint. No hace falta recrear la base.
 - **Errores identificables.** Nuevos, exportados y comparables con `errors.Is`:
   - `ErrDefectNotFound` ("no existe un defecto con ese id");
@@ -154,7 +155,7 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
 
   Se propagan `sprint.ErrSprintNotFound`, `sprint.ErrSprintClosed` y los errores del repositorio.
 - **Concurrencia.** Mutex del `Manager` y `WithOpenSprint` (RN-30.11), verificado con `go test -race` en el CI.
-- **RED y GREEN.** En el RED se agregan los errores, `StatusValues` y firmas vacías (`ChangeStatus`, `GetByID`, `Update` y el handler con 501) para que todo compile; los tests fallan por aserciones, no por compilación. La ruta se registra en el GREEN. Antes del commit RED se corre `go vet ./...`.
+- **RED y GREEN.** En el RED se agregan los errores, `StatusValues` y firmas vacías (`ChangeStatus`, `GetByID` y `Update`) para que todo compile; los tests fallan por aserciones, no por compilación. La ruta y el handler se agregan en el GREEN. Antes del commit RED se corre `go vet ./...`.
 - **Tests.**
   - Unitarios en `internal/defect/status_test.go`.
   - godog en `internal/defect/status_features_test.go`, con el runner `TestFeatures_HU30CambiarEstadoDefecto`, sobre `features/HU-30-cambiar-estado-defecto.feature`, con el CA en el nombre de cada escenario.
