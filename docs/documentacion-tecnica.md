@@ -53,6 +53,9 @@ graph TD
     httpapi --> poker
     httpapi --> effort
     httpapi --> defect
+    httpapi --> project
+    httpapi --> backlog
+    httpapi --> sprint
     metrics --> sprint
     metrics --> backlog
     poker --> backlog
@@ -169,7 +172,7 @@ Todo error responde `{"error": "<mensaje>"}`. La traducción del error de domini
 | 400 | Datos inválidos | JSON inválido o con texto después; `{id}` que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad o votante vacíos; prioridad, estado, severidad, story points o carta fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes; fin de sprint no posterior al inicio; sprint de detección faltante |
 | 404 | La entidad de la ruta no existe | Proyecto, ítem, sprint o sesión de Planning Poker inexistente |
 | 405 | Método no permitido | Un método distinto del de la ruta (por ejemplo, `GET` en las rutas de sesiones de Planning Poker), con el encabezado `Allow`. La respuesta es texto, no JSON |
-| 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión abierta para el ítem; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto |
+| 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión de Planning Poker abierta para el ítem, o el ítem está terminado; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto |
 | 413 | Cuerpo de más de 1 MiB | `el cuerpo del pedido supera el tamaño máximo de 1 MiB` |
 | 500 | Error no previsto (por ejemplo, la base no responde) | Responde `error interno del servidor`, sin exponer el detalle |
 
