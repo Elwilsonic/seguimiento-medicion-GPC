@@ -106,7 +106,7 @@ func TestMetricasSprint_Devuelve200ConLosStoryPoints(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got sprintMetricsJSON
 	decode(t, rec, &got)
-	want := sprintMetricsJSON{SprintID: id, SPPlanificados: 10, SPCompletados: 8, ItemsSinEstimar: 1}
+	want := sprintMetricsJSON{SprintID: id, SPPlanificados: 10, SPCompletados: 8, ItemsSinEstimar: 1, ItemsSinHorasEstimadas: 4}
 	if got != want {
 		t.Errorf("métricas = %+v, se esperaba %+v", got, want)
 	}
