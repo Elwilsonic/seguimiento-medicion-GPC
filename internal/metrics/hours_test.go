@@ -215,6 +215,32 @@ func TestHours_ErrorDelRepositorioDeEsfuerzosSePropaga(t *testing.T) {
 	}
 }
 
+// CA-33.8 · Con el sprint existente, una falla del repositorio de ítems se
+// propaga en SprintHours.
+func TestSprintHours_ErrorDelRepositorioDeItemsSePropaga(t *testing.T) {
+	errRepo := errors.New("falla de ítems")
+	e := newMetricsEnvWith(failingItemRepository{Repository: backlog.NewMemoryRepository(), err: errRepo}, sprint.NewMemoryRepository(), effort.NewMemoryRepository())
+	projectID := e.project(t, "Sistema de ventas")
+	s := e.openSprint(t, projectID, "Sprint 1")
+
+	if got, err := e.metrics.SprintHours(s.ID); !errors.Is(err, errRepo) || got != (Hours{}) {
+		t.Errorf("horas = %+v, error = %v, se esperaba vacío y %v", got, err, errRepo)
+	}
+}
+
+// CA-33.8 · Con los ítems leídos, una falla del repositorio de sprints se
+// propaga en ProjectHours.
+func TestProjectHours_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
+	errRepo := errors.New("falla de sprints")
+	e := newMetricsEnvWith(backlog.NewMemoryRepository(), failingSprintRepository{Repository: sprint.NewMemoryRepository(), err: errRepo}, effort.NewMemoryRepository())
+	projectID := e.project(t, "Sistema de ventas")
+	e.itemWithHours(t, projectID, "A", 10, 0)
+
+	if got, err := e.metrics.ProjectHours(projectID); !errors.Is(err, errRepo) || got != (Hours{}) {
+		t.Errorf("horas = %+v, error = %v, se esperaba vacío y %v", got, err, errRepo)
+	}
+}
+
 // CA-33.8 · Consultar no modifica los ítems, los sprints ni los esfuerzos.
 func TestHours_NoModificaNada(t *testing.T) {
 	e := newMetricsEnv()
