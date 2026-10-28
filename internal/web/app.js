@@ -591,3 +591,53 @@ formEstadoDefecto.addEventListener("submit", (e) => {
     mostrar("msg-defectos", texto + ".", false);
   });
 });
+
+// HU-31 · Consultar defectos (CA-31.9). Consulta el proyecto o el sprint
+// actual; el filtro de estado se envía solo si se eligió uno.
+const formConsultaDefectos = $("form-consultar-defectos");
+formConsultaDefectos.setAttribute("aria-label", "Consultar defectos");
+for (const estado of estadosDefecto) {
+  formConsultaDefectos.estado.append(new Option(estado, estado));
+}
+formConsultaDefectos.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-consultar-defectos", async () => {
+    let ruta =
+      form.tipo.value === "sprint"
+        ? "/sprints/" + sprintActual() + "/defectos"
+        : "/proyectos/" + proyectoActual() + "/defectos";
+    if (form.estado.value !== "") {
+      ruta += "?estado=" + encodeURIComponent(form.estado.value);
+    }
+    const resultado = await api("GET", ruta);
+    const tbody = $("lista-defectos");
+    tbody.replaceChildren(...resultado.defectos.map(filaDefecto));
+    if (resultado.defectos.length === 0) {
+      const tr = document.createElement("tr");
+      const td = celda("Sin defectos.");
+      td.colSpan = 7;
+      td.className = "vacio";
+      tr.append(td);
+      tbody.append(tr);
+    }
+    $("cantidad-defectos").textContent = "Cantidad: " + resultado.cantidad + " defecto(s)";
+    mostrar("msg-consultar-defectos", "Se listaron " + resultado.cantidad + " defecto(s).", false);
+  });
+});
+
+// filaDefecto arma una fila de la tabla de consulta de defectos. Un sprint de
+// resolución 0 (sin resolver) se muestra como "—".
+function filaDefecto(d) {
+  const tr = document.createElement("tr");
+  tr.append(
+    celda(d.id),
+    celda(d.descripcion),
+    celda(d.severidad),
+    celda(d.estado),
+    celda(d.item_id),
+    celda(d.sprint_deteccion_id),
+    celda(d.sprint_resolucion_id === 0 ? "—" : d.sprint_resolucion_id),
+  );
+  return tr;
+}

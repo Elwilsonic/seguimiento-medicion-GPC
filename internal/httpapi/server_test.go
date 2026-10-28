@@ -223,6 +223,9 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},
 		// HU-30, CA-30.9: cambiar el estado de un defecto.
 		{"cambiar estado de defecto", http.MethodPatch, "/api/defectos/abc/estado", `{"estado":"EN_CORRECCION"}`},
+		// HU-31, CA-31.9: consultar los defectos de un proyecto y de un sprint.
+		{"listar defectos del proyecto", http.MethodGet, "/api/proyectos/abc/defectos", ""},
+		{"listar defectos del sprint", http.MethodGet, "/api/sprints/abc/defectos?estado=ABIERTO", ""},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {

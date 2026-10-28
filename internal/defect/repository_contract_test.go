@@ -233,3 +233,75 @@ func runRepositoryStatusContract(t *testing.T, newRepo func(t *testing.T) Reposi
 func TestMemoryRepository_ContratoGetByIDYUpdate(t *testing.T) {
 	runRepositoryStatusContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
+
+// HU-31 · Consultar los defectos de un proyecto o de un sprint (Issue #49)
+//
+// Contrato de Repository.List: toda implementación devuelve todos los
+// defectos, en cualquier estado, ordenados por ID, una lista vacía no nil si
+// no hay ninguno y copias que no comparten estado con lo guardado (RN-31.6,
+// RN-31.8 y RN-31.10).
+func runRepositoryListContract(t *testing.T, newRepo func(t *testing.T) Repository) {
+	t.Run("List sin defectos devuelve una lista vacía no nil", func(t *testing.T) {
+		repo := newRepo(t)
+
+		got, err := repo.List()
+		if err != nil {
+			t.Fatalf("List devolvió un error inesperado: %v", err)
+		}
+		if got == nil || len(got) != 0 {
+			t.Errorf("List = %#v, se esperaba una lista vacía no nil", got)
+		}
+	})
+
+	t.Run("List devuelve todos los defectos en cualquier estado ordenados por ID", func(t *testing.T) {
+		repo := newRepo(t)
+		open := contractSave(t, repo, contractDefect("Descripción abierta", SeverityHigh))
+		inCorrection := contractDefect("Descripción en corrección", SeverityMedium)
+		inCorrection.Status = StatusInCorrection
+		inCorrection = contractSave(t, repo, inCorrection)
+		resolved := contractDefect("Descripción resuelta", SeverityLow)
+		resolved.Status = StatusResolved
+		resolved.ResolutionSprintID = contractDetectionSprintID
+		resolved = contractSave(t, repo, resolved)
+
+		got, err := repo.List()
+		if err != nil {
+			t.Fatalf("List devolvió un error inesperado: %v", err)
+		}
+		want := []Defect{open, inCorrection, resolved}
+		if len(got) != len(want) {
+			t.Fatalf("List = %+v, se esperaba %+v", got, want)
+		}
+		for i := range want {
+			contractAssertDefect(t, "List", got[i], want[i])
+		}
+	})
+
+	t.Run("List devuelve copias", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractDefect("Descripción original", SeverityHigh))
+
+		got, err := repo.List()
+		if err != nil {
+			t.Fatalf("List devolvió un error inesperado: %v", err)
+		}
+		if len(got) != 1 {
+			t.Fatalf("List = %+v, se esperaba solo %+v", got, saved)
+		}
+		got[0].Description = "Descripción modificada"
+		got[0].Status = StatusResolved
+
+		again, err := repo.List()
+		if err != nil {
+			t.Fatalf("List devolvió un error inesperado: %v", err)
+		}
+		if len(again) != 1 {
+			t.Fatalf("List = %+v, se esperaba solo %+v", again, saved)
+		}
+		contractAssertDefect(t, "List después de modificar la copia", again[0], saved)
+	})
+}
+
+func TestMemoryRepository_ContratoList(t *testing.T) {
+	runRepositoryListContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
+}
