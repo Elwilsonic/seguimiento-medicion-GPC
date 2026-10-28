@@ -23,7 +23,7 @@ El GREEN quedó en `56b151b` y se integró `origin/main` mediante el merge commi
 | CA-33.5 — exponer las métricas en ambos endpoints y la interfaz | Los endpoints y la interfaz se verifican con tests HTTP/web y con la prueba de punta a punta de esta evidencia | `TestMetricasSprint_IncluyeHorasYDesviacion`; `TestMetricasProyecto_IncluyeTodoElBacklogYLosEsfuerzos`; `TestInterfaz_MetricasMuestraHorasYDesviacion`; `TestInterfaz_Numero1NormalizaElCeroNegativo` |
 | CA-33.6 — M4 de proyecto incluye todo el backlog y M5 sus sprints | "El proyecto suma todo el backlog y los esfuerzos de sus sprints" | `TestProjectHours_SumaTodoElBacklogYLosEsfuerzos`; `TestMetricasProyecto_IncluyeTodoElBacklogYLosEsfuerzos` |
 | CA-33.7 — sprint y proyecto vacíos devuelven cero, sin desviación | "Un sprint sin ítems no tiene desviación"; "Un proyecto sin ítems no tiene desviación" | `TestSprintHours_SinItems`; `TestProjectHours_SinItems`; `TestMetricas_SinDatosLaDesviacionEsNull` |
-| CA-33.8 — errores, solo lectura y propagación del repositorio | Dos esquemas: "Consultar un sprint inexistente falla" y "Consultar un proyecto inexistente falla" (3 ejemplos cada uno); "Consultar las métricas no modifica los datos" | `TestSprintHours_SprintInexistenteDevuelveErrSprintNotFound`; `TestProjectHours_ProyectoInexistenteDevuelveErrProjectNotFound`; `TestHours_ErrorDelRepositorioDeEsfuerzosSePropaga`; `TestHours_NoModificaNada`; `TestMetricas_ErrorDelRepositorioDeEsfuerzosDevuelve500` |
+| CA-33.8 — errores, solo lectura y propagación del repositorio | Dos esquemas: "Consultar un sprint inexistente falla" y "Consultar un proyecto inexistente falla" (3 ejemplos cada uno); "Consultar las métricas no modifica los datos" | `TestSprintHours_SprintInexistenteDevuelveErrSprintNotFound`; `TestProjectHours_ProyectoInexistenteDevuelveErrProjectNotFound`; `TestHours_ErrorDelRepositorioDeEsfuerzosSePropaga`; `TestSprintHours_ErrorDelRepositorioDeItemsSePropaga` y `TestProjectHours_ErrorDelRepositorioDeSprintsSePropaga` (agregados en la revisión del PR #142); `TestHours_NoModificaNada`; `TestMetricas_ErrorDelRepositorioDeEsfuerzosDevuelve500` |
 | CA-33.9 — dominio sin redondeo, presentación a un decimal y cero negativo normalizado | El ejemplo TEC-03 y las consultas de métricas; el caso decimal se verifica además por test y navegador | `TestSprintHours_ElDominioNoRedondea`; `TestMetricas_RedondeaHorasYDesviacionAUnDecimal`; `TestMetricas_NormalizaElCeroNegativo`; `TestInterfaz_Numero1NormalizaElCeroNegativo`; captura manual incluida abajo |
 | CA-33.10 — resultado por valor, sin mutar el estado guardado | "Consultar las métricas no modifica los datos" | `TestSprintHours_DevuelveUnaCopiaPorValor`; `TestHours_NoModificaNada` |
 
@@ -39,7 +39,7 @@ $ grep -cE '^[[:space:]]*Escenario:' features/HU-33-horas-desviacion.feature
 $ grep -cE '^[[:space:]]*Esquema del escenario:' features/HU-33-horas-desviacion.feature
 2
 $ grep -c '^func Test' internal/metrics/hours_test.go
-13
+15
 $ grep -c '^func Test' internal/metrics/hours_features_test.go
 1
 $ grep -c '^func Test' internal/httpapi/metrics_test.go
@@ -48,7 +48,7 @@ $ grep -c '^func Test' internal/httpapi/web_test.go
 27
 ```
 
-Los cuatro archivos contienen 56 funciones `Test` en total; el conteo incluye tests anteriores de HU-32 y otras historias. Las funciones añadidas por RED, contadas con `git diff --unified=0 59f2a0e 6f69314 -- <archivo> | grep -c '^+func Test'`, fueron 13 en `hours_test.go`, 1 runner en `hours_features_test.go`, 6 en `metrics_test.go` y 2 en `web_test.go`: 22 funciones nuevas. Godog expande los 8 escenarios y 2 esquemas en 14 casos (los esquemas tienen 3 ejemplos cada uno).
+Los cuatro archivos contienen 58 funciones `Test` en total; el conteo incluye tests anteriores de HU-32 y otras historias. Las funciones añadidas por RED, contadas con `git diff --unified=0 59f2a0e 6f69314 -- <archivo> | grep -c '^+func Test'`, fueron 13 en `hours_test.go`, 1 runner en `hours_features_test.go`, 6 en `metrics_test.go` y 2 en `web_test.go`: 22 funciones. La revisión del PR #142 agregó 2 más en `hours_test.go` (`git diff --unified=0 37cebee 2849cc9 -- internal/metrics/hours_test.go | grep -c '^+func Test'` da 2; ver "Ajuste posterior a la revisión del PR #142"): HU-33 suma 24 funciones `Test` nuevas. Godog expande los 8 escenarios y 2 esquemas en 14 casos (los esquemas tienen 3 ejemplos cada uno).
 
 Ejecución actual de Godog:
 
@@ -290,7 +290,66 @@ No se repitió la medición con PostgreSQL: `docker info` no pudo conectar con D
 
 `go tool cover -func=cover.out` mostró `hoursOf`, `toHoursResponse` y `roundOneDecimal` en 100.0%; `SprintHours` en 90.0%, `ProjectHours` en 92.3%, `sprintMetrics` en 88.2% y `projectMetrics` en 90.0%. En `main` (`f6e8101`), `sprintMetrics` estaba en 84.6% y `projectMetrics` en 86.7%.
 
-La cobertura total pasó de 80.2% en `main` (`f6e8101`) a 80.8% en la rama; `internal/httpapi` pasó de 97.5% a 97.6% e `internal/metrics` de 100.0% a 98.0%. Los otros paquetes mantuvieron los porcentajes mostrados por las dos salidas anteriores.
+La cobertura total pasó de 80.2% en `main` (`f6e8101`) a 80.8% en la rama; `internal/httpapi` pasó de 97.5% a 97.6% e `internal/metrics` de 100.0% a 98.0%. Los otros paquetes mantuvieron los porcentajes mostrados por las dos salidas anteriores. Estas cifras son anteriores a la revisión del PR #142; las actuales están en la sección siguiente.
+
+## Ajuste posterior a la revisión del PR #142
+
+**Desviación del ciclo TDD:** los dos tests de esta sección se agregaron después del GREEN (`56b151b`) y del cierre (`37cebee`), no en el RED. En la revisión del PR #142 se detectaron dos ramas de error de CA-33.8 que la SDD pedía (una falla del repositorio se propaga) y que no tenían test: `hours.go:23-25` (falla `ListItems` en `SprintHours` con el sprint existente) y `hours.go:42-44` (falla `ListByProject` de sprints en `ProjectHours` con los ítems leídos). Como el código de producción ya cubría esas ramas, los tests pasan desde el primer intento: no hubo RED propio y no se tocó código de producción. Se registra como desviación, según la acción 2 de la Retrospectiva del Sprint 3.
+
+| Fase | Commit | Mensaje |
+|---|---|---|
+| Tests posteriores a la revisión | `2849cc9` | `test(HU-33): agregar tests de la falla de ítems y sprints` |
+
+Los tests reutilizan `failingItemRepository` y `failingSprintRepository` de `internal/metrics/story_points_test.go`, que ya usaban los tests de HU-32, con el mismo patrón que `failingEffortRepository`:
+
+- `TestSprintHours_ErrorDelRepositorioDeItemsSePropaga`: el sprint existe y falla el listado de ítems; `SprintHours` devuelve ese error y `Hours{}`.
+- `TestProjectHours_ErrorDelRepositorioDeSprintsSePropaga`: el proyecto tiene un ítem con 10 horas y falla el listado de sprints; `ProjectHours` devuelve ese error y `Hours{}`.
+
+Salidas sobre `2849cc9`, con go1.27.2 en Windows y sin `TEST_DATABASE_URL`:
+
+```text
+$ gofmt -l ./cmd ./internal
+(sin salida)
+$ go vet ./...
+(sin salida)
+$ go test -count=1 ./...
+ok      seguimiento-medicion-gpc/cmd/server     0.919s
+ok      seguimiento-medicion-gpc/internal/backlog       1.451s
+ok      seguimiento-medicion-gpc/internal/defect        1.328s
+ok      seguimiento-medicion-gpc/internal/effort        1.191s
+ok      seguimiento-medicion-gpc/internal/httpapi       1.126s
+ok      seguimiento-medicion-gpc/internal/metrics       2.199s
+ok      seguimiento-medicion-gpc/internal/poker 1.078s
+ok      seguimiento-medicion-gpc/internal/postgres      0.713s
+ok      seguimiento-medicion-gpc/internal/postgrestest  0.652s
+ok      seguimiento-medicion-gpc/internal/project       0.995s
+ok      seguimiento-medicion-gpc/internal/sprint        0.923s
+?       seguimiento-medicion-gpc/internal/web   [no test files]
+$ go test -count=1 -cover ./...
+ok      seguimiento-medicion-gpc/cmd/server     0.944s  coverage: 50.0% of statements
+ok      seguimiento-medicion-gpc/internal/backlog       1.597s  coverage: 79.9% of statements
+ok      seguimiento-medicion-gpc/internal/defect        1.458s  coverage: 75.6% of statements
+ok      seguimiento-medicion-gpc/internal/effort        1.276s  coverage: 71.6% of statements
+ok      seguimiento-medicion-gpc/internal/httpapi       1.252s  coverage: 97.6% of statements
+ok      seguimiento-medicion-gpc/internal/metrics       2.085s  coverage: 100.0% of statements
+ok      seguimiento-medicion-gpc/internal/poker 1.184s  coverage: 66.2% of statements
+ok      seguimiento-medicion-gpc/internal/postgres      0.722s  coverage: 83.3% of statements
+ok      seguimiento-medicion-gpc/internal/postgrestest  0.696s  coverage: 36.8% of statements
+ok      seguimiento-medicion-gpc/internal/project       1.105s  coverage: 63.7% of statements
+ok      seguimiento-medicion-gpc/internal/sprint        1.100s  coverage: 72.8% of statements
+        seguimiento-medicion-gpc/internal/web           coverage: 0.0% of statements
+$ go test -count=1 -coverprofile=cover.out ./internal/metrics/ && go tool cover -func=cover.out | grep hours
+ok      seguimiento-medicion-gpc/internal/metrics       0.686s  coverage: 100.0% of statements
+seguimiento-medicion-gpc/internal/metrics/hours.go:17:          SprintHours             100.0%
+seguimiento-medicion-gpc/internal/metrics/hours.go:36:          ProjectHours            100.0%
+seguimiento-medicion-gpc/internal/metrics/hours.go:59:          hoursOf                 100.0%
+$ go test -count=1 -coverprofile=cover.out ./... && go tool cover -func=cover.out | grep -E 'sprintMetrics|projectMetrics|^total'
+seguimiento-medicion-gpc/internal/httpapi/metrics.go:43:        sprintMetrics           88.2%
+seguimiento-medicion-gpc/internal/httpapi/metrics.go:75:        projectMetrics          90.0%
+total:                                                          (statements)            80.9%
+```
+
+Con el ajuste, `SprintHours` pasa de 90.0% a 100.0%, `ProjectHours` de 92.3% a 100.0% e `internal/metrics` de 98.0% a 100.0%, igual que en `main` (`f6e8101`). El total sin base pasa de 80.8% a 80.9% (`main`: 80.2%). `internal/httpapi` sigue en 97.6%, y `sprintMetrics` (88.2%) y `projectMetrics` (90.0%) no cambian, porque los tests nuevos son del dominio. Los otros paquetes conservan sus porcentajes.
 
 ## Pruebas de mutación y `-race`
 
