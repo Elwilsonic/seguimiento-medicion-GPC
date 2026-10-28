@@ -680,3 +680,63 @@ func TestInterfaz_DatosDelProyectoMuestranLaFechaDeInicio(t *testing.T) {
 		}
 	}
 }
+
+// HU-36 · Ver el resumen del estado del proyecto (Issue #54)
+//
+// Trazabilidad: CA-36.6. La interfaz tiene una sección "Dashboard" con el
+// botón "Ver resumen", que llama a GET /proyectos/{id}/resumen con el
+// proyecto actual y muestra el proyecto, los ítems por estado y el sprint
+// actual, o "ninguno abierto".
+
+func TestInterfaz_SeccionDashboardConElBotonVerResumen(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="dashboard">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección del dashboard")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección del dashboard no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		"<h2>Dashboard</h2>",
+		`id="ver-resumen"`,
+		"Ver resumen",
+		`id="datos-resumen"`,
+		`id="msg-resumen"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección del dashboard no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_VerResumenLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("ver-resumen")`, `accion("msg-resumen"`, `proyectoActual() + "/resumen"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_VerResumenMuestraLosItemsPorEstadoYElSprintActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		"items_pendientes",
+		"items_en_curso",
+		"items_terminados",
+		"sprint_actual",
+		"Sprint actual: ",
+		"ninguno abierto",
+		`$("datos-resumen")`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}

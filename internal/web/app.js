@@ -541,6 +541,24 @@ $("ver-metricas").addEventListener("click", () =>
   }),
 );
 
+// HU-36 · Resumen del estado del proyecto (CA-36.6). Muestra el proyecto
+// actual, sus ítems por estado y su sprint abierto, o "ninguno abierto".
+$("ver-resumen").addEventListener("click", () =>
+  accion("msg-resumen", async () => {
+    const r = await api("GET", "/proyectos/" + proyectoActual() + "/resumen");
+    const s = r.sprint_actual;
+    const sprint = s === null
+      ? "ninguno abierto"
+      : s.nombre + " (" + s.fecha_inicio + " al " + s.fecha_fin + ") · Objetivo: " + s.objetivo;
+    $("datos-resumen").textContent =
+      "Proyecto «" + r.nombre + "» · Estado: " + r.estado + ". " +
+      "Ítems: " + r.items_pendientes + " pendientes, " + r.items_en_curso + " en curso, " +
+      r.items_terminados + " terminados. " +
+      "Sprint actual: " + sprint + ".";
+    $("datos-resumen").className = "";
+  }),
+);
+
 // HU-29 · Registrar defecto (CA-29.11). Usa el ítem y el sprint de detección
 // indicados en el formulario; al terminar muestra el ID del defecto.
 const severidadesDefecto = ["CRITICA", "ALTA", "MEDIA", "BAJA"];
