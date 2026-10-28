@@ -47,6 +47,36 @@ func (s *server) registerDefect(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toDefectResponse(saved))
 }
 
+// Handler del cambio de estado de un defecto (HU-30, CA-30.9).
+
+type defectStatusRequest struct {
+	Estado             string `json:"estado"`
+	SprintResolucionID int    `json:"sprint_resolucion_id"`
+}
+
+// changeDefectStatus atiende PATCH /api/defectos/{id}/estado. El orden de los
+// errores es ID de la ruta, JSON y Manager.
+func (s *server) changeDefectStatus(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	var req defectStatusRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	changed, err := s.defects.ChangeStatus(id, req.Estado, req.SprintResolucionID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toDefectResponse(changed))
+}
+
 func toDefectResponse(d defect.Defect) defectResponse {
 	return defectResponse{
 		ID:                 d.ID,

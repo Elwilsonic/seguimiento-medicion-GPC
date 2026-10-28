@@ -221,6 +221,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		// HU-27, CA-27.10: listado de esfuerzos por historia y por sprint.
 		{"listar esfuerzos del ítem", http.MethodGet, "/api/items/abc/esfuerzos", ""},
 		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},
+		// HU-30, CA-30.9: cambiar el estado de un defecto.
+		{"cambiar estado de defecto", http.MethodPatch, "/api/defectos/abc/estado", `{"estado":"EN_CORRECCION"}`},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
@@ -696,6 +698,16 @@ var bodyEndpoints = []bodyEndpoint{
 		untouched: func(t *testing.T, h http.Handler) {
 			rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
 			expectStatus(t, rec, http.StatusNotFound)
+		},
+	},
+	// HU-30, CA-30.9: el cuerpo se rechaza antes de llegar al Manager. No
+	// hay defectos ni una consulta de defectos (HU-31) para comprobar más.
+	{
+		name:   "cambiar estado de defecto",
+		method: http.MethodPatch,
+		path:   "/api/defectos/1/estado",
+		untouched: func(t *testing.T, h http.Handler) {
+			t.Helper()
 		},
 	},
 }

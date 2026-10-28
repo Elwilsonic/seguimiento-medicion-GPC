@@ -255,9 +255,200 @@ func TestRegistrarDefecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T)
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
 
-// brokenDefectRepository siempre falla al guardar.
+// brokenDefectRepository siempre falla al guardar, al buscar y al actualizar.
 type brokenDefectRepository struct{}
 
 func (brokenDefectRepository) Save(defect.Defect) (defect.Defect, error) {
 	return defect.Defect{}, errStorage
+}
+
+func (brokenDefectRepository) GetByID(int) (defect.Defect, error) {
+	return defect.Defect{}, errStorage
+}
+
+func (brokenDefectRepository) Update(defect.Defect) (defect.Defect, error) {
+	return defect.Defect{}, errStorage
+}
+
+// HU-30 · Cambiar el estado de un defecto por HTTP (Issue #48)
+//
+// Trazabilidad: CA-30.9. PATCH /api/defectos/{id}/estado expone el cambio de
+// estado. Hay un caso exitoso y un test por cada código de error de la tabla
+// HTTP de la SDD (400, 404, 409, 413 y 500). El 409 por un sprint de
+// resolución anterior al de detección no se puede producir desde la API
+// (validación defensiva, RN-30.6): se prueba en internal/defect.
+
+const defectStatusPath = "/api/defectos/1/estado"
+
+// newHandlerWithDefect arma la API de newHandlerWithDefects y registra el
+// defecto 1 (ABIERTO, detectado en el sprint 1) con el POST de HU-29.
+func newHandlerWithDefect(t *testing.T) http.Handler {
+	t.Helper()
+	h := newHandlerWithDefects(t)
+	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
+	return h
+}
+
+// changeDefectStatus hace el PATCH y exige un 200.
+func changeDefectStatus(t *testing.T, h http.Handler, body string) defectJSON {
+	t.Helper()
+	rec := do(t, h, http.MethodPatch, defectStatusPath, body)
+	expectStatus(t, rec, http.StatusOK)
+	var got defectJSON
+	decode(t, rec, &got)
+	return got
+}
+
+func TestCambiarEstadoDefecto_Devuelve200ConElDefecto(t *testing.T) {
+	h := newHandlerWithDefect(t)
+
+	got := changeDefectStatus(t, h, `{"estado":" en_correccion "}`)
+	want := defectJSON{
+		ID:                 1,
+		Descripcion:        "El total no descuenta el descuento",
+		Severidad:          defect.SeverityHigh,
+		Estado:             defect.StatusInCorrection,
+		ItemID:             1,
+		SprintDeteccionID:  1,
+		SprintResolucionID: 0,
+	}
+	if got != want {
+		t.Errorf("defecto = %+v, se esperaba %+v", got, want)
+	}
+
+	got = changeDefectStatus(t, h, `{"estado":"RESUELTO","sprint_resolucion_id":1}`)
+	want.Estado = defect.StatusResolved
+	want.SprintResolucionID = 1
+	if got != want {
+		t.Errorf("defecto = %+v, se esperaba %+v", got, want)
+	}
+}
+
+func TestCambiarEstadoDefecto_ReabrirDevuelveElSprintDeResolucionEnCero(t *testing.T) {
+	h := newHandlerWithDefect(t)
+	changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
+	changeDefectStatus(t, h, `{"estado":"RESUELTO","sprint_resolucion_id":1}`)
+
+	rec := do(t, h, http.MethodPatch, defectStatusPath, `{"estado":"EN_CORRECCION","sprint_resolucion_id":1}`)
+
+	expectStatus(t, rec, http.StatusOK)
+	if !strings.Contains(rec.Body.String(), `"sprint_resolucion_id":0`) {
+		t.Errorf("la respuesta no tiene el sprint de resolución en 0: %s", rec.Body.String())
+	}
+}
+
+func TestCambiarEstadoDefecto_DatosInvalidosDevuelven400(t *testing.T) {
+	cases := map[string]struct {
+		body string
+		want string
+	}{
+		"estado vacío":                  {`{"estado":"   "}`, defect.ErrInvalidStatus.Error()},
+		"estado inválido":               {`{"estado":"CERRADO"}`, defect.ErrInvalidStatus.Error()},
+		"sprint de resolución ausente":  {`{"estado":"RESUELTO"}`, defect.ErrMissingResolutionSprint.Error()},
+		"sprint de resolución cero":     {`{"estado":"RESUELTO","sprint_resolucion_id":0}`, defect.ErrMissingResolutionSprint.Error()},
+		"sprint de resolución negativo": {`{"estado":"RESUELTO","sprint_resolucion_id":-1}`, defect.ErrMissingResolutionSprint.Error()},
+		"sprint de resolución null":     {`{"estado":"RESUELTO","sprint_resolucion_id":null}`, defect.ErrMissingResolutionSprint.Error()},
+		"cuerpo que no es JSON":         {`{"estado":`, "el cuerpo del pedido no es un JSON válido"},
+		"sprint de resolución decimal":  {`{"estado":"RESUELTO","sprint_resolucion_id":1.5}`, "el cuerpo del pedido no es un JSON válido"},
+		"sprint de resolución texto":    {`{"estado":"RESUELTO","sprint_resolucion_id":"abc"}`, "el cuerpo del pedido no es un JSON válido"},
+		"texto después del JSON":        {`{"estado":"EN_CORRECCION"} basura`, "el cuerpo del pedido no es un JSON válido"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			h := newHandlerWithDefect(t)
+
+			rec := do(t, h, http.MethodPatch, defectStatusPath, tc.body)
+
+			expectError(t, rec, http.StatusBadRequest, tc.want)
+		})
+	}
+}
+
+func TestCambiarEstadoDefecto_IDInvalidoDevuelve400(t *testing.T) {
+	h := newHandlerWithDefect(t)
+
+	rec := do(t, h, http.MethodPatch, "/api/defectos/abc/estado", `{"estado":"EN_CORRECCION"}`)
+
+	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+}
+
+func TestCambiarEstadoDefecto_InexistenteDevuelve404(t *testing.T) {
+	cases := map[string]struct {
+		path string
+		body string
+		want string
+	}{
+		"defecto inexistente": {
+			"/api/defectos/999/estado",
+			`{"estado":"EN_CORRECCION"}`,
+			defect.ErrDefectNotFound.Error(),
+		},
+		"sprint de resolución inexistente": {
+			defectStatusPath,
+			`{"estado":"RESUELTO","sprint_resolucion_id":999}`,
+			sprint.ErrSprintNotFound.Error(),
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			h := newHandlerWithDefect(t)
+			changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
+
+			rec := do(t, h, http.MethodPatch, tc.path, tc.body)
+
+			expectError(t, rec, http.StatusNotFound, tc.want)
+		})
+	}
+}
+
+func TestCambiarEstadoDefecto_TransicionNoPermitidaDevuelve409(t *testing.T) {
+	h := newHandlerWithDefect(t)
+
+	rec := do(t, h, http.MethodPatch, defectStatusPath, `{"estado":"RESUELTO","sprint_resolucion_id":1}`)
+
+	expectError(t, rec, http.StatusConflict, defect.ErrInvalidTransition.Error())
+}
+
+func TestCambiarEstadoDefecto_SprintCerradoDevuelve409(t *testing.T) {
+	h := newHandlerWithDefect(t)
+	changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
+
+	rec := do(t, h, http.MethodPatch, defectStatusPath, `{"estado":"RESUELTO","sprint_resolucion_id":1}`)
+
+	expectError(t, rec, http.StatusConflict, sprint.ErrSprintClosed.Error())
+}
+
+func TestCambiarEstadoDefecto_SprintDeOtroProyectoDevuelve409(t *testing.T) {
+	h := newHandlerWithDefect(t)
+	changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
+	createProject(t, h, "Sistema de facturación")
+	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/2/sprints", validSprint), http.StatusCreated)
+
+	rec := do(t, h, http.MethodPatch, defectStatusPath, `{"estado":"RESUELTO","sprint_resolucion_id":2}`)
+
+	expectError(t, rec, http.StatusConflict, defect.ErrResolutionSprintFromAnotherProject.Error())
+}
+
+func TestCambiarEstadoDefecto_CuerpoMayorA1MiBDa413(t *testing.T) {
+	h := newHandlerWithDefect(t)
+	body := `{"estado":"EN_CORRECCION"` + strings.Repeat(" ", 1<<20) + `}`
+
+	rec := do(t, h, http.MethodPatch, defectStatusPath, body)
+
+	expectError(t, rec, http.StatusRequestEntityTooLarge, "el cuerpo del pedido supera el tamaño máximo de 1 MiB")
+
+	// El cuerpo rechazado no se procesó: el defecto sigue ABIERTO y puede
+	// pasar a EN_CORRECCION.
+	if got := changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`); got.Estado != defect.StatusInCorrection {
+		t.Errorf("estado = %q, se esperaba %q", got.Estado, defect.StatusInCorrection)
+	}
+}
+
+func TestCambiarEstadoDefecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
+	h := newHandlerWithDefectRepository(t, brokenDefectRepository{})
+
+	rec := do(t, h, http.MethodPatch, defectStatusPath, `{"estado":"EN_CORRECCION"}`)
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }

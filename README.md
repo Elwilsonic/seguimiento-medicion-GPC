@@ -40,7 +40,7 @@ Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-0
 3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21), permite votar una carta indicando el nombre del integrante sin mostrar los votos (HU-22), con "Revelar votos", muestra a la vez la lista de votos (integrante y puntos) y deja la sesión REVELADA, sin más votos (HU-23) y, en "Registrar estimación acordada", con un botón por carta, guarda los story points acordados en el ítem, deja la sesión CERRADA y recarga el backlog para mostrar el valor en la columna SP (HU-25).
 4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32); en los dos niveles, el porcentaje de historias completadas con las cantidades de ítems ("sin datos" si no hay ítems, HU-34).
 5. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo, registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26) y consultar los esfuerzos por sprint o por historia, con su tabla y total, con el formulario "Consultar esfuerzos" (HU-27).
-6. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29).
+6. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29), y cambiar su estado con el formulario "Cambiar estado de defecto": defecto, estado (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso) y sprint de resolución, obligatorio solo para RESUELTO, que tiene que estar abierto y ser del mismo proyecto (HU-30).
 
 Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de Planning Poker para un ítem, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", consultar los esfuerzos con "Consultar esfuerzos", completarlos, ver los completados y cerrar el sprint.
 
@@ -71,6 +71,7 @@ La API responde bajo el prefijo `/api` (TEC-04). El cuerpo de entrada, la respue
 | `POST` | `/api/poker-sessions/{id}/reveal` | Revelar todos los votos de una sesión abierta con votos; la sesión queda REVELADA (HU-23) |
 | `POST` | `/api/poker-sessions/{id}/estimate` | Registrar la estimación acordada (`{"puntos": 13}`, escala 1, 2, 3, 5, 8, 13 o 21) de una sesión revelada: guarda los story points en el ítem y la sesión queda CERRADA (HU-25) |
 | `POST` | `/api/items/{id}/defectos` | Registrar un defecto de una historia, con descripción, severidad y sprint de detección abierto (HU-29) |
+| `PATCH` | `/api/defectos/{id}/estado` | Cambiar el estado de un defecto (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso); para RESUELTO, con el sprint de resolución abierto del mismo proyecto, que vuelve a 0 al reabrir (HU-30) |
 | `GET` | `/api/items/{id}/esfuerzos` | Listar los esfuerzos de una historia, ordenados por ID, con el total de horas (HU-27) |
 | `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
 | `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
@@ -98,13 +99,15 @@ curl -X PATCH localhost:8080/api/items/1/story-points -d '{"story_points":5}'
 curl -X PATCH localhost:8080/api/items/1/estado -d '{"estado":"EN_CURSO"}'
 curl -X POST localhost:8080/api/sprints/1/items/1/completar
 curl -X POST localhost:8080/api/items/1/defectos -d '{"descripcion":"El total no suma el IVA","severidad":"ALTA","sprint_deteccion_id":1}'
+curl -X PATCH localhost:8080/api/defectos/1/estado -d '{"estado":"EN_CORRECCION"}'
+curl -X PATCH localhost:8080/api/defectos/1/estado -d '{"estado":"RESUELTO","sprint_resolucion_id":1}'
 curl localhost:8080/api/sprints/1/completados
 curl -X POST localhost:8080/api/sprints/1/cerrar
 ```
 
 `PUT /api/proyectos/{id}` y `PUT /api/items/{id}` reemplazan todos sus campos: un campo que no se envía queda vacío (o en 0, las horas estimadas), así que hay que mandar también los que no cambian. Las respuestas de proyectos incluyen `fecha_inicio`, en `AAAA-MM-DD`, o `""` si no está registrada; `PUT /api/proyectos/{id}` no recibe la fecha ni la cambia: se registra solo con `PATCH /api/proyectos/{id}/fecha-inicio` (HU-18). Las fechas de un sprint y la fecha de inicio del proyecto usan el formato `AAAA-MM-DD`. Para completar un ítem, antes tiene que estar `EN_CURSO`: el cambio de estado respeta las transiciones de HU-08.
 
-Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem o sprint inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint, story points de un ítem terminado, o sprint de detección de otro proyecto), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
+Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem, sprint o defecto inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint, story points de un ítem terminado, sprint de detección de otro proyecto, transición de estado de un defecto no permitida, o sprint de resolución de otro proyecto o anterior al de detección), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
 
 Para correr los tests: `go test ./...` (no necesita Docker: los tests de PostgreSQL se omiten si no hay base de pruebas).
 
@@ -265,6 +268,12 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-29 | [#47](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/47) | Registrar un defecto | [SDD](docs/especificaciones/HU-29-registrar-defecto.md) | [BDD](features/HU-29-registrar-defecto.feature) | [Evidencia](docs/evidencias/HU-29-tdd.md) | [#124](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/124) |
 | HU-32 | [#50](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/50) | Calcular Story Points planificados, completados y velocidad | [SDD](docs/especificaciones/HU-32-sp-velocidad.md) | [BDD](features/HU-32-sp-velocidad.feature) | [Evidencia](docs/evidencias/HU-32-tdd.md) | [#123](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/123) |
 | HU-34 | [#52](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/52) | Calcular el porcentaje de historias completadas | [SDD](docs/especificaciones/HU-34-porcentaje-completadas.md) | [BDD](features/HU-34-porcentaje-completadas.feature) | [Evidencia](docs/evidencias/HU-34-tdd.md) | [#129](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/129) |
+
+### Sprint 4 — La Entrega (27/10 al 02/11) · [Planning](docs/actas/sprint-4/planning.md)
+
+| ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
+|---|---|---|---|---|---|---|
+| HU-30 | [#48](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/48) | Cambiar el estado de un defecto | [SDD](docs/especificaciones/HU-30-cambiar-estado-defecto.md) | [BDD](features/HU-30-cambiar-estado-defecto.feature) | [Evidencia](docs/evidencias/HU-30-tdd.md) | [#140](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/140) |
 
 ## Estructura del repositorio
 
