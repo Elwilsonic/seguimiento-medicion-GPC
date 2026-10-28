@@ -208,6 +208,6 @@ Sin SKIP (0 tests omitidos) y sin carreras. HU-47 no toca la persistencia: lee l
 | RED | 05df3f5 | `test(HU-47): agregar tests (RED)` |
 | GREEN | 94352f2 | `feat(HU-47): calcular los defectos detectados y resueltos (GREEN)` |
 | Refactor | — | No hubo |
-| Evidencia y cobertura | (propuesto) | `docs(HU-47): agregar evidencia TDD y cobertura` |
+| Evidencia y cobertura | 5693380 | `docs(HU-47): agregar evidencia TDD y cobertura` |
 
 HU-47: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
