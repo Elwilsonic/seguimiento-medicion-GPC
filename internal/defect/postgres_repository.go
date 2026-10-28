@@ -39,6 +39,16 @@ func (r *PostgresRepository) Save(defect Defect) (Defect, error) {
 	return saved, nil
 }
 
+// GetByID (HU-30). Firma vacía del RED: se implementa en el GREEN.
+func (r *PostgresRepository) GetByID(id int) (Defect, error) {
+	return Defect{}, nil
+}
+
+// Update (HU-30). Firma vacía del RED: se implementa en el GREEN.
+func (r *PostgresRepository) Update(defect Defect) (Defect, error) {
+	return Defect{}, nil
+}
+
 // scanDefect lee un defecto con las columnas de defectColumns.
 func scanDefect(row pgx.Row) (Defect, error) {
 	var defect Defect

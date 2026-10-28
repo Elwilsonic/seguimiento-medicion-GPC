@@ -27,3 +27,13 @@ func (r *MemoryRepository) Save(defect Defect) (Defect, error) {
 	r.defects = append(r.defects, stored)
 	return stored, nil
 }
+
+// GetByID (HU-30). Firma vacía del RED: se implementa en el GREEN.
+func (r *MemoryRepository) GetByID(id int) (Defect, error) {
+	return Defect{}, nil
+}
+
+// Update (HU-30). Firma vacía del RED: se implementa en el GREEN.
+func (r *MemoryRepository) Update(defect Defect) (Defect, error) {
+	return Defect{}, nil
+}
