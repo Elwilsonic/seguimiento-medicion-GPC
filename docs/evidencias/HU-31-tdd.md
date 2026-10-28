@@ -156,7 +156,7 @@ postgres_repository_test.go:233: List = [], se esperaba [{ID:1 Description:Prime
 |---|---|---|
 | GREEN | `c4f07e5` | `feat(HU-31): implementar la consulta de defectos (GREEN)` |
 | Refactor | — | No aplica |
-| Documentación | (propuesto) | `docs(HU-31): agregar evidencia TDD y cobertura` |
+| Documentación | `3f6b118` | `docs(HU-31): agregar evidencia TDD y cobertura` |
 
 El GREEN tocó solo 7 archivos de producción:
 
@@ -383,8 +383,8 @@ El perfil se borró al terminar.
 | RED | `b44d97a` | `test(HU-31): agregar tests (RED)` |
 | GREEN | `c4f07e5` | `feat(HU-31): implementar la consulta de defectos (GREEN)` |
 | Refactor | — | No aplica |
-| Documentación | (propuesto) | `docs(HU-31): agregar evidencia TDD y cobertura` |
+| Documentación | `3f6b118` | `docs(HU-31): agregar evidencia TDD y cobertura` |
 
-Todos los commits de la historia referencian el Issue #49 con `Refs #49` y están en la rama `feature/HU-31-consultar-defectos`.
+Los commits de la SDD y su aprobación, el RED, el GREEN y la documentación referencian el Issue #49 con `Refs #49`. Todos los commits de la historia están hechos y subidos a la rama `feature/HU-31-consultar-defectos`, y el Pull Request es el [#141](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/141).
 
 HU-31: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
