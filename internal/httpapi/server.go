@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/dashboard"
 	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/metrics"
@@ -37,21 +38,24 @@ type errorResponse struct {
 
 // server tiene los Manager que atienden los pedidos.
 type server struct {
-	projects *project.Manager
-	items    *backlog.Manager
-	sprints  *sprint.Manager
-	efforts  *effort.Manager
-	poker    *poker.Manager
-	defects  *defect.Manager
-	metrics  *metrics.Manager
+	projects  *project.Manager
+	items     *backlog.Manager
+	sprints   *sprint.Manager
+	efforts   *effort.Manager
+	poker     *poker.Manager
+	defects   *defect.Manager
+	metrics   *metrics.Manager
+	dashboard *dashboard.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
 func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager) http.Handler {
 	// HU-32: metrics no tiene repositorio ni estado, así que se crea acá con
 	// los Manager de ítems y de sprints, sin cambiar la firma de NewHandler.
+	// HU-36: dashboard tampoco tiene repositorio ni estado, y se crea igual.
 	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects,
-		metrics: metrics.NewManager(items, sprints)}
+		metrics:   metrics.NewManager(items, sprints),
+		dashboard: dashboard.NewManager(projects, items, sprints)}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
@@ -82,6 +86,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("POST /api/sprints/{id}/cerrar", s.closeSprint)
 	mux.HandleFunc("GET /api/sprints/{id}/metricas", s.sprintMetrics)
 	mux.HandleFunc("GET /api/proyectos/{id}/metricas", s.projectMetrics)
+	mux.HandleFunc("GET /api/proyectos/{id}/resumen", s.projectSummary)
 	// La interfaz web responde en / (CA-TEC04.8); las rutas /api/… son más
 	// específicas, así que no la tapan.
 	mux.Handle("GET /", web.Handler())
