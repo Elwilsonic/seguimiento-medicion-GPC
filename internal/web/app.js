@@ -504,6 +504,22 @@ function historiasCompletadas(m) {
     m.items_terminados + " de " + m.items_totales + ").";
 }
 
+function numero1(valor) {
+  const texto = valor.toFixed(1);
+  return texto === "-0.0" ? "0.0" : texto;
+}
+
+function horasYDesviacion(m) {
+  let texto = "Horas: " + numero1(m.horas_estimadas) + " estimadas, " +
+    numero1(m.horas_reales) + " reales, " + m.items_sin_horas_estimadas +
+    " ítem(s) sin horas estimadas. Desviación: ";
+  if (m.desviacion_horas === null || m.desviacion_porcentual === null) {
+    return texto + "sin datos.";
+  }
+  return texto + numero1(m.desviacion_horas) + " h (" +
+    numero1(m.desviacion_porcentual) + " %).";
+}
+
 $("ver-metricas").addEventListener("click", () =>
   accion("msg-metricas", async () => {
     const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
@@ -512,13 +528,13 @@ $("ver-metricas").addEventListener("click", () =>
       "Proyecto " + p.proyecto_id + ": " + p.sp_planificados + " SP planificados, " +
       p.sp_completados + " SP completados, " + p.items_sin_estimar + " ítem(s) sin estimar. " +
       "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)). " +
-      historiasCompletadas(p);
+      historiasCompletadas(p) + " " + horasYDesviacion(p);
     if ($("sprint-actual").value.trim() !== "") {
       const s = await api("GET", "/sprints/" + sprintActual() + "/metricas");
       texto +=
         " Sprint " + s.sprint_id + ": " + s.sp_planificados + " SP planificados, " +
         s.sp_completados + " SP completados, " + s.items_sin_estimar + " ítem(s) sin estimar. " +
-        historiasCompletadas(s);
+        historiasCompletadas(s) + " " + horasYDesviacion(s);
     }
     $("datos-metricas").textContent = texto;
     $("datos-metricas").className = "";
@@ -593,3 +609,53 @@ formEstadoDefecto.addEventListener("submit", (e) => {
     mostrar("msg-defectos", texto + ".", false);
   });
 });
+
+// HU-31 · Consultar defectos (CA-31.9). Consulta el proyecto o el sprint
+// actual; el filtro de estado se envía solo si se eligió uno.
+const formConsultaDefectos = $("form-consultar-defectos");
+formConsultaDefectos.setAttribute("aria-label", "Consultar defectos");
+for (const estado of estadosDefecto) {
+  formConsultaDefectos.estado.append(new Option(estado, estado));
+}
+formConsultaDefectos.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-consultar-defectos", async () => {
+    let ruta =
+      form.tipo.value === "sprint"
+        ? "/sprints/" + sprintActual() + "/defectos"
+        : "/proyectos/" + proyectoActual() + "/defectos";
+    if (form.estado.value !== "") {
+      ruta += "?estado=" + encodeURIComponent(form.estado.value);
+    }
+    const resultado = await api("GET", ruta);
+    const tbody = $("lista-defectos");
+    tbody.replaceChildren(...resultado.defectos.map(filaDefecto));
+    if (resultado.defectos.length === 0) {
+      const tr = document.createElement("tr");
+      const td = celda("Sin defectos.");
+      td.colSpan = 7;
+      td.className = "vacio";
+      tr.append(td);
+      tbody.append(tr);
+    }
+    $("cantidad-defectos").textContent = "Cantidad: " + resultado.cantidad + " defecto(s)";
+    mostrar("msg-consultar-defectos", "Se listaron " + resultado.cantidad + " defecto(s).", false);
+  });
+});
+
+// filaDefecto arma una fila de la tabla de consulta de defectos. Un sprint de
+// resolución 0 (sin resolver) se muestra como "—".
+function filaDefecto(d) {
+  const tr = document.createElement("tr");
+  tr.append(
+    celda(d.id),
+    celda(d.descripcion),
+    celda(d.severidad),
+    celda(d.estado),
+    celda(d.item_id),
+    celda(d.sprint_deteccion_id),
+    celda(d.sprint_resolucion_id === 0 ? "—" : d.sprint_resolucion_id),
+  );
+  return tr;
+}

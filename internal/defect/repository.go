@@ -1,8 +1,7 @@
 package defect
 
 // Repository es el almacenamiento de los defectos. La lógica de negocio
-// accede a los datos solo a través de esta interfaz. Las consultas y los
-// listados llegan con HU-31.
+// accede a los datos solo a través de esta interfaz.
 type Repository interface {
 	// Save guarda un defecto nuevo, le asigna el ID y devuelve una copia.
 	Save(Defect) (Defect, error)
@@ -14,4 +13,9 @@ type Repository interface {
 	// Update reemplaza el defecto guardado cuyo ID coincida y devuelve una
 	// copia, o ErrDefectNotFound si no existe (HU-30).
 	Update(Defect) (Defect, error)
+
+	// List devuelve una lista nueva con copias de todos los defectos,
+	// ordenados por ID ascendente, o una lista vacía no nil si no hay
+	// ninguno (HU-31).
+	List() ([]Defect, error)
 }

@@ -15,6 +15,7 @@ type sprintMetricsResponse struct {
 	SPCompletados   int `json:"sp_completados"`
 	ItemsSinEstimar int `json:"items_sin_estimar"`
 	completionResponse
+	hoursResponse
 }
 
 // projectMetricsResponse es la respuesta de GET /api/proyectos/{id}/metricas
@@ -27,6 +28,7 @@ type projectMetricsResponse struct {
 	Velocidad       *float64 `json:"velocidad"`
 	SprintsCerrados int      `json:"sprints_cerrados"`
 	completionResponse
+	hoursResponse
 }
 
 // completionResponse son los campos de M8 (HU-34). PorcentajeCompletadas es
@@ -54,12 +56,18 @@ func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	h, err := s.metrics.SprintHours(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, sprintMetricsResponse{
 		SprintID:           p.SprintID,
 		SPPlanificados:     p.Planned,
 		SPCompletados:      p.Completed,
 		ItemsSinEstimar:    p.Unestimated,
 		completionResponse: toCompletionResponse(c),
+		hoursResponse:      toHoursResponse(h),
 	})
 }
 
@@ -80,9 +88,48 @@ func (s *server) projectMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	h, err := s.metrics.ProjectHours(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	resp := toProjectMetricsResponse(p)
 	resp.completionResponse = toCompletionResponse(c)
+	resp.hoursResponse = toHoursResponse(h)
 	writeJSON(w, http.StatusOK, resp)
+}
+
+type hoursResponse struct {
+	HorasEstimadas         float64  `json:"horas_estimadas"`
+	HorasReales            float64  `json:"horas_reales"`
+	DesviacionHoras        *float64 `json:"desviacion_horas"`
+	DesviacionPorcentual   *float64 `json:"desviacion_porcentual"`
+	ItemsSinHorasEstimadas int      `json:"items_sin_horas_estimadas"`
+}
+
+// toHoursResponse redondea M4 a M7 a un decimal (RN-33.7 y RN-33.8) y deja las
+// desviaciones en null cuando no están disponibles.
+func toHoursResponse(h metrics.Hours) hoursResponse {
+	resp := hoursResponse{
+		HorasEstimadas:         roundOneDecimal(h.Estimated),
+		HorasReales:            roundOneDecimal(h.Actual),
+		ItemsSinHorasEstimadas: h.Unestimated,
+	}
+	if h.DeviationAvailable {
+		deviation := roundOneDecimal(h.Deviation)
+		deviationPercent := roundOneDecimal(h.DeviationPercent)
+		resp.DesviacionHoras = &deviation
+		resp.DesviacionPorcentual = &deviationPercent
+	}
+	return resp
+}
+
+func roundOneDecimal(value float64) float64 {
+	rounded := math.Round(value*10) / 10
+	if rounded == 0 {
+		return 0
+	}
+	return rounded
 }
 
 // toProjectMetricsResponse redondea la velocidad a un decimal (RN-32.7) y la
