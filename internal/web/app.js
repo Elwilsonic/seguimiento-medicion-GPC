@@ -504,6 +504,22 @@ function historiasCompletadas(m) {
     m.items_terminados + " de " + m.items_totales + ").";
 }
 
+function numero1(valor) {
+  const texto = valor.toFixed(1);
+  return texto === "-0.0" ? "0.0" : texto;
+}
+
+function horasYDesviacion(m) {
+  let texto = "Horas: " + numero1(m.horas_estimadas) + " estimadas, " +
+    numero1(m.horas_reales) + " reales, " + m.items_sin_horas_estimadas +
+    " ítem(s) sin horas estimadas. Desviación: ";
+  if (m.desviacion_horas === null || m.desviacion_porcentual === null) {
+    return texto + "sin datos.";
+  }
+  return texto + numero1(m.desviacion_horas) + " h (" +
+    numero1(m.desviacion_porcentual) + " %).";
+}
+
 $("ver-metricas").addEventListener("click", () =>
   accion("msg-metricas", async () => {
     const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
@@ -512,13 +528,13 @@ $("ver-metricas").addEventListener("click", () =>
       "Proyecto " + p.proyecto_id + ": " + p.sp_planificados + " SP planificados, " +
       p.sp_completados + " SP completados, " + p.items_sin_estimar + " ítem(s) sin estimar. " +
       "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)). " +
-      historiasCompletadas(p);
+      historiasCompletadas(p) + " " + horasYDesviacion(p);
     if ($("sprint-actual").value.trim() !== "") {
       const s = await api("GET", "/sprints/" + sprintActual() + "/metricas");
       texto +=
         " Sprint " + s.sprint_id + ": " + s.sp_planificados + " SP planificados, " +
         s.sp_completados + " SP completados, " + s.items_sin_estimar + " ítem(s) sin estimar. " +
-        historiasCompletadas(s);
+        historiasCompletadas(s) + " " + horasYDesviacion(s);
     }
     $("datos-metricas").textContent = texto;
     $("datos-metricas").className = "";

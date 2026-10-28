@@ -1,8 +1,11 @@
 package httpapi_test
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -28,6 +31,12 @@ type sprintMetricsJSON struct {
 	SPPlanificados  int `json:"sp_planificados"`
 	SPCompletados   int `json:"sp_completados"`
 	ItemsSinEstimar int `json:"items_sin_estimar"`
+	// HU-33: M4 a M7 y la cantidad de ítems sin horas estimadas.
+	HorasEstimadas         float64  `json:"horas_estimadas"`
+	HorasReales            float64  `json:"horas_reales"`
+	DesviacionHoras        *float64 `json:"desviacion_horas"`
+	DesviacionPorcentual   *float64 `json:"desviacion_porcentual"`
+	ItemsSinHorasEstimadas int      `json:"items_sin_horas_estimadas"`
 }
 
 type projectMetricsJSON struct {
@@ -37,6 +46,12 @@ type projectMetricsJSON struct {
 	ItemsSinEstimar int      `json:"items_sin_estimar"`
 	Velocidad       *float64 `json:"velocidad"`
 	SprintsCerrados int      `json:"sprints_cerrados"`
+	// HU-33: M4 a M7 y la cantidad de ítems sin horas estimadas.
+	HorasEstimadas         float64  `json:"horas_estimadas"`
+	HorasReales            float64  `json:"horas_reales"`
+	DesviacionHoras        *float64 `json:"desviacion_horas"`
+	DesviacionPorcentual   *float64 `json:"desviacion_porcentual"`
+	ItemsSinHorasEstimadas int      `json:"items_sin_horas_estimadas"`
 }
 
 // metricsSprint crea por la API un sprint del proyecto 1 con un ítem por cada
@@ -91,7 +106,7 @@ func TestMetricasSprint_Devuelve200ConLosStoryPoints(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got sprintMetricsJSON
 	decode(t, rec, &got)
-	want := sprintMetricsJSON{SprintID: id, SPPlanificados: 10, SPCompletados: 8, ItemsSinEstimar: 1}
+	want := sprintMetricsJSON{SprintID: id, SPPlanificados: 10, SPCompletados: 8, ItemsSinEstimar: 1, ItemsSinHorasEstimadas: 4}
 	if got != want {
 		t.Errorf("métricas = %+v, se esperaba %+v", got, want)
 	}
@@ -236,5 +251,221 @@ func TestMetricas_SinItemsElPorcentajeEsNull(t *testing.T) {
 		if !strings.Contains(rec.Body.String(), `"porcentaje_completadas":null`) {
 			t.Errorf("%s: la respuesta no tiene porcentaje_completadas en null: %s", path, rec.Body.String())
 		}
+	}
+}
+
+// HU-33 · Calcular horas estimadas, horas reales y desviación (Issue #51)
+//
+// CA-33.5, CA-33.6, CA-33.9 y CA-33.10: los dos endpoints de métricas suman
+// M4 a M7 y la cantidad de ítems sin horas estimadas, con un decimal y null
+// cuando la desviación no está disponible. Los errores 400, 404 y 500 de las
+// rutas ya los cubren los tests de HU-32 y HU-33.
+
+type hoursItemSpec struct {
+	title  string
+	hours  float64
+	effort float64
+}
+
+// createHoursItem crea un ítem en el proyecto 1 y le asigna las horas
+// estimadas con PUT (el POST no las toma).
+func createHoursItem(t *testing.T, h http.Handler, title string, hours float64) itemJSON {
+	t.Helper()
+	var it itemJSON
+	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog",
+		fmt.Sprintf(`{"titulo":%q,"descripcion":"","prioridad":"MEDIA","criterios":["Criterio"]}`, title))
+	expectStatus(t, rec, http.StatusCreated)
+	decode(t, rec, &it)
+	rec = do(t, h, http.MethodPut, fmt.Sprintf("/api/items/%d", it.ID),
+		fmt.Sprintf(`{"titulo":%q,"descripcion":"","prioridad":"MEDIA","criterios":["Criterio"],"horas_estimadas":%v}`, title, hours))
+	expectStatus(t, rec, http.StatusOK)
+	decode(t, rec, &it)
+	return it
+}
+
+// hoursSprint crea un sprint del proyecto 1 con los ítems de specs, los asigna
+// y registra el esfuerzo indicado (0 = sin esfuerzo). Devuelve el ID del sprint.
+func hoursSprint(t *testing.T, h http.Handler, name string, specs []hoursItemSpec) int {
+	t.Helper()
+	var sp sprintJSON
+	rec := do(t, h, http.MethodPost, "/api/proyectos/1/sprints",
+		fmt.Sprintf(`{"nombre":%q,"fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Goal"}`, name))
+	expectStatus(t, rec, http.StatusCreated)
+	decode(t, rec, &sp)
+	for _, spec := range specs {
+		it := createHoursItem(t, h, spec.title, spec.hours)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sp.ID, it.ID), ""), http.StatusOK)
+		if spec.effort > 0 {
+			body := fmt.Sprintf(`{"integrante":"García Santiago","fecha":"2026-10-10","actividad":"Implementación","horas":%v}`, spec.effort)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/esfuerzos", sp.ID, it.ID), body), http.StatusCreated)
+		}
+	}
+	return sp.ID
+}
+
+func expectHour(t *testing.T, name string, got, want float64) {
+	t.Helper()
+	if got != want {
+		t.Errorf("%s = %v, se esperaba %v", name, got, want)
+	}
+}
+
+func expectOptionalHour(t *testing.T, name string, got *float64, want float64) {
+	t.Helper()
+	if got == nil || *got != want {
+		t.Errorf("%s = %v, se esperaba %v", name, got, want)
+	}
+}
+
+// CA-33.5 · GET /api/sprints/{id}/metricas incluye M4 a M7 con el ejemplo de
+// TEC-03: 20 h estimadas, 20 h reales, desviación 0 y 1 ítem sin horas.
+func TestMetricasSprint_IncluyeHorasYDesviacion(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	id := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{
+		{"A", 10, 12},
+		{"B", 6, 5},
+		{"C", 0, 3},
+		{"D", 4, 0},
+	})
+
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got sprintMetricsJSON
+	decode(t, rec, &got)
+	expectHour(t, "horas_estimadas", got.HorasEstimadas, 20)
+	expectHour(t, "horas_reales", got.HorasReales, 20)
+	expectOptionalHour(t, "desviacion_horas", got.DesviacionHoras, 0)
+	expectOptionalHour(t, "desviacion_porcentual", got.DesviacionPorcentual, 0)
+	if got.ItemsSinHorasEstimadas != 1 {
+		t.Errorf("items_sin_horas_estimadas = %d, se esperaba 1", got.ItemsSinHorasEstimadas)
+	}
+}
+
+// CA-33.6 · GET /api/proyectos/{id}/metricas suma todo el backlog y los
+// esfuerzos de todos los sprints.
+func TestMetricasProyecto_IncluyeTodoElBacklogYLosEsfuerzos(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	hoursSprint(t, h, "Sprint 1", []hoursItemSpec{
+		{"A", 10, 12},
+		{"B", 6, 5},
+	})
+	createHoursItem(t, h, "E", 4)
+	createHoursItem(t, h, "F", 0)
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/metricas", "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got projectMetricsJSON
+	decode(t, rec, &got)
+	expectHour(t, "horas_estimadas", got.HorasEstimadas, 20)
+	expectHour(t, "horas_reales", got.HorasReales, 17)
+	expectOptionalHour(t, "desviacion_horas", got.DesviacionHoras, -3)
+	expectOptionalHour(t, "desviacion_porcentual", got.DesviacionPorcentual, -15)
+	if got.ItemsSinHorasEstimadas != 1 {
+		t.Errorf("items_sin_horas_estimadas = %d, se esperaba 1", got.ItemsSinHorasEstimadas)
+	}
+}
+
+// CA-33.4 y CA-33.5 · Sin datos, la desviación es null en los dos endpoints.
+func TestMetricas_SinDatosLaDesviacionEsNull(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	id := hoursSprint(t, h, "Sprint 1", nil)
+
+	for _, path := range []string{fmt.Sprintf("/api/sprints/%d/metricas", id), "/api/proyectos/1/metricas"} {
+		rec := do(t, h, http.MethodGet, path, "")
+
+		expectStatus(t, rec, http.StatusOK)
+		body := rec.Body.String()
+		for _, want := range []string{`"desviacion_horas":null`, `"desviacion_porcentual":null`} {
+			if !strings.Contains(body, want) {
+				t.Errorf("%s: el cuerpo no contiene %s: %s", path, want, body)
+			}
+		}
+		var got sprintMetricsJSON
+		decode(t, rec, &got)
+		if got.DesviacionHoras != nil || got.DesviacionPorcentual != nil || got.HorasEstimadas != 0 || got.HorasReales != 0 || got.ItemsSinHorasEstimadas != 0 {
+			t.Errorf("%s: métricas = %+v, se esperaba todo en cero y null", path, got)
+		}
+	}
+}
+
+// CA-33.9 · La API redondea M4, M5, M6 y M7 a un decimal: 21,25 h reales
+// sobre 20 h estimadas dan 1,25 h y 6,25 %, que se informan como 1.3 y 6.3.
+func TestMetricas_RedondeaHorasYDesviacionAUnDecimal(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	id := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{{"A", 20, 21.25}})
+
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got sprintMetricsJSON
+	decode(t, rec, &got)
+	expectHour(t, "horas_reales", got.HorasReales, 21.3)
+	expectOptionalHour(t, "desviacion_horas", got.DesviacionHoras, 1.3)
+	expectOptionalHour(t, "desviacion_porcentual", got.DesviacionPorcentual, 6.3)
+}
+
+// CA-33.9 · El cero negativo de M6 y M7 se normaliza a 0 en el JSON.
+func TestMetricas_NormalizaElCeroNegativo(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	id := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{
+		{"A", 0.1, 0.3},
+		{"B", 0.2, 0},
+	})
+
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got struct {
+		HorasEstimadas       float64         `json:"horas_estimadas"`
+		HorasReales          float64         `json:"horas_reales"`
+		DesviacionHoras      json.RawMessage `json:"desviacion_horas"`
+		DesviacionPorcentual json.RawMessage `json:"desviacion_porcentual"`
+	}
+	decode(t, rec, &got)
+	expectHour(t, "horas_estimadas", got.HorasEstimadas, 0.3)
+	expectHour(t, "horas_reales", got.HorasReales, 0.3)
+	if string(got.DesviacionHoras) != "0" {
+		t.Errorf("desviacion_horas = %s, se esperaba 0 sin signo", got.DesviacionHoras)
+	}
+	if string(got.DesviacionPorcentual) != "0" {
+		t.Errorf("desviacion_porcentual = %s, se esperaba 0 sin signo", got.DesviacionPorcentual)
+	}
+}
+
+// failingEffortListRepository falla al leer los esfuerzos de un sprint.
+type failingEffortListRepository struct {
+	effort.Repository
+	err error
+}
+
+func (r failingEffortListRepository) ListBySprint(int) ([]effort.Effort, error) {
+	return nil, r.err
+}
+
+// CA-33.8 · Una falla del repositorio de esfuerzos devuelve 500 sin detalle.
+func TestMetricas_ErrorDelRepositorioDeEsfuerzosDevuelve500(t *testing.T) {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(failingEffortListRepository{Repository: effort.NewMemoryRepository(), err: errors.New("base caída")}, sprints, items)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	createProject(t, h, "Sistema de ventas")
+	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	it := createHoursItem(t, h, "A", 10)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/items/"+strconv.Itoa(it.ID), ""), http.StatusOK)
+
+	for _, path := range []string{"/api/sprints/1/metricas", "/api/proyectos/1/metricas"} {
+		rec := do(t, h, http.MethodGet, path, "")
+
+		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 	}
 }
