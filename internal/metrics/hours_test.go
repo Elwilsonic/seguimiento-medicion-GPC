@@ -290,8 +290,10 @@ func TestSprintHours_ElDominioNoRedondea(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Estimated != 0.1+0.2 {
-		t.Errorf("horas estimadas = %v, se esperaba el valor exacto %v", got.Estimated, 0.1+0.2)
+	want := 0.1
+	want += 0.2
+	if got.Estimated != want {
+		t.Errorf("horas estimadas = %v, se esperaba el valor exacto %v", got.Estimated, want)
 	}
 	if !almostEqual(got.Actual, 0.3) {
 		t.Errorf("horas reales = %v, se esperaba 0.3", got.Actual)
