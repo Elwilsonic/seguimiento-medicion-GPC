@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #48
 
-Aprobada por: (pendiente)
+Aprobada por: Peñalbé Hernán (Agile Enabler), 27/10/2026, con tres ajustes (RESUELTO → RESUELTO sin sprint de resolución da ErrMissingResolutionSprint; ErrResolutionBeforeDetection es una validación defensiva; las transiciones están en status.go y StatusValues() en defect.go), que se aplicaron.
 
 ## Historia de usuario
 
@@ -40,7 +40,7 @@ En `internal/defect/defect.go` se agrega, con el mismo patrón que `severityValu
 - `statusValues = [...]string{"ABIERTO", "EN_CORRECCION", "RESUELTO"}`: definición única, no exportada.
 - `StatusValues() []string`: devuelve una **lista nueva** con los estados en ese orden, para que la interfaz web no repita la lista. Cambiar la lista devuelta no altera la validación.
 
-Se actualiza el comentario de `Status`, que hoy dice que `EN_CORRECCION` y `RESUELTO` "quedan definidos para HU-30", para que remita a `status.go`.
+Se actualiza el comentario de `Status`, que hoy dice que `EN_CORRECCION` y `RESUELTO` "quedan definidos para HU-30", para que remita a `status.go` para las transiciones. `statusValues` y `StatusValues()` quedan en `defect.go`; las transiciones están en `status.go`.
 
 ### Salidas esperadas
 
@@ -84,7 +84,7 @@ Se actualiza el comentario de `Status`, que hoy dice que `EN_CORRECCION` y `RESU
 | Transición no permitida | 409 | El de `ErrInvalidTransition` |
 | Sprint de resolución `CERRADO` | 409 | El de `sprint.ErrSprintClosed` |
 | Sprint de resolución de otro proyecto | 409 | El de `ErrResolutionSprintFromAnotherProject` |
-| Sprint de resolución anterior al de detección | 409 | El de `ErrResolutionBeforeDetection` |
+| Sprint de resolución anterior al de detección | 409 | El de `ErrResolutionBeforeDetection` (validación defensiva: no se puede producir desde la API, ver RN-30.6) |
 | Cuerpo de más de 1 MiB | 413 | El de `errBodyTooLarge` |
 | Falla del repositorio | 500 | El de `errInternal`, sin detalle |
 
@@ -111,13 +111,13 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
 
    No están permitidas `ABIERTO` → `RESUELTO` ni `RESUELTO` → `ABIERTO`: el defecto tiene que pasar por `EN_CORRECCION`. Una transición no permitida devuelve `ErrInvalidTransition`.
 3. **RN-30.3 Defecto existente.** El defecto tiene que existir; si no, `ErrDefectNotFound` (incluidos los IDs 0 y negativos).
-4. **RN-30.4 Mismo estado.** Si el estado destino es igual al actual, la operación es un no-op válido: no llama a `Update`, no devuelve error y devuelve una copia del defecto. En `RESUELTO` → `RESUELTO` no se cambia el sprint de resolución (para corregirlo hay que reabrir y volver a resolver).
+4. **RN-30.4 Mismo estado.** Si el estado destino es igual al actual, la operación es un no-op válido: no llama a `Update`, no devuelve error y devuelve una copia del defecto. El no-op aplica solo después de las validaciones previas al repositorio (RN-30.1 y RN-30.5): si el destino es `RESUELTO` y el sprint de resolución falta, es 0 o es negativo, se devuelve `ErrMissingResolutionSprint` aunque el defecto ya esté `RESUELTO`, porque el sprint <= 0 se valida antes de leer el defecto. En `RESUELTO` → `RESUELTO` con un sprint de resolución válido (> 0), distinto o no del guardado, no se cambia el sprint de resolución (para corregirlo hay que reabrir y volver a resolver).
 5. **RN-30.5 Sprint de resolución obligatorio al resolver.** Si el destino es `RESUELTO`, el sprint de resolución ausente, 0 o negativo devuelve `ErrMissingResolutionSprint`, antes de consultar el repositorio. Con otro destino, el valor recibido se ignora.
 6. **RN-30.6 Sprint de resolución válido.** Al pasar a `RESUELTO`:
    - el sprint tiene que existir; si no, `sprint.ErrSprintNotFound`;
    - tiene que estar `ABIERTO`; si está `CERRADO`, `sprint.ErrSprintClosed`. Se usa `sprint.Manager.WithOpenSprint`, como HU-26 y HU-29;
    - tiene que ser del mismo proyecto que el defecto (el de su historia); si no, `ErrResolutionSprintFromAnotherProject`;
-   - no puede ser anterior al sprint de detección (CA-30.2); si lo es, `ErrResolutionBeforeDetection`. Puede ser el mismo sprint de detección. "Anterior" se compara por ID: dentro de un proyecto los IDs siguen el orden de creación de los sprints, porque hay un solo sprint abierto a la vez (HU-10 y regla de M3 en `docs/metricas.md`).
+   - no puede ser anterior al sprint de detección (CA-30.2); si lo es, `ErrResolutionBeforeDetection`. Puede ser el mismo sprint de detección. "Anterior" se compara por ID: dentro de un proyecto los IDs siguen el orden de creación de los sprints, porque hay un solo sprint abierto a la vez (HU-10 y regla de M3 en `docs/metricas.md`). Es una **validación defensiva**: desde la API no se puede producir, porque el único sprint abierto de un proyecto siempre es el más nuevo y el defecto se detectó en un sprint que estaba abierto. Se prueba guardando el defecto con `Save` del repositorio en memoria, con un sprint de detección posterior.
 7. **RN-30.7 Sprint de resolución al reabrir.** Al pasar de `RESUELTO` a `EN_CORRECCION`, el sprint de resolución vuelve a 0: solo un defecto `RESUELTO` tiene sprint de resolución. Es coherente con RN-29.4 y con HU-47, que cuenta como resuelto solo un defecto en `RESUELTO`.
 8. **RN-30.8 Solo cambia el estado y el sprint de resolución.** No se modifican la descripción, la severidad, la historia, el sprint de detección ni el ID del defecto, ni la historia ni los sprints.
 9. **RN-30.9 Persistencia.** Se guarda con `Repository.Update`, con el defecto completo leído con `GetByID`; funciona igual en memoria y en PostgreSQL, sin cambios de esquema.
@@ -138,12 +138,14 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
 
 - **Organización del código.**
   - `internal/defect/status.go` (nuevo): `ChangeStatus`, la tabla de transiciones y su validación.
-  - `internal/defect/defect.go`: `statusValues`, `StatusValues()` y los errores nuevos; se actualiza el comentario de `Status`.
+  - `internal/defect/defect.go`: `statusValues`, `StatusValues()` y los errores nuevos; el comentario de `Status` remite a `status.go` para las transiciones.
   - `internal/defect/repository.go`: suma `GetByID(id int) (Defect, error)` y `Update(Defect) (Defect, error)`. `memory_repository.go` y `postgres_repository.go` los implementan. No se toca `register.go`.
   - `internal/httpapi`: `defects.go` (handler `changeDefectStatus` y su request) y `server.go` (ruta y errores nuevos en `statusFor`).
   - `internal/web`: `index.html` (formulario "Cambiar estado de defecto") y `app.js` (llamada a `/defectos/{id}/estado` y lista de estados).
   - `README.md`: la ruta en la tabla de endpoints, la línea de "Defectos" del uso de la interfaz y la fila de HU-30 en "Historias por sprint".
-  - Documentación del paso 7: `docs/evidencias/HU-30-tdd.md` (nuevo), `docs/reportes/cobertura.md` y `docs/ia/registro.md`.
+  - `docs/evidencias/HU-30-tdd.md`: evidencia TDD (paso 7).
+  - `docs/reportes/cobertura.md`: cobertura general (paso 7).
+  - `docs/ia/registro.md`: registro del uso de la IA en la historia (paso 7).
 - **Sin cambios de esquema.** `defects.status` y `defects.resolution_sprint_id` ya existen (HU-29); `resolution_sprint_id` sigue sin clave foránea porque 0 no es un sprint. No hace falta recrear la base.
 - **Errores identificables.** Nuevos, exportados y comparables con `errors.Is`:
   - `ErrDefectNotFound` ("no existe un defecto con ese id");
@@ -155,13 +157,13 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
 
   Se propagan `sprint.ErrSprintNotFound`, `sprint.ErrSprintClosed` y los errores del repositorio.
 - **Concurrencia.** Mutex del `Manager` y `WithOpenSprint` (RN-30.11), verificado con `go test -race` en el CI.
-- **RED y GREEN.** En el RED se agregan los errores, `StatusValues` y firmas vacías (`ChangeStatus`, `GetByID` y `Update`) para que todo compile; los tests fallan por aserciones, no por compilación. La ruta y el handler se agregan en el GREEN. Antes del commit RED se corre `go vet ./...`.
+- **RED y GREEN.** En el RED se agregan solo los errores, `StatusValues` y firmas vacías de `ChangeStatus`, `GetByID` y `Update` para que todo compile; los tests fallan por aserciones, no por compilación. La ruta y el handler `changeDefectStatus` van en el GREEN: sin la ruta, los tests de API fallan igual por aserción (404 o 405 en lugar de 200). Antes del commit RED se corre `go vet ./...`.
 - **Tests.**
   - Unitarios en `internal/defect/status_test.go`.
   - godog en `internal/defect/status_features_test.go`, con el runner `TestFeatures_HU30CambiarEstadoDefecto`, sobre `features/HU-30-cambiar-estado-defecto.feature`, con el CA en el nombre de cada escenario.
   - Contrato de `GetByID` y `Update` en `internal/defect/repository_contract_test.go` (memoria y PostgreSQL); específicos de PostgreSQL en `postgres_repository_test.go`, que se omiten sin `TEST_DATABASE_URL`.
   - API en `internal/httpapi/defects_test.go` (200 y un caso por 400, 404, 409, 413 y 500), ruta y `bodyEndpoints` en `server_test.go`; interfaz en `web_test.go`.
-  - El caso "sprint de resolución anterior al de detección" no se puede armar con `Register` + `ChangeStatus` (el único sprint abierto de un proyecto siempre es el más nuevo), así que el test guarda el defecto directamente con `Save` del repositorio en memoria, con un sprint de detección posterior, como hacen los tests de HU-47.
+  - El caso "sprint de resolución anterior al de detección" es una validación defensiva (RN-30.6): no se puede armar con `Register` + `ChangeStatus` ni desde la API (el único sprint abierto de un proyecto siempre es el más nuevo), así que el test unitario y el escenario godog guardan el defecto directamente con `Save` del repositorio en memoria, con un sprint de detección posterior, como hacen los tests de HU-47. Los tests de API no lo cubren: el 409 se prueba con los otros casos.
 - **Tests de PostgreSQL.** Los corre y verifica otro integrante antes del merge si el entorno local no tiene Docker.
 - **Librerías.** Solo la librería estándar en el código, y godog solo en los tests.
 
@@ -177,7 +179,8 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
 | `RESUELTO` → `EN_CORRECCION` (reabrir) | Queda `EN_CORRECCION` y el sprint de resolución vuelve a 0 |
 | `ABIERTO` → `RESUELTO` | `ErrInvalidTransition`; no cambia |
 | `RESUELTO` → `ABIERTO` | `ErrInvalidTransition`; no cambia |
-| Mismo estado (incluido `RESUELTO` → `RESUELTO` con otro sprint) | Sin error, sin `Update`; el defecto no cambia |
+| Mismo estado (incluido `RESUELTO` → `RESUELTO` con otro sprint válido, > 0) | Sin error, sin `Update`; el defecto no cambia |
+| `RESUELTO` → `RESUELTO` sin sprint de resolución (0, negativo o ausente) | `ErrMissingResolutionSprint` (se valida antes de leer el defecto); no cambia |
 | Estado `en_correccion ` o ` Resuelto` | Se normaliza |
 | Estado vacío, con solo espacios o `CERRADO` | `ErrInvalidStatus` |
 | Estado inválido sobre un defecto inexistente | `ErrInvalidStatus` (se valida primero el estado) |
@@ -188,7 +191,7 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
 | `RESUELTO` con sprint positivo inexistente | `sprint.ErrSprintNotFound`; no cambia |
 | `RESUELTO` con sprint `CERRADO` | `sprint.ErrSprintClosed`; no cambia |
 | `RESUELTO` con sprint de otro proyecto | `ErrResolutionSprintFromAnotherProject`; no cambia |
-| `RESUELTO` con sprint anterior al de detección | `ErrResolutionBeforeDetection`; no cambia |
+| `RESUELTO` con sprint anterior al de detección | `ErrResolutionBeforeDetection`; no cambia (validación defensiva: solo se arma guardando el defecto con `Save`) |
 | Transición no permitida y sprint inválido a la vez (`ABIERTO` → `RESUELTO` con sprint cerrado) | `ErrInvalidTransition` (la transición se valida antes que el sprint) |
 | Modificar el defecto devuelto | El defecto guardado no cambia |
 | Cambios simultáneos de `ABIERTO` a `EN_CORRECCION` sobre el mismo defecto | Ninguno falla; el primero cambia, los demás son no-op |
@@ -210,7 +213,7 @@ En la sección **Defectos** de `internal/web`, debajo de "Registrar defecto", un
 | Sprint de resolución inexistente (RN-30.6) | `sprint.ErrSprintNotFound` | No cambia nada |
 | Sprint de resolución `CERRADO` (RN-30.6) | `sprint.ErrSprintClosed` | No cambia nada |
 | Sprint de resolución de otro proyecto (RN-30.6) | `ErrResolutionSprintFromAnotherProject` | No cambia nada |
-| Sprint de resolución anterior al de detección (RN-30.6) | `ErrResolutionBeforeDetection` | No cambia nada |
+| Sprint de resolución anterior al de detección (RN-30.6, validación defensiva) | `ErrResolutionBeforeDetection` | No cambia nada |
 | El repositorio falla al buscar o al actualizar | El error del repositorio | No cambia nada |
 
 **Orden de validación:**
@@ -224,7 +227,7 @@ Se informa el primer error encontrado.
 ## Criterios de aceptación
 
 - **CA-30.1** Un defecto pasa de un estado a otro con transiciones de un paso: `ABIERTO` → `EN_CORRECCION`, `EN_CORRECCION` → `RESUELTO`, `EN_CORRECCION` → `ABIERTO` y `RESUELTO` → `EN_CORRECCION`. `ABIERTO` → `RESUELTO` y `RESUELTO` → `ABIERTO` se rechazan con `ErrInvalidTransition`. Pedir el estado actual no da error y no cambia nada.
-- **CA-30.2** Al pasar a `RESUELTO` se registra el sprint de resolución, que es obligatorio (`ErrMissingResolutionSprint`), tiene que existir (`sprint.ErrSprintNotFound`), estar abierto (`sprint.ErrSprintClosed`), ser del mismo proyecto (`ErrResolutionSprintFromAnotherProject`) y no ser anterior al de detección (`ErrResolutionBeforeDetection`); puede ser el mismo. Al reabrir, el sprint de resolución vuelve a 0.
+- **CA-30.2** Al pasar a `RESUELTO` se registra el sprint de resolución, que es obligatorio (`ErrMissingResolutionSprint`), tiene que existir (`sprint.ErrSprintNotFound`), estar abierto (`sprint.ErrSprintClosed`), ser del mismo proyecto (`ErrResolutionSprintFromAnotherProject`) y no ser anterior al de detección (`ErrResolutionBeforeDetection`, validación defensiva que no se produce desde la API y se prueba con `Save`); puede ser el mismo. Al reabrir, el sprint de resolución vuelve a 0.
 - **CA-30.3** Un estado vacío o fuera de `ABIERTO`, `EN_CORRECCION` y `RESUELTO` se rechaza con `ErrInvalidStatus`; el estado se acepta sin distinguir mayúsculas ni espacios de los extremos.
 - **CA-30.4** Cambiar el estado de un defecto inexistente (incluidos ID 0 y negativo) devuelve `ErrDefectNotFound`.
 - **CA-30.5** Un cambio rechazado no modifica nada, y un cambio válido solo modifica el estado y el sprint de resolución: ni los demás campos del defecto, ni la historia, ni los sprints.
@@ -307,10 +310,10 @@ Confirmadas por Ricardo el 27/10/2026, antes de redactar:
 3. **Al reabrir, el sprint de resolución vuelve a 0.**
 4. **Alcance:** `Manager`, persistencia, API y formulario web.
 
-A confirmar en la revisión:
+Confirmadas por Hernán el 27/10/2026, en la revisión:
 
 5. **"Anterior" se compara por ID** del sprint (orden de creación dentro del proyecto), no por fechas.
-6. **Mismo estado = no-op**, como HU-08, incluido `RESUELTO` → `RESUELTO` (no cambia el sprint de resolución).
+6. **Mismo estado = no-op**, como HU-08, incluido `RESUELTO` → `RESUELTO` con un sprint de resolución válido (no cambia el sprint de resolución). Sin sprint de resolución da `ErrMissingResolutionSprint` (RN-30.4).
 7. **Con un destino que no es `RESUELTO`, el sprint de resolución recibido se ignora** (no da error), como HU-29 ignora `estado` en el cuerpo.
 8. **Orden de validación:** la transición se valida antes que el sprint de resolución, y el sprint de resolución <= 0 antes de consultar el repositorio.
 9. **Endpoint:** `PATCH /api/defectos/{id}/estado`, con el patrón de `PATCH /api/items/{id}/estado`.
