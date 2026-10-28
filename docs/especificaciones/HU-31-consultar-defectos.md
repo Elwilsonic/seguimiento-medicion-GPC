@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #49
 
-Aprobada por: (pendiente)
+Aprobada por: Peñalbé Hernán (Agile Enabler), 28/10/2026, con un ajuste en D3 (un filtro con solo espacios se trata como vacío y no filtra), que se aplicó.
 
 ## Historia de usuario
 
@@ -45,7 +45,7 @@ Se expone en `GET /api/proyectos/{id}/defectos` y `GET /api/sprints/{id}/defecto
 |---|---|---|---|---|
 | Por proyecto | ProjectID | entero | Sí | ID del proyecto cuyos defectos se listan |
 | Por sprint | SprintID | entero | Sí | ID del sprint en el que se detectaron los defectos |
-| Filtro (ambas) | Estado | texto | No | `ABIERTO`, `EN_CORRECCION` o `RESUELTO`, sin distinguir mayúsculas ni contar los espacios de los extremos; sin filtro se devuelven todos |
+| Filtro (ambas) | Estado | texto | No | `ABIERTO`, `EN_CORRECCION` o `RESUELTO`, sin distinguir mayúsculas ni contar los espacios de los extremos; sin filtro (ausente, vacío o con solo espacios) se devuelven todos |
 
 Cada consulta usa exactamente uno de los dos IDs; no hay consulta combinada ni listado global.
 
@@ -53,7 +53,7 @@ Firmas en `internal/defect`:
 
 - `func (m *Manager) ListByProject(projectID int) ([]Defect, error)` — la firma exacta de la SDD de HU-47, sin filtro.
 - `func (m *Manager) ListBySprint(sprintID int) ([]Defect, error)` — sin filtro.
-- `func ParseStatus(status string) (Status, error)` — valida y normaliza el estado del filtro; reutiliza `normalizeStatus` de HU-30 y devuelve `ErrInvalidStatus`.
+- `func ParseStatus(status string) (Status, error)` — valida y normaliza un estado; reutiliza `normalizeStatus` de HU-30 y devuelve `ErrInvalidStatus` para cualquier valor que no sea uno de los tres estados, incluido el vacío (igual que `ChangeStatus`). No decide si hay filtro: eso lo decide el handler (D3).
 - `func FilterByStatus(defects []Defect, status Status) []Defect` — devuelve una lista nueva con los defectos en ese estado, en el mismo orden.
 
 ### Salidas esperadas
@@ -71,7 +71,7 @@ Firmas en `internal/defect`:
 
 - `GET /api/proyectos/{id}/defectos` para consultar por proyecto.
 - `GET /api/sprints/{id}/defectos` para consultar por sprint.
-- Las dos aceptan el parámetro opcional `?estado=ABIERTO|EN_CORRECCION|RESUELTO`. Sin el parámetro, o con el parámetro vacío (`?estado=`), no se filtra.
+- Las dos aceptan el parámetro opcional `?estado=ABIERTO|EN_CORRECCION|RESUELTO`. El handler recorta el valor con `strings.TrimSpace`; si queda vacío (sin el parámetro, `?estado=` o solo espacios), no se filtra (D3).
 
 - **Respuesta exitosa:** `200 OK` con la lista y la cantidad, con el modelo de la respuesta de HU-27 (`esfuerzos` y `total_horas`). Cada defecto tiene la misma forma que la respuesta de HU-29 y HU-30 (`toDefectResponse`):
 
@@ -92,7 +92,7 @@ Firmas en `internal/defect`:
 | Caso | Código | Mensaje |
 |---|---|---|
 | `{id}` que no es un número entero | 400 | El de `errInvalidID` |
-| `estado` con un valor que no es ABIERTO, EN_CORRECCION ni RESUELTO (incluido un valor con solo espacios) | 400 | El de `ErrInvalidStatus` |
+| `estado` que, recortado, no queda vacío y no es ABIERTO, EN_CORRECCION ni RESUELTO (por ejemplo `CERRADO`) | 400 | El de `ErrInvalidStatus` |
 | Proyecto inexistente | 404 | El de `project.ErrProjectNotFound` |
 | Sprint inexistente | 404 | El de `sprint.ErrSprintNotFound` |
 | Falla de un repositorio | 500 | El de `errInternal`, sin detalle |
@@ -116,8 +116,8 @@ En la sección **Defectos** de `internal/web`, debajo de "Cambiar estado de defe
 
 1. **RN-31.1 Una consulta, un alcance.** Cada consulta usa exactamente un ID: el de un proyecto o el de un sprint. No se listan todos los defectos del sistema.
 2. **RN-31.2 Defectos de un proyecto.** Son todos los defectos cuya historia (`ItemID`) pertenece al proyecto, en cualquier estado. `Defect` no guarda el proyecto: se obtiene de la historia, como en HU-29, HU-30 y RN-47.3.
-3. **RN-31.3 Defectos de un sprint.** Son los defectos **detectados** en el sprint (`DetectionSprintID` igual al sprint), en cualquier estado, con la misma definición que M9 en `docs/metricas.md`. Un defecto detectado en un sprint y resuelto en otro aparece solo en la consulta del sprint de detección (decisión D2, a confirmar).
-4. **RN-31.4 Filtro por estado.** El filtro es opcional. Si se informa, se normaliza con `strings.ToUpper(strings.TrimSpace(...))`, como en HU-30, y solo quedan los defectos con ese estado. Un valor que no es `ABIERTO`, `EN_CORRECCION` ni `RESUELTO` devuelve `ErrInvalidStatus`. El filtro se aplica sobre el resultado de `ListByProject` o `ListBySprint`, que no cambian de firma (decisión D3).
+3. **RN-31.3 Defectos de un sprint.** Son los defectos **detectados** en el sprint (`DetectionSprintID` igual al sprint), en cualquier estado, con la misma definición que M9 en `docs/metricas.md`. Un defecto detectado en un sprint y resuelto en otro aparece solo en la consulta del sprint de detección (decisión D2).
+4. **RN-31.4 Filtro por estado.** El filtro es opcional. Primero se recorta con `strings.TrimSpace`: si queda vacío (sin parámetro, `?estado=` o solo espacios), no se filtra. Si no queda vacío, se normaliza con `strings.ToUpper`, como en HU-30, y solo quedan los defectos con ese estado; cualquier otro valor que no sea `ABIERTO`, `EN_CORRECCION` ni `RESUELTO` devuelve `ErrInvalidStatus`. El filtro se aplica sobre el resultado de `ListByProject` o `ListBySprint`, que no cambian de firma (decisión D3).
 5. **RN-31.5 Entidad existente.** Si el proyecto o el sprint no existe (incluidos 0 y negativos), se devuelve `project.ErrProjectNotFound` o `sprint.ErrSprintNotFound`, y no una lista vacía.
 6. **RN-31.6 Lista vacía válida.** Si la entidad existe y no tiene defectos, o ninguno con el estado pedido, se devuelve una lista de longitud 0 (no `nil`), sin error. En JSON, `[]` y no `null`.
 7. **RN-31.7 Aislamiento.** La consulta de un proyecto no incluye defectos de otro proyecto, y la de un sprint no incluye defectos detectados en otro sprint.
@@ -138,17 +138,17 @@ HU-31 referencia por ID un proyecto o un sprint, y **sí valida su existencia**,
 - **Historias y sprints de cada defecto:** **no se validan** uno por uno. HU-29 ya los validó al registrar el defecto, el sistema no elimina historias ni sprints, y una historia no cambia de proyecto.
 - **Proyecto del sprint:** **no se consulta.** El sprint ya determina el conjunto (`DetectionSprintID`), como en HU-27.
 
-## Decisiones de diseño (a confirmar por el Agile Enabler)
+## Decisiones de diseño (confirmadas por Peñalbé Hernán, Agile Enabler, el 28/10/2026)
 
 - **D1 · Consulta por proyecto.** `Manager.ListByProject(projectID int) ([]Defect, error)`, con la firma exacta de la SDD de HU-47: copias de todos los defectos del proyecto, en cualquier estado, ordenados por ID; proyecto inexistente → `project.ErrProjectNotFound`. El filtro por estado no va en esta firma, porque HU-47 la necesita sin filtro.
 - **D2 · Consulta por sprint.** `Manager.ListBySprint(sprintID int) ([]Defect, error)`: los defectos **detectados** en el sprint (`DetectionSprintID`), ordenados por ID, con la misma definición que M9 en `docs/metricas.md`; sprint inexistente → `sprint.ErrSprintNotFound`.
   - *Alternativa:* incluir también los defectos resueltos en el sprint (`RESUELTO` con `ResolutionSprintID` igual al sprint), sin repetirlos. Se propone no incluirlos: la consulta sería la unión de M9 y M10 y no coincidiría con ninguna de las dos, y un defecto aparecería en dos sprints. Si se elige la alternativa, cambian RN-31.3, CA-31.2 y sus escenarios.
   - HU-47 no usa `ListBySprint`: calcula M9 y M10 de un sprint con `ListByProject` y filtra (sección "Decisión sobre entidades referenciadas" de su SDD), así que esta decisión no la afecta.
 - **D3 · Filtro por estado.** Lo aplican dos funciones del paquete, sin cambiar las firmas de D1 y D2:
-  - `ParseStatus(status string) (Status, error)`: exporta la validación de `normalizeStatus` (HU-30), con `ErrInvalidStatus`.
+  - `ParseStatus(status string) (Status, error)`: exporta la validación de `normalizeStatus` (HU-30), con `ErrInvalidStatus`. Un valor vacío o con solo espacios también da `ErrInvalidStatus`, como en `ChangeStatus`: `ParseStatus` valida un estado, no decide si hay filtro.
   - `FilterByStatus(defects []Defect, status Status) []Defect`: lista nueva, mismo orden, nunca `nil`.
 
-  Se separa la validación del filtro para que el handler valide `?estado=` **antes** de consultar, como HU-30 valida el estado antes de leer el repositorio: un estado inválido sobre un proyecto inexistente da 400 y no 404. Sin el parámetro, o con `?estado=` vacío, no se filtra (como `?orden=` de HU-09, que sin valor no cambia nada); un valor con solo espacios da 400. *Alternativa:* una sola función `FilterByStatus(defects, status string) ([]Defect, error)`, más simple pero que obliga a consultar antes de validar el estado (404 antes que 400).
+  Se separa la validación del filtro para que el handler valide `?estado=` **antes** de consultar, como HU-30 valida el estado antes de leer el repositorio: un estado inválido sobre un proyecto inexistente da 400 y no 404. **Quién decide "vacío = sin filtro": el handler.** Recorta `?estado=` con `strings.TrimSpace`; si queda vacío (sin el parámetro, `?estado=` o solo espacios), no llama a `ParseStatus` ni a `FilterByStatus` y devuelve todos, como `?orden=` de HU-09, que no da 400. Si no queda vacío, llama a `ParseStatus`, y cualquier valor que no sea uno de los tres estados (por ejemplo `CERRADO`) da 400 (ajuste de Hernán del 28/10/2026). *Alternativa:* una sola función `FilterByStatus(defects, status string) ([]Defect, error)`, más simple pero que obliga a consultar antes de validar el estado (404 antes que 400).
 - **D4 · Proyecto del defecto.** `Defect` no guarda el proyecto, solo `ItemID`. `ListByProject` obtiene las historias del proyecto con `backlog.Manager.ListItems`, que ya valida el proyecto, y se queda con los defectos cuyo `ItemID` está entre esas historias. No hay cambios de esquema ni operaciones nuevas en el backlog.
 - **D5 · Lectura del repositorio.** Una sola lectura nueva en `defect.Repository`: `List() ([]Defect, error)`, con todos los defectos ordenados por ID, en memoria (`MemoryRepository`, bajo su mutex) y PostgreSQL (`SELECT ... FROM defects ORDER BY id`). El `Manager` filtra por historias (D4) o por sprint de detección (D2).
   - *Por qué `List` y no `ListByItemIDs` o `ListByDetectionSprint`:* una sola lectura sirve a las dos consultas, con el mismo comportamiento en memoria y PostgreSQL y un único test de contrato. `ListByItemIDs` necesitaría `= ANY($1)` en PostgreSQL y una segunda lectura para el sprint.
@@ -191,7 +191,7 @@ HU-31 referencia por ID un proyecto o un sprint, y **sí valida su existencia**,
   - Unitarios en `internal/defect/list_test.go`, que también declara `List` de `testDefectRepository` y `failingDefectRepository`.
   - godog en `internal/defect/list_features_test.go`, con el runner `TestFeatures_HU31ConsultarDefectos`, sobre `features/HU-31-consultar-defectos.feature`, con el CA en el nombre de cada escenario.
   - Contrato de `List` en `internal/defect/repository_contract_test.go` (memoria y PostgreSQL): lista vacía no `nil`, orden por ID, todos los estados y copias. Específicos de PostgreSQL en `postgres_repository_test.go`, que se omiten sin `TEST_DATABASE_URL`.
-  - API en `internal/httpapi/defect_lists_test.go` (nuevo, como `effort_lists_test.go` de HU-27), que también declara `List` de `brokenDefectRepository`: 200 con y sin filtro, lista vacía `[]`, 400 por estado inválido, 404 por proyecto y sprint inexistentes, 500 por repositorio roto; las dos rutas nuevas se suman a `TestRutasConID_IDNoNumericoDevuelve400` en `server_test.go`.
+  - API en `internal/httpapi/defect_lists_test.go` (nuevo, como `effort_lists_test.go` de HU-27), que también declara `List` de `brokenDefectRepository`: 200 con y sin filtro (incluidos `?estado=` y un filtro con solo espacios, que no filtran), lista vacía `[]`, 400 por estado inválido, 404 por proyecto y sprint inexistentes, 500 por repositorio roto; las dos rutas nuevas se suman a `TestRutasConID_IDNoNumericoDevuelve400` en `server_test.go`.
   - Interfaz en `internal/httpapi/web_test.go`: formulario, selectores, tabla, cantidad, caso vacío y llamadas de `app.js`.
 - **Tests de PostgreSQL.** Los corre y verifica otro integrante antes del merge si el entorno local no tiene Docker.
 - **Librerías.** Solo la librería estándar en el código, y godog solo en los tests.
@@ -213,7 +213,9 @@ HU-31 referencia por ID un proyecto o un sprint, y **sí valida su existencia**,
 | Filtro `en_correccion ` o ` Abierto` | Se normaliza |
 | Filtro con un estado sin defectos | Lista vacía, sin error |
 | Filtro vacío (sin parámetro o `?estado=`) | No se filtra |
-| Filtro con solo espacios, `CERRADO` u otro valor | `ErrInvalidStatus` (400) |
+| Filtro con solo espacios | No se filtra (el handler lo recorta y queda vacío) |
+| Filtro `CERRADO` u otro valor | `ErrInvalidStatus` (400) |
+| `ParseStatus` con un valor vacío o con solo espacios | `ErrInvalidStatus` (el handler no la llama en ese caso) |
 | Filtro inválido sobre un proyecto o sprint inexistente | `ErrInvalidStatus` (400): el filtro se valida primero |
 | Proyecto inexistente, 0 o negativo | `project.ErrProjectNotFound` (404); no se devuelve lista |
 | Sprint inexistente, 0 o negativo | `sprint.ErrSprintNotFound` (404); no se devuelve lista |
@@ -239,10 +241,10 @@ HU-31 referencia por ID un proyecto o un sprint, y **sí valida su existencia**,
 
 **Orden de validación:**
 
-1. En la capa HTTP, sin tocar repositorios: ID de la ruta (`errInvalidID`) y, si se informó, estado del filtro (`ParseStatus`, `ErrInvalidStatus`).
+1. En la capa HTTP, sin tocar repositorios: ID de la ruta (`errInvalidID`) y el estado del filtro, recortado con `strings.TrimSpace`; si no queda vacío, `ParseStatus` (`ErrInvalidStatus`).
 2. Con el mutex del `Manager` tomado: existencia del proyecto (con `ListItems`) o del sprint (con `Get`); si no existe, no se lee el repositorio de defectos.
 3. Lectura con `List` y selección por historias o por sprint de detección.
-4. En la capa HTTP: `FilterByStatus`, si se informó el estado.
+4. En la capa HTTP: `FilterByStatus`, si el estado recortado no quedó vacío.
 
 Se informa el primer error encontrado.
 
@@ -250,7 +252,7 @@ Se informa el primer error encontrado.
 
 - **CA-31.1** Se listan todos los defectos de un proyecto (los de todas sus historias) o los detectados en un sprint, en cualquier estado, con ID, descripción, severidad, estado, historia, sprint de detección y sprint de resolución, ordenados por ID ascendente.
 - **CA-31.2** La consulta de un proyecto no incluye defectos de otro proyecto, y la de un sprint no incluye defectos detectados en otro sprint, aunque se hayan resuelto en él. Se pueden consultar sprints abiertos y cerrados.
-- **CA-31.3** Se puede filtrar por estado (`ABIERTO`, `EN_CORRECCION` o `RESUELTO`, sin distinguir mayúsculas ni espacios de los extremos); sin filtro se devuelven todos. Un estado inválido se rechaza con `ErrInvalidStatus` antes de consultar.
+- **CA-31.3** Se puede filtrar por estado (`ABIERTO`, `EN_CORRECCION` o `RESUELTO`, sin distinguir mayúsculas ni espacios de los extremos); sin filtro (ausente, vacío o con solo espacios) se devuelven todos. Cualquier otro valor se rechaza con `ErrInvalidStatus` antes de consultar.
 - **CA-31.4** Un proyecto o un sprint existente sin defectos, o sin defectos con el estado pedido, devuelve una lista vacía (longitud 0, no `nil`; `[]` en JSON), sin error.
 - **CA-31.5** Consultar un proyecto o un sprint inexistente (incluidos 0 y negativos) devuelve `project.ErrProjectNotFound` o `sprint.ErrSprintNotFound`, y no una lista vacía.
 - **CA-31.6** Modificar la lista o un defecto devuelto no altera los defectos guardados, y consultar no modifica nada.
@@ -288,7 +290,7 @@ Los tests unitarios (`list_test.go`) cubren CA-31.1 a CA-31.8 y los casos límit
 - Editar o eliminar defectos.
 - Cambios de esquema.
 - Actualizar `docs/documentacion-tecnica.md` (TEC-06, responsable Peñalbé Hernán).
-- Editar el Issue #49 en esta etapa: el texto de los criterios queda propuesto para aplicarlo con autorización, después de aprobar la SDD.
+- Editar el Issue #49 desde esta SDD: los criterios definitivos ("Comparación con los criterios del Issue #49") se cargan en el Issue después de la aprobación, con autorización de Ricardo.
 
 ## Comparación con el acta de Planning
 
