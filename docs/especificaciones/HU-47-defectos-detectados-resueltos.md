@@ -36,8 +36,9 @@ Esta historia es la segunda parte de la división de HU-34 (acta de Planning del
 | Historia | Qué aporta | Estado |
 |---|---|---|
 | HU-29 (#47) | El defecto, con `ItemID`, `DetectionSprintID`, `Status` y `ResolutionSprintID` | En `main` |
-| HU-30 (#48) | El paso a `RESUELTO` y el sprint de resolución | Pendiente (Sosa) |
-| HU-31 (#49) | La lectura de los defectos de un proyecto en `defect.Manager` y en los repositorios (memoria y PostgreSQL) | Pendiente (Sosa) |
+| HU-30 (#48) | El paso a `RESUELTO` y el sprint de resolución | En `main` (PR #140) |
+| HU-31 (#49) | La lectura de los defectos de un proyecto en `defect.Manager` y en los repositorios (memoria y PostgreSQL) | En `main` (PR #141) |
+| HU-33 (#51) | El parámetro de esfuerzos de `metrics.NewManager` | En `main` (PR #142) |
 | HU-32 y HU-34 | El paquete `internal/metrics`, los endpoints y la sección "Métricas" | En `main` |
 
 HU-47 no lee los repositorios de defectos por su cuenta: usa la operación de HU-31, para que las dos historias no agreguen dos lecturas distintas en los mismos archivos. Esta SDD supone que esa operación es:
@@ -49,7 +50,9 @@ HU-47 no lee los repositorios de defectos por su cuenta: usa la operación de HU
 func (m *Manager) ListByProject(projectID int) ([]Defect, error)
 ```
 
-El nombre y la firma se confirman con Sosa antes de aprobar esta SDD. Si HU-31 la define distinto, solo cambia la interfaz `defectLister` de esta historia (ver "Restricciones").
+HU-31 la integró con ese nombre y esa firma (PR #141), así que la interfaz `defectLister` no cambia.
+
+**Ajuste del 28/10/2026, antes del RED:** HU-33 (PR #142) agregó a `metrics.NewManager` el parámetro de esfuerzos. Por eso el parámetro de defectos de esta historia pasa a ser el cuarto (ver "Restricciones"). No cambian las reglas, los casos ni los criterios.
 
 Los tests de HU-47 no necesitan HU-30: guardan defectos en `RESUELTO` con el `Save` del repositorio en memoria. Pero la métrica M10 solo tiene sentido en la aplicación cuando HU-30 permite resolver un defecto.
 
@@ -138,17 +141,17 @@ No se validan uno por uno la historia ni los sprints de cada defecto: HU-29 ya l
   - la interfaz interna `defectLister` (la operación de HU-31);
   - la función interna que cuenta;
   - los métodos `SprintDefects` y `ProjectDefects`.
-- **Constructor.** `metrics.NewManager` recibe un tercer parámetro con la lectura de defectos: `NewManager(items, sprints, defects)`. Cambian sus llamadas:
+- **Constructor.** `metrics.NewManager` recibe un cuarto parámetro con la lectura de defectos, después del de esfuerzos que agregó HU-33: `NewManager(items, sprints, efforts, defects)`. Cambian sus llamadas:
   - `internal/httpapi/server.go` (`NewHandler` ya recibe el `defect.Manager` desde HU-29, así que su firma no cambia);
   - el helper `newMetricsEnvWith` de los tests de `internal/metrics`.
 
   El cambio de firma va en el RED, con la firma vacía, para que el GREEN no toque tests.
 - **HTTP.** `internal/httpapi/metrics.go`: los dos handlers llaman también a `SprintDefects` o `ProjectDefects` y agregan los dos campos. Las rutas no cambian.
 - **Interfaz.** `internal/web/app.js`: el texto de "Ver métricas". `index.html` no cambia.
-- **Tres lecturas por pedido.** Cada endpoint lee el backlog dos veces (HU-32 y HU-34) y los defectos una vez. Si alguien modifica un dato justo entre las lecturas, los valores de una misma respuesta pueden corresponder a momentos distintos. Es el mismo límite conocido de HU-34, y la consulta única de HU-35 lo resuelve.
+- **Varias lecturas por pedido.** Cada endpoint ya lee el backlog para HU-32 y HU-34, y el backlog y los esfuerzos para HU-33; HU-47 suma una lectura de los defectos. Si alguien modifica un dato justo entre las lecturas, los valores de una misma respuesta pueden corresponder a momentos distintos. Es el mismo límite conocido de HU-34, y la consulta única de HU-35 lo resuelve.
 - **Concurrencia.** `metrics` no tiene estado propio: cada lectura queda protegida por el mutex del `Manager` que la hace, como en HU-32 y HU-34. No se agrega un test de concurrencia.
 - **RED.**
-  - Firmas vacías de `Defects`, `SprintDefects` y `ProjectDefects` y el tercer parámetro de `NewManager`, para que el RED compile y falle por aserciones.
+  - Firmas vacías de `Defects`, `SprintDefects` y `ProjectDefects` y el cuarto parámetro de `NewManager`, para que el RED compile y falle por aserciones.
   - `go vet ./...` antes del commit RED.
   - Los campos nuevos de la API y el texto de la interfaz van en el GREEN.
   - El RED se hace cuando la operación de HU-31 esté en `main`.
