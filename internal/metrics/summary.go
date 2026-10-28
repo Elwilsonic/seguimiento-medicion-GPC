@@ -20,12 +20,73 @@ type ProjectMetrics struct {
 	Defects    Defects
 }
 
-// Sprint devuelve todas las métricas de un sprint en una sola consulta.
+// Sprint devuelve todas las métricas de un sprint existente en una sola
+// consulta (RN-35.1). Lee una sola vez el sprint y los ítems de su proyecto,
+// y después los esfuerzos del sprint y los defectos del proyecto, en ese
+// orden; corta en el primer error (RN-35.3 y RN-35.4). Un sprint inexistente
+// devuelve sprint.ErrSprintNotFound.
 func (m *Manager) Sprint(sprintID int) (SprintMetrics, error) {
-	return SprintMetrics{}, nil
+	sp, err := m.sprints.Get(sprintID)
+	if err != nil {
+		return SprintMetrics{}, err
+	}
+	items, err := m.items.ListItems(sp.ProjectID)
+	if err != nil {
+		return SprintMetrics{}, err
+	}
+	summary, err := m.efforts.ListBySprint(sprintID)
+	if err != nil {
+		return SprintMetrics{}, err
+	}
+	defects, err := m.defects.ListByProject(sp.ProjectID)
+	if err != nil {
+		return SprintMetrics{}, err
+	}
+
+	of := itemsOfSprint(items, sprintID)
+	planned, completed, unestimated := storyPoints(of)
+	return SprintMetrics{
+		SprintID:   sprintID,
+		Points:     SprintPoints{SprintID: sprintID, Planned: planned, Completed: completed, Unestimated: unestimated},
+		Completion: completion(of),
+		Hours:      hoursOf(of, summary.TotalHours),
+		Defects:    sprintDefects(defects, sprintID),
+	}, nil
 }
 
-// Project devuelve todas las métricas de un proyecto en una sola consulta.
+// Project devuelve todas las métricas de un proyecto existente en una sola
+// consulta (RN-35.1). Lee una sola vez los ítems (que valida el proyecto) y
+// la lista de sprints, y después los esfuerzos de cada sprint en orden de ID
+// y los defectos del proyecto; corta en el primer error (RN-35.3 y RN-35.4).
+// M5 se suma sprint por sprint, como HU-33 (RN-35.5). Un proyecto inexistente
+// devuelve project.ErrProjectNotFound.
 func (m *Manager) Project(projectID int) (ProjectMetrics, error) {
-	return ProjectMetrics{}, nil
+	items, err := m.items.ListItems(projectID)
+	if err != nil {
+		return ProjectMetrics{}, err
+	}
+	sprints, err := m.sprints.ListByProject(projectID)
+	if err != nil {
+		return ProjectMetrics{}, err
+	}
+	actual := 0.0
+	for _, sp := range sprints {
+		summary, err := m.efforts.ListBySprint(sp.ID)
+		if err != nil {
+			return ProjectMetrics{}, err
+		}
+		actual += summary.TotalHours
+	}
+	defects, err := m.defects.ListByProject(projectID)
+	if err != nil {
+		return ProjectMetrics{}, err
+	}
+
+	return ProjectMetrics{
+		ProjectID:  projectID,
+		Points:     projectPoints(projectID, items, sprints),
+		Completion: completion(items),
+		Hours:      hoursOf(items, actual),
+		Defects:    projectDefects(defects),
+	}, nil
 }

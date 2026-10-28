@@ -28,6 +28,13 @@ func (m *Manager) SprintDefects(sprintID int) (Defects, error) {
 	if err != nil {
 		return Defects{}, err
 	}
+	return sprintDefects(defects, sprintID), nil
+}
+
+// sprintDefects cuenta los defectos detectados en el sprint y los RESUELTO
+// con ese sprint de resolución (RN-47.1 y RN-47.2). La usan SprintDefects y
+// Sprint (HU-35).
+func sprintDefects(defects []defect.Defect, sprintID int) Defects {
 	var d Defects
 	for _, df := range defects {
 		if df.DetectionSprintID == sprintID {
@@ -37,7 +44,7 @@ func (m *Manager) SprintDefects(sprintID int) (Defects, error) {
 			d.Resolved++
 		}
 	}
-	return d, nil
+	return d
 }
 
 // ProjectDefects devuelve M9 y M10 de un proyecto existente: todos sus
@@ -48,11 +55,17 @@ func (m *Manager) ProjectDefects(projectID int) (Defects, error) {
 	if err != nil {
 		return Defects{}, err
 	}
+	return projectDefects(defects), nil
+}
+
+// projectDefects cuenta todos los defectos del proyecto y los que están
+// RESUELTO (RN-47.3 y RN-47.4). La usan ProjectDefects y Project (HU-35).
+func projectDefects(defects []defect.Defect) Defects {
 	d := Defects{Detected: len(defects)}
 	for _, df := range defects {
 		if df.Status == defect.StatusResolved {
 			d.Resolved++
 		}
 	}
-	return d, nil
+	return d
 }

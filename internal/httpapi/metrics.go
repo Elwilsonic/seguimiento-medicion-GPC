@@ -41,76 +41,54 @@ type completionResponse struct {
 	PorcentajeCompletadas *float64 `json:"porcentaje_completadas"`
 }
 
-// sprintMetrics atiende GET /api/sprints/{id}/metricas (HU-32).
+// sprintMetrics atiende GET /api/sprints/{id}/metricas (HU-32) con una sola
+// consulta de todas las métricas del sprint (HU-35, RN-35.1).
 func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 	id, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	p, err := s.metrics.SprintStoryPoints(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	c, err := s.metrics.SprintCompletion(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	h, err := s.metrics.SprintHours(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	d, err := s.metrics.SprintDefects(id)
+	m, err := s.metrics.Sprint(id)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, sprintMetricsResponse{
-		SprintID:           p.SprintID,
-		SPPlanificados:     p.Planned,
-		SPCompletados:      p.Completed,
-		ItemsSinEstimar:    p.Unestimated,
-		completionResponse: toCompletionResponse(c),
-		hoursResponse:      toHoursResponse(h),
-		defectsResponse:    toDefectsResponse(d),
+		SprintID:           m.SprintID,
+		SPPlanificados:     m.Points.Planned,
+		SPCompletados:      m.Points.Completed,
+		ItemsSinEstimar:    m.Points.Unestimated,
+		completionResponse: toCompletionResponse(m.Completion),
+		hoursResponse:      toHoursResponse(m.Hours),
+		defectsResponse:    toDefectsResponse(m.Defects),
 	})
 }
 
-// projectMetrics atiende GET /api/proyectos/{id}/metricas (HU-32).
+// projectMetrics atiende GET /api/proyectos/{id}/metricas (HU-32) con una
+// sola consulta de todas las métricas del proyecto (HU-35, RN-35.1).
 func (s *server) projectMetrics(w http.ResponseWriter, r *http.Request) {
 	id, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	p, err := s.metrics.ProjectStoryPoints(id)
+	m, err := s.metrics.Project(id)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	c, err := s.metrics.ProjectCompletion(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	h, err := s.metrics.ProjectHours(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	d, err := s.metrics.ProjectDefects(id)
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	resp := toProjectMetricsResponse(p)
-	resp.completionResponse = toCompletionResponse(c)
-	resp.hoursResponse = toHoursResponse(h)
-	resp.defectsResponse = toDefectsResponse(d)
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, projectMetricsResponse{
+		ProyectoID:         m.ProjectID,
+		SPPlanificados:     m.Points.Planned,
+		SPCompletados:      m.Points.Completed,
+		ItemsSinEstimar:    m.Points.Unestimated,
+		Velocidad:          optionalOneDecimal(m.Points.Velocity, m.Points.VelocityAvailable),
+		SprintsCerrados:    m.Points.ClosedSprints,
+		completionResponse: toCompletionResponse(m.Completion),
+		hoursResponse:      toHoursResponse(m.Hours),
+		defectsResponse:    toDefectsResponse(m.Defects),
+	})
 }
 
 // defectsResponse son los campos de M9 y M10 (HU-47), enteros (RN-47.8).
@@ -134,18 +112,25 @@ type hoursResponse struct {
 // toHoursResponse redondea M4 a M7 a un decimal (RN-33.7 y RN-33.8) y deja las
 // desviaciones en null cuando no están disponibles.
 func toHoursResponse(h metrics.Hours) hoursResponse {
-	resp := hoursResponse{
+	return hoursResponse{
 		HorasEstimadas:         roundOneDecimal(h.Estimated),
 		HorasReales:            roundOneDecimal(h.Actual),
+		DesviacionHoras:        optionalOneDecimal(h.Deviation, h.DeviationAvailable),
+		DesviacionPorcentual:   optionalOneDecimal(h.DeviationPercent, h.DeviationAvailable),
 		ItemsSinHorasEstimadas: h.Unestimated,
 	}
-	if h.DeviationAvailable {
-		deviation := roundOneDecimal(h.Deviation)
-		deviationPercent := roundOneDecimal(h.DeviationPercent)
-		resp.DesviacionHoras = &deviation
-		resp.DesviacionPorcentual = &deviationPercent
+}
+
+// optionalOneDecimal es la única conversión de las métricas que pueden no
+// estar disponibles (HU-35, RN-35.6): velocidad, porcentaje de completadas y
+// las dos desviaciones. Devuelve null si no está disponible y, si lo está, el
+// valor redondeado a un decimal sin cero negativo.
+func optionalOneDecimal(value float64, available bool) *float64 {
+	if !available {
+		return nil
 	}
-	return resp
+	rounded := roundOneDecimal(value)
+	return &rounded
 }
 
 func roundOneDecimal(value float64) float64 {
@@ -156,30 +141,12 @@ func roundOneDecimal(value float64) float64 {
 	return rounded
 }
 
-// toProjectMetricsResponse redondea la velocidad a un decimal (RN-32.7) y la
-// deja en null si no está disponible (RN-32.6).
-func toProjectMetricsResponse(p metrics.ProjectPoints) projectMetricsResponse {
-	resp := projectMetricsResponse{
-		ProyectoID:      p.ProjectID,
-		SPPlanificados:  p.Planned,
-		SPCompletados:   p.Completed,
-		ItemsSinEstimar: p.Unestimated,
-		SprintsCerrados: p.ClosedSprints,
-	}
-	if p.VelocityAvailable {
-		v := math.Round(p.Velocity*10) / 10
-		resp.Velocidad = &v
-	}
-	return resp
-}
-
 // toCompletionResponse redondea M8 a un decimal (RN-34.7) y lo deja en null
 // si no hay ítems (RN-34.6).
 func toCompletionResponse(c metrics.Completion) completionResponse {
-	resp := completionResponse{ItemsTotales: c.Items, ItemsTerminados: c.Finished}
-	if c.PercentAvailable {
-		p := math.Round(c.Percent*10) / 10
-		resp.PorcentajeCompletadas = &p
+	return completionResponse{
+		ItemsTotales:          c.Items,
+		ItemsTerminados:       c.Finished,
+		PorcentajeCompletadas: optionalOneDecimal(c.Percent, c.PercentAvailable),
 	}
-	return resp
 }
