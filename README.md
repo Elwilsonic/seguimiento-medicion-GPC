@@ -33,14 +33,15 @@ El servidor escucha en el puerto `8080`. Para usar otro, definí la variable de 
 
 ### Interfaz web
 
-Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con seis secciones:
+Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-04). La interfaz es una sola página con siete secciones:
 
 1. **Proyectos:** crear un proyecto (queda como "proyecto actual"), modificar su nombre, descripción y estado, y registrar o reemplazar su fecha de inicio con el campo de fecha y el botón "Registrar fecha de inicio"; los datos del proyecto actual muestran la fecha ("inicio: AAAA-MM-DD") o "sin fecha de inicio" (HU-18).
 2. **Product Backlog:** crear ítems del proyecto actual, listarlos ordenados por ID o por prioridad y, en cada fila, editar el ítem (incluidas las horas estimadas), cambiar su estado, asignarle story points de la escala 1, 2, 3, 5, 8, 13 o 21 con "Asignar SP" (columna SP; "—" si no está estimado, HU-20), abrir una sesión de Planning Poker con "Abrir Poker" (HU-21), asignarlo al sprint actual o completarlo.
 3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21), permite votar una carta indicando el nombre del integrante sin mostrar los votos (HU-22), con "Revelar votos", muestra a la vez la lista de votos (integrante y puntos) y deja la sesión REVELADA, sin más votos (HU-23) y, en "Registrar estimación acordada", con un botón por carta, guarda los story points acordados en el ítem, deja la sesión CERRADA y recarga el backlog para mostrar el valor en la columna SP (HU-25).
-4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32); en los dos niveles, el porcentaje de historias completadas con las cantidades de ítems ("sin datos" si no hay ítems, HU-34).
-5. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo, registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26) y consultar los esfuerzos por sprint o por historia, con su tabla y total, con el formulario "Consultar esfuerzos" (HU-27).
-6. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29).
+4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32); en los dos niveles, el porcentaje de historias completadas con las cantidades de ítems ("sin datos" si no hay ítems, HU-34), las horas estimadas y reales, los ítems sin horas estimadas y la desviación ("sin datos" si no está disponible, HU-33).
+5. **Dashboard:** con "Ver resumen", muestra el nombre y el estado del proyecto actual, la cantidad de ítems del backlog en PENDIENTE, EN_CURSO y TERMINADO, y el sprint actual (el sprint ABIERTO del proyecto, con sus fechas y su objetivo) o "ninguno abierto" (HU-36).
+6. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo, registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26) y consultar los esfuerzos por sprint o por historia, con su tabla y total, con el formulario "Consultar esfuerzos" (HU-27).
+7. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29), y cambiar su estado con el formulario "Cambiar estado de defecto": defecto, estado (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso) y sprint de resolución, obligatorio solo para RESUELTO, que tiene que estar abierto y ser del mismo proyecto (HU-30). Con el formulario "Consultar defectos" se listan los defectos del proyecto actual o los detectados en el sprint actual, con un filtro de estado opcional, en una tabla con la cantidad (HU-31).
 
 Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de Planning Poker para un ítem, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", consultar los esfuerzos con "Consultar esfuerzos", completarlos, ver los completados y cerrar el sprint.
 
@@ -51,7 +52,7 @@ Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de
 
 ### API
 
-La API responde bajo el prefijo `/api` (TEC-04).
+La API responde bajo el prefijo `/api` (TEC-04). El cuerpo de entrada, la respuesta y los errores de cada endpoint están en la [documentación técnica](docs/documentacion-tecnica.md#3-api-http) (TEC-06).
 
 | Método | Ruta | Operación |
 |---|---|---|
@@ -71,6 +72,9 @@ La API responde bajo el prefijo `/api` (TEC-04).
 | `POST` | `/api/poker-sessions/{id}/reveal` | Revelar todos los votos de una sesión abierta con votos; la sesión queda REVELADA (HU-23) |
 | `POST` | `/api/poker-sessions/{id}/estimate` | Registrar la estimación acordada (`{"puntos": 13}`, escala 1, 2, 3, 5, 8, 13 o 21) de una sesión revelada: guarda los story points en el ítem y la sesión queda CERRADA (HU-25) |
 | `POST` | `/api/items/{id}/defectos` | Registrar un defecto de una historia, con descripción, severidad y sprint de detección abierto (HU-29) |
+| `PATCH` | `/api/defectos/{id}/estado` | Cambiar el estado de un defecto (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso); para RESUELTO, con el sprint de resolución abierto del mismo proyecto, que vuelve a 0 al reabrir (HU-30) |
+| `GET` | `/api/proyectos/{id}/defectos` | Listar los defectos de un proyecto, en cualquier estado y ordenados por ID, con `?estado=` opcional (ABIERTO, EN_CORRECCION o RESUELTO; vacío no filtra) (HU-31) |
+| `GET` | `/api/sprints/{id}/defectos` | Listar los defectos detectados en un sprint, con `?estado=` opcional (HU-31) |
 | `GET` | `/api/items/{id}/esfuerzos` | Listar los esfuerzos de una historia, ordenados por ID, con el total de horas (HU-27) |
 | `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
 | `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
@@ -79,8 +83,9 @@ La API responde bajo el prefijo `/api` (TEC-04).
 | `GET` | `/api/sprints/{id}/esfuerzos` | Listar los esfuerzos de un sprint, ordenados por ID, con el total de horas (HU-27) |
 | `GET` | `/api/sprints/{id}/completados` | Listar los ítems terminados del sprint (HU-12) |
 | `POST` | `/api/sprints/{id}/cerrar` | Cerrar el sprint (HU-13) |
-| `GET` | `/api/sprints/{id}/metricas` | Story points planificados y completados del sprint, e ítems sin estimar (HU-32); porcentaje de historias completadas, con un decimal o `null`, e ítems totales y terminados (HU-34) |
-| `GET` | `/api/proyectos/{id}/metricas` | Story points planificados y completados de todo el backlog, ítems sin estimar y velocidad de los últimos 3 sprints cerrados, con un decimal o `null` (HU-32); porcentaje de historias completadas de todo el backlog, con un decimal o `null`, e ítems totales y terminados (HU-34) |
+| `GET` | `/api/sprints/{id}/metricas` | Story points planificados y completados del sprint e ítems sin estimar (HU-32); porcentaje de historias completadas, con un decimal o `null`, e ítems totales y terminados (HU-34); horas estimadas y reales, desviación en horas y porcentaje (redondeadas a un decimal o `null` si no está disponible) e ítems sin horas estimadas (HU-33) |
+| `GET` | `/api/proyectos/{id}/metricas` | Story points planificados y completados de todo el backlog, ítems sin estimar y velocidad de los últimos 3 sprints cerrados, con un decimal o `null` (HU-32); porcentaje de historias completadas de todo el backlog, con un decimal o `null`, e ítems totales y terminados (HU-34); horas estimadas y reales, desviación en horas y porcentaje (redondeadas a un decimal o `null` si no está disponible) e ítems sin horas estimadas (HU-33) |
+| `GET` | `/api/proyectos/{id}/resumen` | Resumen del estado del proyecto: nombre y estado, ítems en PENDIENTE, EN_CURSO y TERMINADO, y el sprint ABIERTO con el formato de los sprints, o `null` (HU-36) |
 
 Ejemplo con `curl` (en Windows, desde Git Bash):
 
@@ -98,13 +103,16 @@ curl -X PATCH localhost:8080/api/items/1/story-points -d '{"story_points":5}'
 curl -X PATCH localhost:8080/api/items/1/estado -d '{"estado":"EN_CURSO"}'
 curl -X POST localhost:8080/api/sprints/1/items/1/completar
 curl -X POST localhost:8080/api/items/1/defectos -d '{"descripcion":"El total no suma el IVA","severidad":"ALTA","sprint_deteccion_id":1}'
+curl -X PATCH localhost:8080/api/defectos/1/estado -d '{"estado":"EN_CORRECCION"}'
+curl -X PATCH localhost:8080/api/defectos/1/estado -d '{"estado":"RESUELTO","sprint_resolucion_id":1}'
+curl "localhost:8080/api/proyectos/1/defectos?estado=RESUELTO"
 curl localhost:8080/api/sprints/1/completados
 curl -X POST localhost:8080/api/sprints/1/cerrar
 ```
 
 `PUT /api/proyectos/{id}` y `PUT /api/items/{id}` reemplazan todos sus campos: un campo que no se envía queda vacío (o en 0, las horas estimadas), así que hay que mandar también los que no cambian. Las respuestas de proyectos incluyen `fecha_inicio`, en `AAAA-MM-DD`, o `""` si no está registrada; `PUT /api/proyectos/{id}` no recibe la fecha ni la cambia: se registra solo con `PATCH /api/proyectos/{id}/fecha-inicio` (HU-18). Las fechas de un sprint y la fecha de inicio del proyecto usan el formato `AAAA-MM-DD`. Para completar un ítem, antes tiene que estar `EN_CURSO`: el cambio de estado respeta las transiciones de HU-08.
 
-Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem o sprint inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint, story points de un ítem terminado, o sprint de detección de otro proyecto), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
+Las respuestas son JSON. Los errores devuelven `{"error":"..."}` con el código 400 (datos inválidos), 404 (proyecto, ítem, sprint o defecto inexistente), 409 (el pedido choca con el estado actual: nombre repetido, transición no permitida, sprint abierto existente, sprint cerrado, ítem ya asignado, de otro proyecto o no asignado al sprint, story points de un ítem terminado, sprint de detección de otro proyecto, transición de estado de un defecto no permitida, o sprint de resolución de otro proyecto o anterior al de detección), 413 (cuerpo de más de 1 MiB) o 500 (error interno).
 
 Para correr los tests: `go test ./...` (no necesita Docker: los tests de PostgreSQL se omiten si no hay base de pruebas).
 
@@ -266,6 +274,15 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-32 | [#50](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/50) | Calcular Story Points planificados, completados y velocidad | [SDD](docs/especificaciones/HU-32-sp-velocidad.md) | [BDD](features/HU-32-sp-velocidad.feature) | [Evidencia](docs/evidencias/HU-32-tdd.md) | [#123](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/123) |
 | HU-34 | [#52](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/52) | Calcular el porcentaje de historias completadas | [SDD](docs/especificaciones/HU-34-porcentaje-completadas.md) | [BDD](features/HU-34-porcentaje-completadas.feature) | [Evidencia](docs/evidencias/HU-34-tdd.md) | [#129](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/129) |
 
+### Sprint 4 — La Entrega (27/10 al 02/11) · [Planning](docs/actas/sprint-4/planning.md)
+
+| ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
+|---|---|---|---|---|---|---|
+| HU-30 | [#48](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/48) | Cambiar el estado de un defecto | [SDD](docs/especificaciones/HU-30-cambiar-estado-defecto.md) | [BDD](features/HU-30-cambiar-estado-defecto.feature) | [Evidencia](docs/evidencias/HU-30-tdd.md) | [#140](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/140) |
+| HU-31 | [#49](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/49) | Consultar los defectos de un proyecto o de un sprint | [SDD](docs/especificaciones/HU-31-consultar-defectos.md) | [BDD](features/HU-31-consultar-defectos.feature) | [Evidencia](docs/evidencias/HU-31-tdd.md) | [#141](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/141) |
+| HU-33 | [#51](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/51) | Calcular horas estimadas, reales y desviación | [SDD](docs/especificaciones/HU-33-horas-desviacion.md) | [BDD](features/HU-33-horas-desviacion.feature) | [Evidencia](docs/evidencias/HU-33-tdd.md) | [#142](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/142) |
+| HU-36 | [#54](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/54) | Ver el resumen del estado del proyecto | [SDD](docs/especificaciones/HU-36-resumen-proyecto.md) | [BDD](features/HU-36-resumen-proyecto.feature) | [Evidencia](docs/evidencias/HU-36-tdd.md) | [#143](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/143) |
+
 ## Estructura del repositorio
 
 Las carpetas se van creando a medida que aparece su contenido.
@@ -284,6 +301,7 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `docs/actas/_plantillas/` | Plantillas de las actas de Planning, Review y Retrospectiva y del comentario de la Daily |
 | `docs/antes-de-empezar.md` | Checklist para ponerse al día antes de empezar una historia, con o sin IA |
 | `docs/definition-of-ready-done.md` | Definition of Ready y Definition of Done vigentes |
+| `docs/documentacion-tecnica.md` | Documentación técnica: arquitectura, repositorios, API, cómo ejecutar y probar, y flujo de trabajo (TEC-06) |
 | `docs/especificaciones/` | Especificaciones SDD (`HU-XX-nombre.md`) |
 | `docs/evidencias/` | Evidencia TDD por historia (`HU-XX-tdd.md`) |
 | `docs/reportes/` | Reportes de cobertura y métricas |

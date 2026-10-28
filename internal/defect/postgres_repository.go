@@ -2,6 +2,7 @@ package defect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -37,6 +38,65 @@ func (r *PostgresRepository) Save(defect Defect) (Defect, error) {
 		return Defect{}, fmt.Errorf("guardar el defecto: %w", err)
 	}
 	return saved, nil
+}
+
+// GetByID devuelve el defecto con ese ID o ErrDefectNotFound si no existe,
+// incluidos los IDs 0 y negativos (RN-30.3).
+func (r *PostgresRepository) GetByID(id int) (Defect, error) {
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+defectColumns+" FROM defects WHERE id = $1", id)
+	defect, err := scanDefect(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Defect{}, ErrDefectNotFound
+	}
+	if err != nil {
+		return Defect{}, fmt.Errorf("buscar el defecto: %w", err)
+	}
+	return defect, nil
+}
+
+// Update reemplaza el defecto con ese ID y lo devuelve tal como quedó
+// guardado (RN-30.9). Si no existe, devuelve ErrDefectNotFound sin crear ni
+// modificar nada.
+func (r *PostgresRepository) Update(defect Defect) (Defect, error) {
+	row := r.pool.QueryRow(context.Background(),
+		`UPDATE defects
+		SET description = $2, severity = $3, status = $4, item_id = $5, detection_sprint_id = $6, resolution_sprint_id = $7
+		WHERE id = $1 RETURNING `+defectColumns,
+		defect.ID, defect.Description, string(defect.Severity), string(defect.Status),
+		defect.ItemID, defect.DetectionSprintID, defect.ResolutionSprintID)
+	updated, err := scanDefect(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Defect{}, ErrDefectNotFound
+	}
+	if err != nil {
+		return Defect{}, fmt.Errorf("actualizar el defecto: %w", err)
+	}
+	return updated, nil
+}
+
+// List devuelve todos los defectos ordenados por ID (RN-31.8), o una lista
+// vacía no nil si no hay ninguno.
+func (r *PostgresRepository) List() ([]Defect, error) {
+	rows, err := r.pool.Query(context.Background(),
+		"SELECT "+defectColumns+" FROM defects ORDER BY id")
+	if err != nil {
+		return nil, fmt.Errorf("listar los defectos: %w", err)
+	}
+	defer rows.Close()
+
+	defects := []Defect{}
+	for rows.Next() {
+		defect, err := scanDefect(rows)
+		if err != nil {
+			return nil, fmt.Errorf("leer un defecto: %w", err)
+		}
+		defects = append(defects, defect)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("listar los defectos: %w", err)
+	}
+	return defects, nil
 }
 
 // scanDefect lee un defecto con las columnas de defectColumns.

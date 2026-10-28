@@ -156,3 +156,83 @@ func TestPostgresRepository_SprintDeResolucionCeroSeGuarda(t *testing.T) {
 		t.Errorf("sprint de resolución guardado = %d, se esperaba 0", resolutionSprintID)
 	}
 }
+
+// HU-30 · Cambiar el estado de un defecto (Issue #48). GetByID y Update
+// cumplen el mismo contrato que en memoria.
+func TestPostgresRepository_ContratoGetByIDYUpdate(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	runRepositoryStatusContract(t, func(t *testing.T) Repository {
+		return newPostgresTestRepository(t, pool)
+	})
+}
+
+// Update guarda el estado y el sprint de resolución en la tabla defects, sin
+// cambios de esquema (RN-30.9).
+func TestPostgresRepository_UpdateGuardaElCambioEnLaTabla(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	repo := newPostgresTestRepository(t, pool)
+	saved := contractSave(t, repo, contractDefect("Descripción alta", SeverityHigh))
+	changed := saved
+	changed.Status = StatusResolved
+	changed.ResolutionSprintID = contractDetectionSprintID
+
+	if _, err := repo.Update(changed); err != nil {
+		t.Fatalf("Update devolvió un error inesperado: %v", err)
+	}
+
+	got, err := scanDefect(pool.QueryRow(context.Background(),
+		"SELECT "+defectColumns+" FROM defects WHERE id = $1", saved.ID))
+	if err != nil {
+		t.Fatalf("leer el defecto actualizado: %v", err)
+	}
+	contractAssertDefect(t, "defecto actualizado", got, changed)
+}
+
+// Update de un ID inexistente no crea filas.
+func TestPostgresRepository_UpdateInexistenteNoCreaFilas(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	repo := newPostgresTestRepository(t, pool)
+	missing := contractDefectWithID(999, "Descripción alta", SeverityHigh)
+
+	if _, err := repo.Update(missing); !errors.Is(err, ErrDefectNotFound) {
+		t.Fatalf("Update: err = %v, se esperaba %v", err, ErrDefectNotFound)
+	}
+	var count int
+	if err := pool.QueryRow(context.Background(), "SELECT count(*) FROM defects").Scan(&count); err != nil {
+		t.Fatalf("contar los defectos: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("defectos en la tabla = %d, se esperaba ninguno", count)
+	}
+}
+
+// HU-31 · Consultar los defectos de un proyecto o de un sprint (Issue #49).
+// List cumple el mismo contrato que en memoria.
+func TestPostgresRepository_ContratoList(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	runRepositoryListContract(t, func(t *testing.T) Repository {
+		return newPostgresTestRepository(t, pool)
+	})
+}
+
+// List lee la tabla defects completa, ordenada por ID, sin cambios de esquema
+// (RN-31.8 y D5).
+func TestPostgresRepository_ListLeeLaTablaOrdenadaPorID(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	repo := newPostgresTestRepository(t, pool)
+	for _, description := range []string{"Primero", "Segundo", "Tercero"} {
+		contractSave(t, repo, contractDefect(description, SeverityHigh))
+	}
+	want := repo.(*PostgresRepository).stored(t)
+
+	got, err := repo.List()
+	if err != nil {
+		t.Fatalf("List devolvió un error inesperado: %v", err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("List = %+v, se esperaba %+v", got, want)
+	}
+	for i := range want {
+		contractAssertDefect(t, "List", got[i], want[i])
+	}
+}

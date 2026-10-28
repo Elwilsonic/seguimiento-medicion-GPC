@@ -143,8 +143,15 @@
     <section id="metricas">
       <h2>Métricas</h2>
       <button type="button" id="ver-metricas">Ver métricas</button>
-      <p id="datos-metricas" class="vacio">Muestra los story points del proyecto actual y, si hay uno, del sprint actual.</p>
+      <p id="datos-metricas" class="vacio">Muestra los story points y las horas del proyecto actual y, si hay uno, del sprint actual.</p>
       <p class="mensaje" id="msg-metricas" role="alert" hidden></p>
+    </section>
+
+    <section id="dashboard">
+      <h2>Dashboard</h2>
+      <button type="button" id="ver-resumen">Ver resumen</button>
+      <p id="datos-resumen" class="vacio">Muestra el estado del proyecto actual, sus ítems por estado y su sprint actual.</p>
+      <p class="mensaje" id="msg-resumen" role="alert" hidden></p>
     </section>
 
     <section id="sprints">
@@ -220,7 +227,45 @@
         <label>Sprint de detección (ID) <input name="sprint_deteccion_id" type="number" min="1" required placeholder="Ej.: 1"></label>
         <button type="submit">Registrar defecto</button>
       </form>
+      <form id="form-cambiar-estado-defecto">
+        <h3>Cambiar estado de defecto</h3>
+        <label>Defecto (ID) <input name="defecto_id" type="number" min="1" required placeholder="Ej.: 1"></label>
+        <label>Estado
+          <select name="estado" required></select>
+        </label>
+        <label>Sprint de resolución (ID) <input name="sprint_resolucion_id" type="number" min="1" placeholder="Solo para RESUELTO"></label>
+        <button type="submit">Cambiar estado</button>
+      </form>
       <p class="mensaje" id="msg-defectos" role="alert" hidden></p>
+
+      <form id="form-consultar-defectos">
+        <h3>Consultar defectos</h3>
+        <label>Ver por
+          <select name="tipo">
+            <option value="proyecto">Proyecto actual</option>
+            <option value="sprint">Sprint actual</option>
+          </select>
+        </label>
+        <label>Estado
+          <select name="estado">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <button type="submit">Consultar</button>
+      </form>
+
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Descripción</th><th>Severidad</th><th>Estado</th><th>Ítem</th><th>Sprint de detección</th><th>Sprint de resolución</th>
+            </tr>
+          </thead>
+          <tbody id="lista-defectos"></tbody>
+        </table>
+      </div>
+      <p id="cantidad-defectos" class="vacio">Cantidad: 0 defecto(s)</p>
+      <p class="mensaje" id="msg-consultar-defectos" role="alert" hidden></p>
     </section>
   </main>
 

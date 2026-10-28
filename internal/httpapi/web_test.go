@@ -239,6 +239,48 @@ func TestInterfaz_MetricasMuestraElPorcentajeDeHistoriasCompletadas(t *testing.T
 	}
 }
 
+// HU-33, CA-33.5 y CA-33.9 · La sección "Métricas" muestra M4 a M7 y la
+// cantidad de ítems sin horas estimadas, con un decimal y "sin datos" cuando
+// la desviación no está disponible.
+func TestInterfaz_MetricasMuestraHorasYDesviacion(t *testing.T) {
+	h := newHandler()
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{"Métricas", "Ver métricas", "las horas"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{
+		"horas_estimadas",
+		"horas_reales",
+		"desviacion_horas",
+		"desviacion_porcentual",
+		"items_sin_horas_estimadas",
+		`"Horas: "`,
+		`" estimadas, "`,
+		`" reales, "`,
+		`" ítem(s) sin horas estimadas. Desviación: "`,
+		"sin datos",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// HU-33, CA-33.9 · numero1 convierte el texto "-0.0" en "0.0".
+func TestInterfaz_Numero1NormalizaElCeroNegativo(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{"function numero1", `"-0.0"`, `"0.0"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-29 · Registrar defecto (Issue #47)
 //
 // Trazabilidad: CA-29.11. La interfaz tiene una sección "Defectos" con el
@@ -320,6 +362,193 @@ func TestInterfaz_ListaDeSeveridadesDeDefectosCoincideConElPaquete(t *testing.T)
 
 	if !strings.Contains(js, want) {
 		t.Errorf("app.js no define %s", want)
+	}
+}
+
+// HU-30 · Cambiar el estado de un defecto (Issue #48)
+//
+// Trazabilidad: CA-30.9. La sección "Defectos" tiene, debajo de "Registrar
+// defecto", el formulario "Cambiar estado de defecto", que llama a
+// PATCH /defectos/{id}/estado y envía el sprint de resolución solo si tiene
+// valor. El mensaje de éxito y el de error usan el mismo mecanismo que los
+// demás formularios.
+
+func TestInterfaz_FormularioCambiarEstadoDeDefecto(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	registrar := strings.Index(page, `id="form-registrar-defecto"`)
+	cambiar := strings.Index(page, `id="form-cambiar-estado-defecto"`)
+	if cambiar == -1 {
+		t.Fatal("la página no contiene el formulario para cambiar el estado de un defecto")
+	}
+	if registrar == -1 || cambiar < registrar {
+		t.Error("el formulario para cambiar el estado no está debajo de \"Registrar defecto\"")
+	}
+	formulario := page[cambiar:]
+	if fin := strings.Index(formulario, "</form>"); fin != -1 {
+		formulario = formulario[:fin]
+	}
+	for _, want := range []string{
+		"Cambiar estado de defecto",
+		`name="defecto_id" type="number" min="1" required`,
+		`<select name="estado" required></select>`,
+		`name="sprint_resolucion_id" type="number" min="1" placeholder`,
+	} {
+		if !strings.Contains(formulario, want) {
+			t.Errorf("el formulario para cambiar el estado no contiene %q", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{
+		`$("form-cambiar-estado-defecto")`,
+		`"Cambiar estado de defecto"`,
+		`api("PATCH", "/defectos/" + defecto + "/estado"`,
+		`sprint_resolucion_id`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeExito(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`" ahora está en "`, `" resuelto en el sprint "`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeError(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	// Registrar y cambiar el estado muestran sus errores en msg-defectos.
+	if n := strings.Count(js, `accion("msg-defectos"`); n < 2 {
+		t.Errorf("app.js muestra con accion los errores de %d formulario(s) de defectos, se esperaban 2", n)
+	}
+}
+
+// CA-30.9 y SDD de HU-30 ("Interfaz web"): la lista de estados de app.js usa
+// los mismos valores que defect.StatusValues().
+func TestInterfaz_ListaDeEstadosDeDefectosCoincideConElPaquete(t *testing.T) {
+	values := defect.StatusValues()
+	if len(values) == 0 {
+		t.Fatal("defect.StatusValues() devolvió una lista vacía")
+	}
+	want := `const estadosDefecto = ["` + strings.Join(values, `", "`) + `"];`
+
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if !strings.Contains(js, want) {
+		t.Errorf("app.js no define %s", want)
+	}
+}
+
+// HU-31 · Consultar los defectos de un proyecto o de un sprint (Issue #49)
+//
+// Trazabilidad: CA-31.9. La sección "Defectos" tiene, debajo de "Cambiar
+// estado de defecto", el formulario "Consultar defectos" para el proyecto o el
+// sprint actual, con un filtro de estado opcional, una tabla y la cantidad. El
+// recorrido en el navegador queda en la evidencia TDD.
+
+// formularioConsultarDefectos devuelve el HTML del formulario de consulta.
+func formularioConsultarDefectos(t *testing.T, page string) string {
+	t.Helper()
+	inicio := strings.Index(page, `<form id="form-consultar-defectos">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene el formulario para consultar defectos")
+	}
+	formulario := page[inicio:]
+	if fin := strings.Index(formulario, "</form>"); fin != -1 {
+		formulario = formulario[:fin]
+	}
+	return formulario
+}
+
+func TestInterfaz_FormularioConsultarDefectos(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	formulario := formularioConsultarDefectos(t, page)
+	cambiar := strings.Index(page, `id="form-cambiar-estado-defecto"`)
+	if cambiar == -1 || strings.Index(page, `id="form-consultar-defectos"`) < cambiar {
+		t.Error("el formulario para consultar defectos no está debajo de \"Cambiar estado de defecto\"")
+	}
+	for _, want := range []string{
+		"Consultar defectos",
+		`<select name="tipo">`,
+		`<option value="proyecto">Proyecto actual</option>`,
+		`<option value="sprint">Sprint actual</option>`,
+		`<select name="estado">`,
+		`<option value="">Todos</option>`,
+		`<button type="submit">Consultar</button>`,
+	} {
+		if !strings.Contains(formulario, want) {
+			t.Errorf("el formulario para consultar defectos no contiene %q", want)
+		}
+	}
+	for _, want := range []string{
+		`<tbody id="lista-defectos"></tbody>`,
+		`id="cantidad-defectos"`,
+		`<p class="mensaje" id="msg-consultar-defectos" role="alert" hidden></p>`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_TablaDeDefectosTieneLasColumnas(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+	inicio := strings.Index(page, `<form id="form-consultar-defectos">`)
+	fin := strings.Index(page, `id="lista-defectos"`)
+	if inicio == -1 || fin == -1 || fin < inicio {
+		t.Fatal("la página no contiene la tabla de defectos debajo del formulario de consulta")
+	}
+	tabla := page[inicio:fin]
+
+	for _, want := range []string{"<th>ID</th>", "<th>Descripción</th>", "<th>Severidad</th>", "<th>Estado</th>", "<th>Ítem</th>", "<th>Sprint de detección</th>", "<th>Sprint de resolución</th>"} {
+		if !strings.Contains(tabla, want) {
+			t.Errorf("la tabla de defectos no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_ConsultarDefectosLlamaALaAPI(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`$("form-consultar-defectos")`,
+		`"Consultar defectos"`,
+		`"/proyectos/" + proyectoActual() + "/defectos"`,
+		`"/sprints/" + sprintActual() + "/defectos"`,
+		`"?estado=" + encodeURIComponent(`,
+		`$("lista-defectos")`,
+		`"Sin defectos."`,
+		`"Cantidad: "`,
+		`" defecto(s)"`,
+		`"—"`,
+		`accion("msg-consultar-defectos"`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// SDD de HU-31 ("Interfaz web"): el filtro de estado usa la lista de HU-30,
+// que ya se compara con defect.StatusValues(), y no repite los estados.
+func TestInterfaz_FiltroDeEstadoDeDefectosUsaLaListaDelPaquete(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if n := strings.Count(js, "const estadosDefecto = "); n != 1 {
+		t.Errorf("app.js define la lista de estados de defectos %d veces, se esperaba 1", n)
+	}
+	if !strings.Contains(js, "for (const estado of estadosDefecto) {\n  formConsultaDefectos.estado.append(") {
+		t.Error("el filtro de estado de \"Consultar defectos\" no se arma con estadosDefecto")
 	}
 }
 
@@ -446,6 +675,66 @@ func TestInterfaz_DatosDelProyectoMuestranLaFechaDeInicio(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
 	for _, want := range []string{"p.fecha_inicio", `"sin fecha de inicio"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// HU-36 · Ver el resumen del estado del proyecto (Issue #54)
+//
+// Trazabilidad: CA-36.6. La interfaz tiene una sección "Dashboard" con el
+// botón "Ver resumen", que llama a GET /proyectos/{id}/resumen con el
+// proyecto actual y muestra el proyecto, los ítems por estado y el sprint
+// actual, o "ninguno abierto".
+
+func TestInterfaz_SeccionDashboardConElBotonVerResumen(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="dashboard">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección del dashboard")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección del dashboard no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		"<h2>Dashboard</h2>",
+		`id="ver-resumen"`,
+		"Ver resumen",
+		`id="datos-resumen"`,
+		`id="msg-resumen"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección del dashboard no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_VerResumenLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("ver-resumen")`, `accion("msg-resumen"`, `proyectoActual() + "/resumen"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_VerResumenMuestraLosItemsPorEstadoYElSprintActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		"items_pendientes",
+		"items_en_curso",
+		"items_terminados",
+		"sprint_actual",
+		"Sprint actual: ",
+		"ninguno abierto",
+		`$("datos-resumen")`,
+	} {
 		if !strings.Contains(js, want) {
 			t.Errorf("app.js no contiene %q", want)
 		}
