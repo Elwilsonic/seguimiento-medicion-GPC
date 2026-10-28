@@ -547,3 +547,31 @@ formDefecto.addEventListener("submit", (e) => {
     mostrar("msg-defectos", "Defecto " + defecto.id + " registrado para el ítem " + defecto.item_id + ".", false);
   });
 });
+
+// HU-30 · Cambiar el estado de un defecto (CA-30.9). Envía el sprint de
+// resolución solo si el campo tiene valor; la API decide si es obligatorio.
+const estadosDefecto = ["ABIERTO", "EN_CORRECCION", "RESUELTO"];
+const formEstadoDefecto = $("form-cambiar-estado-defecto");
+formEstadoDefecto.setAttribute("aria-label", "Cambiar estado de defecto");
+for (const estado of estadosDefecto) {
+  formEstadoDefecto.estado.append(new Option(estado, estado));
+}
+formEstadoDefecto.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-defectos", async () => {
+    const defecto = form.defecto_id.value.trim();
+    const cuerpo = { estado: form.estado.value };
+    const sprint = form.sprint_resolucion_id.value.trim();
+    if (sprint !== "") {
+      cuerpo.sprint_resolucion_id = Number(sprint);
+    }
+    const cambiado = await api("PATCH", "/defectos/" + defecto + "/estado", cuerpo);
+    form.reset();
+    let texto = "Defecto " + cambiado.id + " ahora está en " + cambiado.estado;
+    if (cambiado.estado === "RESUELTO") {
+      texto += "," + " resuelto en el sprint " + cambiado.sprint_resolucion_id;
+    }
+    mostrar("msg-defectos", texto + ".", false);
+  });
+});

@@ -323,6 +323,89 @@ func TestInterfaz_ListaDeSeveridadesDeDefectosCoincideConElPaquete(t *testing.T)
 	}
 }
 
+// HU-30 · Cambiar el estado de un defecto (Issue #48)
+//
+// Trazabilidad: CA-30.9. La sección "Defectos" tiene, debajo de "Registrar
+// defecto", el formulario "Cambiar estado de defecto", que llama a
+// PATCH /defectos/{id}/estado y envía el sprint de resolución solo si tiene
+// valor. El mensaje de éxito y el de error usan el mismo mecanismo que los
+// demás formularios.
+
+func TestInterfaz_FormularioCambiarEstadoDeDefecto(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	registrar := strings.Index(page, `id="form-registrar-defecto"`)
+	cambiar := strings.Index(page, `id="form-cambiar-estado-defecto"`)
+	if cambiar == -1 {
+		t.Fatal("la página no contiene el formulario para cambiar el estado de un defecto")
+	}
+	if registrar == -1 || cambiar < registrar {
+		t.Error("el formulario para cambiar el estado no está debajo de \"Registrar defecto\"")
+	}
+	formulario := page[cambiar:]
+	if fin := strings.Index(formulario, "</form>"); fin != -1 {
+		formulario = formulario[:fin]
+	}
+	for _, want := range []string{
+		"Cambiar estado de defecto",
+		`name="defecto_id" type="number" min="1" required`,
+		`<select name="estado" required></select>`,
+		`name="sprint_resolucion_id" type="number" min="1" placeholder`,
+	} {
+		if !strings.Contains(formulario, want) {
+			t.Errorf("el formulario para cambiar el estado no contiene %q", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{
+		`$("form-cambiar-estado-defecto")`,
+		`"Cambiar estado de defecto"`,
+		`api("PATCH", "/defectos/" + defecto + "/estado"`,
+		`sprint_resolucion_id`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeExito(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`" ahora está en "`, `" resuelto en el sprint "`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeError(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	// Registrar y cambiar el estado muestran sus errores en msg-defectos.
+	if n := strings.Count(js, `accion("msg-defectos"`); n < 2 {
+		t.Errorf("app.js muestra con accion los errores de %d formulario(s) de defectos, se esperaban 2", n)
+	}
+}
+
+// CA-30.9 y SDD de HU-30 ("Interfaz web"): la lista de estados de app.js usa
+// los mismos valores que defect.StatusValues().
+func TestInterfaz_ListaDeEstadosDeDefectosCoincideConElPaquete(t *testing.T) {
+	values := defect.StatusValues()
+	if len(values) == 0 {
+		t.Fatal("defect.StatusValues() devolvió una lista vacía")
+	}
+	want := `const estadosDefecto = ["` + strings.Join(values, `", "`) + `"];`
+
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if !strings.Contains(js, want) {
+		t.Errorf("app.js no define %s", want)
+	}
+}
+
 // HU-27 — Consultar los registros de esfuerzo (Issue #45)
 //
 // Trazabilidad: CA-27.10. La interfaz tiene un formulario "Consultar

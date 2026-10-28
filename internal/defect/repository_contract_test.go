@@ -1,6 +1,9 @@
 package defect
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 // HU-29 · Registrar defecto (Issue #47)
 //
@@ -113,4 +116,120 @@ func (r *MemoryRepository) stored(t *testing.T) []Defect {
 
 func TestMemoryRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
+}
+
+// HU-30 · Cambiar el estado de un defecto (Issue #48)
+//
+// Contrato de Repository.GetByID y Repository.Update: toda implementación
+// busca por ID, reemplaza el defecto completo, devuelve ErrDefectNotFound si
+// no existe y devuelve copias (RN-30.3, RN-30.9 y RN-30.10).
+func runRepositoryStatusContract(t *testing.T, newRepo func(t *testing.T) Repository) {
+	t.Run("GetByID devuelve el defecto guardado", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractDefect("Descripción crítica", SeverityCritical))
+		saved := contractSave(t, repo, contractDefect("Descripción alta", SeverityHigh))
+
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertDefect(t, "GetByID", got, saved)
+	})
+
+	t.Run("GetByID de un ID inexistente devuelve ErrDefectNotFound", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractDefect("Descripción alta", SeverityHigh))
+
+		for _, id := range []int{999, 0, -1} {
+			if _, err := repo.GetByID(id); !errors.Is(err, ErrDefectNotFound) {
+				t.Errorf("GetByID(%d): err = %v, se esperaba %v", id, err, ErrDefectNotFound)
+			}
+		}
+	})
+
+	t.Run("Update reemplaza el defecto y devuelve una copia", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractDefect("Descripción alta", SeverityHigh))
+		changed := saved
+		changed.Status = StatusResolved
+		changed.ResolutionSprintID = contractDetectionSprintID
+
+		updated, err := repo.Update(changed)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		contractAssertDefect(t, "Update", updated, changed)
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertDefect(t, "GetByID después de Update", got, changed)
+	})
+
+	t.Run("Update vuelve el sprint de resolución a 0", func(t *testing.T) {
+		repo := newRepo(t)
+		resolved := contractDefect("Descripción alta", SeverityHigh)
+		resolved.Status = StatusResolved
+		resolved.ResolutionSprintID = contractDetectionSprintID
+		saved := contractSave(t, repo, resolved)
+		reopened := saved
+		reopened.Status = StatusInCorrection
+		reopened.ResolutionSprintID = 0
+
+		if _, err := repo.Update(reopened); err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertDefect(t, "GetByID después de reabrir", got, reopened)
+	})
+
+	t.Run("Update de un ID inexistente devuelve ErrDefectNotFound y no guarda nada", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractDefect("Descripción alta", SeverityHigh))
+		missing := saved
+		missing.ID = 999
+		missing.Status = StatusInCorrection
+
+		if _, err := repo.Update(missing); !errors.Is(err, ErrDefectNotFound) {
+			t.Fatalf("Update: err = %v, se esperaba %v", err, ErrDefectNotFound)
+		}
+		reader, ok := repo.(storedReader)
+		if !ok {
+			t.Fatalf("el repositorio %T no permite comprobar lo guardado", repo)
+		}
+		if stored := reader.stored(t); len(stored) != 1 || stored[0] != saved {
+			t.Errorf("lo guardado = %+v, se esperaba solo %+v", stored, saved)
+		}
+	})
+
+	t.Run("GetByID y Update devuelven copias", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractDefect("Descripción alta", SeverityHigh))
+
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		got.Status = StatusResolved
+		changed := saved
+		changed.Status = StatusInCorrection
+		updated, err := repo.Update(changed)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		updated.Description = "Descripción modificada"
+
+		again, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertDefect(t, "GetByID después de modificar las copias", again, changed)
+	})
+}
+
+func TestMemoryRepository_ContratoGetByIDYUpdate(t *testing.T) {
+	runRepositoryStatusContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
