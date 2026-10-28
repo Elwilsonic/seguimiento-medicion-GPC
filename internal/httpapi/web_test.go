@@ -239,6 +239,48 @@ func TestInterfaz_MetricasMuestraElPorcentajeDeHistoriasCompletadas(t *testing.T
 	}
 }
 
+// HU-33, CA-33.5 y CA-33.9 · La sección "Métricas" muestra M4 a M7 y la
+// cantidad de ítems sin horas estimadas, con un decimal y "sin datos" cuando
+// la desviación no está disponible.
+func TestInterfaz_MetricasMuestraHorasYDesviacion(t *testing.T) {
+	h := newHandler()
+	page := get(t, h, "/").Body.String()
+	for _, want := range []string{"Métricas", "Ver métricas", "las horas"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la página no contiene %q", want)
+		}
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{
+		"horas_estimadas",
+		"horas_reales",
+		"desviacion_horas",
+		"desviacion_porcentual",
+		"items_sin_horas_estimadas",
+		`"Horas: "`,
+		`" estimadas, "`,
+		`" reales, "`,
+		`" ítem(s) sin horas estimadas. Desviación: "`,
+		"sin datos",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// HU-33, CA-33.9 · numero1 convierte el texto "-0.0" en "0.0".
+func TestInterfaz_Numero1NormalizaElCeroNegativo(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{"function numero1", `"-0.0"`, `"0.0"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-29 · Registrar defecto (Issue #47)
 //
 // Trazabilidad: CA-29.11. La interfaz tiene una sección "Defectos" con el

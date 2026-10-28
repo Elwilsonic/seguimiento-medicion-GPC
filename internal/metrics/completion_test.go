@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
 )
@@ -265,7 +266,7 @@ func (r failingSprintGetRepository) GetByID(int) (sprint.Sprint, error) {
 // CA-34.5 · Una falla al leer el sprint se propaga.
 func TestSprintCompletion_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
 	errRepo := errors.New("base caída")
-	e := newMetricsEnvWith(backlog.NewMemoryRepository(), failingSprintGetRepository{Repository: sprint.NewMemoryRepository(), err: errRepo})
+	e := newMetricsEnvWith(backlog.NewMemoryRepository(), failingSprintGetRepository{Repository: sprint.NewMemoryRepository(), err: errRepo}, effort.NewMemoryRepository())
 
 	got, err := e.metrics.SprintCompletion(1)
 
@@ -280,7 +281,7 @@ func TestSprintCompletion_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
 // CA-34.5 · Una falla al leer los ítems se propaga en los dos niveles.
 func TestCompletion_ErrorDelRepositorioDeItemsSePropaga(t *testing.T) {
 	errRepo := errors.New("base caída")
-	e := newMetricsEnvWith(failingItemRepository{Repository: backlog.NewMemoryRepository(), err: errRepo}, sprint.NewMemoryRepository())
+	e := newMetricsEnvWith(failingItemRepository{Repository: backlog.NewMemoryRepository(), err: errRepo}, sprint.NewMemoryRepository(), effort.NewMemoryRepository())
 	p := e.project(t, "Sistema de ventas")
 	s := e.openSprint(t, p, "Sprint 1")
 
