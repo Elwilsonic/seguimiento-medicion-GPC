@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
@@ -30,10 +31,12 @@ type metricsEnv struct {
 	itemRepo   backlog.Repository
 	sprintRepo sprint.Repository
 	effortRepo effort.Repository
+	defectRepo defect.Repository
 	projects   *project.Manager
 	items      *backlog.Manager
 	sprints    *sprint.Manager
 	efforts    *effort.Manager
+	defects    *defect.Manager
 	metrics    *Manager
 }
 
@@ -43,11 +46,18 @@ func newMetricsEnv() *metricsEnv {
 
 // newMetricsEnvWith permite usar repositorios que fallan (CA-32.7).
 func newMetricsEnvWith(itemRepo backlog.Repository, sprintRepo sprint.Repository, effortRepo effort.Repository) *metricsEnv {
+	return newMetricsEnvWithDefects(itemRepo, sprintRepo, effortRepo, defect.NewMemoryRepository())
+}
+
+// newMetricsEnvWithDefects permite además usar un repositorio de defectos que
+// falla (HU-47).
+func newMetricsEnvWithDefects(itemRepo backlog.Repository, sprintRepo sprint.Repository, effortRepo effort.Repository, defectRepo defect.Repository) *metricsEnv {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(itemRepo, projects)
 	sprints := sprint.NewManager(sprintRepo, projects, items)
 	efforts := effort.NewManager(effortRepo, sprints, items)
-	return &metricsEnv{itemRepo: itemRepo, sprintRepo: sprintRepo, effortRepo: effortRepo, projects: projects, items: items, sprints: sprints, efforts: efforts, metrics: NewManager(items, sprints, efforts)}
+	defects := defect.NewManager(defectRepo, items, sprints)
+	return &metricsEnv{itemRepo: itemRepo, sprintRepo: sprintRepo, effortRepo: effortRepo, defectRepo: defectRepo, projects: projects, items: items, sprints: sprints, efforts: efforts, defects: defects, metrics: NewManager(items, sprints, efforts, defects)}
 }
 
 // sprintsOf lee los sprints del proyecto con GetByID del repositorio (IDs
