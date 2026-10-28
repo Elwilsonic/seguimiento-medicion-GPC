@@ -40,7 +40,7 @@ Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-0
 3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21), permite votar una carta indicando el nombre del integrante sin mostrar los votos (HU-22), con "Revelar votos", muestra a la vez la lista de votos (integrante y puntos) y deja la sesión REVELADA, sin más votos (HU-23) y, en "Registrar estimación acordada", con un botón por carta, guarda los story points acordados en el ítem, deja la sesión CERRADA y recarga el backlog para mostrar el valor en la columna SP (HU-25).
 4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32); en los dos niveles, el porcentaje de historias completadas con las cantidades de ítems ("sin datos" si no hay ítems, HU-34).
 5. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo, registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26) y consultar los esfuerzos por sprint o por historia, con su tabla y total, con el formulario "Consultar esfuerzos" (HU-27).
-6. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29), y cambiar su estado con el formulario "Cambiar estado de defecto": defecto, estado (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso) y sprint de resolución, obligatorio solo para RESUELTO, que tiene que estar abierto y ser del mismo proyecto (HU-30).
+6. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29), y cambiar su estado con el formulario "Cambiar estado de defecto": defecto, estado (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso) y sprint de resolución, obligatorio solo para RESUELTO, que tiene que estar abierto y ser del mismo proyecto (HU-30). Con el formulario "Consultar defectos" se listan los defectos del proyecto actual o los detectados en el sprint actual, con un filtro de estado opcional, en una tabla con la cantidad (HU-31).
 
 Un recorrido típico: crear un proyecto, cargar sus ítems, abrir una sesión de Planning Poker para un ítem, crear un sprint, asignarle ítems, pasarlos a `EN_CURSO` con "Cambiar estado", registrar el esfuerzo con "Registrar esfuerzo", consultar los esfuerzos con "Consultar esfuerzos", completarlos, ver los completados y cerrar el sprint.
 
@@ -72,6 +72,8 @@ La API responde bajo el prefijo `/api` (TEC-04). El cuerpo de entrada, la respue
 | `POST` | `/api/poker-sessions/{id}/estimate` | Registrar la estimación acordada (`{"puntos": 13}`, escala 1, 2, 3, 5, 8, 13 o 21) de una sesión revelada: guarda los story points en el ítem y la sesión queda CERRADA (HU-25) |
 | `POST` | `/api/items/{id}/defectos` | Registrar un defecto de una historia, con descripción, severidad y sprint de detección abierto (HU-29) |
 | `PATCH` | `/api/defectos/{id}/estado` | Cambiar el estado de un defecto (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso); para RESUELTO, con el sprint de resolución abierto del mismo proyecto, que vuelve a 0 al reabrir (HU-30) |
+| `GET` | `/api/proyectos/{id}/defectos` | Listar los defectos de un proyecto, en cualquier estado y ordenados por ID, con `?estado=` opcional (ABIERTO, EN_CORRECCION o RESUELTO; vacío no filtra) (HU-31) |
+| `GET` | `/api/sprints/{id}/defectos` | Listar los defectos detectados en un sprint, con `?estado=` opcional (HU-31) |
 | `GET` | `/api/items/{id}/esfuerzos` | Listar los esfuerzos de una historia, ordenados por ID, con el total de horas (HU-27) |
 | `POST` | `/api/proyectos/{id}/sprints` | Crear un sprint (HU-10) |
 | `POST` | `/api/sprints/{id}/items/{itemId}` | Asignar un ítem al sprint (HU-11) |
@@ -101,6 +103,7 @@ curl -X POST localhost:8080/api/sprints/1/items/1/completar
 curl -X POST localhost:8080/api/items/1/defectos -d '{"descripcion":"El total no suma el IVA","severidad":"ALTA","sprint_deteccion_id":1}'
 curl -X PATCH localhost:8080/api/defectos/1/estado -d '{"estado":"EN_CORRECCION"}'
 curl -X PATCH localhost:8080/api/defectos/1/estado -d '{"estado":"RESUELTO","sprint_resolucion_id":1}'
+curl "localhost:8080/api/proyectos/1/defectos?estado=RESUELTO"
 curl localhost:8080/api/sprints/1/completados
 curl -X POST localhost:8080/api/sprints/1/cerrar
 ```
@@ -274,6 +277,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
 | HU-30 | [#48](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/48) | Cambiar el estado de un defecto | [SDD](docs/especificaciones/HU-30-cambiar-estado-defecto.md) | [BDD](features/HU-30-cambiar-estado-defecto.feature) | [Evidencia](docs/evidencias/HU-30-tdd.md) | [#140](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/140) |
+| HU-31 | [#49](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/49) | Consultar los defectos de un proyecto o de un sprint | [SDD](docs/especificaciones/HU-31-consultar-defectos.md) | [BDD](features/HU-31-consultar-defectos.feature) | [Evidencia](docs/evidencias/HU-31-tdd.md) | — |
 
 ## Estructura del repositorio
 
