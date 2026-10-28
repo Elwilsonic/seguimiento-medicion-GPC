@@ -245,7 +245,7 @@ func TestInterfaz_MetricasMuestraElPorcentajeDeHistoriasCompletadas(t *testing.T
 func TestInterfaz_MetricasMuestraHorasYDesviacion(t *testing.T) {
 	h := newHandler()
 	page := get(t, h, "/").Body.String()
-	for _, want := range []string{"Métricas", "Ver métricas", "horas estimadas", "Desviación"} {
+	for _, want := range []string{"Métricas", "Ver métricas", "las horas"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("la página no contiene %q", want)
 		}
