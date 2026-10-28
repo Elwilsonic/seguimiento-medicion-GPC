@@ -740,3 +740,21 @@ func TestInterfaz_VerResumenMuestraLosItemsPorEstadoYElSprintActual(t *testing.T
 		}
 	}
 }
+
+// HU-47, CA-47.6 · La sección "Métricas" muestra los defectos detectados y
+// resueltos del proyecto y del sprint actual, como enteros.
+func TestInterfaz_MetricasMuestraLosDefectosDetectadosYResueltos(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		"defectos_detectados",
+		"defectos_resueltos",
+		`"Defectos: "`,
+		`" detectados, "`,
+		`" resuelto(s)."`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}

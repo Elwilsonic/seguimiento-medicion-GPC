@@ -53,9 +53,10 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	// HU-32: metrics no tiene repositorio ni estado, así que se crea acá con
 	// los Manager de ítems y de sprints, sin cambiar la firma de NewHandler.
 	// HU-33 suma el Manager de esfuerzos para calcular M5.
+	// HU-47 suma el Manager de defectos para calcular M9 y M10.
 	// HU-36: dashboard tampoco tiene repositorio ni estado, y se crea igual.
 	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects,
-		metrics:   metrics.NewManager(items, sprints, efforts),
+		metrics:   metrics.NewManager(items, sprints, efforts, defects),
 		dashboard: dashboard.NewManager(projects, items, sprints)}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)

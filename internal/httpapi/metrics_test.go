@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
@@ -462,6 +463,64 @@ func TestMetricas_ErrorDelRepositorioDeEsfuerzosDevuelve500(t *testing.T) {
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
 	it := createHoursItem(t, h, "A", 10)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/items/"+strconv.Itoa(it.ID), ""), http.StatusOK)
+
+	for _, path := range []string{"/api/sprints/1/metricas", "/api/proyectos/1/metricas"} {
+		rec := do(t, h, http.MethodGet, path, "")
+
+		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	}
+}
+
+// HU-47 · Calcular los defectos detectados y resueltos (Issue #128)
+//
+// CA-47.6: los endpoints de métricas suman defectos_detectados y
+// defectos_resueltos, como enteros (RN-47.8). Los errores 400 y 404 de esas
+// rutas ya los cubren los tests de HU-32 y
+// TestRutasConID_IDNoNumericoDevuelve400.
+
+type defectsMetricsJSON struct {
+	DefectosDetectados *int `json:"defectos_detectados"`
+	DefectosResueltos  *int `json:"defectos_resueltos"`
+}
+
+func expectDefectsJSON(t *testing.T, rec *httptest.ResponseRecorder, detected, resolved int) {
+	t.Helper()
+	expectStatus(t, rec, http.StatusOK)
+	var got defectsMetricsJSON
+	decode(t, rec, &got)
+	if got.DefectosDetectados == nil || *got.DefectosDetectados != detected {
+		t.Errorf("defectos_detectados = %v, se esperaba %d; cuerpo: %s", got.DefectosDetectados, detected, rec.Body.String())
+	}
+	if got.DefectosResueltos == nil || *got.DefectosResueltos != resolved {
+		t.Errorf("defectos_resueltos = %v, se esperaba %d; cuerpo: %s", got.DefectosResueltos, resolved, rec.Body.String())
+	}
+}
+
+// CA-47.6 · Con un defecto resuelto en el sprint 1 y otro abierto, las
+// métricas del sprint y del proyecto dan 2 detectados y 1 resuelto.
+func TestMetricas_IncluyenLosDefectosDetectadosYResueltos(t *testing.T) {
+	h := newHandlerWithDefects(t)
+	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"RESUELTO","sprint_resolucion_id":1}`), http.StatusOK)
+
+	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/sprints/1/metricas", ""), 2, 1)
+	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/proyectos/1/metricas", ""), 2, 1)
+}
+
+// CA-47.3 y CA-47.6 · Sin defectos, los dos campos valen 0 (no null).
+func TestMetricas_SinDefectosLosCamposValenCero(t *testing.T) {
+	h := newHandlerWithDefects(t)
+
+	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/sprints/1/metricas", ""), 0, 0)
+	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/proyectos/1/metricas", ""), 0, 0)
+}
+
+// Condiciones de error de la SDD · Una falla al leer los defectos devuelve 500
+// sin exponer el detalle.
+func TestMetricas_ErrorDelRepositorioDeDefectosDevuelve500(t *testing.T) {
+	h := newHandlerWithDefectRepository(t, brokenDefectRepository{})
 
 	for _, path := range []string{"/api/sprints/1/metricas", "/api/proyectos/1/metricas"} {
 		rec := do(t, h, http.MethodGet, path, "")
