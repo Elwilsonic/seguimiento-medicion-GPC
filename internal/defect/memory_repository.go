@@ -28,12 +28,31 @@ func (r *MemoryRepository) Save(defect Defect) (Defect, error) {
 	return stored, nil
 }
 
-// GetByID (HU-30). Firma vacía del RED: se implementa en el GREEN.
+// GetByID devuelve una copia del defecto con ese ID o ErrDefectNotFound si
+// no existe, incluidos los IDs 0 y negativos (RN-30.3 y RN-30.10).
 func (r *MemoryRepository) GetByID(id int) (Defect, error) {
-	return Defect{}, nil
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, defect := range r.defects {
+		if defect.ID == id {
+			return defect, nil
+		}
+	}
+	return Defect{}, ErrDefectNotFound
 }
 
-// Update (HU-30). Firma vacía del RED: se implementa en el GREEN.
+// Update reemplaza el defecto con ese ID y devuelve una copia (RN-30.9 y
+// RN-30.10). Si no existe, devuelve ErrDefectNotFound y no modifica nada.
 func (r *MemoryRepository) Update(defect Defect) (Defect, error) {
-	return Defect{}, nil
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := range r.defects {
+		if r.defects[i].ID == defect.ID {
+			r.defects[i] = defect
+			return defect, nil
+		}
+	}
+	return Defect{}, ErrDefectNotFound
 }

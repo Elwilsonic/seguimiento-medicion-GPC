@@ -220,6 +220,15 @@
         <label>Sprint de detección (ID) <input name="sprint_deteccion_id" type="number" min="1" required placeholder="Ej.: 1"></label>
         <button type="submit">Registrar defecto</button>
       </form>
+      <form id="form-cambiar-estado-defecto">
+        <h3>Cambiar estado de defecto</h3>
+        <label>Defecto (ID) <input name="defecto_id" type="number" min="1" required placeholder="Ej.: 1"></label>
+        <label>Estado
+          <select name="estado" required></select>
+        </label>
+        <label>Sprint de resolución (ID) <input name="sprint_resolucion_id" type="number" min="1" placeholder="Solo para RESUELTO"></label>
+        <button type="submit">Cambiar estado</button>
+      </form>
       <p class="mensaje" id="msg-defectos" role="alert" hidden></p>
     </section>
   </main>

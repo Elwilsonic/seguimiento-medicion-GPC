@@ -2,8 +2,9 @@ package defect
 
 import "errors"
 
-// Status es el estado de un defecto (RN-29.3). HU-29 solo usa StatusOpen;
-// StatusInCorrection y StatusResolved quedan definidos para HU-30.
+// Status es el estado de un defecto (RN-29.3). Un defecto se registra en
+// StatusOpen (HU-29); las transiciones entre estados están en status.go
+// (HU-30).
 type Status string
 
 const (
