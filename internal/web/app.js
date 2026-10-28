@@ -520,6 +520,12 @@ function horasYDesviacion(m) {
     numero1(m.desviacion_porcentual) + " %).";
 }
 
+// HU-47 · Defectos detectados y resueltos (CA-47.6), como enteros.
+function defectos(m) {
+  return "Defectos: " + m.defectos_detectados + " detectados, " +
+    m.defectos_resueltos + " resuelto(s).";
+}
+
 $("ver-metricas").addEventListener("click", () =>
   accion("msg-metricas", async () => {
     const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
@@ -528,13 +534,13 @@ $("ver-metricas").addEventListener("click", () =>
       "Proyecto " + p.proyecto_id + ": " + p.sp_planificados + " SP planificados, " +
       p.sp_completados + " SP completados, " + p.items_sin_estimar + " ítem(s) sin estimar. " +
       "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)). " +
-      historiasCompletadas(p) + " " + horasYDesviacion(p);
+      historiasCompletadas(p) + " " + horasYDesviacion(p) + " " + defectos(p);
     if ($("sprint-actual").value.trim() !== "") {
       const s = await api("GET", "/sprints/" + sprintActual() + "/metricas");
       texto +=
         " Sprint " + s.sprint_id + ": " + s.sp_planificados + " SP planificados, " +
         s.sp_completados + " SP completados, " + s.items_sin_estimar + " ítem(s) sin estimar. " +
-        historiasCompletadas(s) + " " + horasYDesviacion(s);
+        historiasCompletadas(s) + " " + horasYDesviacion(s) + " " + defectos(s);
     }
     $("datos-metricas").textContent = texto;
     $("datos-metricas").className = "";

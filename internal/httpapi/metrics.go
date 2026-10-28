@@ -16,6 +16,7 @@ type sprintMetricsResponse struct {
 	ItemsSinEstimar int `json:"items_sin_estimar"`
 	completionResponse
 	hoursResponse
+	defectsResponse
 }
 
 // projectMetricsResponse es la respuesta de GET /api/proyectos/{id}/metricas
@@ -29,6 +30,7 @@ type projectMetricsResponse struct {
 	SprintsCerrados int      `json:"sprints_cerrados"`
 	completionResponse
 	hoursResponse
+	defectsResponse
 }
 
 // completionResponse son los campos de M8 (HU-34). PorcentajeCompletadas es
@@ -61,6 +63,11 @@ func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	d, err := s.metrics.SprintDefects(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, sprintMetricsResponse{
 		SprintID:           p.SprintID,
 		SPPlanificados:     p.Planned,
@@ -68,6 +75,7 @@ func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 		ItemsSinEstimar:    p.Unestimated,
 		completionResponse: toCompletionResponse(c),
 		hoursResponse:      toHoursResponse(h),
+		defectsResponse:    toDefectsResponse(d),
 	})
 }
 
@@ -93,10 +101,26 @@ func (s *server) projectMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
+	d, err := s.metrics.ProjectDefects(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
 	resp := toProjectMetricsResponse(p)
 	resp.completionResponse = toCompletionResponse(c)
 	resp.hoursResponse = toHoursResponse(h)
+	resp.defectsResponse = toDefectsResponse(d)
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// defectsResponse son los campos de M9 y M10 (HU-47), enteros (RN-47.8).
+type defectsResponse struct {
+	DefectosDetectados int `json:"defectos_detectados"`
+	DefectosResueltos  int `json:"defectos_resueltos"`
+}
+
+func toDefectsResponse(d metrics.Defects) defectsResponse {
+	return defectsResponse{DefectosDetectados: d.Detected, DefectosResueltos: d.Resolved}
 }
 
 type hoursResponse struct {
