@@ -132,7 +132,7 @@ De los 45, 42 son tests nuevos de HU-30 y 3 son tests existentes que fallaron so
 |---|---|---|
 | GREEN | `8b87c09` | `feat(HU-30): implementar el cambio de estado de un defecto (GREEN)` |
 | Refactor | — | No aplica |
-| Documentación | (propuesto) | `docs(HU-30): agregar evidencia TDD y cobertura` |
+| Documentación | `3c16a48` | `docs(HU-30): agregar evidencia TDD y cobertura` |
 
 El GREEN tocó solo 8 archivos de producción:
 
@@ -344,10 +344,10 @@ Con `TEST_DATABASE_URL=postgres://gpc:gpc_dev@localhost:5434/gpc_test?sslmode=di
 
 ### `-race`
 
-`-race` no se corrió localmente: `go: -race requires cgo; enable cgo by setting CGO_ENABLED=1`. Los tests de concurrencia (`TestChangeStatus_Concurrente`, `TestChangeStatus_ConcurrenteConCierre` y los dos escenarios de CA-30.7) corrieron sin `-race` y pasaron. Con `-race` los ejecuta el CI del Pull Request (Linux, `go test -race -coverprofile=coverage.out ./...`).
+`-race` no se corrió localmente: `go: -race requires cgo; enable cgo by setting CGO_ENABLED=1`. Los tests de concurrencia (`TestChangeStatus_Concurrente`, `TestChangeStatus_ConcurrenteConCierre` y los dos escenarios de CA-30.7) corrieron sin `-race` y pasaron. Con `-race` los ejecuta el CI del Pull Request (Linux, `go test -race -coverprofile=coverage.out ./...`). La mutación (d) de las pruebas de mutación tampoco la detectaría -race: no es un acceso sin protección, sino el orden entre el chequeo del sprint abierto y el Update.
 
 ## Commits
 
-Los commits de la SDD, su ajuste y su aprobación, el RED, el GREEN y la documentación referencian el Issue #48 con `Refs #48`. Los commits hasta el GREEN están subidos a la rama `feature/HU-30-cambiar-estado-defecto`; el de documentación está propuesto.
+Los commits de la SDD, su ajuste y su aprobación, el RED, el GREEN y la documentación referencian el Issue #48 con `Refs #48`. Todos los commits de la historia están hechos y subidos a la rama `feature/HU-30-cambiar-estado-defecto`, y el Pull Request es el [#140](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/140).
 
 HU-30: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go

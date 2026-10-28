@@ -273,7 +273,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
-| HU-30 | [#48](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/48) | Cambiar el estado de un defecto | [SDD](docs/especificaciones/HU-30-cambiar-estado-defecto.md) | [BDD](features/HU-30-cambiar-estado-defecto.feature) | [Evidencia](docs/evidencias/HU-30-tdd.md) | — |
+| HU-30 | [#48](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/48) | Cambiar el estado de un defecto | [SDD](docs/especificaciones/HU-30-cambiar-estado-defecto.md) | [BDD](features/HU-30-cambiar-estado-defecto.feature) | [Evidencia](docs/evidencias/HU-30-tdd.md) | [#140](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/140) |
 
 ## Estructura del repositorio
 
