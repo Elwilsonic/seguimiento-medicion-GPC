@@ -42,9 +42,14 @@ func (r *MemoryRepository) GetByID(id int) (Defect, error) {
 	return Defect{}, ErrDefectNotFound
 }
 
-// List devuelve copias de todos los defectos ordenados por ID (HU-31).
+// List devuelve una lista nueva con copias de todos los defectos, en el orden
+// de guardado, que es el orden por ID (RN-31.8 y RN-31.10). Sin defectos
+// devuelve una lista vacía, no nil.
 func (r *MemoryRepository) List() ([]Defect, error) {
-	return nil, nil
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return append(make([]Defect, 0, len(r.defects)), r.defects...), nil
 }
 
 // Update reemplaza el defecto con ese ID y devuelve una copia (RN-30.9 y

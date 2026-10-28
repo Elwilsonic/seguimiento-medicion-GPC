@@ -230,6 +230,35 @@
         <button type="submit">Cambiar estado</button>
       </form>
       <p class="mensaje" id="msg-defectos" role="alert" hidden></p>
+
+      <form id="form-consultar-defectos">
+        <h3>Consultar defectos</h3>
+        <label>Ver por
+          <select name="tipo">
+            <option value="proyecto">Proyecto actual</option>
+            <option value="sprint">Sprint actual</option>
+          </select>
+        </label>
+        <label>Estado
+          <select name="estado">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <button type="submit">Consultar</button>
+      </form>
+
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Descripción</th><th>Severidad</th><th>Estado</th><th>Ítem</th><th>Sprint de detección</th><th>Sprint de resolución</th>
+            </tr>
+          </thead>
+          <tbody id="lista-defectos"></tbody>
+        </table>
+      </div>
+      <p id="cantidad-defectos" class="vacio">Cantidad: 0 defecto(s)</p>
+      <p class="mensaje" id="msg-consultar-defectos" role="alert" hidden></p>
     </section>
   </main>
 

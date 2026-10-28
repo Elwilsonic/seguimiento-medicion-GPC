@@ -75,9 +75,28 @@ func (r *PostgresRepository) Update(defect Defect) (Defect, error) {
 	return updated, nil
 }
 
-// List devuelve todos los defectos ordenados por ID (HU-31).
+// List devuelve todos los defectos ordenados por ID (RN-31.8), o una lista
+// vacía no nil si no hay ninguno.
 func (r *PostgresRepository) List() ([]Defect, error) {
-	return nil, nil
+	rows, err := r.pool.Query(context.Background(),
+		"SELECT "+defectColumns+" FROM defects ORDER BY id")
+	if err != nil {
+		return nil, fmt.Errorf("listar los defectos: %w", err)
+	}
+	defer rows.Close()
+
+	defects := []Defect{}
+	for rows.Next() {
+		defect, err := scanDefect(rows)
+		if err != nil {
+			return nil, fmt.Errorf("leer un defecto: %w", err)
+		}
+		defects = append(defects, defect)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("listar los defectos: %w", err)
+	}
+	return defects, nil
 }
 
 // scanDefect lee un defecto con las columnas de defectColumns.
