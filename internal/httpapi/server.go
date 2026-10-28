@@ -50,8 +50,9 @@ type server struct {
 func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager) http.Handler {
 	// HU-32: metrics no tiene repositorio ni estado, así que se crea acá con
 	// los Manager de ítems y de sprints, sin cambiar la firma de NewHandler.
+	// HU-33 suma el Manager de esfuerzos para calcular M5.
 	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects,
-		metrics: metrics.NewManager(items, sprints)}
+		metrics: metrics.NewManager(items, sprints, efforts)}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)

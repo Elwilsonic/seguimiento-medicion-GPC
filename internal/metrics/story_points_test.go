@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
 )
@@ -28,22 +29,25 @@ var (
 type metricsEnv struct {
 	itemRepo   backlog.Repository
 	sprintRepo sprint.Repository
+	effortRepo effort.Repository
 	projects   *project.Manager
 	items      *backlog.Manager
 	sprints    *sprint.Manager
+	efforts    *effort.Manager
 	metrics    *Manager
 }
 
 func newMetricsEnv() *metricsEnv {
-	return newMetricsEnvWith(backlog.NewMemoryRepository(), sprint.NewMemoryRepository())
+	return newMetricsEnvWith(backlog.NewMemoryRepository(), sprint.NewMemoryRepository(), effort.NewMemoryRepository())
 }
 
 // newMetricsEnvWith permite usar repositorios que fallan (CA-32.7).
-func newMetricsEnvWith(itemRepo backlog.Repository, sprintRepo sprint.Repository) *metricsEnv {
+func newMetricsEnvWith(itemRepo backlog.Repository, sprintRepo sprint.Repository, effortRepo effort.Repository) *metricsEnv {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(itemRepo, projects)
 	sprints := sprint.NewManager(sprintRepo, projects, items)
-	return &metricsEnv{itemRepo: itemRepo, sprintRepo: sprintRepo, projects: projects, items: items, sprints: sprints, metrics: NewManager(items, sprints)}
+	efforts := effort.NewManager(effortRepo, sprints, items)
+	return &metricsEnv{itemRepo: itemRepo, sprintRepo: sprintRepo, effortRepo: effortRepo, projects: projects, items: items, sprints: sprints, efforts: efforts, metrics: NewManager(items, sprints, efforts)}
 }
 
 // sprintsOf lee los sprints del proyecto con GetByID del repositorio (IDs
@@ -109,6 +113,39 @@ func (e *metricsEnv) item(t *testing.T, projectID int, title string, points int,
 		}
 	}
 	return it
+}
+
+// itemWithHours crea un ítem con las horas estimadas indicadas (0 = sin
+// horas), lo asigna al sprint si sprintID no es 0 y lo devuelve.
+func (e *metricsEnv) itemWithHours(t *testing.T, projectID int, title string, hours float64, sprintID int) backlog.Item {
+	t.Helper()
+	it, err := e.items.Create(projectID, title, "", "MEDIA", []string{"Criterio de " + title})
+	if err != nil {
+		t.Fatalf("crear el ítem %q: %v", title, err)
+	}
+	if it, err = e.items.Update(it.ID, title, "", "MEDIA", []string{"Criterio de " + title}, hours); err != nil {
+		t.Fatalf("asignar %v horas a %q: %v", hours, title, err)
+	}
+	if sprintID != 0 {
+		if it, err = e.sprints.AssignItem(sprintID, it.ID); err != nil {
+			t.Fatalf("asignar %q al sprint %d: %v", title, sprintID, err)
+		}
+	}
+	return it
+}
+
+// registerEffort registra horas del integrante de prueba en un sprint abierto.
+// Con 0 no registra nada, para reutilizar las tablas de BDD.
+func (e *metricsEnv) registerEffort(t *testing.T, sprintID, itemID int, hours float64) effort.Effort {
+	t.Helper()
+	if hours == 0 {
+		return effort.Effort{}
+	}
+	saved, err := e.efforts.Register(sprintID, itemID, "García Santiago", testStart, "Actividad de prueba", hours)
+	if err != nil {
+		t.Fatalf("registrar %v horas en el ítem %d: %v", hours, itemID, err)
+	}
+	return saved
 }
 
 // closedSprint crea un sprint con un ítem TERMINADO por cada valor de
@@ -332,7 +369,7 @@ func (r failingItemRepository) ListByProject(int) ([]backlog.Item, error) {
 // ese error.
 func TestProjectStoryPoints_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
 	errRepo := errors.New("falla de sprints")
-	e := newMetricsEnvWith(backlog.NewMemoryRepository(), failingSprintRepository{Repository: sprint.NewMemoryRepository(), err: errRepo})
+	e := newMetricsEnvWith(backlog.NewMemoryRepository(), failingSprintRepository{Repository: sprint.NewMemoryRepository(), err: errRepo}, effort.NewMemoryRepository())
 	projectID := e.project(t, "Sistema de ventas")
 
 	if _, err := e.metrics.ProjectStoryPoints(projectID); !errors.Is(err, errRepo) {
@@ -344,7 +381,7 @@ func TestProjectStoryPoints_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) 
 // ese error.
 func TestStoryPoints_ErrorDelRepositorioDeItemsSePropaga(t *testing.T) {
 	errRepo := errors.New("falla de ítems")
-	e := newMetricsEnvWith(failingItemRepository{Repository: backlog.NewMemoryRepository(), err: errRepo}, sprint.NewMemoryRepository())
+	e := newMetricsEnvWith(failingItemRepository{Repository: backlog.NewMemoryRepository(), err: errRepo}, sprint.NewMemoryRepository(), effort.NewMemoryRepository())
 	projectID := e.project(t, "Sistema de ventas")
 	s := e.openSprint(t, projectID, "Sprint 1")
 
