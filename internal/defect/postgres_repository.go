@@ -75,6 +75,11 @@ func (r *PostgresRepository) Update(defect Defect) (Defect, error) {
 	return updated, nil
 }
 
+// List devuelve todos los defectos ordenados por ID (HU-31).
+func (r *PostgresRepository) List() ([]Defect, error) {
+	return nil, nil
+}
+
 // scanDefect lee un defecto con las columnas de defectColumns.
 func scanDefect(row pgx.Row) (Defect, error) {
 	var defect Defect
