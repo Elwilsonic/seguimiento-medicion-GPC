@@ -176,7 +176,7 @@ Los 3 tests de PostgreSQL hicieron SKIP sin `TEST_DATABASE_URL` y fallaron con l
 |---|---|---|
 | GREEN | `5eb7a07` | `feat(HU-41): registrar la fecha de fin del proyecto (GREEN)` |
 | Refactor | — | No aplica |
-| Documentación | (propuesto) | `docs(HU-41): agregar evidencia TDD y cobertura` |
+| Documentación | `106853d` | `docs(HU-41): agregar evidencia TDD y cobertura` |
 
 El GREEN tocó solo 9 archivos de producción:
 
@@ -358,8 +358,8 @@ El perfil se borró al terminar.
 | RED | `3b01a87` | `test(HU-41): agregar tests (RED)` |
 | GREEN | `5eb7a07` | `feat(HU-41): registrar la fecha de fin del proyecto (GREEN)` |
 | Refactor | — | No aplica |
-| Documentación | (propuesto) | `docs(HU-41): agregar evidencia TDD y cobertura` |
+| Documentación | `106853d` | `docs(HU-41): agregar evidencia TDD y cobertura` |
 
-Todos los commits de la historia referencian el Issue #115 con `Refs #115` y están en la rama `feature/HU-41-fecha-fin-proyecto`.
+Los commits de la SDD, su ajuste y su aprobación, el merge de `main`, el RED, el GREEN y la documentación referencian el Issue #115 con `Refs #115`. Todos los commits de la historia están hechos y subidos a la rama `feature/HU-41-fecha-fin-proyecto`, y el Pull Request es el [#150](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/150).
 
 HU-41: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
