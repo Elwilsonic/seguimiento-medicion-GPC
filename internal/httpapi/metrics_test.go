@@ -1,6 +1,7 @@
 package httpapi_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -526,5 +527,261 @@ func TestMetricas_ErrorDelRepositorioDeDefectosDevuelve500(t *testing.T) {
 		rec := do(t, h, http.MethodGet, path, "")
 
 		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	}
+}
+
+// HU-35 · Consultar las métricas del proyecto (Issue #53)
+//
+// CA-35.6: las rutas, los campos, su orden y los códigos HTTP no cambian, y
+// el contrato queda documentado con los tres ejemplos de la SDD. El orden de
+// los campos se verifica comparando el cuerpo crudo con el JSON esperado,
+// ambos normalizados con json.Compact, porque al decodificar a un struct o a
+// un mapa se pierde el orden. CA-35.4: los ítems del backlog se leen una sola
+// vez por consulta.
+
+// contractItemSpec es un ítem del ejemplo de TEC-03 con Story Points, horas,
+// estado y esfuerzo (0 = sin esfuerzo).
+type contractItemSpec struct {
+	title  string
+	points int
+	hours  float64
+	status string
+	effort float64
+}
+
+// contractTEC03 crea por la API el proyecto 1 con el sprint 1 abierto, los
+// ítems del ejemplo de TEC-03 y un defecto detectado y resuelto en el sprint.
+// Devuelve el ID del sprint.
+func contractTEC03(t *testing.T, h http.Handler) int {
+	t.Helper()
+	createProject(t, h, "Sistema de ventas")
+	var sp sprintJSON
+	rec := do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint)
+	expectStatus(t, rec, http.StatusCreated)
+	decode(t, rec, &sp)
+	specs := []contractItemSpec{
+		{"A", 5, 10, "TERMINADO", 12},
+		{"B", 3, 6, "TERMINADO", 5},
+		{"C", 2, 0, "EN_CURSO", 3},
+		{"D", 0, 4, "PENDIENTE", 0},
+	}
+	var first itemJSON
+	for i, spec := range specs {
+		it := createHoursItem(t, h, spec.title, spec.hours)
+		if i == 0 {
+			first = it
+		}
+		if spec.points > 0 {
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/story-points", it.ID), fmt.Sprintf(`{"story_points":%d}`, spec.points)), http.StatusOK)
+		}
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sp.ID, it.ID), ""), http.StatusOK)
+		if spec.effort > 0 {
+			body := fmt.Sprintf(`{"integrante":"García Santiago","fecha":"2026-10-10","actividad":"Implementación","horas":%v}`, spec.effort)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/esfuerzos", sp.ID, it.ID), body), http.StatusCreated)
+		}
+		if spec.status != "PENDIENTE" {
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/estado", it.ID), `{"estado":"EN_CURSO"}`), http.StatusOK)
+		}
+		if spec.status == "TERMINADO" {
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/completar", sp.ID, it.ID), ""), http.StatusOK)
+		}
+	}
+	defectBody := fmt.Sprintf(`{"descripcion":"El total no descuenta el descuento","severidad":"alta","sprint_deteccion_id":%d}`, sp.ID)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%d/defectos", first.ID), defectBody), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%d}`, sp.ID)), http.StatusOK)
+	return sp.ID
+}
+
+// expectRawJSON compara el cuerpo crudo de la respuesta con el JSON
+// esperado, ambos con json.Compact, así se verifican también el orden de los
+// campos y los null.
+func expectRawJSON(t *testing.T, rec *httptest.ResponseRecorder, want string) {
+	t.Helper()
+	expectStatus(t, rec, http.StatusOK)
+	var got, expected bytes.Buffer
+	if err := json.Compact(&got, rec.Body.Bytes()); err != nil {
+		t.Fatalf("cuerpo no es JSON válido (%v): %s", err, rec.Body.String())
+	}
+	if err := json.Compact(&expected, []byte(want)); err != nil {
+		t.Fatalf("JSON esperado inválido: %v", err)
+	}
+	if !bytes.Equal(got.Bytes(), expected.Bytes()) {
+		t.Errorf("cuerpo =\n%s\nse esperaba\n%s", got.String(), expected.String())
+	}
+}
+
+// CA-35.1 y CA-35.6 · Contrato del sprint con el ejemplo de TEC-03.
+func TestConsultaMetricas_ContratoDelSprint(t *testing.T) {
+	h := newHandler()
+	id := contractTEC03(t, h)
+
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+
+	expectRawJSON(t, rec, `{
+  "sprint_id": 1,
+  "sp_planificados": 10,
+  "sp_completados": 8,
+  "items_sin_estimar": 1,
+  "items_totales": 4,
+  "items_terminados": 2,
+  "porcentaje_completadas": 50,
+  "horas_estimadas": 20,
+  "horas_reales": 20,
+  "desviacion_horas": 0,
+  "desviacion_porcentual": 0,
+  "items_sin_horas_estimadas": 1,
+  "defectos_detectados": 1,
+  "defectos_resueltos": 1
+}`)
+}
+
+// CA-35.1 y CA-35.6 · Contrato del proyecto con ese sprint cerrado.
+func TestConsultaMetricas_ContratoDelProyecto(t *testing.T) {
+	h := newHandler()
+	id := contractTEC03(t, h)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", id), ""), http.StatusOK)
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/metricas", "")
+
+	expectRawJSON(t, rec, `{
+  "proyecto_id": 1,
+  "sp_planificados": 10,
+  "sp_completados": 8,
+  "items_sin_estimar": 1,
+  "velocidad": 8,
+  "sprints_cerrados": 1,
+  "items_totales": 4,
+  "items_terminados": 2,
+  "porcentaje_completadas": 50,
+  "horas_estimadas": 20,
+  "horas_reales": 20,
+  "desviacion_horas": 0,
+  "desviacion_porcentual": 0,
+  "items_sin_horas_estimadas": 1,
+  "defectos_detectados": 1,
+  "defectos_resueltos": 1
+}`)
+}
+
+// CA-35.2 y CA-35.6 · Contrato de un proyecto recién creado: las cuatro
+// métricas no disponibles en null y el resto en 0.
+func TestConsultaMetricas_ContratoDelProyectoVacio(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	createProject(t, h, "Proyecto vacío")
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/2/metricas", "")
+
+	expectRawJSON(t, rec, `{
+  "proyecto_id": 2,
+  "sp_planificados": 0,
+  "sp_completados": 0,
+  "items_sin_estimar": 0,
+  "velocidad": null,
+  "sprints_cerrados": 0,
+  "items_totales": 0,
+  "items_terminados": 0,
+  "porcentaje_completadas": null,
+  "horas_estimadas": 0,
+  "horas_reales": 0,
+  "desviacion_horas": null,
+  "desviacion_porcentual": null,
+  "items_sin_horas_estimadas": 0,
+  "defectos_detectados": 0,
+  "defectos_resueltos": 0
+}`)
+}
+
+// CA-35.3 · Un {id} no numérico devuelve 400 en las dos rutas.
+func TestConsultaMetricas_IDNoNumericoDevuelve400(t *testing.T) {
+	h := newHandler()
+	for _, path := range []string{"/api/sprints/abc/metricas", "/api/proyectos/abc/metricas"} {
+		rec := do(t, h, http.MethodGet, path, "")
+
+		expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	}
+}
+
+// CA-35.3 · Un sprint inexistente, 0 o negativo devuelve 404.
+func TestConsultaMetricas_SprintInexistenteDevuelve404(t *testing.T) {
+	h := newHandler()
+	for _, id := range []string{"99", "0", "-1"} {
+		rec := do(t, h, http.MethodGet, "/api/sprints/"+id+"/metricas", "")
+
+		expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
+	}
+}
+
+// CA-35.3 · Un proyecto inexistente, 0 o negativo devuelve 404.
+func TestConsultaMetricas_ProyectoInexistenteDevuelve404(t *testing.T) {
+	h := newHandler()
+	for _, id := range []string{"99", "0", "-1"} {
+		rec := do(t, h, http.MethodGet, "/api/proyectos/"+id+"/metricas", "")
+
+		expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
+	}
+}
+
+// CA-35.3 · Una falla al leer los esfuerzos o los defectos devuelve 500 sin
+// detalle, en las dos rutas. Usa los repositorios de prueba de HU-33
+// (failingEffortListRepository) y de HU-31 (brokenDefectRepository).
+func TestConsultaMetricas_FallaDeEsfuerzosODefectosDevuelve500(t *testing.T) {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(failingEffortListRepository{Repository: effort.NewMemoryRepository(), err: errors.New("base caída")}, sprints, items)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	effortsBroken := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	createProject(t, effortsBroken, "Sistema de ventas")
+	expectStatus(t, do(t, effortsBroken, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	defectsBroken := newHandlerWithDefectRepository(t, brokenDefectRepository{})
+
+	for _, h := range []http.Handler{effortsBroken, defectsBroken} {
+		for _, path := range []string{"/api/sprints/1/metricas", "/api/proyectos/1/metricas"} {
+			rec := do(t, h, http.MethodGet, path, "")
+
+			expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+		}
+	}
+}
+
+// countingItemRepository cuenta las lecturas de los ítems de un proyecto.
+type countingItemRepository struct {
+	backlog.Repository
+	listCalls int
+}
+
+func (r *countingItemRepository) ListByProject(projectID int) ([]backlog.Item, error) {
+	r.listCalls++
+	return r.Repository.ListByProject(projectID)
+}
+
+// CA-35.4 · A través del handler, cada consulta lee el repositorio de ítems 2
+// veces: 1 de metrics y 1 interna de defect.Manager.ListByProject (límite
+// conocido de la SDD). El proyecto tiene dos sprints.
+func TestConsultaMetricas_LeeLosItemsUnaSolaVez(t *testing.T) {
+	itemRepo := &countingItemRepository{Repository: backlog.NewMemoryRepository()}
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(itemRepo, projects)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	createProject(t, h, "Sistema de ventas")
+	first := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{{"A", 10, 12}, {"B", 6, 5}})
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", first), ""), http.StatusOK)
+	second := hoursSprint(t, h, "Sprint 2", []hoursItemSpec{{"C", 4, 3}})
+
+	for _, path := range []string{fmt.Sprintf("/api/sprints/%d/metricas", second), "/api/proyectos/1/metricas"} {
+		itemRepo.listCalls = 0
+
+		expectStatus(t, do(t, h, http.MethodGet, path, ""), http.StatusOK)
+
+		if itemRepo.listCalls != 2 {
+			t.Errorf("%s: lecturas de ítems = %d, se esperaba 2 (1 de metrics y 1 interna de defect)", path, itemRepo.listCalls)
+		}
 	}
 }

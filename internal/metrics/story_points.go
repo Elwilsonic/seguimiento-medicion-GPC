@@ -34,7 +34,13 @@ func (m *Manager) ProjectStoryPoints(projectID int) (ProjectPoints, error) {
 	if err != nil {
 		return ProjectPoints{}, err
 	}
+	return projectPoints(projectID, items, sprints), nil
+}
 
+// projectPoints calcula M1, M2 y la velocidad de un proyecto a partir de
+// sus ítems y sus sprints, sin leer nada (RN-32.1 a RN-32.6). La usan
+// ProjectStoryPoints y Project (HU-35).
+func projectPoints(projectID int, items []backlog.Item, sprints []sprint.Sprint) ProjectPoints {
 	var closed []closedSprint
 	for _, sp := range sprints {
 		if sp.Status != sprint.StatusClosed {
@@ -54,7 +60,7 @@ func (m *Manager) ProjectStoryPoints(projectID int) (ProjectPoints, error) {
 		Velocity:          v,
 		VelocityAvailable: used > 0,
 		ClosedSprints:     used,
-	}, nil
+	}
 }
 
 // itemsOfSprint devuelve los ítems asignados al sprint.
