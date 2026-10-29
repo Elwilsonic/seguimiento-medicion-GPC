@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #57
 
-Aprobada por: pendiente (Agile Enabler).
+Aprobada por: Peñalbé Hernán (Agile Enabler), 29/10/2026, con un ajuste (cita de la decisión 9 de HU-38), que se aplicó.
 
 ## Historia de usuario
 
