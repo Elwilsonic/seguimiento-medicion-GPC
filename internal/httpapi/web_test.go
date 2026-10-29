@@ -1201,3 +1201,98 @@ func TestInterfaz_DescargarPDFLlamaALaAPIConElProyectoActual(t *testing.T) {
 		}
 	}
 }
+
+// HU-14 · Consultar sprints anteriores (Issue #28)
+//
+// CA-14.6: la sección "Sprints" tiene el botón "Ver sprints del proyecto", que
+// llena una tabla con los sprints del proyecto actual; cada fila tiene el
+// botón "Ver ítems completados", que deja ese sprint como sprint actual y
+// avisa el cambio en el mensaje (ajuste del Agile Enabler en la SDD).
+
+// CA-14.6 · La sección "Sprints" tiene el botón y la tabla de sprints, con sus
+// columnas, y conserva el botón "Ver ítems completados" de HU-12.
+func TestInterfaz_SeccionSprintsTieneElBotonVerSprintsDelProyecto(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="sprints">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de sprints")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de sprints no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		`<button type="button" id="ver-sprints" class="secundario">Ver sprints del proyecto</button>`,
+		`<tbody id="lista-sprints"></tbody>`,
+		"<th>ID</th><th>Nombre</th><th>Inicio</th><th>Fin</th><th>Sprint goal</th><th>Estado</th><th>Acciones</th>",
+		`id="ver-completados"`,
+		`id="msg-sprints"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de sprints no contiene %q", want)
+		}
+	}
+}
+
+// CA-14.1, CA-14.2 y CA-14.6 · "Ver sprints del proyecto" llama a la ruta
+// nueva con el proyecto actual, llena la tabla e informa la cantidad.
+func TestInterfaz_VerSprintsLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+	body := handlerBody(t, js, "ver-sprints")
+
+	for _, want := range []string{
+		`accion("msg-sprints"`,
+		`api("GET", "/proyectos/" + proyecto + "/sprints")`,
+		`$("lista-sprints")`,
+		"s.fecha_inicio",
+		"s.fecha_fin",
+		"s.objetivo",
+		"s.estado",
+		`" sprint(s) en el proyecto "`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("el handler de ver-sprints no contiene %q", want)
+		}
+	}
+	if strings.Contains(body, "innerHTML") {
+		t.Error("el handler de ver-sprints usa innerHTML")
+	}
+}
+
+// CA-14.3 y CA-14.6 · El botón de cada fila deja el sprint como sprint actual
+// (mostrarSprint), muestra sus ítems completados con la consulta de HU-12 y
+// avisa "Sprint N seleccionado: M ítem(s) completado(s).".
+func TestInterfaz_FilaDeSprintSeleccionaElSprintYMuestraSusCompletados(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+	body := handlerBody(t, js, "ver-sprints")
+
+	for _, want := range []string{
+		`"Ver ítems completados"`,
+		"mostrarSprint(s)",
+		"mostrarCompletados(s.id)",
+		`"Sprint " + s.id + " seleccionado: "`,
+		`" ítem(s) completado(s)."`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("el handler de ver-sprints no contiene %q", want)
+		}
+	}
+}
+
+// CA-14.3 · La consulta de los ítems completados es una sola función, que usan
+// el botón de HU-12 y el de cada fila.
+func TestInterfaz_CompletadosCompartidosPorLosDosBotones(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if !strings.Contains(js, "async function mostrarCompletados(") {
+		t.Fatal("app.js no tiene la función mostrarCompletados")
+	}
+	if !strings.Contains(js, `api("GET", "/sprints/" + sprint + "/completados")`) {
+		t.Error("app.js no consulta los ítems completados de HU-12")
+	}
+	if !strings.Contains(handlerBody(t, js, "ver-completados"), "mostrarCompletados(sprint)") {
+		t.Error("el handler de ver-completados no usa mostrarCompletados")
+	}
+}
