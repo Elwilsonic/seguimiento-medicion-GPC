@@ -90,6 +90,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("POST /api/sprints/{id}/cerrar", s.closeSprint)
 	mux.HandleFunc("GET /api/sprints/{id}/metricas", s.sprintMetrics)
 	mux.HandleFunc("GET /api/proyectos/{id}/metricas", s.projectMetrics)
+	mux.HandleFunc("GET /api/proyectos/{id}/metricas/sprints", s.projectSprintsMetrics)
 	mux.HandleFunc("GET /api/proyectos/{id}/resumen", s.projectSummary)
 	// La interfaz web responde en / (CA-TEC04.8); las rutas /api/… son más
 	// específicas, así que no la tapan.

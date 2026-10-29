@@ -1,5 +1,10 @@
 package metrics
 
+import (
+	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
+)
+
 // SprintMetrics son todas las métricas de un sprint (HU-35): M1, M2 y M4 a
 // M10, formadas por los tipos de HU-32, HU-34, HU-33 y HU-47.
 type SprintMetrics struct {
@@ -43,15 +48,22 @@ func (m *Manager) Sprint(sprintID int) (SprintMetrics, error) {
 		return SprintMetrics{}, err
 	}
 
+	return sprintMetricsOf(sprintID, items, summary.TotalHours, defects), nil
+}
+
+// sprintMetricsOf calcula M1, M2 y M4 a M10 de un sprint a partir de los
+// ítems y los defectos de su proyecto y de sus horas reales, sin leer nada.
+// La usan Sprint (HU-35) y ProjectSprints (HU-37).
+func sprintMetricsOf(sprintID int, items []backlog.Item, actual float64, defects []defect.Defect) SprintMetrics {
 	of := itemsOfSprint(items, sprintID)
 	planned, completed, unestimated := storyPoints(of)
 	return SprintMetrics{
 		SprintID:   sprintID,
 		Points:     SprintPoints{SprintID: sprintID, Planned: planned, Completed: completed, Unestimated: unestimated},
 		Completion: completion(of),
-		Hours:      hoursOf(of, summary.TotalHours),
+		Hours:      hoursOf(of, actual),
 		Defects:    sprintDefects(defects, sprintID),
-	}, nil
+	}
 }
 
 // Project devuelve todas las métricas de un proyecto existente en una sola

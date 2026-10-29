@@ -758,3 +758,170 @@ func TestInterfaz_MetricasMuestraLosDefectosDetectadosYResueltos(t *testing.T) {
 		}
 	}
 }
+
+// HU-37 · Ver las métricas en el dashboard con gráficos (Issue #55)
+//
+// CA-37.1, CA-37.2 y CA-37.6: la sección "Dashboard" tiene el botón "Ver
+// gráficos", que muestra M1 a M10 del proyecto y tres gráficos SVG dibujados
+// con JavaScript propio. Los tests no tienen un motor de JavaScript, así que
+// verifican el contenido de index.html, app.js y styles.css; el dibujo se
+// verifica en el navegador (evidencia TDD).
+
+// handlerBody devuelve el código del handler del botón id en app.js, desde
+// $("id").addEventListener hasta el cierre "\n);\n".
+func handlerBody(t *testing.T, js, id string) string {
+	t.Helper()
+	start := strings.Index(js, `$("`+id+`").addEventListener`)
+	if start == -1 {
+		t.Fatalf("app.js no tiene el handler de %q", id)
+	}
+	end := strings.Index(js[start:], "\n);\n")
+	if end == -1 {
+		t.Fatalf("el handler de %q no se cierra", id)
+	}
+	return js[start : start+end]
+}
+
+// CA-37.1 · La sección "Dashboard" tiene el botón "Ver gráficos", el texto de
+// las métricas, el contenedor de los gráficos y el mensaje, y conserva el
+// botón "Ver resumen" de HU-36.
+func TestInterfaz_DashboardTieneElBotonVerGraficos(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="dashboard">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección del dashboard")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección del dashboard no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		`id="ver-resumen"`,
+		`id="ver-graficos"`,
+		"Ver gráficos",
+		`id="datos-graficos"`,
+		`id="graficos"`,
+		`id="msg-graficos"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección del dashboard no contiene %q", want)
+		}
+	}
+}
+
+// CA-37.1 y CA-37.3 · "Ver gráficos" pide las métricas del proyecto (HU-35) y
+// las de cada sprint con el proyecto actual.
+func TestInterfaz_VerGraficosLlamaALasDosRutas(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+	body := handlerBody(t, js, "ver-graficos")
+
+	for _, want := range []string{
+		`accion("msg-graficos"`,
+		`proyectoActual() + "/metricas"`,
+		`proyectoActual() + "/metricas/sprints"`,
+		`$("datos-graficos")`,
+		`$("graficos")`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("el handler de ver-graficos no contiene %q", want)
+		}
+	}
+}
+
+// CA-37.1 · El texto de M1 a M3 está en una función compartida, que usan
+// "Ver métricas" y "Ver gráficos", junto con las de M4 a M10.
+func TestInterfaz_TextoDeStoryPointsCompartidoPorLosDosBotones(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if !strings.Contains(js, "function storyPointsYVelocidad(") {
+		t.Fatal("app.js no tiene la función storyPointsYVelocidad")
+	}
+	for _, id := range []string{"ver-metricas", "ver-graficos"} {
+		body := handlerBody(t, js, id)
+		for _, want := range []string{"storyPointsYVelocidad(p)", "historiasCompletadas(p)", "horasYDesviacion(p)", "defectos(p)"} {
+			if !strings.Contains(body, want) {
+				t.Errorf("el handler de %s no usa %q", id, want)
+			}
+		}
+	}
+}
+
+// CA-37.1 · Los tres gráficos tienen su título, la velocidad como línea de
+// referencia y solo los sprints CERRADO en el gráfico de velocidad.
+func TestInterfaz_GraficosTienenLosTresTitulos(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`"Story Points completados por sprint cerrado"`,
+		`"Story Points planificados y completados por sprint"`,
+		`"Horas estimadas y reales por sprint"`,
+		`"Velocidad: "`,
+		`"CERRADO"`,
+		"sp_planificados",
+		"sp_completados",
+		"horas_estimadas",
+		"horas_reales",
+		"desviacion_horas",
+		"desviacion_porcentual",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// CA-37.2 · Una métrica no disponible se muestra como "sin datos", y un
+// proyecto sin sprints muestra el aviso en lugar de los gráficos.
+func TestInterfaz_GraficosMuestranSinDatos(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`"Velocidad: sin datos (no hay sprints cerrados)."`,
+		`"Sin sprints: no hay datos para los gráficos."`,
+		`"Desviación: sin datos"`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// CA-37.6 · Los gráficos son SVG creados con createElementNS, los textos se
+// asignan con textContent y no se usa innerHTML ni recursos externos.
+func TestInterfaz_GraficosSeDibujanConSVGPropioSinLibrerias(t *testing.T) {
+	h := newHandler()
+	js := get(t, h, "/app.js").Body.String()
+	page := get(t, h, "/").Body.String()
+
+	for _, want := range []string{
+		"document.createElementNS",
+		`"http://www.w3.org/2000/svg"`,
+		`"title"`,
+		"textContent",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+	if strings.Contains(js, "innerHTML") {
+		t.Error("app.js usa innerHTML")
+	}
+	for _, external := range []string{`src="http`, `src="//`, `href="http`, `href="//`} {
+		if strings.Contains(page, external) {
+			t.Errorf("index.html carga un recurso externo (%s)", external)
+		}
+	}
+}
+
+// CA-37.1 · Los colores de las series salen de variables CSS de styles.css.
+func TestInterfaz_GraficosUsanVariablesDeColor(t *testing.T) {
+	css := get(t, newHandler(), "/styles.css").Body.String()
+
+	for _, want := range []string{"--serie-a:", "--serie-b:", "--referencia:", ".grafico"} {
+		if !strings.Contains(css, want) {
+			t.Errorf("styles.css no contiene %q", want)
+		}
+	}
+}

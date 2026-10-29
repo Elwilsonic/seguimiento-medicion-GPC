@@ -54,7 +54,14 @@ func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, sprintMetricsResponse{
+	writeJSON(w, http.StatusOK, toSprintMetricsResponse(m))
+}
+
+// toSprintMetricsResponse arma la respuesta de las métricas de un sprint. La
+// usan GET /api/sprints/{id}/metricas (HU-35) y cada elemento de
+// GET /api/proyectos/{id}/metricas/sprints (HU-37).
+func toSprintMetricsResponse(m metrics.SprintMetrics) sprintMetricsResponse {
+	return sprintMetricsResponse{
 		SprintID:           m.SprintID,
 		SPPlanificados:     m.Points.Planned,
 		SPCompletados:      m.Points.Completed,
@@ -62,7 +69,35 @@ func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 		completionResponse: toCompletionResponse(m.Completion),
 		hoursResponse:      toHoursResponse(m.Hours),
 		defectsResponse:    toDefectsResponse(m.Defects),
-	})
+	}
+}
+
+// sprintWithMetricsResponse es un elemento de
+// GET /api/proyectos/{id}/metricas/sprints (HU-37): el sprint con el formato
+// de HU-10 y sus métricas con el de HU-35, sin campos nuevos.
+type sprintWithMetricsResponse struct {
+	Sprint   sprintResponse        `json:"sprint"`
+	Metricas sprintMetricsResponse `json:"metricas"`
+}
+
+// projectSprintsMetrics atiende GET /api/proyectos/{id}/metricas/sprints
+// (HU-37, CA-37.4). Un proyecto sin sprints devuelve [], no null.
+func (s *server) projectSprintsMetrics(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	list, err := s.metrics.ProjectSprints(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	resp := make([]sprintWithMetricsResponse, 0, len(list))
+	for _, e := range list {
+		resp = append(resp, sprintWithMetricsResponse{Sprint: toSprintResponse(e.Sprint), Metricas: toSprintMetricsResponse(e.Metrics)})
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // projectMetrics atiende GET /api/proyectos/{id}/metricas (HU-32) con una
