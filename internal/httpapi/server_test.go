@@ -220,6 +220,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"métricas del proyecto", http.MethodGet, "/api/proyectos/abc/metricas", ""},
 		// HU-36, CA-36.6: resumen del estado del proyecto.
 		{"resumen del proyecto", http.MethodGet, "/api/proyectos/abc/resumen", ""},
+		// HU-38, CA-38.7: reporte del proyecto.
+		{"reporte del proyecto", http.MethodGet, "/api/proyectos/abc/reporte", ""},
 		// HU-27, CA-27.10: listado de esfuerzos por historia y por sprint.
 		{"listar esfuerzos del ítem", http.MethodGet, "/api/items/abc/esfuerzos", ""},
 		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},

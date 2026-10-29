@@ -758,3 +758,69 @@ func TestInterfaz_MetricasMuestraLosDefectosDetectadosYResueltos(t *testing.T) {
 		}
 	}
 }
+
+// HU-38 · Generar el reporte del proyecto (Issue #56)
+//
+// Trazabilidad: CA-38.7. La interfaz tiene una sección "Reportes" con el
+// botón "Generar reporte", que llama a GET /proyectos/{id}/reporte con el
+// proyecto actual y muestra cada parte del reporte en su bloque.
+
+func TestInterfaz_SeccionReportesConElBotonGenerarReporte(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="reportes">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de reportes")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de reportes no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		"<h2>Reportes</h2>",
+		`id="generar-reporte"`,
+		"Generar reporte",
+		`id="datos-reporte"`,
+		`id="msg-reporte"`,
+		`id="reporte-proyecto"`,
+		`id="reporte-metricas"`,
+		`id="reporte-esfuerzos"`,
+		`id="reporte-defectos"`,
+		`id="reporte-integrantes"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de reportes no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_GenerarReporteLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("generar-reporte")`, `accion("msg-reporte"`, `proyectoActual() + "/reporte"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_GenerarReporteMuestraCadaParte(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`$("reporte-proyecto")`,
+		`$("reporte-metricas")`,
+		`$("reporte-esfuerzos")`,
+		`$("reporte-defectos")`,
+		`$("reporte-integrantes")`,
+		"Sin esfuerzos registrados.",
+		"Sin defectos registrados.",
+		"Integrantes que registraron esfuerzo: ",
+		"Inicio: sin registrar",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
