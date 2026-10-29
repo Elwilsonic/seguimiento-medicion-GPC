@@ -181,6 +181,10 @@ No hubo. `sprintMetricsOf`, `toSprintMetricsResponse` y `storyPointsYVelocidad` 
 - **Ninguna en el RED ni en el GREEN.** Ningún test nuevo pasó con el stub, y el GREEN no tocó tests.
 - **Dibujo sin tests automáticos.** Los tests de Go no ejecutan JavaScript, como anticipa la SDD en "Límite conocido". El dibujo se cubre con los tests de contenido, la prueba de humo y el recorrido en el navegador (ver "Dibujo de los gráficos").
 
+## Integración con `main` (`d88c4fd`)
+
+Antes de abrir el Pull Request se trajo `main` (`a30a0f8`, con TEC-06) a la rama con un merge commit, no con rebase, para que los hashes del RED y del GREEN de esta evidencia sigan existiendo (acción 5 de la Retrospectiva del Sprint 3). Solo cambia `docs/documentacion-tecnica.md`, que HU-37 no toca, así que no hubo conflictos. Después del merge, `gofmt -l .` y `go vet ./...` no dan salida, y `go test -count=1 ./...` da `ok` en los 12 paquetes. Como no cambió código, la cobertura medida sobre el GREEN sigue valiendo.
+
 ## Validación final
 
 Sobre `9f5cdeb`, en Windows con go1.27.1:
@@ -241,5 +245,6 @@ godog HU-37: `15 scenarios (15 passed)`, `126 steps (126 passed)`.
 | RED | cb3a941 | `test(HU-37): agregar tests (RED)` |
 | GREEN | 9f5cdeb | `feat(HU-37): mostrar las métricas del dashboard con gráficos (GREEN)` |
 | Refactor | — | No hubo |
+| Integración con `main` | d88c4fd | `chore(HU-37): traer main con TEC-06` |
 
 HU-37: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
