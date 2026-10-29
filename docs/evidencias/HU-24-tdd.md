@@ -138,7 +138,7 @@ $ git diff --stat b0d9b69 42ebcce -- '*_test.go' '*.feature'
 (sin salida)
 ```
 
-Salida sobre el estado actual de la rama (`2c05ccb`): `gofmt -l .` y `go vet ./...` sin salida, y `GOTMPDIR=C:/gotmp go test -count=1 -p 1 ./...` con exit 0:
+Salida del GREEN sobre `2c05ccb` (con HU-39 y HU-41, antes de traer HU-40): `gofmt -l .` y `go vet ./...` sin salida, y `GOTMPDIR=C:/gotmp go test -count=1 -p 1 ./...` con exit 0:
 
 ```text
 ok   seguimiento-medicion-gpc/cmd/server
@@ -159,6 +159,8 @@ ok   seguimiento-medicion-gpc/internal/sprint
 
 Con `go test -count=1 -p 1 -v ./internal/poker ./internal/httpapi`: **347 PASS, 0 FAIL y 2 SKIP** de primer nivel, con los 34 tests nuevos de HU-24 en PASS y los dos subtests nuevos en PASS. Godog de HU-24: `15 scenarios (15 passed)` y `145 steps (145 passed)`. Con `go test -count=1 -p 1 -v ./...` sobre toda la rama: 896 PASS de primer nivel, 0 `--- FAIL` y 37 `--- SKIP` (los tests de PostgreSQL, sin `TEST_DATABASE_URL`).
 
+Después de traer HU-40 (`d7809b9`), con `GOTMPDIR=C:/gotmp` y los mismos comandos: los 13 paquetes en `ok`; en `./internal/poker ./internal/httpapi`, **354 PASS, 0 FAIL y 2 SKIP** de primer nivel (los 7 de más son tests de HU-40 en `internal/httpapi`), con los 34 tests de HU-24 en PASS y godog de HU-24 con `15 scenarios (15 passed)` y `145 steps (145 passed)`; en `./...`, 916 PASS de primer nivel, 0 `--- FAIL` y 37 `--- SKIP`. Las dos corridas terminaron con exit 1 solo por el `unlinkat` del desvío 1.
+
 ## Refactor
 
 No se hizo refactor: el código del GREEN no tiene duplicaciones claras ni cambios de estructura que mejoren la legibilidad sin cambiar el comportamiento.
@@ -175,16 +177,16 @@ Con el servidor en memoria (`go run ./cmd/server`, puerto 8080, sin `DATABASE_UR
 
 ## Cobertura
 
-Medición local sin base, en Windows con go1.27.1, `GOTMPDIR=C:/gotmp go test -count=1 -p 1 -coverprofile=cover.out ./...` y `go tool cover -func=cover.out`, sobre `2c05ccb` (el GREEN con `main` traído), y en `main` (`f9af5a9`) con el mismo Go y los mismos comandos, en una copia temporal con `git worktree`:
+Medición local sin base, en Windows con go1.27.1, `GOTMPDIR=C:/gotmp go test -count=1 -p 1 -coverprofile=cover.out ./...` y `go tool cover -func=cover.out`, sobre `d7809b9` (la rama con `main` `b3dc426` adentro, merge con HU-40), y en `main` (`b3dc426`) con el mismo Go y los mismos comandos, en una copia temporal con `git worktree`:
 
-| Paquete | Rama | `main` (`f9af5a9`) |
+| Paquete | Rama | `main` (`b3dc426`) |
 |---|---|---|
 | `cmd/server` | 31.5% | 31.5% |
 | `internal/backlog` | 83.3% | 83.3% |
 | `internal/dashboard` | 100.0% | 100.0% |
 | `internal/defect` | 77.7% | 77.7% |
 | `internal/effort` | 75.2% | 75.2% |
-| `internal/httpapi` | 98.8% | 98.8% |
+| `internal/httpapi` | 98.5% | 98.5% |
 | `internal/metrics` | 100.0% | 100.0% |
 | `internal/poker` | 75.5% | 69.5% |
 | `internal/postgres` | 83.3% | 83.3% |
@@ -193,17 +195,17 @@ Medición local sin base, en Windows con go1.27.1, `GOTMPDIR=C:/gotmp go test -c
 | `internal/report` | 100.0% | 100.0% |
 | `internal/sprint` | 76.3% | 76.3% |
 | `internal/web` | 0.0% | 0.0% |
-| **Total del perfil** | **84.4%** | **83.9%** |
+| **Total del perfil** | **84.9%** | **84.5%** |
 
 ```text
 internal/httpapi/poker.go:114:  revealPokerSession       100.0%
 internal/httpapi/poker.go:145:  repeatRoundPokerSession  100.0%
 internal/poker/compare.go:22:   CompareVotes             100.0%
 internal/poker/manager.go:131:  RepeatRound              100.0%
-total:                          (statements)             84.4%
+total:                          (statements)             84.9%
 ```
 
-Solo cambia `internal/poker`, de 69.5% a 75.5%; los demás paquetes conservan sus porcentajes, y el total sube de 83.9% a 84.4%. En `main`, `revealPokerSession` (`poker.go:100`) también está en 100.0%.
+Solo cambia `internal/poker`, de 69.5% a 75.5%; los demás paquetes conservan sus porcentajes, y el total sube de 84.5% a 84.9% (+0.4). `internal/httpapi` queda en 98.5% en la rama y en `main`: baja de 98.8% (medición anterior, sobre `2c05ccb` y `f9af5a9`) por `projectReportPDF` de HU-40, en 87.5% en las dos, no por HU-24. En `main`, `revealPokerSession` (`poker.go:100`) también está en 100.0%.
 
 ## Desvíos y límites
 
@@ -211,7 +213,7 @@ Solo cambia `internal/poker`, de 69.5% a 75.5%; los demás paquetes conservan su
 2. **Sin `-race`.** Localmente responde `-race requires cgo` (`CGO_ENABLED=0`). Los tres tests de concurrencia (`TestRepeatRound_Concurrente…`) y el escenario de CA-24.10 pasan sin el detector de carreras; lo ejecuta el CI.
 3. **Sin medición con PostgreSQL.** Sin `TEST_DATABASE_URL`, se omiten los tests de PostgreSQL (2 en `internal/poker` e `internal/httpapi`, 37 en toda la rama: los 34 de la medición de HU-39 más los 3 de `internal/project` que agregó HU-41 en `3b01a87`; HU-24 no agrega tests de PostgreSQL de primer nivel, porque su subtest de contrato corre dentro de `TestPostgresRepository_Contrato`, ya contado): el subtest de contrato nuevo solo corrió contra `MemoryRepository`. HU-24 no cambia el repositorio ni el esquema.
 4. **Subtest de contrato en verde desde el RED.** `Update guarda una ronda nueva ABIERTA sin votos y OpenByItem la encuentra` pasa ya en el RED porque verifica comportamiento existente de `Update` y `OpenByItem`, que la SDD no cambia (D12).
-5. **Merge de `main`.** Antes de la evidencia se trajo `main` con HU-39 y HU-41 (merge `2c05ccb`), sin conflictos; se conservaron las rutas, los tests y la interfaz de las dos historias junto con los de HU-24.
+5. **Merges de `main`.** Antes de la evidencia se trajo `main` con HU-39 y HU-41 (merge `2c05ccb`), sin conflictos; se conservaron las rutas, los tests y la interfaz de las dos historias junto con los de HU-24. Después se trajo `main` con HU-40 (`b3dc426`, merge `d7809b9`): la única librería nueva es `github.com/go-pdf/fpdf` v0.9.0, de HU-40, y hubo conflictos solo en `docs/ia/registro.md` y `docs/reportes/cobertura.md`, resueltos conservando los dos lados.
 6. **CA-24.11 y CA-24.12 fuera del `.feature`.** Los pasos de godog llaman al `Manager` y a `CompareVotes`, no al handler HTTP, así que la persistencia y la API e interfaz se prueban con el test de contrato y los tests HTTP y de interfaz, como en HU-23.
 
 ## Commits
@@ -222,5 +224,8 @@ Solo cambia `internal/poker`, de 69.5% a 75.5%; los demás paquetes conservan su
 | RED | `b0d9b69` | `test(HU-24): agregar tests (RED)` |
 | GREEN | `42ebcce` | `feat(HU-24): implementar la detección de diferencias y la repetición de ronda (GREEN)` |
 | Traer `main` | `2c05ccb` | `chore(HU-24): traer main con HU-39 y HU-41` |
+| Evidencia y cobertura | `3feb712` | `docs(HU-24): agregar evidencia TDD y cobertura` |
+| Traer `main` | `d7809b9` | `chore(HU-24): traer main con HU-40` |
+| Cobertura con HU-40 | (propuesto) | `docs(HU-24): actualizar la cobertura con la integración de HU-40` |
 
 HU-24: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
