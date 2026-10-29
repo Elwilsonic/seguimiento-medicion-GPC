@@ -1153,6 +1153,9 @@ func TestInterfaz_DescargarPDFLlamaALaAPIConElProyectoActual(t *testing.T) {
 		`"reporte-proyecto-" + `,
 		`.pdf"`,
 		"PDF del proyecto ",
+		// El enlace temporal se libera después del clic, no en el mismo
+		// paso: liberarlo antes puede cancelar la descarga.
+		"setTimeout(() => URL.revokeObjectURL(url), 0)",
 	} {
 		if !strings.Contains(js, want) {
 			t.Errorf("app.js no contiene %q", want)
