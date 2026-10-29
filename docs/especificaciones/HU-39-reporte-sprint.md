@@ -23,7 +23,7 @@ Reunir en una sola consulta el reporte de un sprint: sus datos (nombre, fechas, 
   - la exportación a PDF (HU-40) ni librerías externas;
   - cambios en el reporte del proyecto (HU-38): `ProjectReport`, `Project`, `GET /api/proyectos/{id}/reporte` y el botón "Generar reporte" no cambian;
   - integrantes del equipo como entidad (E4, HU-15 a HU-17, fuera de la entrega; tema 5 del Planning del Sprint 4): el reporte lista solo los integrantes que registraron esfuerzo en el sprint;
-  - la lista de ítems del sprint: las historias planificadas y completadas y sus estimaciones se informan con las métricas M1, M2, M4 y M8 y sus cantidades, como en HU-38 (decisión 6);
+  - la lista de ítems del sprint: las historias planificadas y completadas y sus estimaciones se informan con las métricas M1, M2, M4 y M8 y sus cantidades, como en HU-38 (decisión 9);
   - cálculos o métricas nuevas, ni totales por integrante o por ítem;
   - cambios en `internal/sprint`, `internal/backlog`, `internal/metrics`, `internal/effort`, `internal/defect` o `internal/dashboard`, ni en sus repositorios o tests;
   - cambios en los endpoints existentes ni en la sección "Métricas";
@@ -327,7 +327,7 @@ Sin sprint actual, el mismo mensaje de error que las demás secciones ("Elegí u
   | Defectos | 2 | `metrics` (1) y `report` (1) |
 
   Evitarlo requiere cambiar `internal/metrics`, igual que en HU-38 (su decisión 5). Es aceptable para una consulta de solo lectura que se pide a mano.
-- **Sin lista de ítems del sprint.** Las historias planificadas y completadas y sus estimaciones se informan con las métricas (M1, M2, M4 y M8, con `items_totales`, `items_terminados`, `items_sin_estimar` e `items_sin_horas_estimadas`), no ítem por ítem, como en HU-38 (decisión 6). El detalle de los ítems terminados está en `GET /api/sprints/{id}/completados` (HU-12).
+- **Sin lista de ítems del sprint.** Las historias planificadas y completadas y sus estimaciones se informan con las métricas (M1, M2, M4 y M8, con `items_totales`, `items_terminados`, `items_sin_estimar` e `items_sin_horas_estimadas`), no ítem por ítem, como en HU-38 (decisión 9). El detalle de los ítems terminados está en `GET /api/sprints/{id}/completados` (HU-12).
 - **Regla de M9 y M10 repetida.** La selección de RN-39.5 repite en `report` la condición de `sprintDefects` de `internal/metrics`, que no se exporta. Los tests de RN-39.5 comparan los conteos con M9 y M10, así que las dos no pueden divergir sin que falle un test.
 - **Lecturas no atómicas.** Como en HU-38: un cambio simultáneo entre lecturas puede quedar en una parte y no en otra, y entonces `total_horas` o los defectos podrían no coincidir con las métricas.
 - **Integrantes por texto.** Como en HU-38: "Ana" y "ana" aparecen dos veces, y un integrante sin esfuerzos en el sprint no aparece.
