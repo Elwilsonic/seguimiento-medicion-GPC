@@ -810,7 +810,9 @@ $("descargar-reporte-pdf").addEventListener("click", () =>
     enlace.href = url;
     enlace.download = "reporte-proyecto-" + id + ".pdf";
     enlace.click();
-    URL.revokeObjectURL(url);
+    // Se libera después del clic: liberarlo en el mismo paso puede cancelar
+    // la descarga en algunos navegadores.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
     mostrar("msg-reporte", "PDF del proyecto " + id + " descargado.", false);
   }),
 );
