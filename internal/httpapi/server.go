@@ -71,6 +71,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PUT /api/proyectos/{id}", s.updateProject)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-inicio", s.setProjectStartDate)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-fin", s.setProjectEndDate)
+	mux.HandleFunc("POST /api/proyectos/{id}/integrantes", s.registerMember)
 	mux.HandleFunc("POST /api/proyectos/{id}/backlog", s.createItem)
 	mux.HandleFunc("GET /api/proyectos/{id}/backlog", s.listItems)
 	mux.HandleFunc("GET /api/items/{id}", s.getItem)
@@ -170,7 +171,8 @@ func statusFor(err error) int {
 		errors.Is(err, defect.ErrEmptyDescription), errors.Is(err, defect.ErrInvalidSeverity),
 		errors.Is(err, defect.ErrMissingDetectionSprint),
 		errors.Is(err, defect.ErrInvalidStatus), errors.Is(err, defect.ErrMissingResolutionSprint),
-		errors.Is(err, poker.ErrEmptyVoter), errors.Is(err, poker.ErrInvalidCard):
+		errors.Is(err, poker.ErrEmptyVoter), errors.Is(err, poker.ErrInvalidCard),
+		errors.Is(err, member.ErrEmptyName), errors.Is(err, member.ErrMissingRole), errors.Is(err, member.ErrInvalidRole):
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
 		errors.Is(err, sprint.ErrSprintNotFound), errors.Is(err, poker.ErrSessionNotFound),
@@ -188,7 +190,7 @@ func statusFor(err error) int {
 		errors.Is(err, defect.ErrResolutionBeforeDetection),
 		errors.Is(err, poker.ErrSessionAlreadyOpen), errors.Is(err, poker.ErrItemFinished),
 		errors.Is(err, poker.ErrSessionNotOpen), errors.Is(err, poker.ErrNoVotes),
-		errors.Is(err, poker.ErrSessionNotRevealed):
+		errors.Is(err, poker.ErrSessionNotRevealed), errors.Is(err, member.ErrDuplicateMember):
 		return http.StatusConflict
 	case errors.Is(err, errBodyTooLarge):
 		return http.StatusRequestEntityTooLarge
