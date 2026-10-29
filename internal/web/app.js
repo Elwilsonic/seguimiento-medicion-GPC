@@ -183,14 +183,16 @@ function celda(texto) {
   return td;
 }
 
-function boton(texto, fn, clase) {
+// boton crea un botón que ejecuta fn y muestra su error en msgId (por
+// defecto, el mensaje del backlog).
+function boton(texto, fn, clase, msgId = "msg-backlog") {
   const b = document.createElement("button");
   b.type = "button";
   b.textContent = texto;
   if (clase) {
     b.className = clase;
   }
-  b.addEventListener("click", () => accion("msg-backlog", fn));
+  b.addEventListener("click", () => accion(msgId, fn));
   return b;
 }
 
@@ -438,19 +440,64 @@ $("form-crear-sprint").addEventListener("submit", (e) => {
   });
 });
 
+// mostrarCompletados muestra los ítems completados del sprint (HU-12) y los
+// devuelve. La usan "Ver ítems completados" y cada fila de sprints (HU-14).
+async function mostrarCompletados(sprint) {
+  const items = await api("GET", "/sprints/" + sprint + "/completados");
+  $("completados").replaceChildren(
+    ...items.map((it) => {
+      const li = document.createElement("li");
+      li.textContent = it.id + " · " + it.titulo;
+      return li;
+    }),
+  );
+  return items;
+}
+
 $("ver-completados").addEventListener("click", () =>
   accion("msg-sprints", async () => {
     const sprint = sprintActual();
-    const items = await api("GET", "/sprints/" + sprint + "/completados");
-    const lista = $("completados");
-    lista.replaceChildren(
-      ...items.map((it) => {
-        const li = document.createElement("li");
-        li.textContent = it.id + " · " + it.titulo;
-        return li;
+    const items = await mostrarCompletados(sprint);
+    mostrar("msg-sprints", items.length + " ítem(s) completado(s) en el sprint " + sprint + ".", false);
+  }),
+);
+
+// HU-14 · Sprints del proyecto actual. El botón de cada fila deja ese sprint
+// como sprint actual y lo avisa, porque "Cerrar sprint" y "Registrar
+// esfuerzo" usan el sprint actual.
+$("ver-sprints").addEventListener("click", () =>
+  accion("msg-sprints", async () => {
+    const proyecto = proyectoActual();
+    const sprints = await api("GET", "/proyectos/" + proyecto + "/sprints");
+    $("lista-sprints").replaceChildren(
+      ...sprints.map((s) => {
+        const tr = document.createElement("tr");
+        const acciones = document.createElement("td");
+        acciones.append(
+          boton(
+            "Ver ítems completados",
+            async () => {
+              mostrarSprint(s);
+              const items = await mostrarCompletados(s.id);
+              mostrar("msg-sprints", "Sprint " + s.id + " seleccionado: " + items.length + " ítem(s) completado(s).", false);
+            },
+            "secundario",
+            "msg-sprints",
+          ),
+        );
+        tr.append(
+          celda(s.id),
+          celda(s.nombre),
+          celda(s.fecha_inicio),
+          celda(s.fecha_fin),
+          celda(s.objetivo),
+          celda(s.estado),
+          acciones,
+        );
+        return tr;
       }),
     );
-    mostrar("msg-sprints", items.length + " ítem(s) completado(s) en el sprint " + sprint + ".", false);
+    mostrar("msg-sprints", sprints.length + " sprint(s) en el proyecto " + proyecto + ".", false);
   }),
 );
 

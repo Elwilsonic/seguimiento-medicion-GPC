@@ -254,6 +254,20 @@
         </div>
       </div>
 
+      <div class="barra">
+        <button type="button" id="ver-sprints" class="secundario">Ver sprints del proyecto</button>
+      </div>
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Nombre</th><th>Inicio</th><th>Fin</th><th>Sprint goal</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="lista-sprints"></tbody>
+        </table>
+      </div>
+
       <form id="form-registrar-esfuerzo">
         <h3>Registrar esfuerzo</h3>
         <label>Ítem (ID) <input name="item_id" type="number" min="1" placeholder="Ej.: 1"></label>
