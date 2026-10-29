@@ -226,6 +226,6 @@ Solo cambia `internal/poker`, de 69.5% a 75.5%; los demás paquetes conservan su
 | Traer `main` | `2c05ccb` | `chore(HU-24): traer main con HU-39 y HU-41` |
 | Evidencia y cobertura | `3feb712` | `docs(HU-24): agregar evidencia TDD y cobertura` |
 | Traer `main` | `d7809b9` | `chore(HU-24): traer main con HU-40` |
-| Cobertura con HU-40 | (propuesto) | `docs(HU-24): actualizar la cobertura con la integración de HU-40` |
+| Cobertura con HU-40 | `2b595de` | `docs(HU-24): actualizar la cobertura con la integración de HU-40` |
 
 HU-24: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
