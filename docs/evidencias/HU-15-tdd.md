@@ -183,6 +183,6 @@ Sin SKIP (0 tests omitidos con `go test -v ./internal/member/`) y sin carreras. 
 | Corrección de tests del RED | 058804f | `test(HU-15): corregir dos tests de la API del RED` |
 | GREEN | 358e427 | `feat(HU-15): registrar un integrante del proyecto (GREEN)` |
 | Refactor | — | No hubo |
-| Evidencia y cobertura | (propuesto) | `docs(HU-15): agregar evidencia TDD y cobertura` |
+| Evidencia y cobertura | 716a102 | `docs(HU-15): agregar evidencia TDD y cobertura` |
 
 HU-15: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
