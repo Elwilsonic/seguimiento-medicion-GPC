@@ -11,10 +11,12 @@ var ErrMissingStartDate = errors.New("la fecha de inicio del proyecto es obligat
 
 // SetStartDate registra la fecha de inicio de un proyecto existente (HU-18) y
 // devuelve una copia. Si ya tenía una, la reemplaza (RN-18.4); no cambia
-// ningún otro dato del proyecto (RN-18.6).
+// ningún otro dato del proyecto (RN-18.6). Si el proyecto tiene fecha de fin,
+// la de inicio tiene que ser anterior (RN-41.7, HU-41).
 //
-// El orden de validación es: fecha ausente, existencia y guardado; se informa
-// el primer error encontrado y, si algo falla, el proyecto queda como estaba.
+// El orden de validación es: fecha ausente, existencia, relación con la fecha
+// de fin y guardado; se informa el primer error encontrado y, si algo falla,
+// el proyecto queda como estaba.
 func (m *Manager) SetStartDate(id int, date time.Time) (Project, error) {
 	// RN-18.1: la fecha ausente se informa sin consultar el repositorio.
 	if date.IsZero() {
@@ -29,6 +31,12 @@ func (m *Manager) SetStartDate(id int, date time.Time) (Project, error) {
 	current, err := m.repo.GetByID(id)
 	if err != nil {
 		return Project{}, err
+	}
+
+	// RN-41.7: con fecha de fin registrada, el inicio tiene que ser anterior
+	// (D5 de HU-41).
+	if !current.EndDate.IsZero() && !date.Before(current.EndDate) {
+		return Project{}, ErrStartNotBeforeEnd
 	}
 
 	current.StartDate = date
