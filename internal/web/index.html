@@ -158,6 +158,39 @@
       <p class="mensaje" id="msg-graficos" role="alert" hidden></p>
     </section>
 
+    <section id="reportes">
+      <h2>Reportes</h2>
+      <button type="button" id="generar-reporte">Generar reporte</button>
+      <div id="datos-reporte">
+        <p id="reporte-proyecto" class="vacio">Genera el reporte del proyecto actual: sus datos, métricas, esfuerzos, defectos e integrantes.</p>
+        <p id="reporte-metricas"></p>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Fecha</th><th>Integrante</th><th>Actividad</th><th>Ítem</th><th>Sprint</th><th>Horas</th>
+              </tr>
+            </thead>
+            <tbody id="reporte-esfuerzos"></tbody>
+          </table>
+        </div>
+        <p id="reporte-total-horas"></p>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Descripción</th><th>Severidad</th><th>Estado</th><th>Ítem</th><th>Sprint de detección</th><th>Sprint de resolución</th>
+              </tr>
+            </thead>
+            <tbody id="reporte-defectos"></tbody>
+          </table>
+        </div>
+        <p id="reporte-cantidad-defectos"></p>
+        <p id="reporte-integrantes"></p>
+      </div>
+      <p class="mensaje" id="msg-reporte" role="alert" hidden></p>
+    </section>
+
     <section id="sprints">
       <h2>Sprints</h2>
       <div class="columnas">
