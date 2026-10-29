@@ -238,6 +238,6 @@ Sin SKIP (0 tests omitidos con `go test -v`) y sin carreras. HU-40 no toca la pe
 | Corrección de tests del RED | a317814 | `test(HU-40): corregir dos tests de la API del RED` |
 | GREEN | 69fe2f5 | `feat(HU-40): exportar el reporte del proyecto a PDF (GREEN)` |
 | Refactor | — | No hubo |
-| Evidencia y cobertura | (propuesto) | `docs(HU-40): agregar evidencia TDD y cobertura` |
+| Evidencia y cobertura | 6940cd5 | `docs(HU-40): agregar evidencia TDD y cobertura` |
 
 HU-40: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
