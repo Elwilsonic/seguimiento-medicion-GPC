@@ -768,6 +768,32 @@ $("generar-reporte").addEventListener("click", () =>
   }),
 );
 
+// HU-39 · Reporte del sprint (CA-39.8). Muestra cada parte del reporte del
+// sprint actual en su propio contenedor, con las funciones del reporte del
+// proyecto (HU-38).
+$("generar-reporte-sprint").addEventListener("click", () =>
+  accion("msg-reporte-sprint", async () => {
+    const r = await api("GET", "/sprints/" + sprintActual() + "/reporte");
+    const s = r.sprint;
+    $("reporte-sprint").textContent =
+      "Sprint «" + s.nombre + "» · Estado: " + s.estado + " · Del " + s.fecha_inicio + " al " + s.fecha_fin +
+      ". Objetivo: " + s.objetivo;
+    $("reporte-sprint").className = "";
+    const m = r.metricas;
+    $("reporte-sprint-metricas").textContent =
+      m.sp_planificados + " SP planificados, " + m.sp_completados + " SP completados, " +
+      m.items_sin_estimar + " ítem(s) sin estimar. " +
+      historiasCompletadas(m) + " " + horasYDesviacion(m) + " " + defectos(m);
+    filasReporte($("reporte-sprint-esfuerzos"), r.esfuerzos.esfuerzos, filaEsfuerzo, "Sin esfuerzos registrados.");
+    $("reporte-sprint-total-horas").textContent = "Total: " + r.esfuerzos.total_horas.toFixed(1) + " horas";
+    filasReporte($("reporte-sprint-defectos"), r.defectos.defectos, filaDefecto, "Sin defectos registrados.");
+    $("reporte-sprint-cantidad-defectos").textContent = "Cantidad: " + r.defectos.cantidad + " defecto(s)";
+    const nombres = r.integrantes.integrantes;
+    $("reporte-sprint-integrantes").textContent =
+      "Integrantes que registraron esfuerzo: " + (nombres.length === 0 ? "ninguno" : nombres.join(", "));
+  }),
+);
+
 // HU-29 · Registrar defecto (CA-29.11). Usa el ítem y el sprint de detección
 // indicados en el formulario; al terminar muestra el ID del defecto.
 const severidadesDefecto = ["CRITICA", "ALTA", "MEDIA", "BAJA"];
