@@ -360,6 +360,6 @@ El perfil se borró al terminar.
 | Refactor | — | No aplica |
 | Documentación | `106853d` | `docs(HU-41): agregar evidencia TDD y cobertura` |
 
-Los commits de la SDD, su ajuste y su aprobación, el merge de `main`, el RED, el GREEN y la documentación referencian el Issue #115 con `Refs #115`. Todos los commits de la historia están hechos y subidos a la rama `feature/HU-41-fecha-fin-proyecto`, y el Pull Request es el [#150](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/150).
+Los commits de la SDD, su ajuste y su aprobación, el RED, el GREEN y la documentación referencian el Issue #115 con `Refs #115`, y el de cierre lo cierra con `Closes #115`. El merge de `main` (`e61f21a`, `chore(HU-41): traer main con HU-39`) no lleva referencia al Issue. Todos los commits de la historia están hechos y subidos a la rama `feature/HU-41-fecha-fin-proyecto`, y el Pull Request es el [#150](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/150).
 
 HU-41: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
