@@ -991,3 +991,70 @@ func TestInterfaz_GenerarReporteMuestraCadaParte(t *testing.T) {
 		}
 	}
 }
+
+// HU-39 · Generar el reporte de un sprint (Issue #57)
+//
+// Trazabilidad: CA-39.8. La sección "Reportes" tiene el botón "Generar
+// reporte del sprint", que llama a GET /sprints/{id}/reporte con el sprint
+// actual y muestra cada parte del reporte en su propio contenedor, sin tocar
+// los ids del reporte del proyecto (HU-38).
+
+func TestInterfaz_SeccionReportesConElBotonGenerarReporteDelSprint(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="reportes">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de reportes")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de reportes no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		`id="generar-reporte-sprint"`,
+		"Generar reporte del sprint",
+		`id="datos-reporte-sprint"`,
+		`id="msg-reporte-sprint"`,
+		`id="reporte-sprint"`,
+		`id="reporte-sprint-metricas"`,
+		`id="reporte-sprint-esfuerzos"`,
+		`id="reporte-sprint-total-horas"`,
+		`id="reporte-sprint-defectos"`,
+		`id="reporte-sprint-cantidad-defectos"`,
+		`id="reporte-sprint-integrantes"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de reportes no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_GenerarReporteDelSprintLlamaALaAPIConElSprintActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("generar-reporte-sprint")`, `accion("msg-reporte-sprint"`, `sprintActual() + "/reporte"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_GenerarReporteDelSprintMuestraCadaParte(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`$("reporte-sprint")`,
+		`$("reporte-sprint-metricas")`,
+		`$("reporte-sprint-esfuerzos")`,
+		`$("reporte-sprint-total-horas")`,
+		`$("reporte-sprint-defectos")`,
+		`$("reporte-sprint-cantidad-defectos")`,
+		`$("reporte-sprint-integrantes")`,
+		"Objetivo: ",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
