@@ -15,6 +15,7 @@ Universidad Tecnológica Nacional — Facultad Regional San Rafael
 - **Integración continua:** Cada Pull Request hacia `main` corre `gofmt`, `go vet ./...` y `go test -race ./...` con GitHub Actions, y muestra la cobertura total
 - **Interfaz web:** HTML, JavaScript y CSS sin frameworks, embebidos en el binario con `embed` y servidos por el mismo servidor (TEC-04); ver [Interfaz web](#interfaz-web)
 - **Persistencia:** en memoria (valor por defecto) o PostgreSQL 17 en Docker (TEC-05), con el driver `github.com/jackc/pgx/v5`; ver [Persistencia con PostgreSQL](#persistencia-con-postgresql)
+- **PDF:** el reporte del proyecto se exporta a PDF con `github.com/go-pdf/fpdf` (HU-40); ver [Librería de PDF](#librería-de-pdf)
 
 ## Requisitos
 
@@ -40,7 +41,7 @@ Con el servidor en marcha, abrí <http://localhost:8080/> en el navegador (TEC-0
 3. **Planning Poker:** muestra la última sesión abierta para un ítem del backlog, con su ID, ítem, estado, ronda y las cartas de la escala de HU-20 (HU-21), permite votar una carta indicando el nombre del integrante sin mostrar los votos (HU-22), con "Revelar votos", muestra a la vez la lista de votos (integrante y puntos) y deja la sesión REVELADA, sin más votos (HU-23) y, en "Registrar estimación acordada", con un botón por carta, guarda los story points acordados en el ítem, deja la sesión CERRADA y recarga el backlog para mostrar el valor en la columna SP (HU-25).
 4. **Métricas:** con "Ver métricas", muestra los story points planificados y completados, los ítems sin estimar y la velocidad del proyecto actual ("sin datos" si no hay sprints cerrados) y, si hay sprint actual, los story points de ese sprint (HU-32); en los dos niveles, el porcentaje de historias completadas con las cantidades de ítems ("sin datos" si no hay ítems, HU-34), las horas estimadas y reales, los ítems sin horas estimadas y la desviación ("sin datos" si no está disponible, HU-33), y los defectos detectados y resueltos (HU-47).
 5. **Dashboard:** con "Ver resumen", muestra el nombre y el estado del proyecto actual, la cantidad de ítems del backlog en PENDIENTE, EN_CURSO y TERMINADO, y el sprint actual (el sprint ABIERTO del proyecto, con sus fechas y su objetivo) o "ninguno abierto" (HU-36). Con "Ver gráficos", muestra M1 a M10 del proyecto y tres gráficos por sprint: Story Points completados por sprint cerrado con la velocidad como línea de referencia, Story Points planificados y completados, y horas estimadas y reales con su desviación; una métrica no disponible se muestra como "sin datos" (HU-37).
-6. **Reportes:** con "Generar reporte", muestra el reporte del proyecto actual: sus datos (nombre, estado, fecha de inicio o "sin registrar" y descripción), sus métricas con el mismo formato que "Ver métricas", la tabla de esfuerzos con el total de horas, la tabla de defectos con la cantidad y los integrantes que registraron esfuerzo, o "Sin esfuerzos registrados.", "Sin defectos registrados." y "ninguno" si no hay datos (HU-38). Con "Generar reporte del sprint", muestra en un bloque propio el reporte del sprint actual, abierto o cerrado: sus datos (nombre, estado, fechas y objetivo), sus métricas, la tabla de sus esfuerzos con el total de horas, la tabla de los defectos detectados o resueltos en el sprint con la cantidad y los integrantes que registraron esfuerzo en el sprint (HU-39).
+6. **Reportes:** con "Generar reporte", muestra el reporte del proyecto actual: sus datos (nombre, estado, fecha de inicio o "sin registrar" y descripción), sus métricas con el mismo formato que "Ver métricas", la tabla de esfuerzos con el total de horas, la tabla de defectos con la cantidad y los integrantes que registraron esfuerzo, o "Sin esfuerzos registrados.", "Sin defectos registrados." y "ninguno" si no hay datos (HU-38). Con "Descargar PDF", descarga ese mismo reporte del proyecto actual como el archivo `reporte-proyecto-N.pdf` (HU-40). Con "Generar reporte del sprint", muestra en un bloque propio el reporte del sprint actual, abierto o cerrado: sus datos (nombre, estado, fechas y objetivo), sus métricas, la tabla de sus esfuerzos con el total de horas, la tabla de los defectos detectados o resueltos en el sprint con la cantidad y los integrantes que registraron esfuerzo en el sprint (HU-39).
 7. **Sprints:** crear un sprint en el proyecto actual (queda como "sprint actual"), ver sus ítems completados, cerrarlo, registrar el esfuerzo de un integrante en una historia del sprint con el formulario "Registrar esfuerzo" (HU-26) y consultar los esfuerzos por sprint o por historia, con su tabla y total, con el formulario "Consultar esfuerzos" (HU-27).
 8. **Defectos:** registrar un defecto de una historia del backlog con el formulario "Registrar defecto": ítem, descripción, severidad (CRITICA, ALTA, MEDIA o BAJA) y sprint de detección, que es obligatorio y tiene que estar abierto (HU-29), y cambiar su estado con el formulario "Cambiar estado de defecto": defecto, estado (ABIERTO, EN_CORRECCION o RESUELTO, de a un paso) y sprint de resolución, obligatorio solo para RESUELTO, que tiene que estar abierto y ser del mismo proyecto (HU-30). Con el formulario "Consultar defectos" se listan los defectos del proyecto actual o los detectados en el sprint actual, con un filtro de estado opcional, en una tabla con la cantidad (HU-31).
 
@@ -90,6 +91,7 @@ La API responde bajo el prefijo `/api` (TEC-04). El cuerpo de entrada, la respue
 | `GET` | `/api/proyectos/{id}/metricas/sprints` | Cada sprint del proyecto, ordenado por ID, como `{sprint, metricas}`, con el formato de los sprints y el de `/api/sprints/{id}/metricas`; `[]` si no tiene sprints (HU-37) |
 | `GET` | `/api/proyectos/{id}/resumen` | Resumen del estado del proyecto: nombre y estado, ítems en PENDIENTE, EN_CURSO y TERMINADO, y el sprint ABIERTO con el formato de los sprints, o `null` (HU-36) |
 | `GET` | `/api/proyectos/{id}/reporte` | Reporte del proyecto en una sola consulta: `proyecto` (formato de `GET /api/proyectos/{id}`), `metricas` (formato de `GET /api/proyectos/{id}/metricas`), `esfuerzos` de todos sus sprints con el total redondeado a un decimal (formato de `GET /api/sprints/{id}/esfuerzos`), `defectos` (formato de `GET /api/proyectos/{id}/defectos`) e `integrantes` que registraron esfuerzo, sin repetir, con su cantidad (HU-38) |
+| `GET` | `/api/proyectos/{id}/reporte/pdf` | El mismo reporte del proyecto como archivo PDF para descargar (`application/pdf`, `reporte-proyecto-{id}.pdf`), con los valores redondeados como la API; los errores responden en JSON (HU-40) |
 | `GET` | `/api/sprints/{id}/reporte` | Reporte de un sprint, abierto o cerrado, en una sola consulta: `sprint` (formato de `POST /api/proyectos/{id}/sprints`), `metricas` (formato de `GET /api/sprints/{id}/metricas`), `esfuerzos` del sprint con el total redondeado a un decimal (formato de `GET /api/sprints/{id}/esfuerzos`), `defectos` detectados o resueltos en el sprint (formato de `GET /api/sprints/{id}/defectos`) e `integrantes` que registraron esfuerzo en el sprint, sin repetir, con su cantidad (HU-39) |
 
 Ejemplo con `curl` (en Windows, desde Git Bash):
@@ -114,6 +116,7 @@ curl -X PATCH localhost:8080/api/defectos/1/estado -d '{"estado":"RESUELTO","spr
 curl "localhost:8080/api/proyectos/1/defectos?estado=RESUELTO"
 curl localhost:8080/api/sprints/1/completados
 curl -X POST localhost:8080/api/sprints/1/cerrar
+curl -o reporte-proyecto-1.pdf localhost:8080/api/proyectos/1/reporte/pdf
 ```
 
 `PUT /api/proyectos/{id}` y `PUT /api/items/{id}` reemplazan todos sus campos: un campo que no se envía queda vacío (o en 0, las horas estimadas), así que hay que mandar también los que no cambian. Las respuestas de proyectos incluyen `fecha_inicio` y `fecha_fin`, en `AAAA-MM-DD`, o `""` si no están registradas; `PUT /api/proyectos/{id}` no recibe las fechas ni las cambia: se registran solo con `PATCH /api/proyectos/{id}/fecha-inicio` (HU-18) y `PATCH /api/proyectos/{id}/fecha-fin` (HU-41). Las fechas de un sprint y las fechas de inicio y de fin del proyecto usan el formato `AAAA-MM-DD`. Para completar un ítem, antes tiene que estar `EN_CURSO`: el cambio de estado respeta las transiciones de HU-08.
@@ -180,12 +183,23 @@ $env:TEST_DATABASE_URL="postgres://gpc:gpc_dev@localhost:5433/gpc_test?sslmode=d
 
 ### Driver de PostgreSQL
 
-Se usa **`github.com/jackc/pgx/v5`** (versión `v5.11.0`), la única dependencia externa del código de producción (CA-TEC05.10). El equipo aprobó pgx/v5 como única dependencia nueva antes de agregarla al go.mod. Motivos:
+Se usa **`github.com/jackc/pgx/v5`** (versión `v5.11.0`), la única dependencia externa del código de producción hasta HU-40 (CA-TEC05.10). El equipo aprobó pgx/v5 como única dependencia nueva antes de agregarla al go.mod. Motivos:
 
 - Es el driver de PostgreSQL para Go más usado y tiene mantenimiento activo; `lib/pq`, la otra opción conocida, está en modo mantenimiento y sus autores recomiendan pgx.
 - Trae su propio pool de conexiones (`pgxpool`), así que no hace falta otra librería.
 - Lee y escribe los arreglos de PostgreSQL (`TEXT[]`) directamente como `[]string`, que es como se guardan los criterios de aceptación de los ítems.
 - Expone los códigos de error de PostgreSQL (`pgconn.PgError`), que los tests usan para verificar la clave foránea.
+
+### Librería de PDF
+
+HU-40 usa **`github.com/go-pdf/fpdf`** (versión `v0.9.0`, licencia MIT) para exportar el reporte del proyecto a PDF (CA-40.4). El equipo la aprobó el 29/10/2026 (tema 3 del acta de Planning del Sprint 4). Motivos:
+
+- La biblioteca estándar de Go no genera PDF.
+- Está escrita en Go puro, sin cgo: compila en las máquinas del equipo que no tienen compilador de C.
+- Escribe texto en páginas A4 con pocas líneas de código, que es lo que necesita un reporte sin formato.
+- `jung-kurt/gofpdf`, de la que es continuación, está archivada; las alternativas con más funciones tienen licencia comercial o AGPL, o necesitan un programa externo.
+
+Se usa solo en `internal/report/pdf.go`. Las fuentes estándar del PDF escriben en Windows-1252: las tildes, la ñ y los signos del español se ven bien, y un carácter de otro alfabeto se reemplaza por ".". La última versión es de 2023 (ver los límites conocidos de la [SDD de HU-40](docs/especificaciones/HU-40-exportar-reporte-pdf.md)).
 
 ## Equipo
 
