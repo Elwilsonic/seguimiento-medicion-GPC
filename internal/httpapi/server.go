@@ -17,6 +17,7 @@ import (
 	"seguimiento-medicion-gpc/internal/metrics"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
+	"seguimiento-medicion-gpc/internal/report"
 	"seguimiento-medicion-gpc/internal/sprint"
 	"seguimiento-medicion-gpc/internal/web"
 )
@@ -46,6 +47,7 @@ type server struct {
 	defects   *defect.Manager
 	metrics   *metrics.Manager
 	dashboard *dashboard.Manager
+	reports   *report.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
@@ -55,9 +57,12 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	// HU-33 suma el Manager de esfuerzos para calcular M5.
 	// HU-47 suma el Manager de defectos para calcular M9 y M10.
 	// HU-36: dashboard tampoco tiene repositorio ni estado, y se crea igual.
+	// HU-38: report tampoco tiene repositorio ni estado; lee las métricas con
+	// el mismo Manager de métricas del servidor.
 	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects,
 		metrics:   metrics.NewManager(items, sprints, efforts, defects),
 		dashboard: dashboard.NewManager(projects, items, sprints)}
+	s.reports = report.NewManager(projects, sprints, s.metrics, efforts, defects)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
@@ -91,6 +96,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("GET /api/sprints/{id}/metricas", s.sprintMetrics)
 	mux.HandleFunc("GET /api/proyectos/{id}/metricas", s.projectMetrics)
 	mux.HandleFunc("GET /api/proyectos/{id}/resumen", s.projectSummary)
+	mux.HandleFunc("GET /api/proyectos/{id}/reporte", s.projectReport)
 	// La interfaz web responde en / (CA-TEC04.8); las rutas /api/… son más
 	// específicas, así que no la tapan.
 	mux.Handle("GET /", web.Handler())

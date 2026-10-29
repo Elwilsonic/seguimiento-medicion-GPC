@@ -565,6 +565,50 @@ $("ver-resumen").addEventListener("click", () =>
   }),
 );
 
+// HU-38 · Reporte del proyecto (CA-38.7). Muestra cada parte del reporte del
+// proyecto actual en su bloque, con textContent.
+function storyPointsReporte(m) {
+  const velocidad = m.velocidad === null ? "sin datos" : m.velocidad.toFixed(1) + " SP por sprint";
+  return m.sp_planificados + " SP planificados, " + m.sp_completados + " SP completados, " +
+    m.items_sin_estimar + " ítem(s) sin estimar. " +
+    "Velocidad: " + velocidad + " (" + m.sprints_cerrados + " sprint(s) cerrado(s)).";
+}
+
+// filasReporte llena el tbody de una tabla del reporte con fila, o con una
+// fila con textoVacio si no hay elementos.
+function filasReporte(tbody, lista, fila, textoVacio) {
+  tbody.replaceChildren(...lista.map(fila));
+  if (lista.length === 0) {
+    const tr = document.createElement("tr");
+    const td = celda(textoVacio);
+    td.colSpan = 7;
+    td.className = "vacio";
+    tr.append(td);
+    tbody.append(tr);
+  }
+}
+
+$("generar-reporte").addEventListener("click", () =>
+  accion("msg-reporte", async () => {
+    const r = await api("GET", "/proyectos/" + proyectoActual() + "/reporte");
+    const p = r.proyecto;
+    const inicio = p.fecha_inicio === "" ? "Inicio: sin registrar" : "Inicio: " + p.fecha_inicio;
+    $("reporte-proyecto").textContent =
+      "Proyecto «" + p.nombre + "» · Estado: " + p.estado + " · " + inicio + ". " + p.descripcion;
+    $("reporte-proyecto").className = "";
+    const m = r.metricas;
+    $("reporte-metricas").textContent =
+      storyPointsReporte(m) + " " + historiasCompletadas(m) + " " + horasYDesviacion(m) + " " + defectos(m);
+    filasReporte($("reporte-esfuerzos"), r.esfuerzos.esfuerzos, filaEsfuerzo, "Sin esfuerzos registrados.");
+    $("reporte-total-horas").textContent = "Total: " + r.esfuerzos.total_horas.toFixed(1) + " horas";
+    filasReporte($("reporte-defectos"), r.defectos.defectos, filaDefecto, "Sin defectos registrados.");
+    $("reporte-cantidad-defectos").textContent = "Cantidad: " + r.defectos.cantidad + " defecto(s)";
+    const nombres = r.integrantes.integrantes;
+    $("reporte-integrantes").textContent =
+      "Integrantes que registraron esfuerzo: " + (nombres.length === 0 ? "ninguno" : nombres.join(", "));
+  }),
+);
+
 // HU-29 · Registrar defecto (CA-29.11). Usa el ítem y el sprint de detección
 // indicados en el formulario; al terminar muestra el ID del defecto.
 const severidadesDefecto = ["CRITICA", "ALTA", "MEDIA", "BAJA"];
