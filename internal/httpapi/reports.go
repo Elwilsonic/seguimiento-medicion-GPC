@@ -42,8 +42,6 @@ func (s *server) projectReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func toProjectReportResponse(rep report.ProjectReport) projectReportResponse {
-	names := make([]string, 0, len(rep.Members.Names))
-	names = append(names, rep.Members.Names...)
 	return projectReportResponse{
 		Proyecto: toProjectResponse(rep.Project),
 		Metricas: toReportMetricsResponse(rep.Metrics),
@@ -52,7 +50,7 @@ func toProjectReportResponse(rep report.ProjectReport) projectReportResponse {
 		// redondeado a un decimal (RN-38.9).
 		Esfuerzos:   toEffortListResponse(effort.Summary{Efforts: rep.Efforts.Efforts, TotalHours: rep.Efforts.TotalHours}),
 		Defectos:    toDefectListResponse(rep.Defects.Defects),
-		Integrantes: memberListResponse{Integrantes: names, Cantidad: len(names)},
+		Integrantes: toMemberListResponse(rep.Members),
 	}
 }
 
