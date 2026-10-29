@@ -162,7 +162,7 @@ Se hizo con el servidor compilado de la rama (`PORT=18914`, datos en memoria) y 
 
 ### Uso desde el navegador
 
-Pendiente: el recorrido en el navegador de Buttini Cristobal. Consiste en crear un proyecto y dos sprints (el primero cerrado con un ítem completado), tocar "Ver sprints del proyecto" y después "Ver ítems completados" en la fila del sprint cerrado.
+Buttini Cristobal hizo el recorrido en el navegador el 29/10/2026 y confirmó que funciona. Creó un proyecto y dos sprints, el primero cerrado con un ítem completado, tocó "Ver sprints del proyecto" y después "Ver ítems completados" en la fila del sprint cerrado.
 
 ## Refactor (`3d53790`)
 
