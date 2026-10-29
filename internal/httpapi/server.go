@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/dashboard"
 	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
+	"seguimiento-medicion-gpc/internal/member"
 	"seguimiento-medicion-gpc/internal/metrics"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
@@ -48,10 +49,11 @@ type server struct {
 	metrics   *metrics.Manager
 	dashboard *dashboard.Manager
 	reports   *report.Manager
+	members   *member.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
-func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager) http.Handler {
+func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager, members *member.Manager) http.Handler {
 	// HU-32: metrics no tiene repositorio ni estado, así que se crea acá con
 	// los Manager de ítems y de sprints, sin cambiar la firma de NewHandler.
 	// HU-33 suma el Manager de esfuerzos para calcular M5.
@@ -59,7 +61,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	// HU-36: dashboard tampoco tiene repositorio ni estado, y se crea igual.
 	// HU-38: report tampoco tiene repositorio ni estado; lee las métricas con
 	// el mismo Manager de métricas del servidor.
-	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects,
+	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects, members: members,
 		metrics:   metrics.NewManager(items, sprints, efforts, defects),
 		dashboard: dashboard.NewManager(projects, items, sprints)}
 	s.reports = report.NewManager(projects, sprints, s.metrics, efforts, defects)

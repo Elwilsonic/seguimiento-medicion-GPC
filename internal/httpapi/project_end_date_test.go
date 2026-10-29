@@ -183,7 +183,7 @@ func TestRegistrarFechaFinProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18"))
 
