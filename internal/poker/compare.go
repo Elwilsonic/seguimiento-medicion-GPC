@@ -15,8 +15,33 @@ type VoteComparison struct {
 	Highest        VoteGroup
 }
 
-// CompareVotes compara los votos revelados de la ronda (HU-24).
+// CompareVotes compara los votos revelados de la ronda (HU-24). Hay
+// diferencia si no todos tienen los mismos puntos; el menor y el mayor llevan
+// a sus integrantes en el orden de los votos. Es una función pura y devuelve
+// listas nuevas (RN-24.10).
 func CompareVotes(votes []Vote) VoteComparison {
-	// Stub de la fase RED.
-	return VoteComparison{}
+	comparison := VoteComparison{
+		Lowest:  VoteGroup{Voters: []string{}},
+		Highest: VoteGroup{Voters: []string{}},
+	}
+	if len(votes) == 0 {
+		return comparison
+	}
+
+	comparison.Lowest.Points = votes[0].Points
+	comparison.Highest.Points = votes[0].Points
+	for _, vote := range votes[1:] {
+		comparison.Lowest.Points = min(comparison.Lowest.Points, vote.Points)
+		comparison.Highest.Points = max(comparison.Highest.Points, vote.Points)
+	}
+	for _, vote := range votes {
+		if vote.Points == comparison.Lowest.Points {
+			comparison.Lowest.Voters = append(comparison.Lowest.Voters, vote.Voter)
+		}
+		if vote.Points == comparison.Highest.Points {
+			comparison.Highest.Voters = append(comparison.Highest.Voters, vote.Voter)
+		}
+	}
+	comparison.HasDifferences = comparison.Lowest.Points != comparison.Highest.Points
+	return comparison
 }

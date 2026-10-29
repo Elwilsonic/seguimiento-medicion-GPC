@@ -81,6 +81,8 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("POST /api/poker-sessions/{id}/reveal", s.revealPokerSession)
 	mux.HandleFunc("GET /api/poker-sessions/{id}/estimate", methodNotAllowed)
 	mux.HandleFunc("POST /api/poker-sessions/{id}/estimate", s.estimatePokerSession)
+	mux.HandleFunc("GET /api/poker-sessions/{id}/rounds", methodNotAllowed)
+	mux.HandleFunc("POST /api/poker-sessions/{id}/rounds", s.repeatRoundPokerSession)
 	mux.HandleFunc("POST /api/items/{id}/defectos", s.registerDefect)
 	mux.HandleFunc("PATCH /api/defectos/{id}/estado", s.changeDefectStatus)
 	mux.HandleFunc("GET /api/proyectos/{id}/defectos", s.listDefectsByProject)
