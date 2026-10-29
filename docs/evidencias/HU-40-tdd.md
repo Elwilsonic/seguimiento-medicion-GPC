@@ -218,7 +218,7 @@ godog de HU-40: `10 scenarios (10 passed)`, `39 steps (39 passed)`.
 
 ### Con base (PostgreSQL 16.15) y `-race`
 
-Base `gpc_test` recreada con `db/init/01-schema.sql` (con la columna `end_date` de HU-41):
+Con PostgreSQL 16.15 instalado en el entorno de trabajo, no con el contenedor `postgres:17-alpine` de `docker-compose.yml` (no hay Docker en ese entorno; igual que en HU-47). La base `gpc_test` se recreó con el mismo `db/init/01-schema.sql` que usa el contenedor, con la columna `end_date` de HU-41:
 
 ```
 $ TEST_DATABASE_URL=... go test -race -count=1 -p 1 -coverpkg=./... -coverprofile=cover.out ./...
@@ -228,6 +228,16 @@ total:                                  (statements)            96.0%
 ```
 
 Sin SKIP (0 tests omitidos con `go test -v`) y sin carreras. HU-40 no toca la persistencia: lee el reporte con la operación de HU-38.
+
+## Cambios por la revisión del PR #151
+
+Sosa Ricardo aprobó el PR con tres detalles opcionales:
+
+1. **Criterios del Issue #58 en borrador.** Se reemplazan por CA-40.1 a CA-40.8 después del merge, con autorización.
+2. **Entorno de PostgreSQL.** Se aclaró en "Con base" que se midió con PostgreSQL 16.15 instalado en el entorno de trabajo, no con el contenedor de `docker-compose.yml`.
+3. **Liberar el enlace de la descarga después del clic.** `URL.revokeObjectURL(url)` justo después de `enlace.click()` puede cancelar la descarga en algunos navegadores. Con TDD:
+   - **RED (`584b907`):** `TestInterfaz_DescargarPDFLlamaALaAPIConElProyectoActual` suma que `app.js` libere el enlace con `setTimeout(() => URL.revokeObjectURL(url), 0)`. Falla por esa aserción: `web_test.go:1161: app.js no contiene "setTimeout(() => URL.revokeObjectURL(url), 0)"`.
+   - **GREEN (`52a0498`):** `app.js` libera el enlace con `setTimeout(..., 0)`. `go test ./...` en verde. En el navegador (Chromium con Playwright), "Descargar PDF" sigue descargando `reporte-proyecto-1.pdf` y mostrando "PDF del proyecto 1 descargado.".
 
 ## Commits
 
@@ -239,5 +249,7 @@ Sin SKIP (0 tests omitidos con `go test -v`) y sin carreras. HU-40 no toca la pe
 | GREEN | 69fe2f5 | `feat(HU-40): exportar el reporte del proyecto a PDF (GREEN)` |
 | Refactor | — | No hubo |
 | Evidencia y cobertura | 6940cd5 | `docs(HU-40): agregar evidencia TDD y cobertura` |
+| RED de la revisión (punto 3) | 584b907 | `test(HU-40): verificar que la descarga libera el enlace después del clic (RED)` |
+| GREEN de la revisión (punto 3) | 52a0498 | `fix(HU-40): liberar el enlace de la descarga después del clic (GREEN)` |
 
 HU-40: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
