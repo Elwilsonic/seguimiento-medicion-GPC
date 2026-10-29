@@ -82,7 +82,10 @@ function mostrarProyecto(p) {
   // HU-18: fecha_inicio es "" si no está registrada.
   $("form-fecha-inicio-proyecto").fecha_inicio.value = p.fecha_inicio;
   const inicio = p.fecha_inicio ? "inicio: " + p.fecha_inicio : "sin fecha de inicio";
-  $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + "), " + inicio;
+  // HU-41: fecha_fin es "" si no está registrada.
+  $("form-fecha-fin-proyecto").fecha_fin.value = p.fecha_fin;
+  const fin = p.fecha_fin ? "fin: " + p.fecha_fin : "sin fecha de fin";
+  $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + "), " + inicio + ", " + fin;
 }
 
 async function cargarProyecto() {
@@ -136,6 +139,20 @@ $("form-fecha-inicio-proyecto").addEventListener("submit", (e) => {
     });
     mostrarProyecto(p);
     mostrar("msg-proyectos", "Fecha de inicio del proyecto " + p.id + " registrada: " + p.fecha_inicio + ".", false);
+  });
+});
+
+// HU-41: registra la fecha de fin del proyecto actual, posterior a la de
+// inicio. El campo de fecha del navegador ya envía AAAA-MM-DD.
+$("form-fecha-fin-proyecto").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-proyectos", async () => {
+    const p = await api("PATCH", "/proyectos/" + proyectoActual() + "/fecha-fin", {
+      fecha_fin: form.fecha_fin.value,
+    });
+    mostrarProyecto(p);
+    mostrar("msg-proyectos", "Fecha de fin del proyecto " + p.id + " registrada: " + p.fecha_fin + ".", false);
   });
 });
 

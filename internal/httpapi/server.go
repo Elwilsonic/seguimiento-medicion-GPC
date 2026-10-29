@@ -68,6 +68,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
 	mux.HandleFunc("PUT /api/proyectos/{id}", s.updateProject)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-inicio", s.setProjectStartDate)
+	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-fin", s.setProjectEndDate)
 	mux.HandleFunc("POST /api/proyectos/{id}/backlog", s.createItem)
 	mux.HandleFunc("GET /api/proyectos/{id}/backlog", s.listItems)
 	mux.HandleFunc("GET /api/items/{id}", s.getItem)
@@ -150,7 +151,7 @@ func statusFor(err error) int {
 	switch {
 	case errors.Is(err, errInvalidJSON), errors.Is(err, errInvalidID),
 		errors.Is(err, project.ErrEmptyName), errors.Is(err, project.ErrInvalidStatus),
-		errors.Is(err, project.ErrMissingStartDate),
+		errors.Is(err, project.ErrMissingStartDate), errors.Is(err, project.ErrMissingEndDate),
 		errors.Is(err, backlog.ErrEmptyTitle), errors.Is(err, backlog.ErrInvalidPriority),
 		errors.Is(err, backlog.ErrNoAcceptanceCriteria), errors.Is(err, backlog.ErrInvalidEstimatedHours),
 		errors.Is(err, backlog.ErrInvalidStatus), errors.Is(err, backlog.ErrInvalidStoryPoints),
@@ -170,6 +171,8 @@ func statusFor(err error) int {
 		errors.Is(err, defect.ErrDefectNotFound):
 		return http.StatusNotFound
 	case errors.Is(err, project.ErrDuplicateName), errors.Is(err, backlog.ErrInvalidTransition),
+		errors.Is(err, project.ErrStartDateNotRegistered), errors.Is(err, project.ErrEndNotAfterStart),
+		errors.Is(err, project.ErrStartNotBeforeEnd),
 		errors.Is(err, backlog.ErrItemAlreadyAssigned), errors.Is(err, backlog.ErrItemFinished),
 		errors.Is(err, sprint.ErrOpenSprintExists),
 		errors.Is(err, sprint.ErrItemFromAnotherProject), errors.Is(err, sprint.ErrSprintClosed),

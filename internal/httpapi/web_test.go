@@ -681,6 +681,60 @@ func TestInterfaz_DatosDelProyectoMuestranLaFechaDeInicio(t *testing.T) {
 	}
 }
 
+// HU-41 · Registrar la fecha de fin del proyecto (Issue #115)
+//
+// Trazabilidad: CA-41.13. La sección Proyectos tiene, debajo de "Fecha de
+// inicio", un campo de fecha y el botón "Registrar fecha de fin" para el
+// proyecto actual, y los datos del proyecto muestran la fecha de fin. El
+// recorrido en el navegador queda en la evidencia TDD.
+
+func TestInterfaz_FormularioDeFechaDeFinDelProyecto(t *testing.T) {
+	h := newHandler()
+
+	seccion := seccionProyectos(t, get(t, h, "/").Body.String())
+	for _, want := range []string{
+		`id="form-fecha-fin-proyecto"`,
+		`name="fecha_fin" type="date" required`,
+		"Registrar fecha de fin",
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de proyectos no contiene %q", want)
+		}
+	}
+	inicio := strings.Index(seccion, `id="form-fecha-inicio-proyecto"`)
+	fin := strings.Index(seccion, `id="form-fecha-fin-proyecto"`)
+	if inicio == -1 || fin < inicio {
+		t.Error("el formulario de fecha de fin no está debajo de \"Fecha de inicio\"")
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`$("form-fecha-fin-proyecto")`, `"/fecha-fin"`, "fecha_fin: form.fecha_fin.value"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_RegistrarFechaDeFinMuestraElMensajeDeExito(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`mostrar("msg-proyectos", "Fecha de fin del proyecto "`, "p.fecha_fin + \".\""} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_DatosDelProyectoMuestranLaFechaDeFin(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("form-fecha-fin-proyecto").fecha_fin.value = p.fecha_fin`, `"sin fecha de fin"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-36 · Ver el resumen del estado del proyecto (Issue #54)
 //
 // Trazabilidad: CA-36.6. La interfaz tiene una sección "Dashboard" con el

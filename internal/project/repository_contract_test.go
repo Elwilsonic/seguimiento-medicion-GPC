@@ -208,3 +208,70 @@ func contractSave(t *testing.T, repo Repository, p Project) Project {
 func TestMemoryRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
+
+// HU-41 · Registrar la fecha de fin del proyecto (Issue #115)
+//
+// runRepositoryEndDateContract verifica que toda implementación de Repository
+// conserve la fecha de fin, sin registrar (cero) o registrada (CA-41.12).
+func runRepositoryEndDateContract(t *testing.T, newRepo func(t *testing.T) Repository) {
+	t.Run("Save y GetByID conservan la fecha de fin", func(t *testing.T) {
+		repo := newRepo(t)
+		withoutDate := contractSave(t, repo, Project{Name: "Alfa", Status: StatusPlanned, StartDate: contractStartDate})
+		withDate := contractSave(t, repo, Project{Name: "Beta", Status: StatusPlanned, StartDate: contractStartDate, EndDate: contractEndDate})
+
+		if !withoutDate.EndDate.IsZero() {
+			t.Errorf("Save sin fecha de fin: EndDate = %v, se esperaba sin registrar", withoutDate.EndDate)
+		}
+		if !withDate.EndDate.Equal(contractEndDate) {
+			t.Errorf("Save con fecha de fin: EndDate = %v, se esperaba %v", withDate.EndDate, contractEndDate)
+		}
+		for _, want := range []Project{withoutDate, withDate} {
+			got, err := repo.GetByID(want.ID)
+			if err != nil {
+				t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+			}
+			if got != want {
+				t.Errorf("GetByID = %+v, se esperaba %+v", got, want)
+			}
+		}
+	})
+
+	t.Run("Update escribe y conserva la fecha de fin", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, Project{Name: "Alfa", Status: StatusPlanned, StartDate: contractStartDate})
+		withDate := saved
+		withDate.EndDate = contractEndDate
+
+		got, err := repo.Update(withDate)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		if got != withDate {
+			t.Errorf("Update = %+v, se esperaba %+v", got, withDate)
+		}
+		stored, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		if stored != withDate {
+			t.Errorf("GetByID después de Update = %+v, se esperaba %+v", stored, withDate)
+		}
+		listed, err := repo.List()
+		if err != nil {
+			t.Fatalf("List devolvió un error inesperado: %v", err)
+		}
+		if want := []Project{withDate}; !slices.Equal(listed, want) {
+			t.Errorf("List = %+v, se esperaba %+v", listed, want)
+		}
+	})
+}
+
+// contractEndDate es una fecha de fin como la lee la API: 00:00 UTC,
+// posterior a contractStartDate.
+var contractEndDate = time.Date(2026, 12, 18, 0, 0, 0, 0, time.UTC)
+
+// El contrato de memoria caracteriza el comportamiento actual: el repositorio
+// en memoria guarda el struct completo, así que pasa sin cambios.
+func TestMemoryRepository_ContratoFechaDeFin(t *testing.T) {
+	runRepositoryEndDateContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
+}
