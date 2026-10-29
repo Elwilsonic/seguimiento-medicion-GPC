@@ -242,7 +242,27 @@ $("btn-revelar-poker").addEventListener("click", () =>
     }));
     lista.hidden = false;
     mostrarEstimarPoker(s);
+    mostrarDiferenciasPoker(s.comparacion);
     mostrar("msg-poker", "Votos revelados en la sesión " + s.id + ".", false);
+  }));
+
+// mostrarDiferenciasPoker muestra si los votos revelados coinciden o el voto
+// menor y el mayor con sus integrantes (HU-24).
+function mostrarDiferenciasPoker(c) {
+  $("diferencias-poker").textContent = c.hay_diferencias
+    ? "Hay diferencias: menor " + c.menor.puntos + " (" + c.menor.integrantes.join(", ") +
+      "), mayor " + c.mayor.puntos + " (" + c.mayor.integrantes.join(", ") + ")."
+    : "Todos votaron " + c.menor.puntos + ".";
+}
+
+// "Repetir ronda" vuelve a abrir la sesión revelada en la ronda siguiente y
+// sin votos (HU-24); mostrarPoker vuelve a mostrar los botones de voto.
+$("btn-repetir-ronda-poker").addEventListener("click", () =>
+  accion("msg-poker", async () => {
+    const form = $("form-votar-poker");
+    const s = await api("POST", "/poker-sessions/" + form.dataset.sessionId + "/rounds");
+    mostrarPoker(s);
+    mostrar("msg-poker", "Ronda " + s.ronda + " iniciada en la sesión " + s.id + ".", false);
   }));
 
 // mostrarEstimarPoker muestra un botón por carta para registrar la estimación

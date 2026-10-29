@@ -562,3 +562,221 @@ func TestRegistrarEstimacionPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
 		}
 	}
 }
+
+// HU-24 · Detectar diferencias y repetir ronda (Issue #42)
+//
+// CA-24.12 · POST /api/poker-sessions/{id}/reveal suma el campo comparacion y
+// POST /api/poker-sessions/{id}/rounds repite la ronda. Un caso exitoso y un
+// test por cada código de error.
+
+type pokerVoteGroupJSON struct {
+	Puntos      int      `json:"puntos"`
+	Integrantes []string `json:"integrantes"`
+}
+
+type pokerComparisonJSON struct {
+	HayDiferencias bool               `json:"hay_diferencias"`
+	Menor          pokerVoteGroupJSON `json:"menor"`
+	Mayor          pokerVoteGroupJSON `json:"mayor"`
+}
+
+type pokerRevealJSON struct {
+	pokerSessionJSON
+	Comparacion *pokerComparisonJSON `json:"comparacion"`
+}
+
+// expectVoteGroupJSON verifica un extremo de la comparación.
+func expectVoteGroupJSON(t *testing.T, what string, got pokerVoteGroupJSON, points int, voters ...string) {
+	t.Helper()
+	if got.Puntos != points || !slices.Equal(got.Integrantes, voters) {
+		t.Errorf("%s = %+v, se esperaba %d de %v", what, got, points, voters)
+	}
+}
+
+func TestRevelarPoker_IncluyeComparacionConDiferencias(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`, `{"integrante":"Bruno","puntos":8}`)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got pokerRevealJSON
+	decode(t, rec, &got)
+	if got.Estado != "REVELADA" || len(got.Votos) != 2 {
+		t.Errorf("sesión = %+v, se esperaba REVELADA con dos votos", got.pokerSessionJSON)
+	}
+	if got.Comparacion == nil {
+		t.Fatal("comparacion ausente, se esperaba en la respuesta de revelar")
+	}
+	if !got.Comparacion.HayDiferencias {
+		t.Error("hay_diferencias = false, se esperaba true")
+	}
+	expectVoteGroupJSON(t, "menor", got.Comparacion.Menor, 5, "Ana")
+	expectVoteGroupJSON(t, "mayor", got.Comparacion.Mayor, 8, "Bruno")
+}
+
+func TestRevelarPoker_IncluyeComparacionSinDiferencias(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`, `{"integrante":"Bruno","puntos":5}`)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got pokerRevealJSON
+	decode(t, rec, &got)
+	if got.Comparacion == nil {
+		t.Fatal("comparacion ausente, se esperaba en la respuesta de revelar")
+	}
+	if got.Comparacion.HayDiferencias {
+		t.Error("hay_diferencias = true, se esperaba false")
+	}
+	expectVoteGroupJSON(t, "menor", got.Comparacion.Menor, 5, "Ana", "Bruno")
+	expectVoteGroupJSON(t, "mayor", got.Comparacion.Mayor, 5, "Ana", "Bruno")
+}
+
+// expectNoComparison verifica que la respuesta no tenga el campo comparacion.
+func expectNoComparison(t *testing.T, what string, rec *httptest.ResponseRecorder) {
+	t.Helper()
+	var body map[string]any
+	decode(t, rec, &body)
+	if _, ok := body["comparacion"]; ok {
+		t.Errorf("%s: la respuesta incluye comparacion, solo debe incluirla revelar", what)
+	}
+}
+
+// Abrir, votar, repetir la ronda y registrar la estimación no incluyen
+// comparacion: su JSON no cambia.
+func TestVotarPoker_RespuestaSinComparacion(t *testing.T) {
+	h := newHandlerWithItem(t)
+
+	rec := do(t, h, http.MethodPost, "/api/items/1/poker-sessions", "")
+	expectStatus(t, rec, http.StatusCreated)
+	expectNoComparison(t, "abrir", rec)
+
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
+	expectStatus(t, rec, http.StatusOK)
+	expectNoComparison(t, "votar", rec)
+
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", ""), http.StatusOK)
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/1/rounds", "")
+	expectStatus(t, rec, http.StatusOK)
+	expectNoComparison(t, "repetir ronda", rec)
+
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", ""), http.StatusOK)
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`)
+	expectStatus(t, rec, http.StatusOK)
+	expectNoComparison(t, "registrar estimación", rec)
+}
+
+func TestRepetirRondaPoker_Devuelve200ConRondaSiguienteYSinVotos(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/rounds", "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got pokerSessionJSON
+	decode(t, rec, &got)
+	if got.ID != 1 || got.ItemID != 1 || got.Estado != "ABIERTA" || got.Ronda != 2 {
+		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, ABIERTA, en la ronda 2", got)
+	}
+	if got.Votos == nil || len(got.Votos) != 0 {
+		t.Errorf("votos = %#v, se esperaba una lista vacía", got.Votos)
+	}
+	if !slices.Equal(got.Cartas, poker.Cards()) {
+		t.Errorf("cartas = %v, se esperaba %v", got.Cartas, poker.Cards())
+	}
+	// La sesión vuelve a aceptar votos.
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":13}`), http.StatusOK)
+}
+
+func TestRepetirRondaPoker_IDNoNumericoDevuelve400(t *testing.T) {
+	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/rounds", "")
+
+	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+}
+
+func TestRepetirRondaPoker_InexistenteDevuelve404(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+
+	for _, id := range []string{"999", "0", "-1"} {
+		rec := do(t, h, http.MethodPost, "/api/poker-sessions/"+id+"/rounds", "")
+
+		expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
+	}
+}
+
+func TestRepetirRondaPoker_SesionNoReveladaDevuelve409(t *testing.T) {
+	h := newHandlerWithItem(t)
+	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
+
+	// ABIERTA.
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/rounds", "")
+	expectError(t, rec, http.StatusConflict, poker.ErrSessionNotRevealed.Error())
+
+	// CERRADA.
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`), http.StatusOK)
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/1/rounds", "")
+	expectError(t, rec, http.StatusConflict, poker.ErrSessionNotRevealed.Error())
+}
+
+func TestRepetirRondaPoker_OtraSesionAbiertaDevuelve409(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/poker-sessions", ""), http.StatusCreated)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/rounds", "")
+
+	expectError(t, rec, http.StatusConflict, poker.ErrSessionAlreadyOpen.Error())
+}
+
+func TestRepetirRondaPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
+	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
+	h := newEstimateHandler(pokerRepo)
+	createProject(t, h, "Sistema de ventas")
+	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
+	revealSessionWithVotes(t, h)
+	pokerRepo.failUpdate = true
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/rounds", "")
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	stored, err := pokerRepo.GetByID(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Status != poker.StatusRevealed || stored.Round != 1 || len(stored.Votes) != 2 {
+		t.Errorf("sesión guardada = %+v, se esperaba REVELADA en la ronda 1 con dos votos", stored)
+	}
+}
+
+func TestRepetirRondaPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+
+	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodDelete} {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest(method, "/api/poker-sessions/1/rounds", nil))
+
+		if rec.Code != http.StatusMethodNotAllowed {
+			t.Errorf("%s: código = %d, se esperaba %d", method, rec.Code, http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+func TestRepetirRondaPoker_IgnoraElCuerpo(t *testing.T) {
+	h := newHandlerWithItem(t)
+	revealSessionWithVotes(t, h)
+
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/rounds", `no es JSON {"ronda":99}`)
+
+	expectStatus(t, rec, http.StatusOK)
+	var got pokerSessionJSON
+	decode(t, rec, &got)
+	if got.Estado != "ABIERTA" || got.Ronda != 2 {
+		t.Errorf("sesión = %+v, se esperaba ABIERTA en la ronda 2", got)
+	}
+}

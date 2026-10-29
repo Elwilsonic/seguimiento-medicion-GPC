@@ -208,6 +208,45 @@ func TestInterfaz_FormularioRegistrarEstimacion(t *testing.T) {
 	}
 }
 
+// HU-24, CA-24.12 · Después de revelar se muestra la comparación y el botón
+// "Repetir ronda", dentro del bloque de la estimación. El botón es
+// type="button" para que el clic no envíe el formulario.
+func TestInterfaz_DiferenciasYBotonRepetirRonda(t *testing.T) {
+	h := newHandler()
+
+	page := get(t, h, "/").Body.String()
+	start := strings.Index(page, `<form id="form-estimar-poker"`)
+	if start < 0 {
+		t.Fatal(`la página no contiene <form id="form-estimar-poker"`)
+	}
+	end := strings.Index(page[start:], "</form>")
+	if end < 0 {
+		t.Fatal("el formulario form-estimar-poker no se cierra")
+	}
+	form := page[start : start+end]
+	for _, want := range []string{`id="diferencias-poker"`, `id="btn-repetir-ronda-poker"`, "Repetir ronda"} {
+		if !strings.Contains(form, want) {
+			t.Errorf("form-estimar-poker no contiene %q", want)
+		}
+	}
+	if id := strings.Index(form, `id="btn-repetir-ronda-poker"`); id >= 0 {
+		open := strings.LastIndex(form[:id], "<button")
+		closeTag := strings.Index(form[id:], ">")
+		if open < 0 || closeTag < 0 {
+			t.Fatal(`btn-repetir-ronda-poker no es un <button>`)
+		}
+		if tag := form[open : id+closeTag]; !strings.Contains(tag, `type="button"`) {
+			t.Errorf(`botón %s, se esperaba type="button"`, tag)
+		}
+	}
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`"/rounds"`, "s.comparacion", "mostrarDiferenciasPoker", `"Hay diferencias: menor "`, `"Todos votaron "`, `" iniciada en la sesión "`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-32, CA-32.9 · La sección "Métricas" muestra los Story Points del
 // proyecto y del sprint actual, y la velocidad.
 func TestInterfaz_SeccionDeMetricas(t *testing.T) {
