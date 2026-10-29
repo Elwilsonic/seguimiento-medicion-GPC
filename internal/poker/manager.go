@@ -124,6 +124,12 @@ func (m *Manager) Estimate(sessionID int, points int) (Session, error) {
 	return cloneSession(session), nil
 }
 
+// RepeatRound repite la ronda de una sesión REVELADA (HU-24).
+func (m *Manager) RepeatRound(sessionID int) (Session, error) {
+	// Stub de la fase RED.
+	return Session{}, nil
+}
+
 func validCard(points int) bool {
 	for _, card := range Cards() {
 		if card == points {

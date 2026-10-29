@@ -242,6 +242,36 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 			t.Errorf("sesión guardada = %+v, se esperaba CERRADA en la ronda 1 con %+v", got, saved.Votes)
 		}
 	})
+
+	// HU-24, CA-24.11: la ronda nueva se persiste ABIERTA y sin votos.
+	t.Run("Update guarda una ronda nueva ABIERTA sin votos y OpenByItem la encuentra", func(t *testing.T) {
+		repo, itemID := newRepo(t)
+		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusRevealed, Round: 1, Votes: []Vote{{Voter: "Ana", Points: 3}, {Voter: "Bruno", Points: 8}}})
+		if err != nil {
+			t.Fatalf("Save: %v", err)
+		}
+		saved.Status = StatusOpen
+		saved.Round = 2
+		saved.Votes = []Vote{}
+
+		if _, err := repo.Update(saved); err != nil {
+			t.Fatalf("Update: %v", err)
+		}
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID después de Update: %v", err)
+		}
+		if got.Status != StatusOpen || got.Round != 2 || got.Votes == nil || len(got.Votes) != 0 {
+			t.Errorf("sesión guardada = %+v, se esperaba ABIERTA en la ronda 2 sin votos", got)
+		}
+		open, exists, err := repo.OpenByItem(itemID)
+		if err != nil {
+			t.Fatalf("OpenByItem: %v", err)
+		}
+		if !exists || open.ID != saved.ID || open.Round != 2 {
+			t.Errorf("OpenByItem = %+v, %v; se esperaba la sesión %d en la ronda 2", open, exists, saved.ID)
+		}
+	})
 }
 
 // newMemoryRepo arma un repositorio en memoria con un proyecto y un ítem

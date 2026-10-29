@@ -207,6 +207,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"revelar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/reveal", ""},
 		// HU-25, CA-25.9: registrar la estimación acordada.
 		{"registrar estimación Planning Poker", http.MethodPost, "/api/poker-sessions/abc/estimate", `{"puntos":5}`},
+		// HU-24, CA-24.12: repetir la ronda.
+		{"repetir ronda Planning Poker", http.MethodPost, "/api/poker-sessions/abc/rounds", ""},
 		// TEC-04, CA-TEC04.9: endpoints de sprints.
 		{"crear sprint", http.MethodPost, "/api/proyectos/abc/sprints", validSprint},
 		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
