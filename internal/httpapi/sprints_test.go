@@ -5,6 +5,10 @@ import (
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
+	"seguimiento-medicion-gpc/internal/defect"
+	"seguimiento-medicion-gpc/internal/effort"
+	"seguimiento-medicion-gpc/internal/httpapi"
+	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
 )
@@ -301,4 +305,87 @@ func TestCerrarSprint_YaCerradoDevuelve409(t *testing.T) {
 	rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
 
 	expectError(t, rec, http.StatusConflict, sprint.ErrSprintClosed.Error())
+}
+
+// HU-14 · Consultar sprints anteriores (Issue #28)
+//
+// GET /api/proyectos/{id}/sprints lista los sprints del proyecto, abiertos y
+// cerrados, ordenados por ID, con el formato de toSprintResponse (CA-14.1 a
+// CA-14.4).
+
+// failingSprintListRepository falla al listar los sprints de un proyecto.
+type failingSprintListRepository struct {
+	sprint.Repository
+	err error
+}
+
+func (r failingSprintListRepository) ListByProject(int) ([]sprint.Sprint, error) {
+	return nil, r.err
+}
+
+// CA-14.1 · Devuelve el sprint cerrado y el abierto, en orden de ID y con el
+// formato exacto de la creación.
+func TestListarSprintsDelProyecto_Devuelve200ConLosSprintsOrdenados(t *testing.T) {
+	h := newHandlerWithSprint(t)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints",
+		`{"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Métricas"}`), http.StatusCreated)
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/sprints", "")
+
+	expectRawJSON(t, rec, `[
+		{"id":1,"proyecto_id":1,"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Gestionar el backlog","estado":"CERRADO"},
+		{"id":2,"proyecto_id":1,"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Métricas","estado":"ABIERTO"}
+	]`)
+}
+
+// CA-14.2 · Un proyecto sin sprints devuelve 200 y [], no null.
+func TestListarSprintsDelProyecto_SinSprintsDevuelveListaVacia(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/sprints", "")
+
+	expectRawJSON(t, rec, `[]`)
+}
+
+// CA-14.4 · Un {id} no numérico devuelve 400.
+func TestListarSprintsDelProyecto_IDNoNumericoDevuelve400(t *testing.T) {
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/sprints", "")
+
+	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+}
+
+// CA-14.4 · Un proyecto inexistente, 0 o negativo devuelve 404.
+func TestListarSprintsDelProyecto_ProyectoInexistenteDevuelve404(t *testing.T) {
+	h := newHandler()
+	for _, id := range []string{"99", "0", "-1"} {
+		rec := do(t, h, http.MethodGet, "/api/proyectos/"+id+"/sprints", "")
+
+		expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
+	}
+}
+
+// RN-14.7 · Una falla al leer el proyecto o los sprints devuelve 500 sin
+// detalle. Usa brokenRepository de TEC-01 para los proyectos.
+func TestListarSprintsDelProyecto_FallaDeUnRepositorioDevuelve500(t *testing.T) {
+	newHandlerWith := func(projectRepo project.Repository, sprintRepo sprint.Repository) http.Handler {
+		projects := project.NewManager(projectRepo)
+		items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+		sprints := sprint.NewManager(sprintRepo, projects, items)
+		efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+		pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+		defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+		return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	}
+	projectsBroken := newHandlerWith(brokenRepository{}, sprint.NewMemoryRepository())
+	sprintsBroken := newHandlerWith(project.NewMemoryRepository(),
+		failingSprintListRepository{Repository: sprint.NewMemoryRepository(), err: errStorage})
+	createProject(t, sprintsBroken, "Sistema de ventas")
+
+	for _, h := range []http.Handler{projectsBroken, sprintsBroken} {
+		rec := do(t, h, http.MethodGet, "/api/proyectos/1/sprints", "")
+
+		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	}
 }

@@ -90,6 +90,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("GET /api/sprints/{id}/defectos", s.listDefectsBySprint)
 	mux.HandleFunc("GET /api/items/{id}/esfuerzos", s.listEffortsByItem)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
+	mux.HandleFunc("GET /api/proyectos/{id}/sprints", s.listProjectSprints)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/esfuerzos", s.registerEffort)
