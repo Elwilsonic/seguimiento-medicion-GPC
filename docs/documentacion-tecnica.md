@@ -33,8 +33,9 @@ La capa HTTP solo llama a los Manager; los Manager solo acceden a los datos a tr
 | `internal/sprint` | Sprints: crear (uno solo `ABIERTO` por proyecto), asignar ítems, completarlos, listar los completados y cerrar (`CERRADO`) | HU-10 a HU-13 |
 | `internal/poker` | Sesiones de Planning Poker de un ítem: abrir (`ABIERTA`), votar sin mostrar los votos, revelar (`REVELADA`) y registrar la estimación acordada (`CERRADA`), que se guarda en el ítem | HU-21 a HU-23, HU-25 |
 | `internal/effort` | Esfuerzo: registrar integrante, fecha, actividad y horas sobre una historia de un sprint abierto, y listar por historia o por sprint con el total de horas | HU-26, HU-27 |
-| `internal/defect` | Defectos: registrar descripción, severidad (`CRITICA`, `ALTA`, `MEDIA`, `BAJA`) y sprint de detección; nacen `ABIERTO` | HU-29 |
-| `internal/metrics` | Métricas calculadas a partir del backlog y de los sprints: story points planificados y completados, ítems sin estimar, velocidad y porcentaje de historias completadas. No tiene almacenamiento propio | TEC-03, HU-32, HU-34 |
+| `internal/defect` | Defectos: registrar descripción, severidad (`CRITICA`, `ALTA`, `MEDIA`, `BAJA`) y sprint de detección (nacen `ABIERTO`); cambiar el estado de a un paso (`ABIERTO` ↔ `EN_CORRECCION` ↔ `RESUELTO`), con sprint de resolución al resolver; y listar los defectos de un proyecto o los detectados en un sprint, con filtro opcional por estado | HU-29, HU-30, HU-31 |
+| `internal/metrics` | Métricas M1 a M10 de [`docs/metricas.md`](metricas.md), calculadas a partir del backlog, los sprints, los esfuerzos y los defectos: story points planificados y completados, ítems sin estimar, velocidad, horas estimadas y reales, desviación, porcentaje de historias completadas y defectos detectados y resueltos. `Sprint` y `Project` las devuelven todas en una sola consulta. No tiene almacenamiento propio | TEC-03, HU-32 a HU-35, HU-47 |
+| `internal/dashboard` | Resumen del estado de un proyecto: nombre y estado, cantidad de ítems por estado y sprint actual (el `ABIERTO`). No tiene almacenamiento propio | HU-36 |
 | `internal/httpapi` | Rutas HTTP (`server.go`), un archivo de handlers por tema, lectura del JSON (máximo 1 MiB, sin texto después del JSON) y la traducción de errores a códigos (`statusFor`) | TEC-01, TEC-04 y el endpoint de cada historia |
 | `internal/web` | `index.html`, `app.js` y `styles.css`, embebidos con `embed` y servidos en `/`. Sin frameworks: usa la API con `fetch` | TEC-04 y la interfaz de cada historia |
 | `internal/postgres` | `Open`: abre el pool de `pgx/v5` y verifica la conexión; el error nunca incluye la URL | TEC-05 |
@@ -50,6 +51,7 @@ graph TD
     main --> postgres
     httpapi --> web
     httpapi --> metrics
+    httpapi --> dashboard
     httpapi --> poker
     httpapi --> effort
     httpapi --> defect
@@ -58,6 +60,11 @@ graph TD
     httpapi --> sprint
     metrics --> sprint
     metrics --> backlog
+    metrics --> effort
+    metrics --> defect
+    dashboard --> project
+    dashboard --> backlog
+    dashboard --> sprint
     poker --> backlog
     effort --> sprint
     effort --> backlog
@@ -71,14 +78,14 @@ graph TD
 - `backlog` usa `project` para verificar que el proyecto exista al crear o listar ítems.
 - `sprint` usa `project` (el proyecto existe) y `backlog` (el ítem existe, es del mismo proyecto, se asigna y se completa a través de las reglas de HU-08).
 - `poker` usa `backlog` para verificar el ítem y guardar los story points acordados.
-- `effort` y `defect` usan `sprint` (`WithOpenSprint`: el sprint existe y está abierto mientras se registra) y `backlog` (el ítem existe).
-- `metrics` lee ítems y sprints a través de sus Manager; `httpapi` lo crea en `NewHandler`.
+- `effort` y `defect` usan `sprint` (`WithOpenSprint`: el sprint existe y está abierto mientras se registra un esfuerzo o un defecto, o mientras se resuelve un defecto) y `backlog` (el ítem existe y da el proyecto del defecto). Para listar los defectos de un proyecto, `defect` lee sus ítems con `backlog`, que valida el proyecto.
+- `metrics` lee ítems, sprints, esfuerzos (`effort.Manager.ListBySprint`) y defectos (`defect.Manager.ListByProject`) a través de sus Manager. `dashboard` lee el proyecto, sus ítems y sus sprints. `httpapi` crea los dos en `NewHandler`.
 
 Un Manager nunca accede al repositorio de otro: pasa siempre por su Manager, así las validaciones de cada dominio no se pueden saltear.
 
 ### 1.3 Concurrencia
 
-El servidor atiende pedidos en paralelo. Cada Manager que lee y después escribe tiene un `sync.Mutex` que protege la operación completa, para que dos pedidos simultáneos no dejen, por ejemplo, dos proyectos con el mismo nombre (CA-01.7), dos sprints abiertos en un proyecto (CA-10.6) o dos sesiones de Poker abiertas para un ítem (CA-21.6). Cuando una operación toma el lock de dos Manager, el orden es siempre el mismo (por ejemplo, poker → backlog en HU-25), para evitar bloqueos mutuos. El CI corre los tests con `-race`.
+El servidor atiende pedidos en paralelo. Cada Manager que lee y después escribe tiene un `sync.Mutex` que protege la operación completa, para que dos pedidos simultáneos no dejen, por ejemplo, dos proyectos con el mismo nombre (CA-01.7), dos sprints abiertos en un proyecto (CA-10.6) o dos sesiones de Poker abiertas para un ítem (CA-21.6). Cuando una operación toma el lock de dos Manager, el orden es siempre el mismo, para evitar bloqueos mutuos: poker → backlog (HU-25), sprint → backlog (HU-11 a HU-13), defect → sprint → backlog (HU-29 y HU-30) y defect → project → backlog (HU-31). Ningún Manager con mutex llama a `defect` ni a `poker`, así que no hay ciclos. `metrics` y `dashboard` no tienen mutex propio: no guardan estado, llaman a los otros Manager (`metrics` también a `defect`) sin tener ningún lock tomado, y cada lectura queda protegida por el Manager que la hace. El CI corre los tests con `-race`.
 
 ### 1.4 Copias por valor
 
@@ -95,9 +102,9 @@ Cada dominio con datos propios define su interfaz `Repository` en `repository.go
 | `sprint` | `Save`, `OpenByProject`, `GetByID`, `Update`, `ListByProject` |
 | `poker` | `Save`, `OpenByItem`, `GetByID`, `Update` |
 | `effort` | `Save`, `ListByItem`, `ListBySprint` |
-| `defect` | `Save` |
+| `defect` | `Save`, `GetByID`, `Update`, `List` |
 
-`metrics` no tiene repositorio: calcula a partir de los Manager de `backlog` y `sprint`.
+`metrics` y `dashboard` no tienen repositorio: calculan a partir de los Manager de los otros dominios.
 
 ### 2.1 Implementación en memoria
 
@@ -126,6 +133,10 @@ Todas las rutas están en `internal/httpapi/server.go` (`NewHandler`) y usan sol
 | Esfuerzo | `id`, `sprint_id`, `item_id`, `integrante`, `fecha`, `actividad`, `horas` |
 | Lista de esfuerzos | `esfuerzos` (lista), `total_horas` (redondeado a un decimal) |
 | Defecto | `id`, `descripcion`, `severidad`, `estado`, `item_id`, `sprint_deteccion_id`, `sprint_resolucion_id` (0 si no está resuelto) |
+| Lista de defectos | `defectos` (lista), `cantidad` |
+| Métricas del sprint | `sprint_id`, `sp_planificados`, `sp_completados`, `items_sin_estimar`, `items_totales`, `items_terminados`, `porcentaje_completadas`, `horas_estimadas`, `horas_reales`, `desviacion_horas`, `desviacion_porcentual`, `items_sin_horas_estimadas`, `defectos_detectados`, `defectos_resueltos` |
+| Métricas del proyecto | Las del sprint con `proyecto_id` en lugar de `sprint_id`, más `velocidad` y `sprints_cerrados` después de `items_sin_estimar` |
+| Resumen del proyecto | `proyecto_id`, `nombre`, `estado`, `items_pendientes`, `items_en_curso`, `items_terminados`, `sprint_actual` (un sprint, o `null` si no hay ninguno abierto) |
 | Error | `error` (mensaje en español) |
 
 Una lista vacía se devuelve como `[]`, nunca como `null`.
@@ -157,11 +168,15 @@ Una lista vacía se devuelve como `[]`, nunca como `null`.
 | `GET /api/sprints/{id}/esfuerzos` | — | 200, lista de esfuerzos | HU-27 |
 | `GET /api/items/{id}/esfuerzos` | — | 200, lista de esfuerzos | HU-27 |
 | `POST /api/items/{id}/defectos` | `{"descripcion", "severidad", "sprint_deteccion_id"}` | 201, defecto `ABIERTO` | HU-29 |
-| `GET /api/sprints/{id}/metricas` | — | 200, `{sprint_id, sp_planificados, sp_completados, items_sin_estimar, items_totales, items_terminados, porcentaje_completadas}` | HU-32, HU-34 |
-| `GET /api/proyectos/{id}/metricas` | — | 200, `{proyecto_id, sp_planificados, sp_completados, items_sin_estimar, velocidad, sprints_cerrados, items_totales, items_terminados, porcentaje_completadas}` | HU-32, HU-34 |
+| `PATCH /api/defectos/{id}/estado` | `{"estado", "sprint_resolucion_id"}` (el sprint solo es obligatorio para `RESUELTO`) | 200, defecto | HU-30 |
+| `GET /api/proyectos/{id}/defectos` | — (`?estado=` opcional; vacío o con solo espacios no filtra) | 200, lista de defectos del proyecto | HU-31 |
+| `GET /api/sprints/{id}/defectos` | — (`?estado=` opcional) | 200, lista de defectos detectados en el sprint | HU-31 |
+| `GET /api/sprints/{id}/metricas` | — | 200, métricas del sprint | HU-32 a HU-35, HU-47 |
+| `GET /api/proyectos/{id}/metricas` | — | 200, métricas del proyecto | HU-32 a HU-35, HU-47 |
+| `GET /api/proyectos/{id}/resumen` | — | 200, resumen del proyecto | HU-36 |
 | `GET /` | — | 200, interfaz web | TEC-04 |
 
-En las métricas, `velocidad` (promedio de los últimos 3 sprints cerrados) y `porcentaje_completadas` van redondeados a un decimal, o `null` si no hay datos (sin sprints cerrados o sin ítems). Las fórmulas están en [`docs/metricas.md`](metricas.md).
+En las métricas, cada endpoint hace una sola consulta (HU-35). Las horas, la velocidad y el porcentaje van redondeados a un decimal; los story points y las cantidades son enteros. Cuatro campos son `null` cuando no se pueden calcular, y la respuesta trae igual las demás métricas: `velocidad` (sin sprints cerrados), `porcentaje_completadas` (sin ítems) y `desviacion_horas` y `desviacion_porcentual` (sin horas estimadas o sin horas registradas). Las fórmulas están en [`docs/metricas.md`](metricas.md) y los ejemplos completos del contrato, en la SDD de HU-35.
 
 ### 3.3 Errores
 
@@ -169,10 +184,10 @@ Todo error responde `{"error": "<mensaje>"}`. La traducción del error de domini
 
 | Código | Cuándo | Errores |
 |---|---|---|
-| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad o votante vacíos; prioridad, estado, severidad, story points o carta fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes; fin de sprint no posterior al inicio; sprint de detección faltante |
-| 404 | La entidad de la ruta no existe | Proyecto, ítem, sprint o sesión de Planning Poker inexistente |
+| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad o votante vacíos; prioridad, estado, severidad, story points o carta fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes; fin de sprint no posterior al inicio; sprint de detección faltante; estado de defecto inválido (también en el filtro `?estado=`); sprint de resolución faltante al resolver |
+| 404 | La entidad de la ruta no existe | Proyecto, ítem, sprint, sesión de Planning Poker o defecto inexistente |
 | 405 | Método no permitido | Un método distinto del de la ruta (por ejemplo, `GET` en las rutas de sesiones de Planning Poker), con el encabezado `Allow`. La respuesta es texto, no JSON |
-| 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión de Planning Poker abierta para el ítem, o el ítem está terminado; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto |
+| 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión de Planning Poker abierta para el ítem, o el ítem está terminado; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto; transición de estado de defecto no permitida; sprint de resolución de otro proyecto o anterior al de detección |
 | 413 | Cuerpo de más de 1 MiB | `el cuerpo del pedido supera el tamaño máximo de 1 MiB` |
 | 500 | Error no previsto (por ejemplo, la base no responde) | Responde `error interno del servidor`, sin exponer el detalle |
 
