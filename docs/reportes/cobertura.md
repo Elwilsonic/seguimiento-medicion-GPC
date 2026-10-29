@@ -5,25 +5,27 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 ## Cobertura actual
 
 - **Fecha:** 29/10/2026
-- **Última historia con cobertura medida:** HU-38, rama `feature/HU-38-reporte-proyecto` con `main` (`3837b5c`, con HU-37) adentro. Medida sobre el merge `0f98b48` (HU-38 más `main`) en Windows con go1.27.1, sin base (sin `TEST_DATABASE_URL`, 34 tests de PostgreSQL omitidos). No se midió con PostgreSQL: la columna "Con base" sigue siendo la de HU-47, y HU-38 no toca la persistencia.
-- **Comandos:** sin base, `go test -count=1 -cover ./...` por paquete y `go test -count=1 -p 1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out` para el total; con base, `go test -race -count=1 -p 1 -coverpkg=./... -coverprofile=cover.out ./...` para el total y `go test -count=1 -p 1 -cover ./...` por paquete. Total: 83.4% sin base (HU-38 con HU-37) y 95.4% con base (HU-47). El CI (Linux) es la fuente autoritativa.
+- **Última historia con cobertura medida:** HU-39, rama `feature/HU-39-reporte-sprint`, medida sobre el GREEN `e96c5ba` con el refactor de `toProjectReportResponse` aplicado, en Windows con go1.27.2, sin base (sin `TEST_DATABASE_URL`, 34 tests de PostgreSQL omitidos). La comparación con `main` (`a1ff5b5`, con HU-38) se hizo con el mismo Go y los mismos comandos, en una copia temporal con `git worktree`. No se midió con PostgreSQL: la columna "Con base" sigue siendo la de HU-47, y HU-39 no toca la persistencia.
+- **Comandos:** sin base, `go test -count=1 -p 1 -coverprofile=cover.out ./...` por paquete y `go tool cover -func=cover.out` para el total; con base, `go test -race -count=1 -p 1 -coverpkg=./... -coverprofile=cover.out ./...` para el total y `go test -count=1 -p 1 -cover ./...` por paquete. Total: 83.2% sin base (HU-39) y 95.4% con base (HU-47). El CI (Linux) es la fuente autoritativa.
 
-| Paquete | Sin base (HU-38, Windows) | Con base (HU-47, PostgreSQL 16.15) |
+| Paquete | Sin base (HU-39, Windows, go1.27.2) | Con base (HU-47, PostgreSQL 16.15) |
 |---|---|---|
-| `cmd/server` | 31.5% | 33.3% |
-| `internal/backlog` | 83.3% | 99.0% |
+| `cmd/server` | 50.0% | 33.3% |
+| `internal/backlog` | 79.9% | 99.0% |
 | `internal/dashboard` | 100.0% | 100.0% |
-| `internal/defect` | 77.7% | 95.6% |
-| `internal/effort` | 75.2% | 97.3% |
-| `internal/httpapi` | 98.7% | 98.0% |
+| `internal/defect` | 74.6% | 95.6% |
+| `internal/effort` | 71.6% | 97.3% |
+| `internal/httpapi` | 98.6% | 98.0% |
 | `internal/metrics` | 100.0% | 100.0% |
-| `internal/poker` | 69.5% | 94.2% |
+| `internal/poker` | 66.2% | 94.2% |
 | `internal/report` | 100.0% | — |
 | `internal/web` | 0.0% (cubierto por los tests de `internal/httpapi`) | — |
 | `internal/postgres` | 83.3% | 83.3% |
 | `internal/postgrestest` | 36.8% | 36.8% |
-| `internal/project` | 67.5% | 97.4% |
-| `internal/sprint` | 76.3% | 97.1% |
+| `internal/project` | 63.7% | 97.4% |
+| `internal/sprint` | 72.8% | 97.1% |
+
+Con HU-39, `Sprint` y `defectsOfSprint` de `internal/report` y `sprintReport`, `toSprintReportResponse` y `toMemberListResponse` de `internal/httpapi` entran en 100.0%; `internal/report` sigue en 100.0% e `internal/httpapi` en 98.6%. Sin base, el total del perfil sube de **82.9%** en `main` (`a1ff5b5`, mismo go1.27.2 y comandos) a **83.2%**; los demás paquetes conservan sus porcentajes. La columna "Sin base" se volvió a medir completa en esta máquina con go1.27.2: las diferencias con las cifras de HU-38 (por ejemplo, `cmd/server` 31.5% contra 50.0%) son de entorno, porque en `main` dan lo mismo que en la rama. `-race` no corre localmente (sin cgo); lo ejecuta el CI.
 
 Con HU-38, `internal/report` entra en 100.0% (`NewManager`, `Project` y `membersOf`), y `projectReport`, `toProjectReportResponse`, `toReportMetricsResponse` y `NewHandler` de `internal/httpapi` también quedan en 100.0%. Sin base, `internal/httpapi` sube de 98.6% en `main` (`a30a0f8`, mismo go1.27.1, medido con `-p 1` en una copia temporal con `git worktree`) a 98.7% y el total del perfil de **82.7%** a **83.1%**; los demás paquetes conservan sus porcentajes. Después de traer `main` con HU-37 (merge `0f98b48`), `internal/report` sigue en 100.0%, `internal/httpapi` en 98.7% e `internal/metrics` en 100.0%, y el total del perfil queda en **83.4%** (`main` en `3837b5c`, con HU-37, mismo go1.27.1 y comando, medido en una copia temporal con `git worktree`: **83.0%**). `internal/report` no tiene repositorio propio, así que no tiene medición con base. `-race` no corre localmente (sin cgo); lo ejecuta el CI.
 
@@ -135,3 +137,4 @@ HU-13 agrega `Close` y `Update` en memoria y PostgreSQL. En el CI, `internal/spr
 | 28/10/2026 | HU-47 | `internal/metrics` e `internal/httpapi` | 100.0% y 98.0% (sin base); total 82.5%; total 95.4% con PostgreSQL 16.15 y `-coverpkg=./...`, sin SKIP | Medido sobre `94352f2` en Linux con go1.27.1; comparación con `main` (`0ee9b20`) con el mismo Go y comandos: total 82.2%. `SprintDefects`, `ProjectDefects` y `toDefectsResponse` en 100.0%; las ramas sin cubrir de `sprintMetrics` y `projectMetrics` son las defensivas de HU-34 |
 | 28/10/2026 | HU-35 | `internal/metrics` e `internal/httpapi` | 100.0% y 98.6% (sin base); total 82.7% | Medido sobre `79af174` en Windows con go1.27.1 mediante `go test -count=1 -cover ./...` y `go test -count=1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out`, sin `TEST_DATABASE_URL` (30 tests de PostgreSQL omitidos); comparación con `main` (`8624c6e`) con el mismo Go y comando con `-p 1`, en una copia temporal con `git worktree`: `internal/metrics` 100.0%, `internal/httpapi` 98.0%, total 82.5%. `Sprint`, `Project`, `projectPoints`, `sprintDefects`, `projectDefects`, `sprintMetrics`, `projectMetrics` y `optionalOneDecimal` en 100.0%; las ramas defensivas de HU-34 desaparecen porque cada handler hace una sola llamada. No se midió con PostgreSQL (HU-35 no toca la persistencia); `-race` no corre localmente (`CGO_ENABLED=0`), lo ejecuta el CI |
 | 29/10/2026 | HU-37 | `internal/metrics` e `internal/httpapi` | 100.0% y 98.7% (sin base); total 83.0% | Medido sobre `9f5cdeb` en Windows con go1.27.1 mediante `go test -count=1 -cover ./...` y `go test -count=1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out`, sin `TEST_DATABASE_URL` (34 tests de PostgreSQL omitidos); comparación con `main` (`33b1234`) con el mismo Go y comandos, en una copia temporal con `git worktree`: `internal/metrics` 100.0%, `internal/httpapi` 98.6%, total 82.7%. `ProjectSprints`, `sprintMetricsOf`, `toSprintMetricsResponse` y `projectSprintsMetrics` en 100.0%. El dibujo de los gráficos (`internal/web/app.js`) no tiene cobertura de Go. No se midió con PostgreSQL (HU-37 no toca la persistencia); `-race` no corre localmente (`CGO_ENABLED=0`), lo ejecuta el CI |
+| 29/10/2026 | HU-39 | `internal/report` e `internal/httpapi` | 100.0% y 98.6% (sin base); total 83.2% | Medido sobre `e96c5ba` con el refactor de `toProjectReportResponse` aplicado, en Windows con go1.27.2 mediante `go test -count=1 -p 1 -coverprofile=cover.out ./...` y `go tool cover -func=cover.out`, sin `TEST_DATABASE_URL` (34 tests de PostgreSQL omitidos); comparación con `main` (`a1ff5b5`) con los mismos comandos en una copia temporal con `git worktree`: total 82.9% y los mismos porcentajes por paquete. `Sprint`, `defectsOfSprint`, `sprintReport`, `toSprintReportResponse` y `toMemberListResponse` quedan en 100.0%, y `toProjectReportResponse` sigue en 100.0% con el refactor. No se midió PostgreSQL: HU-39 no toca la persistencia. `-race` no corre localmente (`CGO_ENABLED=0`), lo ejecuta el CI |
