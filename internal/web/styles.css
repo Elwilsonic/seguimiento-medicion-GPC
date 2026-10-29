@@ -12,6 +12,10 @@
   --error-texto: #8a1c12;
   --ok-fondo: #e8f5ec;
   --ok-texto: #1d5f34;
+  /* HU-37: series y línea de referencia de los gráficos. */
+  --serie-a: #9db8e0;
+  --serie-b: #2457a6;
+  --referencia: #c0392b;
 }
 
 * {
@@ -190,4 +194,85 @@ th {
   background: var(--ok-fondo);
   color: var(--ok-texto);
   border: 1px solid #b5dcc1;
+}
+
+/* HU-37 · Gráficos SVG del dashboard. */
+.grafico {
+  margin: 1rem 0 0;
+  overflow-x: auto;
+}
+
+.grafico figcaption {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.grafico svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.grafico text {
+  font-size: 11px;
+  fill: var(--texto);
+  text-anchor: middle;
+}
+
+.grafico text.nota {
+  fill: var(--suave);
+}
+
+.grafico text.fin {
+  text-anchor: end;
+  fill: var(--referencia);
+}
+
+.grafico .eje {
+  stroke: var(--borde);
+}
+
+.grafico .barra-a {
+  fill: var(--serie-a);
+}
+
+.grafico .barra-b {
+  fill: var(--serie-b);
+}
+
+.grafico .referencia {
+  stroke: var(--referencia);
+  stroke-dasharray: 4 3;
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--suave);
+}
+
+.leyenda span::before {
+  content: "";
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.3rem;
+  vertical-align: -0.1rem;
+}
+
+.leyenda .muestra-a::before {
+  background: var(--serie-a);
+}
+
+.leyenda .muestra-b::before {
+  background: var(--serie-b);
+}
+
+.leyenda .muestra-referencia::before {
+  height: 0;
+  border-top: 2px dashed var(--referencia);
+  vertical-align: 0.2rem;
 }

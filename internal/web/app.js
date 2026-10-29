@@ -526,14 +526,20 @@ function defectos(m) {
     m.defectos_resueltos + " resuelto(s).";
 }
 
+// HU-32 · M1 a M3 del proyecto. La usan "Ver métricas" y "Ver gráficos"
+// (HU-37), con el mismo texto.
+function storyPointsYVelocidad(p) {
+  const velocidad = p.velocidad === null ? "sin datos" : p.velocidad.toFixed(1) + " SP por sprint";
+  return "Proyecto " + p.proyecto_id + ": " + p.sp_planificados + " SP planificados, " +
+    p.sp_completados + " SP completados, " + p.items_sin_estimar + " ítem(s) sin estimar. " +
+    "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)). ";
+}
+
 $("ver-metricas").addEventListener("click", () =>
   accion("msg-metricas", async () => {
     const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
-    const velocidad = p.velocidad === null ? "sin datos" : p.velocidad.toFixed(1) + " SP por sprint";
     let texto =
-      "Proyecto " + p.proyecto_id + ": " + p.sp_planificados + " SP planificados, " +
-      p.sp_completados + " SP completados, " + p.items_sin_estimar + " ítem(s) sin estimar. " +
-      "Velocidad: " + velocidad + " (" + p.sprints_cerrados + " sprint(s) cerrado(s)). " +
+      storyPointsYVelocidad(p) +
       historiasCompletadas(p) + " " + horasYDesviacion(p) + " " + defectos(p);
     if ($("sprint-actual").value.trim() !== "") {
       const s = await api("GET", "/sprints/" + sprintActual() + "/metricas");
@@ -562,6 +568,159 @@ $("ver-resumen").addEventListener("click", () =>
       r.items_terminados + " terminados. " +
       "Sprint actual: " + sprint + ".";
     $("datos-resumen").className = "";
+  }),
+);
+
+// HU-37 · Gráficos del dashboard (CA-37.1, CA-37.2 y CA-37.6). Son SVG
+// dibujados con JavaScript propio, sin librerías; los textos se asignan con
+// textContent, así el nombre de un sprint no se interpreta como HTML.
+const svgNS = "http://www.w3.org/2000/svg";
+
+function svgElemento(tag, atributos) {
+  const el = document.createElementNS(svgNS, tag);
+  for (const [nombre, valor] of Object.entries(atributos)) {
+    el.setAttribute(nombre, valor);
+  }
+  return el;
+}
+
+function svgTexto(x, y, texto, clase) {
+  const t = svgElemento("text", { x: x, y: y, class: clase });
+  t.textContent = texto;
+  return t;
+}
+
+function aviso(texto) {
+  const p = document.createElement("p");
+  p.className = "vacio";
+  p.textContent = texto;
+  return p;
+}
+
+// graficoDeBarras dibuja un gráfico con un grupo de barras por sprint, una por
+// serie, con su valor escrito con formato. Cada grupo tiene un nombre y una
+// nota opcional debajo. referencia es una línea horizontal opcional
+// ({valor, texto}). Las barras se escalan al mayor valor; si todos son 0, las
+// barras tienen altura 0 (RN-37.8).
+function graficoDeBarras(titulo, series, grupos, formato, referencia) {
+  const anchoBarra = 30;
+  const anchoGrupo = Math.max(series.length * anchoBarra + 30, 130);
+  const alto = 160;
+  const arriba = 22;
+  const base = arriba + alto;
+  const ancho = Math.max(320, grupos.length * anchoGrupo);
+  const valores = grupos.flatMap((g) => g.valores);
+  const maximo = Math.max(0, ...valores, referencia ? referencia.valor : 0);
+  const escala = maximo > 0 ? alto / maximo : 0;
+
+  const figura = document.createElement("figure");
+  figura.className = "grafico";
+  const leyenda = document.createElement("figcaption");
+  leyenda.textContent = titulo;
+  figura.append(leyenda);
+
+  const svg = svgElemento("svg", { viewBox: "0 0 " + ancho + " " + (base + 44), width: ancho, role: "img" });
+  const tituloSvg = svgElemento("title", {});
+  tituloSvg.textContent = titulo;
+  svg.append(tituloSvg,svgElemento("line", { x1: 0, y1: base, x2: ancho, y2: base, class: "eje" }));
+  grupos.forEach((g, i) => {
+    const centro = i * anchoGrupo + anchoGrupo / 2;
+    const inicio = centro - (series.length * anchoBarra) / 2;
+    g.valores.forEach((valor, j) => {
+      const h = valor * escala;
+      const x = inicio + j * anchoBarra;
+      svg.append(
+        svgElemento("rect", { x: x + 2, y: base - h, width: anchoBarra - 4, height: h, class: "barra-" + series[j].clase }),
+        svgTexto(x + anchoBarra / 2, base - h - 4, formato(valor), "valor"),
+      );
+    });
+    svg.append(svgTexto(centro, base + 16, g.nombre, "rotulo"));
+    if (g.nota) {
+      svg.append(svgTexto(centro, base + 32, g.nota, "nota"));
+    }
+  });
+  if (referencia) {
+    const y = base - referencia.valor * escala;
+    svg.append(
+      svgElemento("line", { x1: 0, y1: y, x2: ancho, y2: y, class: "referencia" }),
+      svgTexto(ancho - 4, y - 4, referencia.texto, "fin"),
+    );
+  }
+  figura.append(svg);
+
+  const muestras = document.createElement("p");
+  muestras.className = "leyenda";
+  for (const s of series) {
+    const span = document.createElement("span");
+    span.className = "muestra-" + s.clase;
+    span.textContent = s.nombre;
+    muestras.append(span);
+  }
+  if (referencia) {
+    const span = document.createElement("span");
+    span.className = "muestra-referencia";
+    span.textContent = referencia.texto;
+    muestras.append(span);
+  }
+  figura.append(muestras);
+  return figura;
+}
+
+function desviacionDelSprint(m) {
+  if (m.desviacion_horas === null || m.desviacion_porcentual === null) {
+    return "Desviación: sin datos";
+  }
+  return "Desviación: " + numero1(m.desviacion_horas) + " h (" + numero1(m.desviacion_porcentual) + " %)";
+}
+
+// graficosDelProyecto arma los tres gráficos con las métricas del proyecto
+// (p) y las de cada sprint (lista). El de velocidad usa solo los sprints
+// CERRADO, porque M3 se calcula con ellos (RN-37.5).
+function graficosDelProyecto(p, lista) {
+  if (lista.length === 0) {
+    return [aviso("Sin sprints: no hay datos para los gráficos.")];
+  }
+  const cerrados = lista.filter((e) => e.sprint.estado === "CERRADO");
+  const velocidad = p.velocidad === null || cerrados.length === 0
+    ? aviso("Velocidad: sin datos (no hay sprints cerrados).")
+    : graficoDeBarras(
+      "Story Points completados por sprint cerrado",
+      [{ nombre: "SP completados", clase: "b" }],
+      cerrados.map((e) => ({ nombre: e.sprint.nombre, valores: [e.metricas.sp_completados] })),
+      String,
+      { valor: p.velocidad, texto: "Velocidad: " + p.velocidad.toFixed(1) + " SP" },
+    );
+  const puntos = graficoDeBarras(
+    "Story Points planificados y completados por sprint",
+    [{ nombre: "SP planificados", clase: "a" }, { nombre: "SP completados", clase: "b" }],
+    lista.map((e) => ({ nombre: e.sprint.nombre, valores: [e.metricas.sp_planificados, e.metricas.sp_completados] })),
+    String,
+  );
+  const horas = graficoDeBarras(
+    "Horas estimadas y reales por sprint",
+    [{ nombre: "Horas estimadas", clase: "a" }, { nombre: "Horas reales", clase: "b" }],
+    lista.map((e) => ({
+      nombre: e.sprint.nombre,
+      valores: [e.metricas.horas_estimadas, e.metricas.horas_reales],
+      nota: desviacionDelSprint(e.metricas),
+    })),
+    numero1,
+  );
+  return [velocidad, puntos, horas];
+}
+
+// Pide las dos consultas antes de dibujar, así una falla no deja gráficos con
+// datos incompletos.
+$("ver-graficos").addEventListener("click", () =>
+  accion("msg-graficos", async () => {
+    $("graficos").replaceChildren();
+    const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
+    const lista = await api("GET", "/proyectos/" + proyectoActual() + "/metricas/sprints");
+    $("datos-graficos").textContent =
+      storyPointsYVelocidad(p) +
+      historiasCompletadas(p) + " " + horasYDesviacion(p) + " " + defectos(p);
+    $("datos-graficos").className = "";
+    $("graficos").replaceChildren(...graficosDelProyecto(p, lista));
   }),
 );
 
