@@ -1151,3 +1151,53 @@ func TestInterfaz_GenerarReporteDelSprintMuestraCadaParte(t *testing.T) {
 		}
 	}
 }
+
+// HU-40 · Exportar un reporte a un archivo PDF (Issue #58)
+//
+// Trazabilidad: CA-40.1. La sección "Reportes" tiene el botón "Descargar PDF",
+// que pide GET /proyectos/{id}/reporte/pdf con el proyecto actual y descarga
+// el archivo, sin tocar los ids del reporte del proyecto (HU-38).
+
+func TestInterfaz_SeccionReportesConElBotonDescargarPDF(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="reportes">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de reportes")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de reportes no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		`<button type="button" id="descargar-reporte-pdf">Descargar PDF</button>`,
+		`id="generar-reporte"`,
+		`id="msg-reporte"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de reportes no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_DescargarPDFLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`$("descargar-reporte-pdf")`,
+		`accion("msg-reporte"`,
+		`proyectoActual()`,
+		`"/reporte/pdf"`,
+		`"reporte-proyecto-" + `,
+		`.pdf"`,
+		"PDF del proyecto ",
+		// El enlace temporal se libera después del clic, no en el mismo
+		// paso: liberarlo antes puede cancelar la descarga.
+		"setTimeout(() => URL.revokeObjectURL(url), 0)",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}

@@ -805,6 +805,38 @@ $("generar-reporte").addEventListener("click", () =>
   }),
 );
 
+// HU-40 · PDF del reporte del proyecto (CA-40.1). Descarga el archivo del
+// proyecto actual; si la API responde con error, muestra su mensaje (JSON).
+$("descargar-reporte-pdf").addEventListener("click", () =>
+  accion("msg-reporte", async () => {
+    const id = proyectoActual();
+    let response;
+    try {
+      response = await fetch("/api/proyectos/" + id + "/reporte/pdf");
+    } catch {
+      throw new Error("No se pudo conectar con el servidor. ¿Está en ejecución?");
+    }
+    if (!response.ok) {
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Sin JSON, se informa por el código.
+      }
+      throw new Error((data && data.error) || "Error " + response.status + " del servidor.");
+    }
+    const url = URL.createObjectURL(await response.blob());
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = "reporte-proyecto-" + id + ".pdf";
+    enlace.click();
+    // Se libera después del clic: liberarlo en el mismo paso puede cancelar
+    // la descarga en algunos navegadores.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    mostrar("msg-reporte", "PDF del proyecto " + id + " descargado.", false);
+  }),
+);
+
 // HU-39 · Reporte del sprint (CA-39.8). Muestra cada parte del reporte del
 // sprint actual en su propio contenedor, con las funciones del reporte del
 // proyecto (HU-38).
