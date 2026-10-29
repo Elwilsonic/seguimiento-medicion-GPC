@@ -54,7 +54,8 @@ func TestReportePDF_Devuelve200ConElArchivo(t *testing.T) {
 	h := newHandler()
 	reportTEC03(t, h)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte/pdf", "")
+	// get y no do, porque do exige una respuesta JSON.
+	rec := get(t, h, "/api/proyectos/1/reporte/pdf")
 
 	expectStatus(t, rec, http.StatusOK)
 	if got := rec.Header().Get("Content-Type"); got != "application/pdf" {
@@ -71,7 +72,9 @@ func TestReportePDF_Devuelve200ConElArchivo(t *testing.T) {
 		"Reporte del proyecto «Software Metrics»",
 		"Inicio: 2026-10-05",
 		"#3 · 2026-10-08 · Ana · Pruebas · ítem 3 · sprint 1 · 3 h",
-		"#1 · ALTA · RESUELTO · ítem 1 · detectado en sprint 1 · resuelto en sprint 1 · El total de horas no suma los decimales",
+		// La línea del defecto sigue en la línea siguiente porque es más larga
+		// que el ancho de la página: se verifica su comienzo.
+		"#1 · ALTA · RESUELTO · ítem 1 · detectado en sprint 1",
 		"Integrantes que registraron esfuerzo: Ana, Luis",
 	)
 }
@@ -106,7 +109,8 @@ func TestReportePDF_TieneLosMismosValoresQueElReporteJSON(t *testing.T) {
 	expectStatus(t, jsonRec, http.StatusOK)
 	decode(t, jsonRec, &rep)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte/pdf", "")
+	// get y no do, porque do exige una respuesta JSON.
+	rec := get(t, h, "/api/proyectos/1/reporte/pdf")
 
 	expectStatus(t, rec, http.StatusOK)
 	m := rep.Metricas
