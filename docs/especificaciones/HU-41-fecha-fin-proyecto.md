@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #115
 
-Aprobada por: pendiente
+Aprobada por: Peñalbé Hernán (Agile Enabler), 29/10/2026, con dos agregados (D4 y D5 cubren parte de HU-19, que sigue abierta y fuera de la entrega), que se aplicaron.
 
 ## Historia de usuario
 
@@ -145,7 +145,7 @@ En la sección **Proyectos** de `internal/web`, debajo del formulario "Fecha de 
 - **Fecha de inicio:** no es una entidad, pero **sí se valida contra la guardada** (RN-41.4 y RN-41.5), leída del mismo proyecto bajo el mismo mutex.
 - **Sprints del proyecto:** **no se consultan**, por el mismo motivo que en HU-18: el Issue no relaciona las fechas del proyecto con las de sus sprints, y consultarlos haría que `project` dependa de `sprint`, que ya depende de `project` (ciclo de imports). Un proyecto puede tener sprints que terminan después de su fecha de fin registrada.
 
-## Decisiones de diseño (a confirmar por el Agile Enabler)
+## Decisiones de diseño (confirmadas por el Agile Enabler)
 
 1. **D1 Operación dedicada y formato.** `Manager.SetEndDate(id int, date time.Time) (Project, error)` en `internal/project/end_date.go`, y `PATCH /api/proyectos/{id}/fecha-fin` con `{"fecha_fin":"AAAA-MM-DD"}`. Es el mismo formato y el mismo patrón que HU-18: `dateLayout` y `parseDate` sin cambios, `errInvalidDate` para el formato y un error propio (`ErrMissingEndDate`) para la fecha ausente, porque `sprint.ErrMissingEndDate` habla de la fecha del sprint. No se cambia `PUT /api/proyectos/{id}`, por el mismo motivo que D1 de HU-18: un cliente que no mande la fecha la borraría.
 2. **D2 Sin fecha de inicio, se rechaza.** Si el proyecto no tiene fecha de inicio, `SetEndDate` devuelve `ErrStartDateNotRegistered` (409). El borrador pide "posterior a la de inicio", y sin inicio no hay con qué comparar. *Alternativa:* aceptar la fecha de fin sin inicio y validar la relación recién cuando se registre el inicio. Se descarta porque permite proyectos con fin y sin inicio, y obliga a que HU-18 haga la validación que le corresponde a esta historia.
@@ -286,6 +286,7 @@ CA-41.3 (formato), CA-41.12 (PostgreSQL) y CA-41.13 (API e interfaz) se cubren f
 2. El mismo día se rechaza (D3).
 3. **HU-41 modifica el comportamiento de `SetStartDate` de HU-18** (D5), para que la regla del acta ("posterior a la de inicio") se mantenga también cuando cambia el inicio.
 4. **Cambia el esquema** (columna `projects.end_date`) y hay que recrear la base (D7).
+5. **D4 y D5 cubren parte de HU-19** (Issue #37, "Modificar las fechas del proyecto"): volver a registrar las fechas y validar que el fin siga siendo posterior al inicio (CA-19.1 y CA-19.2 de su borrador). HU-19 sigue abierta y fuera de la entrega, y su Issue no se modifica.
 
 Ninguna contradice las actas. Si el cambio de HU-18 (D5) o el del esquema hacen que la historia no entre en 2 Story Points, se ajusta en la Daily.
 
@@ -337,7 +338,7 @@ Ninguna contradice las actas. Si el cambio de HU-18 (D5) o el del esquema hacen 
 
 - La duración del proyecto calculada y cualquier métrica, dashboard o reporte que la use.
 - Mostrar la fecha de fin en el texto del reporte de la interfaz (HU-38).
-- HU-19.
+- HU-19 (Issue #37, "Modificar las fechas del proyecto"). D4 y D5 cubren parte de ella: volver a registrar las fechas y validar que el fin siga siendo posterior al inicio (CA-19.1 y CA-19.2 de su borrador). HU-19 sigue abierta y fuera de la entrega, y su Issue no se modifica.
 - Borrar una fecha de fin registrada.
 - Pedir la fecha al crear el proyecto o recibirla en `PUT /api/proyectos/{id}`.
 - Relacionar las fechas del proyecto con las de sus sprints.
