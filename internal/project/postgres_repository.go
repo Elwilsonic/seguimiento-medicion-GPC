@@ -24,14 +24,14 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // projectColumns son las columnas de un proyecto, en el orden de scanProject.
-const projectColumns = "id, name, description, status, start_date"
+const projectColumns = "id, name, description, status, start_date, end_date"
 
 // Save guarda el proyecto; la base asigna el siguiente ID correlativo
 // (RN-01.5). Devuelve el proyecto tal como quedó guardado.
 func (r *PostgresRepository) Save(p Project) (Project, error) {
 	row := r.pool.QueryRow(context.Background(),
-		"INSERT INTO projects (name, description, status, start_date) VALUES ($1, $2, $3, $4) RETURNING "+projectColumns,
-		p.Name, p.Description, p.Status, startDateParam(p.StartDate))
+		"INSERT INTO projects (name, description, status, start_date, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING "+projectColumns,
+		p.Name, p.Description, p.Status, dateParam(p.StartDate), dateParam(p.EndDate))
 	saved, err := scanProject(row)
 	if err != nil {
 		return Project{}, fmt.Errorf("guardar el proyecto: %w", err)
@@ -72,8 +72,8 @@ func (r *PostgresRepository) GetByID(id int) (Project, error) {
 // guardado, o ErrProjectNotFound si no existe (HU-02).
 func (r *PostgresRepository) Update(p Project) (Project, error) {
 	row := r.pool.QueryRow(context.Background(),
-		"UPDATE projects SET name = $2, description = $3, status = $4, start_date = $5 WHERE id = $1 RETURNING "+projectColumns,
-		p.ID, p.Name, p.Description, p.Status, startDateParam(p.StartDate))
+		"UPDATE projects SET name = $2, description = $3, status = $4, start_date = $5, end_date = $6 WHERE id = $1 RETURNING "+projectColumns,
+		p.ID, p.Name, p.Description, p.Status, dateParam(p.StartDate), dateParam(p.EndDate))
 	updated, err := scanProject(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Project{}, ErrProjectNotFound
@@ -85,23 +85,27 @@ func (r *PostgresRepository) Update(p Project) (Project, error) {
 }
 
 // scanProject lee un proyecto con las columnas de projectColumns. Una
-// start_date NULL es una fecha sin registrar (valor cero, RN-18.7); una
-// registrada se normaliza a UTC, porque pgx devuelve timestamptz en la zona
-// local de la máquina (RN-18.9, como los sprints).
+// start_date o una end_date NULL es una fecha sin registrar (valor cero,
+// RN-18.7 y RN-41.10); una registrada se normaliza a UTC, porque pgx devuelve
+// timestamptz en la zona local de la máquina (RN-18.9 y RN-41.12, como los
+// sprints).
 func scanProject(row pgx.Row) (Project, error) {
 	var p Project
-	var startDate *time.Time
-	err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Status, &startDate)
+	var startDate, endDate *time.Time
+	err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Status, &startDate, &endDate)
 	if startDate != nil {
 		p.StartDate = startDate.UTC()
+	}
+	if endDate != nil {
+		p.EndDate = endDate.UTC()
 	}
 	return p, err
 }
 
-// startDateParam traduce la fecha de inicio a su valor en la base: el cero
-// (sin registrar) se guarda como NULL, para no guardar el año 1 como una
-// fecha real (HU-18).
-func startDateParam(date time.Time) any {
+// dateParam traduce una fecha del proyecto (inicio o fin) a su valor en la
+// base: el cero (sin registrar) se guarda como NULL, para no guardar el año 1
+// como una fecha real (HU-18 y HU-41).
+func dateParam(date time.Time) any {
 	if date.IsZero() {
 		return nil
 	}

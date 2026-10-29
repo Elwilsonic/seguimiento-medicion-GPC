@@ -59,6 +59,14 @@
           </label>
           <button type="submit">Registrar fecha de inicio</button>
         </form>
+
+        <form id="form-fecha-fin-proyecto">
+          <h3>Fecha de fin</h3>
+          <label>Fecha de fin del proyecto actual
+            <input name="fecha_fin" type="date" required>
+          </label>
+          <button type="submit">Registrar fecha de fin</button>
+        </form>
       </div>
       <p class="mensaje" id="msg-proyectos" role="alert" hidden></p>
     </section>
@@ -191,6 +199,35 @@
         <p id="reporte-integrantes"></p>
       </div>
       <p class="mensaje" id="msg-reporte" role="alert" hidden></p>
+      <button type="button" id="generar-reporte-sprint">Generar reporte del sprint</button>
+      <div id="datos-reporte-sprint">
+        <p id="reporte-sprint" class="vacio">Genera el reporte del sprint actual: sus datos, métricas, esfuerzos, defectos e integrantes.</p>
+        <p id="reporte-sprint-metricas"></p>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Fecha</th><th>Integrante</th><th>Actividad</th><th>Ítem</th><th>Sprint</th><th>Horas</th>
+              </tr>
+            </thead>
+            <tbody id="reporte-sprint-esfuerzos"></tbody>
+          </table>
+        </div>
+        <p id="reporte-sprint-total-horas"></p>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Descripción</th><th>Severidad</th><th>Estado</th><th>Ítem</th><th>Sprint de detección</th><th>Sprint de resolución</th>
+              </tr>
+            </thead>
+            <tbody id="reporte-sprint-defectos"></tbody>
+          </table>
+        </div>
+        <p id="reporte-sprint-cantidad-defectos"></p>
+        <p id="reporte-sprint-integrantes"></p>
+      </div>
+      <p class="mensaje" id="msg-reporte-sprint" role="alert" hidden></p>
     </section>
 
     <section id="sprints">

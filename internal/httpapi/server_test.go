@@ -38,6 +38,9 @@ type projectJSON struct {
 	// HU-18, CA-18.6: fecha de inicio en AAAA-MM-DD, o "" si no está
 	// registrada.
 	FechaInicio string `json:"fecha_inicio"`
+	// HU-41, CA-41.9: fecha de fin en AAAA-MM-DD, o "" si no está
+	// registrada.
+	FechaFin string `json:"fecha_fin"`
 }
 
 type itemJSON struct {
@@ -196,6 +199,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"modificar proyecto", http.MethodPut, "/api/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
 		// HU-18, CA-18.10: registrar la fecha de inicio del proyecto.
 		{"registrar fecha de inicio", http.MethodPatch, "/api/proyectos/abc/fecha-inicio", `{"fecha_inicio":"2026-10-23"}`},
+		// HU-41, CA-41.13: registrar la fecha de fin del proyecto.
+		{"registrar fecha de fin", http.MethodPatch, "/api/proyectos/abc/fecha-fin", `{"fecha_fin":"2026-12-18"}`},
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
 		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
 		// TEC-04, CA-TEC04.9: endpoints de ítems.
@@ -226,6 +231,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"métricas por sprint del proyecto", http.MethodGet, "/api/proyectos/abc/metricas/sprints", ""},
 		// HU-38, CA-38.7: reporte del proyecto.
 		{"reporte del proyecto", http.MethodGet, "/api/proyectos/abc/reporte", ""},
+		// HU-39, CA-39.8: reporte de un sprint.
+		{"reporte del sprint", http.MethodGet, "/api/sprints/abc/reporte", ""},
 		// HU-27, CA-27.10: listado de esfuerzos por historia y por sprint.
 		{"listar esfuerzos del ítem", http.MethodGet, "/api/items/abc/esfuerzos", ""},
 		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},
@@ -648,6 +655,22 @@ var bodyEndpoints = []bodyEndpoint{
 			decode(t, rec, &p)
 			if p.FechaInicio != "" {
 				t.Errorf("proyecto = %+v, se esperaba sin fecha de inicio", p)
+			}
+		},
+	},
+	// HU-41, CA-41.13: el cuerpo se rechaza antes de llegar al Manager, así
+	// que el proyecto 1 sigue sin fecha de fin.
+	{
+		name:   "registrar fecha de fin",
+		method: http.MethodPatch,
+		path:   "/api/proyectos/1/fecha-fin",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			expectStatus(t, rec, http.StatusOK)
+			var p projectJSON
+			decode(t, rec, &p)
+			if p.FechaFin != "" {
+				t.Errorf("proyecto = %+v, se esperaba sin fecha de fin", p)
 			}
 		},
 	},

@@ -24,6 +24,9 @@ type Project struct {
 	// StartDate es la fecha de inicio del proyecto (HU-18); el valor cero
 	// significa que no está registrada (RN-18.7).
 	StartDate time.Time
+	// EndDate es la fecha de fin del proyecto (HU-41); el valor cero
+	// significa que no está registrada (RN-41.10).
+	EndDate time.Time
 }
 
 var (

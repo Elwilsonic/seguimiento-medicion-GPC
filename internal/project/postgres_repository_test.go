@@ -113,3 +113,72 @@ func TestPostgresRepository_FechaDeInicioEnUTC(t *testing.T) {
 		}
 	}
 }
+
+// HU-41 · Registrar la fecha de fin del proyecto (Issue #115). Estos tests
+// necesitan TEST_DATABASE_URL y la base con la columna end_date; sin la
+// variable se omiten.
+
+// CA-41.12: el repositorio PostgreSQL conserva la fecha de fin con el mismo
+// contrato que el de memoria.
+func TestPostgresRepository_ContratoFechaDeFin(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	runRepositoryEndDateContract(t, func(t *testing.T) Repository {
+		return newPostgresTestRepository(t, pool)
+	})
+}
+
+// CA-41.12: un proyecto sin fecha de fin se guarda como NULL y se lee sin
+// fecha.
+func TestPostgresRepository_SinFechaDeFinSeGuardaComoNULL(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	repo := newPostgresTestRepository(t, pool)
+
+	saved := contractSave(t, repo, Project{Name: "Alfa", Status: StatusPlanned, StartDate: contractStartDate})
+
+	var isNull bool
+	err := pool.QueryRow(context.Background(), "SELECT end_date IS NULL FROM projects WHERE id = $1", saved.ID).Scan(&isNull)
+	if err != nil {
+		t.Fatalf("leer end_date: %v", err)
+	}
+	if !isNull {
+		t.Error("end_date no es NULL para un proyecto sin fecha de fin")
+	}
+	read, err := repo.GetByID(saved.ID)
+	if err != nil {
+		t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+	}
+	if !read.EndDate.IsZero() {
+		t.Errorf("EndDate = %v, se esperaba sin registrar", read.EndDate)
+	}
+}
+
+// CA-41.12: la fecha de fin se lee en UTC, el mismo instante y el mismo día,
+// aunque la zona de la máquina sea UTC-3 (patrón de TEC-05 y HU-18).
+func TestPostgresRepository_FechaDeFinEnUTC(t *testing.T) {
+	zone := time.FixedZone("UTC-3", -3*60*60)
+	previousLocal := time.Local
+	time.Local = zone
+	t.Cleanup(func() { time.Local = previousLocal })
+
+	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
+	saved := contractSave(t, repo, Project{Name: "Alfa", Status: StatusPlanned, StartDate: contractStartDate})
+	saved.EndDate = time.Date(2026, 12, 18, 0, 0, 0, 0, time.UTC)
+
+	updated, err := repo.Update(saved)
+	if err != nil {
+		t.Fatalf("Update devolvió un error inesperado: %v", err)
+	}
+	read, err := repo.GetByID(saved.ID)
+	if err != nil {
+		t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+	}
+
+	for op, got := range map[string]Project{"Update": updated, "GetByID": read} {
+		if got.EndDate != saved.EndDate || got.EndDate.Location() != time.UTC {
+			t.Errorf("%s: EndDate = %v, se esperaba %v en UTC", op, got.EndDate, saved.EndDate)
+		}
+		if got.EndDate.Format("2006-01-02") != "2026-12-18" {
+			t.Errorf("%s: día = %s, se esperaba 2026-12-18", op, got.EndDate.Format("2006-01-02"))
+		}
+	}
+}

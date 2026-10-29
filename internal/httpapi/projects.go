@@ -1,7 +1,7 @@
 package httpapi
 
 // Handlers de proyectos (HU-01, HU-02 y HU-03), expuestos desde TEC-01, y
-// fecha de inicio (HU-18).
+// fechas de inicio (HU-18) y de fin (HU-41).
 
 import (
 	"net/http"
@@ -21,6 +21,12 @@ type startDateRequest struct {
 	FechaInicio string `json:"fecha_inicio"`
 }
 
+// endDateRequest es el cuerpo de PATCH /api/proyectos/{id}/fecha-fin
+// (HU-41).
+type endDateRequest struct {
+	FechaFin string `json:"fecha_fin"`
+}
+
 type projectResponse struct {
 	ID          int    `json:"id"`
 	Nombre      string `json:"nombre"`
@@ -28,6 +34,8 @@ type projectResponse struct {
 	Estado      string `json:"estado"`
 	// FechaInicio va en AAAA-MM-DD, o "" si no está registrada (HU-18).
 	FechaInicio string `json:"fecha_inicio"`
+	// FechaFin va en AAAA-MM-DD, o "" si no está registrada (HU-41).
+	FechaFin string `json:"fecha_fin"`
 }
 
 // HU-01
@@ -106,11 +114,40 @@ func (s *server) setProjectStartDate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toProjectResponse(p))
 }
 
+// HU-41. Mismo formato que la fecha de inicio; una fecha vacía o ausente
+// llega al Manager en cero (ErrMissingEndDate).
+func (s *server) setProjectEndDate(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var req endDateRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
+		return
+	}
+	date, err := parseDate(req.FechaFin)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	p, err := s.projects.SetEndDate(id, date)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toProjectResponse(p))
+}
+
 func toProjectResponse(p project.Project) projectResponse {
 	resp := projectResponse{ID: p.ID, Nombre: p.Name, Descripcion: p.Description, Estado: string(p.Status)}
 	// El cero no se formatea: saldría 0001-01-01 (RN-18.7).
 	if !p.StartDate.IsZero() {
 		resp.FechaInicio = p.StartDate.Format(dateLayout)
+	}
+	if !p.EndDate.IsZero() {
+		resp.FechaFin = p.EndDate.Format(dateLayout)
 	}
 	return resp
 }

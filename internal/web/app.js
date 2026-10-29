@@ -82,7 +82,10 @@ function mostrarProyecto(p) {
   // HU-18: fecha_inicio es "" si no está registrada.
   $("form-fecha-inicio-proyecto").fecha_inicio.value = p.fecha_inicio;
   const inicio = p.fecha_inicio ? "inicio: " + p.fecha_inicio : "sin fecha de inicio";
-  $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + "), " + inicio;
+  // HU-41: fecha_fin es "" si no está registrada.
+  $("form-fecha-fin-proyecto").fecha_fin.value = p.fecha_fin;
+  const fin = p.fecha_fin ? "fin: " + p.fecha_fin : "sin fecha de fin";
+  $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + "), " + inicio + ", " + fin;
 }
 
 async function cargarProyecto() {
@@ -136,6 +139,20 @@ $("form-fecha-inicio-proyecto").addEventListener("submit", (e) => {
     });
     mostrarProyecto(p);
     mostrar("msg-proyectos", "Fecha de inicio del proyecto " + p.id + " registrada: " + p.fecha_inicio + ".", false);
+  });
+});
+
+// HU-41: registra la fecha de fin del proyecto actual, posterior a la de
+// inicio. El campo de fecha del navegador ya envía AAAA-MM-DD.
+$("form-fecha-fin-proyecto").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-proyectos", async () => {
+    const p = await api("PATCH", "/proyectos/" + proyectoActual() + "/fecha-fin", {
+      fecha_fin: form.fecha_fin.value,
+    });
+    mostrarProyecto(p);
+    mostrar("msg-proyectos", "Fecha de fin del proyecto " + p.id + " registrada: " + p.fecha_fin + ".", false);
   });
 });
 
@@ -784,6 +801,32 @@ $("generar-reporte").addEventListener("click", () =>
     $("reporte-cantidad-defectos").textContent = "Cantidad: " + r.defectos.cantidad + " defecto(s)";
     const nombres = r.integrantes.integrantes;
     $("reporte-integrantes").textContent =
+      "Integrantes que registraron esfuerzo: " + (nombres.length === 0 ? "ninguno" : nombres.join(", "));
+  }),
+);
+
+// HU-39 · Reporte del sprint (CA-39.8). Muestra cada parte del reporte del
+// sprint actual en su propio contenedor, con las funciones del reporte del
+// proyecto (HU-38).
+$("generar-reporte-sprint").addEventListener("click", () =>
+  accion("msg-reporte-sprint", async () => {
+    const r = await api("GET", "/sprints/" + sprintActual() + "/reporte");
+    const s = r.sprint;
+    $("reporte-sprint").textContent =
+      "Sprint «" + s.nombre + "» · Estado: " + s.estado + " · Del " + s.fecha_inicio + " al " + s.fecha_fin +
+      ". Objetivo: " + s.objetivo;
+    $("reporte-sprint").className = "";
+    const m = r.metricas;
+    $("reporte-sprint-metricas").textContent =
+      m.sp_planificados + " SP planificados, " + m.sp_completados + " SP completados, " +
+      m.items_sin_estimar + " ítem(s) sin estimar. " +
+      historiasCompletadas(m) + " " + horasYDesviacion(m) + " " + defectos(m);
+    filasReporte($("reporte-sprint-esfuerzos"), r.esfuerzos.esfuerzos, filaEsfuerzo, "Sin esfuerzos registrados.");
+    $("reporte-sprint-total-horas").textContent = "Total: " + r.esfuerzos.total_horas.toFixed(1) + " horas";
+    filasReporte($("reporte-sprint-defectos"), r.defectos.defectos, filaDefecto, "Sin defectos registrados.");
+    $("reporte-sprint-cantidad-defectos").textContent = "Cantidad: " + r.defectos.cantidad + " defecto(s)";
+    const nombres = r.integrantes.integrantes;
+    $("reporte-sprint-integrantes").textContent =
       "Integrantes que registraron esfuerzo: " + (nombres.length === 0 ? "ninguno" : nombres.join(", "));
   }),
 );

@@ -92,7 +92,8 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
     "nombre": "Software Metrics",
     "descripcion": "Estimación y seguimiento de proyectos",
     "estado": "EN_CURSO",
-    "fecha_inicio": "2026-10-05"
+    "fecha_inicio": "2026-10-05",
+    "fecha_fin": ""
   },
   "metricas": {
     "proyecto_id": 1,
@@ -181,7 +182,8 @@ func TestReporteProyecto_ContratoDelProyectoVacio(t *testing.T) {
     "nombre": "Proyecto sin datos",
     "descripcion": "Recién creado",
     "estado": "PLANIFICADO",
-    "fecha_inicio": ""
+    "fecha_inicio": "",
+    "fecha_fin": ""
   },
   "metricas": {
     "proyecto_id": 2,

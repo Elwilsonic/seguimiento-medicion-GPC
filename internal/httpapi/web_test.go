@@ -720,6 +720,60 @@ func TestInterfaz_DatosDelProyectoMuestranLaFechaDeInicio(t *testing.T) {
 	}
 }
 
+// HU-41 · Registrar la fecha de fin del proyecto (Issue #115)
+//
+// Trazabilidad: CA-41.13. La sección Proyectos tiene, debajo de "Fecha de
+// inicio", un campo de fecha y el botón "Registrar fecha de fin" para el
+// proyecto actual, y los datos del proyecto muestran la fecha de fin. El
+// recorrido en el navegador queda en la evidencia TDD.
+
+func TestInterfaz_FormularioDeFechaDeFinDelProyecto(t *testing.T) {
+	h := newHandler()
+
+	seccion := seccionProyectos(t, get(t, h, "/").Body.String())
+	for _, want := range []string{
+		`id="form-fecha-fin-proyecto"`,
+		`name="fecha_fin" type="date" required`,
+		"Registrar fecha de fin",
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de proyectos no contiene %q", want)
+		}
+	}
+	inicio := strings.Index(seccion, `id="form-fecha-inicio-proyecto"`)
+	fin := strings.Index(seccion, `id="form-fecha-fin-proyecto"`)
+	if inicio == -1 || fin < inicio {
+		t.Error("el formulario de fecha de fin no está debajo de \"Fecha de inicio\"")
+	}
+
+	js := get(t, h, "/app.js").Body.String()
+	for _, want := range []string{`$("form-fecha-fin-proyecto")`, `"/fecha-fin"`, "fecha_fin: form.fecha_fin.value"} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_RegistrarFechaDeFinMuestraElMensajeDeExito(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`mostrar("msg-proyectos", "Fecha de fin del proyecto "`, "p.fecha_fin + \".\""} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_DatosDelProyectoMuestranLaFechaDeFin(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("form-fecha-fin-proyecto").fecha_fin.value = p.fecha_fin`, `"sin fecha de fin"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-36 · Ver el resumen del estado del proyecto (Issue #54)
 //
 // Trazabilidad: CA-36.6. La interfaz tiene una sección "Dashboard" con el
@@ -1024,6 +1078,73 @@ func TestInterfaz_GenerarReporteMuestraCadaParte(t *testing.T) {
 		"Sin defectos registrados.",
 		"Integrantes que registraron esfuerzo: ",
 		"Inicio: sin registrar",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// HU-39 · Generar el reporte de un sprint (Issue #57)
+//
+// Trazabilidad: CA-39.8. La sección "Reportes" tiene el botón "Generar
+// reporte del sprint", que llama a GET /sprints/{id}/reporte con el sprint
+// actual y muestra cada parte del reporte en su propio contenedor, sin tocar
+// los ids del reporte del proyecto (HU-38).
+
+func TestInterfaz_SeccionReportesConElBotonGenerarReporteDelSprint(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="reportes">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de reportes")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de reportes no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		`id="generar-reporte-sprint"`,
+		"Generar reporte del sprint",
+		`id="datos-reporte-sprint"`,
+		`id="msg-reporte-sprint"`,
+		`id="reporte-sprint"`,
+		`id="reporte-sprint-metricas"`,
+		`id="reporte-sprint-esfuerzos"`,
+		`id="reporte-sprint-total-horas"`,
+		`id="reporte-sprint-defectos"`,
+		`id="reporte-sprint-cantidad-defectos"`,
+		`id="reporte-sprint-integrantes"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de reportes no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_GenerarReporteDelSprintLlamaALaAPIConElSprintActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("generar-reporte-sprint")`, `accion("msg-reporte-sprint"`, `sprintActual() + "/reporte"`} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_GenerarReporteDelSprintMuestraCadaParte(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`$("reporte-sprint")`,
+		`$("reporte-sprint-metricas")`,
+		`$("reporte-sprint-esfuerzos")`,
+		`$("reporte-sprint-total-horas")`,
+		`$("reporte-sprint-defectos")`,
+		`$("reporte-sprint-cantidad-defectos")`,
+		`$("reporte-sprint-integrantes")`,
+		"Objetivo: ",
 	} {
 		if !strings.Contains(js, want) {
 			t.Errorf("app.js no contiene %q", want)
