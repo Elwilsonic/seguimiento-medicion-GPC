@@ -768,7 +768,7 @@ var bodyEndpoints = []bodyEndpoint{
 			t.Helper()
 			rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
 			expectStatus(t, rec, http.StatusCreated)
-			expectRawJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
+			expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
 		},
 	},
 }

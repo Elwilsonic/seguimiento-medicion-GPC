@@ -1,7 +1,10 @@
 package httpapi_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -20,6 +23,23 @@ import (
 
 const validMember = `{"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`
 
+// expectMemberJSON compara el cuerpo con el JSON esperado, los dos
+// compactados. No usa expectRawJSON, que además exige el código 200: el
+// registro responde 201.
+func expectMemberJSON(t *testing.T, rec *httptest.ResponseRecorder, want string) {
+	t.Helper()
+	var got, expected bytes.Buffer
+	if err := json.Compact(&got, rec.Body.Bytes()); err != nil {
+		t.Fatalf("cuerpo no es JSON válido (%v): %s", err, rec.Body.String())
+	}
+	if err := json.Compact(&expected, []byte(want)); err != nil {
+		t.Fatalf("JSON esperado inválido: %v", err)
+	}
+	if !bytes.Equal(got.Bytes(), expected.Bytes()) {
+		t.Errorf("cuerpo =\n%s\nse esperaba\n%s", got.String(), expected.String())
+	}
+}
+
 // newHandlerWithProject arma la API con el proyecto 1 "Sistema de ventas".
 func newHandlerWithProject(t *testing.T) http.Handler {
 	t.Helper()
@@ -35,7 +55,7 @@ func TestRegistrarIntegrante_Devuelve201ConElIntegrante(t *testing.T) {
 	rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"  Ana Pérez ","rol":"product_builder"}`)
 
 	expectStatus(t, rec, http.StatusCreated)
-	expectRawJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
+	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
 }
 
 // CA-15.2 · Nombre vacío, rol vacío o rol inválido devuelven 400.
