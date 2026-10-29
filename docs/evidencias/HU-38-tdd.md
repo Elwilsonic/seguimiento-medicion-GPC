@@ -6,7 +6,7 @@
 - **Escenarios BDD:** [`features/HU-38-reporte-proyecto.feature`](../../features/HU-38-reporte-proyecto.feature): 15 definiciones (13 escenarios y 2 esquemas, con 3 y 5 ejemplos), que godog ejecuta como 21 escenarios y 184 pasos.
 - **Rama:** `feature/HU-38-reporte-proyecto`.
 - **Story Points:** 5 (Planning del Sprint 4).
-- **Dependencias:** HU-27 (#126), HU-31 (#141) y HU-35 (#145), integradas en `main` (`33b1234`) antes de la SDD. Durante la historia, `origin/main` avanzó con TEC-06 (#146, solo `docs/documentacion-tecnica.md`), que se trajo con el merge `f58b5e7`, sin conflictos.
+- **Dependencias:** HU-27 (#126), HU-31 (#141) y HU-35 (#145), integradas en `main` (`33b1234`) antes de la SDD. Durante la historia, `origin/main` avanzó con TEC-06 (#146, solo `docs/documentacion-tecnica.md`), que se trajo con el merge `f58b5e7`, sin conflictos, y con HU-37 (#147), que se trajo con el merge `0f98b48`, con conflictos resueltos (ver "Integración con main (HU-37)").
 
 ## Historia
 
@@ -172,7 +172,7 @@ Es el JSON del ejemplo 1 de la SDD. En la interfaz, "Generar reporte" con el pro
 
 ## Validación final
 
-Sobre `f58b5e7` (GREEN con `main` en `a30a0f8`, que trae TEC-06), en Windows con go1.27.1, sin base:
+Sobre `f58b5e7` (GREEN con `main` en `a30a0f8`, que trae TEC-06), en Windows con go1.27.1, sin base. Las cifras con HU-37 adentro están en "Integración con main (HU-37)".
 
 ```
 $ gofmt -l .
@@ -202,6 +202,51 @@ godog de HU-38: `21 scenarios (21 passed)`, `184 steps (184 passed)`. Con `go te
 
 `go tool cover -func` (perfil de `go test -count=1 -p 1 -coverprofile=cover.out ./...`): `report.NewManager`, `report.Project`, `membersOf`, `projectReport`, `toProjectReportResponse`, `toReportMetricsResponse` y `NewHandler` en 100.0%. `internal/report` entra en 100.0% e `internal/httpapi` sube de 98.6% a 98.7%. Total del perfil sin base: **83.1%** (`main` en `a30a0f8`, mismo Go y comando, en una copia temporal con `git worktree`: **82.7%**). No se midió con PostgreSQL.
 
+## Integración con main (HU-37)
+
+Después de abrir el Pull Request, `main` avanzó con HU-37 (#147, merge `3837b5c`), que agrega `GET /api/proyectos/{id}/metricas/sprints` y los gráficos de la sección "Dashboard" y modifica `internal/httpapi/metrics.go`, `internal/metrics/summary.go`, `server.go`, la interfaz y los mismos documentos. Se trajo con `git merge --no-ff origin/main` en el commit `0f98b48` (`chore(HU-38): traer main con HU-37`).
+
+Hubo conflictos en 6 archivos, y se resolvieron conservando los dos lados:
+
+- `internal/httpapi/server_test.go`: las dos filas de `TestRutasConID_IDNoNumericoDevuelve400`, primero la de HU-37 y después la de HU-38.
+- `internal/httpapi/web_test.go`: los tests de HU-37 y, a continuación, los 3 de HU-38.
+- `internal/web/app.js`: el código de HU-37 y, a continuación, el bloque de HU-38 (`storyPointsReporte`, `filasReporte` y el handler de "Generar reporte"), sin cambios.
+- `README.md`: el ítem "Dashboard" de HU-37 (con "Ver gráficos") y los ítems 6 "Reportes", 7 "Sprints" y 8 "Defectos" de HU-38; las filas de HU-37 y HU-38 en "Historias por sprint". Las rutas de la API se integraron sin conflicto.
+- `docs/ia/registro.md`: las filas de HU-37 y HU-38.
+- `docs/reportes/cobertura.md`: los párrafos de HU-38 y HU-37; la cabecera se actualizó con las cifras de abajo.
+
+`server.go`, `index.html` y `styles.css` se integraron sin conflictos. Comparada con `main` (`git diff 3837b5c 0f98b48`), la rama suma a `app.js` y a `web_test.go` solo las líneas de HU-38 (44 y 66 agregadas, ninguna borrada) y a `server_test.go` la fila de HU-38. Lo que HU-37 cambió en `internal/httpapi/metrics.go` no afecta a `toReportMetricsResponse`: `TestReporteProyecto_CadaParteEsIgualASuEndpoint` sigue verificando que "metricas" es igual a la respuesta de `GET /api/proyectos/{id}/metricas`.
+
+Validación sobre `0f98b48`, en Windows con go1.27.1, sin base:
+
+```
+$ gofmt -l .
+(sin salida)
+
+$ go vet ./...
+(sin salida)
+
+$ go test -count=1 -cover ./...
+ok   seguimiento-medicion-gpc/cmd/server             coverage: 31.5% of statements
+ok   seguimiento-medicion-gpc/internal/backlog       coverage: 83.3% of statements
+ok   seguimiento-medicion-gpc/internal/dashboard     coverage: 100.0% of statements
+ok   seguimiento-medicion-gpc/internal/defect        coverage: 77.7% of statements
+ok   seguimiento-medicion-gpc/internal/effort        coverage: 75.2% of statements
+ok   seguimiento-medicion-gpc/internal/httpapi       coverage: 98.7% of statements
+ok   seguimiento-medicion-gpc/internal/metrics       coverage: 100.0% of statements
+ok   seguimiento-medicion-gpc/internal/poker         coverage: 69.5% of statements
+ok   seguimiento-medicion-gpc/internal/postgres      coverage: 83.3% of statements
+ok   seguimiento-medicion-gpc/internal/postgrestest  coverage: 36.8% of statements
+ok   seguimiento-medicion-gpc/internal/project       coverage: 67.5% of statements
+ok   seguimiento-medicion-gpc/internal/report        coverage: 100.0% of statements
+ok   seguimiento-medicion-gpc/internal/sprint        coverage: 76.3% of statements
+     seguimiento-medicion-gpc/internal/web           coverage: 0.0% of statements
+```
+
+- Con `go test -count=1 -v ./...`: 800 tests de nivel superior pasan, 0 fallan y 34 se saltan (los de PostgreSQL). Pasan `TestFeatures_HU38ReporteProyecto` (`21 scenarios (21 passed)`, `184 steps (184 passed)`), `TestFeatures_HU37GraficosDashboard` y `TestRutasConID_IDNoNumericoDevuelve400`, con las filas de HU-37 y HU-38.
+- La primera corrida de `go test -count=1 -v ./...` terminó con código 1 aunque todos los paquetes dieron `ok` y no hubo ningún `--- FAIL`, por un error de Windows al borrar el ejecutable temporal (`go: unlinkat …\server.test.exe: The process cannot access the file because it is being used by another process`), igual que en HU-35. La repetición dio código 0, con las mismas cifras.
+- `go tool cover -func` (perfil de `go test -count=1 -p 1 -coverprofile=cover.out ./...`): `report.NewManager`, `report.Project`, `membersOf`, `projectReport`, `toProjectReportResponse` y `toReportMetricsResponse` siguen en 100.0%. `internal/report` 100.0%, `internal/httpapi` 98.7% e `internal/metrics` 100.0%. Total del perfil sin base: **83.4%** (`main` en `3837b5c`, con HU-37, mismo Go y comando, en una copia temporal con `git worktree`: **83.0%**, con `internal/httpapi` 98.7% e `internal/metrics` 100.0%). No se midió con PostgreSQL.
+
 ## Commits
 
 | Fase | Commit | Mensaje |
@@ -210,6 +255,7 @@ godog de HU-38: `21 scenarios (21 passed)`, `184 steps (184 passed)`. Con `go te
 | RED | a396ae2 | `test(HU-38): agregar tests (RED)` |
 | GREEN | 7d7bfb2 | `feat(HU-38): generar el reporte del proyecto (GREEN)` |
 | Merge de `main` | f58b5e7 | `chore(HU-38): traer main con TEC-06` |
+| Merge de `main` | 0f98b48 | `chore(HU-38): traer main con HU-37` |
 | Refactor | — | No hubo |
 
 HU-38: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go

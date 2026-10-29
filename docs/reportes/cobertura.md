@@ -4,9 +4,9 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 
 ## Cobertura actual
 
-- **Fecha:** 28/10/2026
-- **Última historia con cobertura medida:** HU-38, rama `feature/HU-38-reporte-proyecto` con `main` (`a30a0f8`, con TEC-06) adentro. Medida sobre el merge `f58b5e7` (GREEN `7d7bfb2` más `main`) en Windows con go1.27.1, sin base (sin `TEST_DATABASE_URL`, 34 tests de PostgreSQL omitidos). No se midió con PostgreSQL: la columna "Con base" sigue siendo la de HU-47, y HU-38 no toca la persistencia.
-- **Comandos:** sin base, `go test -count=1 -cover ./...` por paquete y `go test -count=1 -p 1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out` para el total; con base, `go test -race -count=1 -p 1 -coverpkg=./... -coverprofile=cover.out ./...` para el total y `go test -count=1 -p 1 -cover ./...` por paquete. Total: 83.1% sin base (HU-38) y 95.4% con base (HU-47). El CI (Linux) es la fuente autoritativa.
+- **Fecha:** 29/10/2026
+- **Última historia con cobertura medida:** HU-38, rama `feature/HU-38-reporte-proyecto` con `main` (`3837b5c`, con HU-37) adentro. Medida sobre el merge `0f98b48` (HU-38 más `main`) en Windows con go1.27.1, sin base (sin `TEST_DATABASE_URL`, 34 tests de PostgreSQL omitidos). No se midió con PostgreSQL: la columna "Con base" sigue siendo la de HU-47, y HU-38 no toca la persistencia.
+- **Comandos:** sin base, `go test -count=1 -cover ./...` por paquete y `go test -count=1 -p 1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out` para el total; con base, `go test -race -count=1 -p 1 -coverpkg=./... -coverprofile=cover.out ./...` para el total y `go test -count=1 -p 1 -cover ./...` por paquete. Total: 83.4% sin base (HU-38 con HU-37) y 95.4% con base (HU-47). El CI (Linux) es la fuente autoritativa.
 
 | Paquete | Sin base (HU-38, Windows) | Con base (HU-47, PostgreSQL 16.15) |
 |---|---|---|
@@ -25,7 +25,7 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 | `internal/project` | 67.5% | 97.4% |
 | `internal/sprint` | 76.3% | 97.1% |
 
-Con HU-38, `internal/report` entra en 100.0% (`NewManager`, `Project` y `membersOf`), y `projectReport`, `toProjectReportResponse`, `toReportMetricsResponse` y `NewHandler` de `internal/httpapi` también quedan en 100.0%. Sin base, `internal/httpapi` sube de 98.6% en `main` (`a30a0f8`, mismo go1.27.1, medido con `-p 1` en una copia temporal con `git worktree`) a 98.7% y el total del perfil de **82.7%** a **83.1%**; los demás paquetes conservan sus porcentajes. `internal/report` no tiene repositorio propio, así que no tiene medición con base. `-race` no corre localmente (sin cgo); lo ejecuta el CI.
+Con HU-38, `internal/report` entra en 100.0% (`NewManager`, `Project` y `membersOf`), y `projectReport`, `toProjectReportResponse`, `toReportMetricsResponse` y `NewHandler` de `internal/httpapi` también quedan en 100.0%. Sin base, `internal/httpapi` sube de 98.6% en `main` (`a30a0f8`, mismo go1.27.1, medido con `-p 1` en una copia temporal con `git worktree`) a 98.7% y el total del perfil de **82.7%** a **83.1%**; los demás paquetes conservan sus porcentajes. Después de traer `main` con HU-37 (merge `0f98b48`), `internal/report` sigue en 100.0%, `internal/httpapi` en 98.7% e `internal/metrics` en 100.0%, y el total del perfil queda en **83.4%** (`main` en `3837b5c`, con HU-37, mismo go1.27.1 y comando, medido en una copia temporal con `git worktree`: **83.0%**). `internal/report` no tiene repositorio propio, así que no tiene medición con base. `-race` no corre localmente (sin cgo); lo ejecuta el CI.
 
 Con HU-37, `ProjectSprints`, `sprintMetricsOf`, `toSprintMetricsResponse` y `projectSprintsMetrics` quedan en 100.0%, e `internal/metrics` sigue en 100.0%. Sin base, `internal/httpapi` sube de 98.6% en `main` (`33b1234`, mismo go1.27.1, medido en una copia temporal con `git worktree`) a 98.7%, y el total del perfil sube de **82.7%** a **83.0%**; los demás paquetes conservan sus porcentajes. El dibujo de los gráficos (`internal/web/app.js`) no tiene cobertura de Go: lo verifican los tests de contenido de `internal/httpapi/web_test.go` y la prueba de humo de la evidencia. `-race` no corre localmente (sin cgo); lo ejecuta el CI.
 
