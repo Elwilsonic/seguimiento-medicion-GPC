@@ -255,7 +255,7 @@ Sin sprint actual, el mismo mensaje de error que las demás secciones ("Elegí u
 ## Reglas de negocio
 
 1. **RN-39.1 Consulta única.** `Sprint` devuelve el reporte completo en una sola llamada, con las cinco partes. El handler no llama a ninguna otra operación.
-2. **RN-39.2 Sin cálculos nuevos.** Cada parte sale de una operación existente: los datos del sprint de `sprint.Manager.Get` (HU-11), las métricas de `metrics.Manager.Sprint` (HU-35), los esfuerzos de `effort.Manager.ListBySprint` (HU-27) y los defectos de `defect.Manager.ListByProject` (HU-31). Lo único que arma `report` es la selección de los defectos del sprint (RN-39.5) y la lista de integrantes sin repetir (`membersOf` de HU-38).
+2. **RN-39.2 Sin cálculos nuevos.** Cada parte sale de una operación existente: los datos del sprint de `sprint.Manager.Get` (HU-32), las métricas de `metrics.Manager.Sprint` (HU-35), los esfuerzos de `effort.Manager.ListBySprint` (HU-27) y los defectos de `defect.Manager.ListByProject` (HU-31). Lo único que arma `report` es la selección de los defectos del sprint (RN-39.5) y la lista de integrantes sin repetir (`membersOf` de HU-38).
 3. **RN-39.3 Lecturas y orden.** `Sprint` llama a cada operación una sola vez, en este orden:
 
    | Orden | Operación | Para qué |
