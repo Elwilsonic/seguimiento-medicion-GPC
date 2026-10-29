@@ -785,3 +785,172 @@ func TestConsultaMetricas_LeeLosItemsUnaSolaVez(t *testing.T) {
 		}
 	}
 }
+
+// HU-37 · Ver las métricas en el dashboard con gráficos (Issue #55)
+//
+// CA-37.4: GET /api/proyectos/{id}/metricas/sprints devuelve cada sprint del
+// proyecto con sus métricas, en orden de ID, con los formatos de
+// sprintResponse (HU-10) y sprintMetricsResponse (HU-32 a HU-35). El orden de
+// los campos se verifica con expectRawJSON de HU-35. CA-37.3: las métricas de
+// cada sprint son las de GET /api/sprints/{id}/metricas.
+
+// secondSprint es un segundo sprint del proyecto 1, que se crea después de
+// cerrar el primero (solo puede haber un sprint abierto).
+const secondSprint = `{"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Mostrar el dashboard"}`
+
+// CA-37.1 y CA-37.4 · Contrato con el ejemplo de TEC-03 en el sprint 1,
+// cerrado, y el sprint 2 abierto y sin ítems: las métricas no disponibles
+// del sprint 2 son null.
+func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) {
+	h := newHandler()
+	id := contractTEC03(t, h)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", id), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", secondSprint), http.StatusCreated)
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/metricas/sprints", "")
+
+	expectRawJSON(t, rec, `[
+  {
+    "sprint": {
+      "id": 1,
+      "proyecto_id": 1,
+      "nombre": "Sprint 1",
+      "fecha_inicio": "2026-10-01",
+      "fecha_fin": "2026-10-14",
+      "objetivo": "Gestionar el backlog",
+      "estado": "CERRADO"
+    },
+    "metricas": {
+      "sprint_id": 1,
+      "sp_planificados": 10,
+      "sp_completados": 8,
+      "items_sin_estimar": 1,
+      "items_totales": 4,
+      "items_terminados": 2,
+      "porcentaje_completadas": 50,
+      "horas_estimadas": 20,
+      "horas_reales": 20,
+      "desviacion_horas": 0,
+      "desviacion_porcentual": 0,
+      "items_sin_horas_estimadas": 1,
+      "defectos_detectados": 1,
+      "defectos_resueltos": 1
+    }
+  },
+  {
+    "sprint": {
+      "id": 2,
+      "proyecto_id": 1,
+      "nombre": "Sprint 2",
+      "fecha_inicio": "2026-10-15",
+      "fecha_fin": "2026-10-28",
+      "objetivo": "Mostrar el dashboard",
+      "estado": "ABIERTO"
+    },
+    "metricas": {
+      "sprint_id": 2,
+      "sp_planificados": 0,
+      "sp_completados": 0,
+      "items_sin_estimar": 0,
+      "items_totales": 0,
+      "items_terminados": 0,
+      "porcentaje_completadas": null,
+      "horas_estimadas": 0,
+      "horas_reales": 0,
+      "desviacion_horas": null,
+      "desviacion_porcentual": null,
+      "items_sin_horas_estimadas": 0,
+      "defectos_detectados": 0,
+      "defectos_resueltos": 0
+    }
+  }
+]`)
+}
+
+// CA-37.3 · Las métricas de cada elemento son exactamente el cuerpo de
+// GET /api/sprints/{id}/metricas, y el sprint el de la lista de sprints.
+func TestMetricasPorSprint_ValoresIgualesALaConsultaDeCadaSprint(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+	first := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{{"A", 10, 12}, {"B", 6, 5}})
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", first), ""), http.StatusOK)
+	second := hoursSprint(t, h, "Sprint 2", []hoursItemSpec{{"C", 4, 3}})
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/metricas/sprints", "")
+
+	expectStatus(t, rec, http.StatusOK)
+	var got []struct {
+		Sprint   sprintJSON      `json:"sprint"`
+		Metricas json.RawMessage `json:"metricas"`
+	}
+	decode(t, rec, &got)
+	ids := []int{first, second}
+	if len(got) != len(ids) {
+		t.Fatalf("la lista tiene %d sprints, se esperaba %d", len(got), len(ids))
+	}
+	for i, entry := range got {
+		if entry.Sprint.ID != ids[i] {
+			t.Errorf("posición %d: sprint %d, se esperaba %d", i, entry.Sprint.ID, ids[i])
+		}
+		single := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", ids[i]), "")
+		var want, compact bytes.Buffer
+		if err := json.Compact(&want, single.Body.Bytes()); err != nil {
+			t.Fatalf("métricas del sprint %d: %v", ids[i], err)
+		}
+		if err := json.Compact(&compact, entry.Metricas); err != nil {
+			t.Fatalf("métricas de la lista: %v", err)
+		}
+		if !bytes.Equal(compact.Bytes(), want.Bytes()) {
+			t.Errorf("sprint %d: métricas de la lista =\n%s\nGET /api/sprints/%d/metricas =\n%s", ids[i], compact.String(), ids[i], want.String())
+		}
+	}
+}
+
+// CA-37.4 · Un proyecto sin sprints devuelve 200 y [], no null.
+func TestMetricasPorSprint_SinSprintsDevuelveListaVacia(t *testing.T) {
+	h := newHandler()
+	createProject(t, h, "Sistema de ventas")
+
+	rec := do(t, h, http.MethodGet, "/api/proyectos/1/metricas/sprints", "")
+
+	expectRawJSON(t, rec, `[]`)
+}
+
+// CA-37.4 · Un {id} no numérico devuelve 400.
+func TestMetricasPorSprint_IDNoNumericoDevuelve400(t *testing.T) {
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/metricas/sprints", "")
+
+	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+}
+
+// CA-37.4 · Un proyecto inexistente, 0 o negativo devuelve 404.
+func TestMetricasPorSprint_ProyectoInexistenteDevuelve404(t *testing.T) {
+	h := newHandler()
+	for _, id := range []string{"99", "0", "-1"} {
+		rec := do(t, h, http.MethodGet, "/api/proyectos/"+id+"/metricas/sprints", "")
+
+		expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
+	}
+}
+
+// CA-37.4 · Una falla al leer los esfuerzos o los defectos devuelve 500 sin
+// detalle. Usa los repositorios de prueba de HU-33
+// (failingEffortListRepository) y de HU-31 (brokenDefectRepository).
+func TestMetricasPorSprint_FallaDeUnRepositorioDevuelve500(t *testing.T) {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(failingEffortListRepository{Repository: effort.NewMemoryRepository(), err: errors.New("base caída")}, sprints, items)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	effortsBroken := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	createProject(t, effortsBroken, "Sistema de ventas")
+	expectStatus(t, do(t, effortsBroken, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	defectsBroken := newHandlerWithDefectRepository(t, brokenDefectRepository{})
+
+	for _, h := range []http.Handler{effortsBroken, defectsBroken} {
+		rec := do(t, h, http.MethodGet, "/api/proyectos/1/metricas/sprints", "")
+
+		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	}
+}
