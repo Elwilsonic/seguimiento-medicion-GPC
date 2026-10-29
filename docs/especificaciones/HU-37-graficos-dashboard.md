@@ -191,7 +191,7 @@ Las barras se escalan al mayor valor del gráfico. Los colores salen de variable
 
 El acta describe HU-37 como "Gráficos con las métricas de HU-35, dibujados sin librerías externas" (5 SP), con SVG generado con JavaScript propio en `internal/web` (tema 4). Además, la SDD de HU-35 dice que "HU-37 construye el dashboard sobre el mismo contrato". Esta SDD respeta el SVG y la ausencia de librerías, con **una diferencia**: agrega una ruta nueva en Go (`GET /api/proyectos/{id}/metricas/sprints`) y la operación `metrics.ProjectSprints`. La ruta reutiliza los cálculos y los formatos de HU-35, pero es contrato nuevo. El motivo es que el contrato de HU-35 no permite listar las métricas de cada sprint de un proyecto, y el ejemplo del Issue ("velocidad por sprint") las necesita.
 
-## Comparación con los criterios del Issue #55 (borrador)
+## Comparación con los criterios iniciales del Issue #55
 
 | Criterio del Issue | Criterio final |
 |---|---|
