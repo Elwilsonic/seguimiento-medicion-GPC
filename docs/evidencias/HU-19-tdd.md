@@ -304,8 +304,8 @@ Con PostgreSQL en Docker en el puerto 5434, recreado con la tabla `members`, y `
 | GREEN | `7553296` | `feat(HU-19): modificar las fechas del proyecto (GREEN)` |
 | Merge de `main` | `4d92c68` | `chore(HU-19): traer main con HU-15` |
 | Refactor | — | No aplica |
-| Documentación | (propuesto) | `docs(HU-19): agregar evidencia TDD y cobertura` |
+| Documentación | `3f39adb` | `docs(HU-19): agregar evidencia TDD y cobertura` |
 
-Todos los commits referencian el Issue #37 con `Refs #37`, incluidos los dos merges de `main`. El de cierre lo cerrará con `Closes #37`. El mensaje del merge `4d92c68` conserva la lista `# Conflicts:` de los 3 archivos que git agrega con `--no-edit`.
+Los 7 commits de la tabla (la SDD, los dos merges de `main`, la aprobación de la SDD, el RED, el GREEN y la documentación) referencian el Issue #37 con `Refs #37`, verificado con `git log --first-parent --format="%h %b" 656ac18..HEAD`, y el de cierre lo cierra con `Closes #37`. Todos los commits de la historia están hechos y subidos a la rama `feature/HU-19-modificar-fechas-proyecto`, y el Pull Request es el [#156](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/156). El mensaje del merge `4d92c68` conserva la lista `# Conflicts:` de los 3 archivos que git agrega con `--no-edit`.
 
 HU-19: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
