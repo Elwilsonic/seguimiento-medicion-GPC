@@ -215,6 +215,7 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		// TEC-04, CA-TEC04.9: endpoints de ítems.
 		{"consultar ítem", http.MethodGet, "/api/items/abc", ""},
 		{"modificar ítem", http.MethodPut, "/api/items/abc", validItem},
+		{"modificar integrante", http.MethodPut, "/api/integrantes/abc", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},
 		{"cambiar estado", http.MethodPatch, "/api/items/abc/estado", `{"estado":"EN_CURSO"}`},
 		{"votar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/votes", `{"integrante":"Ana","puntos":5}`},
 		// HU-23, CA-23.8: revelar los votos.
@@ -771,6 +772,7 @@ var bodyEndpoints = []bodyEndpoint{
 			expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
 		},
 	},
+	{name: "modificar integrante", method: http.MethodPut, path: "/api/integrantes/1", untouched: expectNoMemberSaved},
 }
 
 // expectItemUntouched verifica que el ítem 1 siga como lo creó validItem.
