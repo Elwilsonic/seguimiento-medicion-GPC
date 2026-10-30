@@ -28,11 +28,12 @@ La capa HTTP solo llama a los Manager; los Manager solo acceden a los datos a tr
 | Paquete | Qué hace | Historias |
 |---|---|---|
 | `cmd/server` | `main`: lee `STORAGE`, `DATABASE_URL` y `PORT` (`storage.go`), arma los repositorios en memoria o PostgreSQL (`repositories.go`), crea los Manager y arranca el servidor con timeouts | TEC-01, TEC-04, TEC-05 |
-| `internal/project` | Proyectos: crear, modificar, consultar y registrar la fecha de inicio y la de fin, que tiene que ser posterior al inicio. Estados `PLANIFICADO`, `EN_CURSO` y `FINALIZADO`; nombre único | HU-01, HU-02, HU-03, HU-18, HU-41 |
+| `internal/project` | Proyectos: crear, modificar, consultar, registrar la fecha de inicio y la de fin, que tiene que ser posterior al inicio, y modificar juntas las dos fechas ya registradas (`SetDates`). Estados `PLANIFICADO`, `EN_CURSO` y `FINALIZADO`; nombre único | HU-01, HU-02, HU-03, HU-18, HU-19, HU-41 |
+| `internal/member` | Integrantes de un proyecto: registrar (`Register`), modificar el nombre y el rol (`Update`) y listar por proyecto (`List`, ordenados por ID). Roles `PRODUCT_ARCHITECT`, `AGILE_ENABLER` y `PRODUCT_BUILDER`; el nombre no se repite en el proyecto, sin distinguir mayúsculas y con cualquier rol | HU-15, HU-16, HU-17 |
 | `internal/backlog` | Ítems del Product Backlog: crear, consultar, listar (por ID o por prioridad), modificar, cambiar el estado (`PENDIENTE` ↔ `EN_CURSO` ↔ `TERMINADO`, de a un paso), asignar story points (escala 1, 2, 3, 5, 8, 13, 21) y asignar a un sprint | HU-04 a HU-09, HU-11, HU-20 |
-| `internal/sprint` | Sprints: crear (uno solo `ABIERTO` por proyecto), asignar ítems, completarlos, listar los completados y cerrar (`CERRADO`) | HU-10 a HU-13 |
+| `internal/sprint` | Sprints: crear (uno solo `ABIERTO` por proyecto), asignar ítems, completarlos, listar los completados, cerrar (`CERRADO`) y listar los sprints de un proyecto, abiertos y cerrados (`History`) | HU-10 a HU-14 |
 | `internal/poker` | Sesiones de Planning Poker de un ítem: abrir (`ABIERTA`), votar sin mostrar los votos, revelar (`REVELADA`) con la comparación de los votos (`CompareVotes`: si hay diferencias, el menor y el mayor con quiénes los emitieron), repetir la ronda en la misma sesión (vuelve a `ABIERTA`, ronda siguiente y sin votos) y registrar la estimación acordada (`CERRADA`), que se guarda en el ítem | HU-21 a HU-25 |
-| `internal/effort` | Esfuerzo: registrar integrante, fecha, actividad y horas sobre una historia de un sprint abierto, y listar por historia o por sprint con el total de horas | HU-26, HU-27 |
+| `internal/effort` | Esfuerzo: registrar integrante, fecha, actividad y horas sobre una historia de un sprint abierto, listar por historia o por sprint con el total de horas y corregir las horas de un esfuerzo de un sprint abierto (`CorrectHours`) | HU-26, HU-27, HU-28 |
 | `internal/defect` | Defectos: registrar descripción, severidad (`CRITICA`, `ALTA`, `MEDIA`, `BAJA`) y sprint de detección (nacen `ABIERTO`); cambiar el estado de a un paso (`ABIERTO` ↔ `EN_CORRECCION` ↔ `RESUELTO`), con sprint de resolución al resolver; y listar los defectos de un proyecto o los detectados en un sprint, con filtro opcional por estado | HU-29, HU-30, HU-31 |
 | `internal/metrics` | Métricas M1 a M10 de [`docs/metricas.md`](metricas.md), calculadas a partir del backlog, los sprints, los esfuerzos y los defectos: story points planificados y completados, ítems sin estimar, velocidad, horas estimadas y reales, desviación, porcentaje de historias completadas y defectos detectados y resueltos. `Sprint` y `Project` las devuelven todas en una sola consulta, y `ProjectSprints` cada sprint del proyecto con sus métricas (para los gráficos). No tiene almacenamiento propio | TEC-03, HU-32 a HU-35, HU-37, HU-47 |
 | `internal/dashboard` | Resumen del estado de un proyecto: nombre y estado, cantidad de ítems por estado y sprint actual (el `ABIERTO`). No tiene almacenamiento propio | HU-36 |
@@ -60,6 +61,7 @@ graph TD
     httpapi --> project
     httpapi --> backlog
     httpapi --> sprint
+    httpapi --> member
     metrics --> sprint
     metrics --> backlog
     metrics --> effort
@@ -81,11 +83,13 @@ graph TD
     sprint --> backlog
     sprint --> project
     backlog --> project
+    member --> project
 ```
 
 - `backlog` usa `project` para verificar que el proyecto exista al crear o listar ítems.
 - `sprint` usa `project` (el proyecto existe) y `backlog` (el ítem existe, es del mismo proyecto, se asigna y se completa a través de las reglas de HU-08).
 - `poker` usa `backlog` para verificar el ítem y guardar los story points acordados.
+- `member` usa `project` para verificar que el proyecto exista al registrar o listar integrantes.
 - `effort` y `defect` usan `sprint` (`WithOpenSprint`: el sprint existe y está abierto mientras se registra un esfuerzo o un defecto, o mientras se resuelve un defecto) y `backlog` (el ítem existe y da el proyecto del defecto). Para listar los defectos de un proyecto, `defect` lee sus ítems con `backlog`, que valida el proyecto.
 - `metrics` lee ítems, sprints, esfuerzos (`effort.Manager.ListBySprint`) y defectos (`defect.Manager.ListByProject`) a través de sus Manager. `dashboard` lee el proyecto, sus ítems y sus sprints. `report` lee el proyecto, los sprints, las métricas (con el mismo Manager de `metrics` del servidor), los esfuerzos y los defectos, y no calcula nada nuevo: cada parte del reporte sale de una operación que ya existe. `httpapi` crea los tres en `NewHandler`.
 
@@ -93,7 +97,7 @@ Un Manager nunca accede al repositorio de otro: pasa siempre por su Manager, as�
 
 ### 1.3 Concurrencia
 
-El servidor atiende pedidos en paralelo. Cada Manager que lee y después escribe tiene un `sync.Mutex` que protege la operación completa, para que dos pedidos simultáneos no dejen, por ejemplo, dos proyectos con el mismo nombre (CA-01.7), dos sprints abiertos en un proyecto (CA-10.6) o dos sesiones de Poker abiertas para un ítem (CA-21.6). Cuando una operación toma el lock de dos Manager, el orden es siempre el mismo, para evitar bloqueos mutuos: poker → backlog (HU-25), sprint → backlog (HU-11 a HU-13), defect → sprint → backlog (HU-29 y HU-30) y defect → project → backlog (HU-31). Ningún Manager con mutex llama a `defect` ni a `poker`, así que no hay ciclos. `metrics`, `dashboard` y `report` no tienen mutex propio: no guardan estado, llaman a los otros Manager (`metrics` y `report` también a `defect`) sin tener ningún lock tomado, y cada lectura queda protegida por el Manager que la hace. Por eso las lecturas de un reporte no son atómicas: un cambio simultáneo puede quedar en una parte y no en otra (límite conocido de HU-38 y HU-39). `SetEndDate` y `SetStartDate` de `project` (HU-18 y HU-41) leen, comparan las dos fechas y guardan bajo el mutex de proyectos, y `RepeatRound` de `poker` (HU-24) busca otra sesión abierta del ítem y guarda bajo el mutex de poker, así nunca quedan dos sesiones `ABIERTA` para un ítem. El CI corre los tests con `-race`.
+El servidor atiende pedidos en paralelo. Cada Manager que lee y después escribe tiene un `sync.Mutex` que protege la operación completa, para que dos pedidos simultáneos no dejen, por ejemplo, dos proyectos con el mismo nombre (CA-01.7), dos sprints abiertos en un proyecto (CA-10.6) o dos sesiones de Poker abiertas para un ítem (CA-21.6). Cuando una operación toma el lock de dos Manager, el orden es siempre el mismo, para evitar bloqueos mutuos: poker → backlog (HU-25), sprint → backlog (HU-11 a HU-13), defect → sprint → backlog (HU-29 y HU-30) y defect → project → backlog (HU-31). Ningún Manager con mutex llama a `defect` ni a `poker`, así que no hay ciclos. `metrics`, `dashboard` y `report` no tienen mutex propio: no guardan estado, llaman a los otros Manager (`metrics` y `report` también a `defect`) sin tener ningún lock tomado, y cada lectura queda protegida por el Manager que la hace. Por eso las lecturas de un reporte no son atómicas: un cambio simultáneo puede quedar en una parte y no en otra (límite conocido de HU-38 y HU-39). `SetEndDate`, `SetStartDate` y `SetDates` de `project` (HU-18, HU-41 y HU-19) leen, comparan las dos fechas y guardan bajo el mutex de proyectos. `member` valida el proyecto antes de tomar su mutex y después lee, compara y guarda bajo ese mutex, así dos registros o modificaciones simultáneos no dejan un nombre repetido (HU-15 y HU-16); `List` (HU-17) lee bajo el mismo mutex. `CorrectHours` de `effort` (HU-28) vuelve a leer el esfuerzo y lo guarda dentro de `WithOpenSprint`, con el mutex del sprint tomado, así la corrección no se cruza con el cierre del sprint ni con otra corrección. `RepeatRound` de `poker` (HU-24) busca otra sesión abierta del ítem y guarda bajo el mutex de poker, así nunca quedan dos sesiones `ABIERTA` para un ítem. El CI corre los tests con `-race`.
 
 ### 1.4 Copias por valor
 
@@ -109,8 +113,9 @@ Cada dominio con datos propios define su interfaz `Repository` en `repository.go
 | `backlog` | `Save`, `ListByProject`, `GetByID`, `Update` |
 | `sprint` | `Save`, `OpenByProject`, `GetByID`, `Update`, `ListByProject` |
 | `poker` | `Save`, `OpenByItem`, `GetByID`, `Update` |
-| `effort` | `Save`, `ListByItem`, `ListBySprint` |
+| `effort` | `Save`, `ListByItem`, `ListBySprint`, `GetByID`, `Update` |
 | `defect` | `Save`, `GetByID`, `Update`, `List` |
+| `member` | `Save`, `ListByProject`, `GetByID`, `Update` |
 
 `metrics`, `dashboard` y `report` no tienen repositorio: calculan a partir de los Manager de los otros dominios.
 
@@ -120,7 +125,7 @@ Cada dominio con datos propios define su interfaz `Repository` en `repository.go
 
 ### 2.2 Implementación en PostgreSQL
 
-`postgres_repository.go` en cada paquete (TEC-05). Usa el driver `github.com/jackc/pgx/v5` con un único pool (`pgxpool`) compartido por todos los repositorios, que abre `postgres.Open`. Los IDs los asigna la base (`GENERATED ... AS IDENTITY`). El esquema está en [`db/init/01-schema.sql`](../db/init/01-schema.sql), con las tablas `projects` (con `start_date` y `end_date`, `NULL` si no están registradas, HU-18 y HU-41), `backlog_items`, `sprints`, `efforts`, `defects` y `poker_sessions`; [`02-test-database.sql`](../db/init/02-test-database.sql) crea la base `gpc_test` con el mismo esquema.
+`postgres_repository.go` en cada paquete (TEC-05). Usa el driver `github.com/jackc/pgx/v5` con un único pool (`pgxpool`) compartido por todos los repositorios, que abre `postgres.Open`. Los IDs los asigna la base (`GENERATED ... AS IDENTITY`). El esquema está en [`db/init/01-schema.sql`](../db/init/01-schema.sql), con las tablas `projects` (con `start_date` y `end_date`, `NULL` si no están registradas, HU-18 y HU-41), `backlog_items`, `sprints`, `efforts`, `defects`, `poker_sessions` y `members` (HU-15); [`02-test-database.sql`](../db/init/02-test-database.sql) crea la base `gpc_test` con el mismo esquema.
 
 ### 2.3 Contrato común
 
@@ -138,6 +143,7 @@ Todas las rutas están en `internal/httpapi/server.go` (`NewHandler`) y usan sol
 | Ítem | `id`, `proyecto_id`, `titulo`, `descripcion`, `prioridad`, `criterios` (lista), `estado`, `story_points` (0 si no está estimado), `horas_estimadas`, `sprint_id` (0 si no está asignado) |
 | Sprint | `id`, `proyecto_id`, `nombre`, `fecha_inicio`, `fecha_fin`, `objetivo`, `estado` |
 | Sesión de Poker | `id`, `item_id`, `estado`, `ronda`, `votos` (lista de `{integrante, puntos}`), `cartas` (la escala). Solo la respuesta de revelar suma `comparacion`: `{hay_diferencias, menor, mayor}`, con `menor` y `mayor` como `{puntos, integrantes}` |
+| Integrante | `id`, `proyecto_id`, `nombre`, `rol` |
 | Esfuerzo | `id`, `sprint_id`, `item_id`, `integrante`, `fecha`, `actividad`, `horas` |
 | Lista de esfuerzos | `esfuerzos` (lista), `total_horas` (redondeado a un decimal) |
 | Defecto | `id`, `descripcion`, `severidad`, `estado`, `item_id`, `sprint_deteccion_id`, `sprint_resolucion_id` (0 si no está resuelto) |
@@ -161,6 +167,10 @@ Una lista vacía se devuelve como `[]`, nunca como `null`.
 | `PUT /api/proyectos/{id}` | `{"nombre", "descripcion", "estado"}` (reemplaza los tres) | 200, proyecto | HU-02 |
 | `PATCH /api/proyectos/{id}/fecha-inicio` | `{"fecha_inicio"}` (anterior a la fecha de fin, si está registrada) | 200, proyecto | HU-18, HU-41 |
 | `PATCH /api/proyectos/{id}/fecha-fin` | `{"fecha_fin"}` (posterior a la fecha de inicio, que tiene que estar registrada) | 200, proyecto | HU-41 |
+| `PATCH /api/proyectos/{id}/fechas` | `{"fecha_inicio", "fecha_fin"}` (las dos ya registradas; el fin nuevo, posterior al inicio nuevo) | 200, proyecto | HU-19 |
+| `POST /api/proyectos/{id}/integrantes` | `{"nombre", "rol"}` | 201, integrante | HU-15 |
+| `GET /api/proyectos/{id}/integrantes` | — | 200, lista de integrantes ordenada por ID | HU-17 |
+| `PUT /api/integrantes/{id}` | `{"nombre", "rol"}` (reemplaza los dos; el ID y el proyecto no cambian) | 200, integrante | HU-16 |
 | `POST /api/proyectos/{id}/backlog` | `{"titulo", "descripcion", "prioridad", "criterios": [...]}` | 201, ítem | HU-04 |
 | `GET /api/proyectos/{id}/backlog` | — (`?orden=prioridad` ordena ALTA, MEDIA, BAJA; sin el parámetro, por ID) | 200, lista de ítems | HU-06, HU-09 |
 | `GET /api/items/{id}` | — | 200, ítem | HU-05 |
@@ -173,6 +183,7 @@ Una lista vacía se devuelve como `[]`, nunca como `null`.
 | `POST /api/poker-sessions/{id}/rounds` | — (un cuerpo se ignora) | 200, sesión `ABIERTA` en la ronda siguiente, sin votos | HU-24 |
 | `POST /api/poker-sessions/{id}/estimate` | `{"puntos"}` | 200, sesión `CERRADA`; los puntos quedan en el ítem | HU-25 |
 | `POST /api/proyectos/{id}/sprints` | `{"nombre", "fecha_inicio", "fecha_fin", "objetivo"}` | 201, sprint | HU-10 |
+| `GET /api/proyectos/{id}/sprints` | — | 200, lista de sprints del proyecto, abiertos y cerrados, ordenada por ID | HU-14 |
 | `POST /api/sprints/{id}/items/{itemId}` | — | 200, ítem asignado | HU-11 |
 | `POST /api/sprints/{id}/items/{itemId}/completar` | — | 200, ítem `TERMINADO` | HU-12 |
 | `GET /api/sprints/{id}/completados` | — | 200, lista de ítems | HU-12 |
@@ -180,6 +191,7 @@ Una lista vacía se devuelve como `[]`, nunca como `null`.
 | `POST /api/sprints/{id}/items/{itemId}/esfuerzos` | `{"integrante", "fecha", "actividad", "horas"}` | 201, esfuerzo | HU-26 |
 | `GET /api/sprints/{id}/esfuerzos` | — | 200, lista de esfuerzos | HU-27 |
 | `GET /api/items/{id}/esfuerzos` | — | 200, lista de esfuerzos | HU-27 |
+| `PATCH /api/esfuerzos/{id}/horas` | `{"horas"}` | 200, esfuerzo con las horas corregidas | HU-28 |
 | `POST /api/items/{id}/defectos` | `{"descripcion", "severidad", "sprint_deteccion_id"}` | 201, defecto `ABIERTO` | HU-29 |
 | `PATCH /api/defectos/{id}/estado` | `{"estado", "sprint_resolucion_id"}` (el sprint solo es obligatorio para `RESUELTO`) | 200, defecto | HU-30 |
 | `GET /api/proyectos/{id}/defectos` | — (`?estado=` opcional; vacío o con solo espacios no filtra) | 200, lista de defectos del proyecto | HU-31 |
@@ -201,10 +213,10 @@ Todo error responde `{"error": "<mensaje>"}`. La traducción del error de domini
 
 | Código | Cuándo | Errores |
 |---|---|---|
-| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad o votante vacíos; prioridad, estado, severidad, story points o carta fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes (también la fecha de fin del proyecto); fin de sprint no posterior al inicio; sprint de detección faltante; estado de defecto inválido (también en el filtro `?estado=`); sprint de resolución faltante al resolver |
-| 404 | La entidad de la ruta no existe | Proyecto, ítem, sprint, sesión de Planning Poker o defecto inexistente |
-| 405 | Método no permitido | Un método distinto del de la ruta (por ejemplo, `GET` en las rutas de sesiones de Planning Poker, incluida `/rounds`), con el encabezado `Allow`. La respuesta es texto, no JSON |
-| 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión de Planning Poker abierta para el ítem, o el ítem está terminado; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto; transición de estado de defecto no permitida; sprint de resolución de otro proyecto o anterior al de detección; fecha de fin de un proyecto sin fecha de inicio, o no posterior a ella; fecha de inicio no anterior a la fecha de fin registrada; repetir la ronda de una sesión no revelada o con otra sesión abierta para el ítem |
+| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad, votante o rol vacíos; prioridad, estado, severidad, story points, carta o rol fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes (también la fecha de fin del proyecto); fin de sprint no posterior al inicio; sprint de detección faltante; estado de defecto inválido (también en el filtro `?estado=`); sprint de resolución faltante al resolver |
+| 404 | La entidad de la ruta no existe | Proyecto, ítem, sprint, sesión de Planning Poker, defecto, esfuerzo o integrante inexistente |
+| 405 | Método no permitido | Un método distinto del de la ruta (por ejemplo, `GET` en las rutas de sesiones de Planning Poker, incluida `/rounds`, o en `/api/integrantes/{id}`), con el encabezado `Allow`. La respuesta es texto, no JSON |
+| 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión de Planning Poker abierta para el ítem, o el ítem está terminado; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto; transición de estado de defecto no permitida; sprint de resolución de otro proyecto o anterior al de detección; fecha de fin de un proyecto sin fecha de inicio, o no posterior a ella; fecha de inicio no anterior a la fecha de fin registrada; modificar las fechas de un proyecto que no tiene registradas las dos; nombre de integrante repetido en el proyecto; corregir un esfuerzo de un sprint cerrado; repetir la ronda de una sesión no revelada o con otra sesión abierta para el ítem |
 | 413 | Cuerpo de más de 1 MiB | `el cuerpo del pedido supera el tamaño máximo de 1 MiB` |
 | 500 | Error no previsto (por ejemplo, la base no responde) | Responde `error interno del servidor`, sin exponer el detalle |
 
@@ -270,7 +282,7 @@ En Git Bash, Linux o macOS: `TEST_DATABASE_URL="postgres://gpc:gpc_dev@localhost
 docker compose up -d --wait
 ```
 
-Levanta PostgreSQL 17 (`docker-compose.yml`) con los valores de `.env` o, si no existe, los de desarrollo de [`.env.example`](../.env.example): usuario `gpc`, contraseña `gpc_dev`, base `gpc`, publicada en `127.0.0.1:5433` (no en el 5432, para no chocar con un PostgreSQL instalado). Los scripts de `db/init/` crean el esquema y la base `gpc_test` **solo la primera vez**, con el volumen vacío. Si el esquema cambió, hay que recrear el volumen con `docker compose down -v` (borra los datos) y volver a levantar la base. El último cambio de esquema es la columna `projects.end_date` (HU-41).
+Levanta PostgreSQL 17 (`docker-compose.yml`) con los valores de `.env` o, si no existe, los de desarrollo de [`.env.example`](../.env.example): usuario `gpc`, contraseña `gpc_dev`, base `gpc`, publicada en `127.0.0.1:5433` (no en el 5432, para no chocar con un PostgreSQL instalado). Los scripts de `db/init/` crean el esquema y la base `gpc_test` **solo la primera vez**, con el volumen vacío. Si el esquema cambió, hay que recrear el volumen con `docker compose down -v` (borra los datos) y volver a levantar la base. El último cambio de esquema es la tabla `members` (HU-15).
 
 ### 5.2 Variables de entorno
 

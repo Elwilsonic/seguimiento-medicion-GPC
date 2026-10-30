@@ -237,6 +237,35 @@ godog HU-37: `15 scenarios (15 passed)`, `126 steps (126 passed)`.
 - **Tests de PostgreSQL:** se omiten 34 (`--- SKIP`), porque `TEST_DATABASE_URL` no está definida. HU-37 no toca la persistencia ni el esquema, así que no se midió con base.
 - **`-race`:** `go test -race ./...` no corre localmente (`CGO_ENABLED=0`) y lo verifica el CI del Pull Request.
 
+## Corrección de un defecto: la nota de desviación se cortaba
+
+**Defecto.** Al armar las capturas del manual de usuario (TEC-07, PR #161) se vio que, en el gráfico "Horas estimadas y reales por sprint", la nota "Desviación: -2.5 h (-19.2 %)" del primer sprint quedaba cortada por la izquierda ("esviación: …") y pegada a la del sprint siguiente. Causa: `graficoDeBarras` daba a cada grupo un ancho fijo de 130 px (con dos series), y la nota, centrada debajo de las barras, mide unos 145 px. CA-37.1 pide que el gráfico muestre la desviación de cada sprint, así que es un defecto de HU-37 y se corrige con TDD (`AGENTS.md`).
+
+**Prueba en el navegador.** Los tests de Go no ejecutan JavaScript (ver "Desviaciones del ciclo TDD"), así que el defecto se reprodujo con un script de Playwright que arma por la API un proyecto con un sprint cerrado (13 horas estimadas y 10.5 reales) y uno abierto, toca "Ver gráficos" y mide con `getBBox()` que cada rótulo y cada nota quede dentro del SVG y no se pise con otro texto de la misma línea. Sobre `main` (`d82a93b`):
+
+```
+FALLA:
+Horas estimadas y reales por sprint: «Desviación: -2.5 h (-19.2 %)» sale del gráfico (x -7.6 a 137.6, ancho 320)
+```
+
+**RED (`56fea15`).** `TestInterfaz_GraficoDeBarrasEnsanchaLosGruposSegunSusTextos` (`internal/httpapi/web_test.go`) fija que `app.js` tenga `anchoDeTexto` y que `graficoDeBarras` calcule el ancho del grupo con `anchoDeTexto(g.nombre)` y `anchoDeTexto(g.nota)`. `go test -count=1 ./...` falla solo en ese test; los demás paquetes dan `ok`:
+
+```
+--- FAIL: TestInterfaz_GraficoDeBarrasEnsanchaLosGruposSegunSusTextos (0.00s)
+    web_test.go:1139: app.js no tiene la función anchoDeTexto
+FAIL
+FAIL	seguimiento-medicion-gpc/internal/httpapi	0.633s
+FAIL
+```
+
+**GREEN (`1b2bbaa`).** `anchoDeTexto` estima el ancho de un texto de 11 px (6 px por carácter, un poco más que lo medido, para no quedarse corto), y `graficoDeBarras` usa para todos los grupos el mayor entre el ancho anterior (barras + 30 px, mínimo 130 px) y el del nombre o la nota más largos más 16 px. No cambian los tests. `go test -count=1 ./...` y `go test -race -count=1 ./...` dan `ok` en los 14 paquetes, `gofmt -l` y `go vet ./...` no dan salida, y el mismo script de Playwright pasa:
+
+```
+OK: los rótulos y las notas de los 3 gráficos quedan dentro del SVG y no se pisan
+```
+
+Medido en Linux con go1.27.1, sin `TEST_DATABASE_URL`. La cobertura no cambia (`internal/httpapi` 98.7%, total 84.5%), porque el cambio está en `app.js`, que no tiene cobertura de Go. No cambia la API ni la persistencia.
+
 ## Commits
 
 | Fase | Commit | Mensaje |
@@ -246,5 +275,7 @@ godog HU-37: `15 scenarios (15 passed)`, `126 steps (126 passed)`.
 | GREEN | 9f5cdeb | `feat(HU-37): mostrar las métricas del dashboard con gráficos (GREEN)` |
 | Refactor | — | No hubo |
 | Integración con `main` | d88c4fd | `chore(HU-37): traer main con TEC-06` |
+| RED de la corrección | 56fea15 | `test(HU-37): verificar que las notas del gráfico de horas no se corten (RED)` |
+| GREEN de la corrección | 1b2bbaa | `fix(HU-37): ensanchar los grupos del gráfico según sus textos (GREEN)` |
 
 HU-37: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go

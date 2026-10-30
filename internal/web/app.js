@@ -769,14 +769,27 @@ function aviso(texto) {
   return p;
 }
 
+// anchoDeTexto estima el ancho en píxeles de un texto de 11 px de los
+// gráficos, con un margen por carácter para no quedarse corto.
+function anchoDeTexto(texto) {
+  return Math.ceil(texto.length * 6);
+}
+
 // graficoDeBarras dibuja un gráfico con un grupo de barras por sprint, una por
 // serie, con su valor escrito con formato. Cada grupo tiene un nombre y una
 // nota opcional debajo. referencia es una línea horizontal opcional
 // ({valor, texto}). Las barras se escalan al mayor valor; si todos son 0, las
-// barras tienen altura 0 (RN-37.8).
+// barras tienen altura 0 (RN-37.8). Todos los grupos tienen el mismo ancho,
+// el que necesita el nombre o la nota más largos, así esos textos, que van
+// centrados debajo de las barras, no se cortan ni se pisan.
 function graficoDeBarras(titulo, series, grupos, formato, referencia) {
   const anchoBarra = 30;
-  const anchoGrupo = Math.max(series.length * anchoBarra + 30, 130);
+  const anchoGrupo = Math.max(
+    series.length * anchoBarra + 30,
+    130,
+    ...grupos.map((g) => anchoDeTexto(g.nombre) + 16),
+    ...grupos.map((g) => (g.nota ? anchoDeTexto(g.nota) + 16 : 0)),
+  );
   const alto = 160;
   const arriba = 22;
   const base = arriba + alto;
