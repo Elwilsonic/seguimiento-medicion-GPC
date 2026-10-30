@@ -156,6 +156,29 @@ $("form-fecha-fin-proyecto").addEventListener("submit", (e) => {
   });
 });
 
+// --- Integrantes (HU-15) ---
+
+// nombresDeRoles son los nombres legibles de los roles de la API.
+const nombresDeRoles = {
+  PRODUCT_ARCHITECT: "Product Architect",
+  AGILE_ENABLER: "Agile Enabler",
+  PRODUCT_BUILDER: "Product Builder",
+};
+
+// HU-15: registra un integrante con nombre y rol en el proyecto actual.
+$("form-registrar-integrante").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-integrantes", async () => {
+    const m = await api("POST", "/proyectos/" + proyectoActual() + "/integrantes", {
+      nombre: form.nombre.value,
+      rol: form.rol.value,
+    });
+    form.nombre.value = "";
+    mostrar("msg-integrantes", "Integrante " + m.id + " registrado: " + m.nombre + " (" + nombresDeRoles[m.rol] + ").", false);
+  });
+});
+
 // --- Product Backlog (HU-04 a HU-09 y HU-20) ---
 
 // escalaStoryPoints es la escala de backlog.StoryPointScale() (HU-20). Un test

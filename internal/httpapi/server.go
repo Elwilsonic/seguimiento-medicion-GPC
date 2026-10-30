@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/dashboard"
 	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
+	"seguimiento-medicion-gpc/internal/member"
 	"seguimiento-medicion-gpc/internal/metrics"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
@@ -48,10 +49,11 @@ type server struct {
 	metrics   *metrics.Manager
 	dashboard *dashboard.Manager
 	reports   *report.Manager
+	members   *member.Manager
 }
 
 // NewHandler devuelve el handler HTTP de la aplicación con sus rutas.
-func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager) http.Handler {
+func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *sprint.Manager, efforts *effort.Manager, pokerManager *poker.Manager, defects *defect.Manager, members *member.Manager) http.Handler {
 	// HU-32: metrics no tiene repositorio ni estado, así que se crea acá con
 	// los Manager de ítems y de sprints, sin cambiar la firma de NewHandler.
 	// HU-33 suma el Manager de esfuerzos para calcular M5.
@@ -59,7 +61,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	// HU-36: dashboard tampoco tiene repositorio ni estado, y se crea igual.
 	// HU-38: report tampoco tiene repositorio ni estado; lee las métricas con
 	// el mismo Manager de métricas del servidor.
-	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects,
+	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects, members: members,
 		metrics:   metrics.NewManager(items, sprints, efforts, defects),
 		dashboard: dashboard.NewManager(projects, items, sprints)}
 	s.reports = report.NewManager(projects, sprints, s.metrics, efforts, defects)
@@ -69,6 +71,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PUT /api/proyectos/{id}", s.updateProject)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-inicio", s.setProjectStartDate)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-fin", s.setProjectEndDate)
+	mux.HandleFunc("POST /api/proyectos/{id}/integrantes", s.registerMember)
 	mux.HandleFunc("POST /api/proyectos/{id}/backlog", s.createItem)
 	mux.HandleFunc("GET /api/proyectos/{id}/backlog", s.listItems)
 	mux.HandleFunc("GET /api/items/{id}", s.getItem)
@@ -168,7 +171,8 @@ func statusFor(err error) int {
 		errors.Is(err, defect.ErrEmptyDescription), errors.Is(err, defect.ErrInvalidSeverity),
 		errors.Is(err, defect.ErrMissingDetectionSprint),
 		errors.Is(err, defect.ErrInvalidStatus), errors.Is(err, defect.ErrMissingResolutionSprint),
-		errors.Is(err, poker.ErrEmptyVoter), errors.Is(err, poker.ErrInvalidCard):
+		errors.Is(err, poker.ErrEmptyVoter), errors.Is(err, poker.ErrInvalidCard),
+		errors.Is(err, member.ErrEmptyName), errors.Is(err, member.ErrMissingRole), errors.Is(err, member.ErrInvalidRole):
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
 		errors.Is(err, sprint.ErrSprintNotFound), errors.Is(err, poker.ErrSessionNotFound),
@@ -186,7 +190,7 @@ func statusFor(err error) int {
 		errors.Is(err, defect.ErrResolutionBeforeDetection),
 		errors.Is(err, poker.ErrSessionAlreadyOpen), errors.Is(err, poker.ErrItemFinished),
 		errors.Is(err, poker.ErrSessionNotOpen), errors.Is(err, poker.ErrNoVotes),
-		errors.Is(err, poker.ErrSessionNotRevealed):
+		errors.Is(err, poker.ErrSessionNotRevealed), errors.Is(err, member.ErrDuplicateMember):
 		return http.StatusConflict
 	case errors.Is(err, errBodyTooLarge):
 		return http.StatusRequestEntityTooLarge

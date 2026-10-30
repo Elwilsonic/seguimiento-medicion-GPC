@@ -1296,3 +1296,53 @@ func TestInterfaz_CompletadosCompartidosPorLosDosBotones(t *testing.T) {
 		t.Error("el handler de ver-completados no usa mostrarCompletados")
 	}
 }
+
+// HU-15 · Registrar integrante del proyecto (Issue #29)
+//
+// Trazabilidad: CA-15.7. La sección "Integrantes" tiene el formulario
+// "Registrar integrante", que llama a POST /proyectos/{id}/integrantes con el
+// proyecto actual.
+
+func TestInterfaz_SeccionIntegrantesConElFormularioDeRegistro(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="integrantes">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de integrantes")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de integrantes no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		"<h2>Integrantes</h2>",
+		`id="form-registrar-integrante"`,
+		`name="nombre"`,
+		`name="rol"`,
+		`<option value="PRODUCT_ARCHITECT">Product Architect</option>`,
+		`<option value="AGILE_ENABLER">Agile Enabler</option>`,
+		`<option value="PRODUCT_BUILDER">Product Builder</option>`,
+		"Registrar integrante",
+		`id="msg-integrantes"`,
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de integrantes no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_RegistrarIntegranteLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`$("form-registrar-integrante")`,
+		`accion("msg-integrantes"`,
+		`proyectoActual() + "/integrantes"`,
+		`"Integrante " + `,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}

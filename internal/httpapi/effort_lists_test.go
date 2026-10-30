@@ -161,7 +161,7 @@ func newHandlerWithBrokenEffortLists(t *testing.T) http.Handler {
 	efforts := effort.NewManager(brokenEffortRepository{}, sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)

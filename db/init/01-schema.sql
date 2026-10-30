@@ -93,3 +93,16 @@ CREATE TABLE IF NOT EXISTS poker_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS poker_sessions_item_id_idx ON poker_sessions (item_id);
+
+-- Integrantes de un proyecto (HU-15). El ID es correlativo global
+-- (RN-15.7). El rol es PRODUCT_ARCHITECT, AGILE_ENABLER o PRODUCT_BUILDER;
+-- la regla de nombres sin repetir en el proyecto la aplica el Manager
+-- (RN-15.4, D6).
+CREATE TABLE IF NOT EXISTS members (
+    id         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    project_id INTEGER NOT NULL REFERENCES projects (id),
+    name       TEXT NOT NULL,
+    role       TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS members_project_id_idx ON members (project_id);
