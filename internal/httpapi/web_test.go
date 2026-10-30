@@ -1454,3 +1454,44 @@ func TestInterfaz_RegistrarIntegranteLlamaALaAPIConElProyectoActual(t *testing.T
 		}
 	}
 }
+
+// HU-28 · Corregir un registro de esfuerzo (Issue #46)
+//
+// Trazabilidad: CA-28.7. La sección "Sprints" tiene el formulario "Corregir
+// esfuerzo", con el ID del esfuerzo y las horas, que llama a
+// PATCH /esfuerzos/{id}/horas.
+
+func TestInterfaz_FormularioCorregirEsfuerzoEnSprints(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<form id="form-corregir-esfuerzo">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene el formulario para corregir esfuerzos")
+	}
+	fin := strings.Index(page[inicio:], "</form>")
+	if fin == -1 {
+		t.Fatal("el formulario para corregir esfuerzos no se cierra")
+	}
+	form := page[inicio : inicio+fin]
+	for _, want := range []string{"<h3>Corregir esfuerzo</h3>", `name="esfuerzo_id"`, `name="horas"`, "Corregir esfuerzo</button>"} {
+		if !strings.Contains(form, want) {
+			t.Errorf("el formulario para corregir esfuerzos no contiene %q", want)
+		}
+	}
+	sprints := strings.Index(page, `<section id="sprints">`)
+	registrar := strings.Index(page, `<form id="form-registrar-esfuerzo">`)
+	consultar := strings.Index(page, `<form id="form-consultar-esfuerzos">`)
+	if !(sprints < registrar && registrar < inicio && inicio < consultar) {
+		t.Error("el formulario para corregir esfuerzos tiene que estar en Sprints, entre Registrar esfuerzo y Consultar esfuerzos")
+	}
+}
+
+func TestInterfaz_CorregirEsfuerzoLlamaALaAPI(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{`$("form-corregir-esfuerzo")`, `"PATCH"`, `"/esfuerzos/"`, `"/horas"`, " corregido: "} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}

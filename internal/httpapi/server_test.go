@@ -251,6 +251,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		// HU-27, CA-27.10: listado de esfuerzos por historia y por sprint.
 		{"listar esfuerzos del ítem", http.MethodGet, "/api/items/abc/esfuerzos", ""},
 		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},
+		// HU-28, CA-28.7: corregir las horas de un esfuerzo.
+		{"corregir esfuerzo", http.MethodPatch, "/api/esfuerzos/abc/horas", `{"horas":10}`},
 		// HU-30, CA-30.9: cambiar el estado de un defecto.
 		{"cambiar estado de defecto", http.MethodPatch, "/api/defectos/abc/estado", `{"estado":"EN_CORRECCION"}`},
 		// HU-31, CA-31.9: consultar los defectos de un proyecto y de un sprint.

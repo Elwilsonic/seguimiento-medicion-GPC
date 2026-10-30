@@ -54,3 +54,32 @@ func (r *MemoryRepository) ListBySprint(sprintID int) ([]Effort, error) {
 	}
 	return efforts, nil
 }
+
+// GetByID devuelve una copia del esfuerzo con ese ID o ErrEffortNotFound si
+// no existe, incluidos los IDs 0 y negativos (HU-28).
+func (r *MemoryRepository) GetByID(id int) (Effort, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, effort := range r.efforts {
+		if effort.ID == id {
+			return effort, nil
+		}
+	}
+	return Effort{}, ErrEffortNotFound
+}
+
+// Update reemplaza el esfuerzo con ese ID y devuelve una copia (HU-28). Si no
+// existe, devuelve ErrEffortNotFound y no modifica nada.
+func (r *MemoryRepository) Update(effort Effort) (Effort, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := range r.efforts {
+		if r.efforts[i].ID == effort.ID {
+			r.efforts[i] = effort
+			return effort, nil
+		}
+	}
+	return Effort{}, ErrEffortNotFound
+}

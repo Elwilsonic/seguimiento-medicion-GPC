@@ -553,3 +553,12 @@ func (r *recordingEffortRepository) Save(e Effort) (Effort, error) {
 	}
 	return saved, err
 }
+
+// GetByID y Update fallan con el mismo error (HU-28).
+func (r failingEffortRepository) GetByID(int) (Effort, error) {
+	return Effort{}, r.err
+}
+
+func (r failingEffortRepository) Update(Effort) (Effort, error) {
+	return Effort{}, r.err
+}
