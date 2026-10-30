@@ -141,7 +141,7 @@ En la sección **"Integrantes"** (`id="integrantes"`), después del formulario "
 - **Filas en `server_test.go`.** La ruta `PUT /api/integrantes/{id}` entra en las dos listas comunes, como hizo HU-15, en el commit RED y no en el GREEN. Es la única modificación de ese archivo: una línea por lista, sin comentario, separadas de las filas de HU-15.
   - En `TestRutasConID_IDNoNumericoDevuelve400`, después de "modificar ítem": ``{"modificar integrante", http.MethodPut, "/api/integrantes/abc", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},``.
   - En `bodyEndpoints`, al final de la lista: `{name: "modificar integrante", method: http.MethodPut, path: "/api/integrantes/1", untouched: expectNoMemberSaved},`. El entorno de esas pruebas no tiene integrantes, así que `expectNoMemberSaved`, declarada en `members_update_test.go`, comprueba que el primer registro válido recibe el ID 1, como la fila de HU-15.
-- **RED.** Firmas vacías de `ErrMemberNotFound`, `Update` del `Manager` y de los repositorios, y `GetByID` (que devuelven un error), para que todo compile y los tests fallen por aserciones. La ruta, el handler y la interfaz van en el GREEN; el cambio de `Register` a `nameTaken`, en el refactor. `go vet ./...` antes del commit RED.
+- **RED.** Firmas vacías de `ErrMemberNotFound`, `Update` del `Manager` y de los repositorios, y `GetByID` (que devuelven un error), para que todo compile y los tests fallen por aserciones. La ruta, el handler, la interfaz y el cambio de `Register` a `nameTaken` van en el GREEN. `go vet ./...` antes del commit RED.
 - **Librerías.** Solo la librería estándar y `pgx/v5`, ya aprobada; godog en los tests.
 
 ### Conflictos con HU-17
@@ -151,7 +151,7 @@ HU-17 (Consultar los integrantes, Issue #31, Buttini) trabaja en paralelo sobre 
 | Archivo | Cambio de HU-16 | Riesgo |
 |---|---|---|
 | `internal/member/manager.go` | Ninguno | — |
-| `internal/member/register.go` | El bucle de duplicados pasa a `nameTaken` (refactor) | Bajo: HU-17 no necesita cambiar el registro |
+| `internal/member/register.go` | El bucle de duplicados pasa a `nameTaken` | Bajo: HU-17 no necesita cambiar el registro |
 | `internal/member/repository.go` | Dos métodos al final de la interfaz | Bajo: HU-17 puede usar `ListByProject`, que ya existe |
 | `memory_repository.go` y `postgres_repository.go` | Ninguno (archivos nuevos `*_update.go`) | — |
 | `internal/httpapi/members.go` | Ninguno (archivo nuevo `members_update.go`) | — |
