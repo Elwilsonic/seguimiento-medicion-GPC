@@ -2,6 +2,7 @@ package effort
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -83,14 +84,36 @@ func (r *PostgresRepository) listEfforts(filter string, id int) ([]Effort, error
 	return efforts, nil
 }
 
-// GetByID devuelve el esfuerzo con ese ID (HU-28). Firma vacía del RED: se
-// implementa en el GREEN.
+// GetByID devuelve el esfuerzo con ese ID o ErrEffortNotFound si no existe,
+// incluidos los IDs 0 y negativos (HU-28).
 func (r *PostgresRepository) GetByID(id int) (Effort, error) {
-	return Effort{}, nil
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+effortColumns+" FROM efforts WHERE id = $1", id)
+	effort, err := scanEffort(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Effort{}, ErrEffortNotFound
+	}
+	if err != nil {
+		return Effort{}, fmt.Errorf("buscar el esfuerzo: %w", err)
+	}
+	return effort, nil
 }
 
-// Update reemplaza el esfuerzo con ese ID (HU-28). Firma vacía del RED: se
-// implementa en el GREEN.
+// Update reemplaza el esfuerzo con ese ID y devuelve el registro tal como
+// quedó guardado (HU-28). Si no existe, devuelve ErrEffortNotFound sin crear
+// ni modificar filas.
 func (r *PostgresRepository) Update(effort Effort) (Effort, error) {
-	return Effort{}, nil
+	row := r.pool.QueryRow(context.Background(),
+		`UPDATE efforts
+		SET member = $2, effort_date = $3, activity = $4, item_id = $5, sprint_id = $6, hours = $7
+		WHERE id = $1 RETURNING `+effortColumns,
+		effort.ID, effort.Member, effort.Date, effort.Activity, effort.ItemID, effort.SprintID, effort.Hours)
+	updated, err := scanEffort(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Effort{}, ErrEffortNotFound
+	}
+	if err != nil {
+		return Effort{}, fmt.Errorf("actualizar el esfuerzo: %w", err)
+	}
+	return updated, nil
 }

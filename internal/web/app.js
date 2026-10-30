@@ -573,6 +573,23 @@ formEsfuerzo.addEventListener("submit", (e) => {
   });
 });
 
+// HU-28 · Corregir esfuerzo (CA-28.7). Corrige las horas del esfuerzo
+// indicado; no usa el sprint actual, porque el esfuerzo ya tiene su sprint.
+const formCorregirEsfuerzo = $("form-corregir-esfuerzo");
+formCorregirEsfuerzo.setAttribute("aria-label", "Corregir esfuerzo");
+formCorregirEsfuerzo.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-sprints", async () => {
+    const id = form.esfuerzo_id.value.trim();
+    const esfuerzo = await api("PATCH", "/esfuerzos/" + id + "/horas", {
+      horas: Number(form.horas.value),
+    });
+    form.reset();
+    mostrar("msg-sprints", "Esfuerzo " + esfuerzo.id + " corregido: " + esfuerzo.horas + " horas.", false);
+  });
+});
+
 // HU-27 · Consultar esfuerzos (CA-27.10). Consulta por sprint o por historia,
 // llena la tabla y muestra el total con un decimal.
 const formConsultaEsfuerzos = $("form-consultar-esfuerzos");

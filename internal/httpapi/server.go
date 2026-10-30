@@ -99,6 +99,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/esfuerzos", s.registerEffort)
 	mux.HandleFunc("GET /api/sprints/{id}/esfuerzos", s.listEffortsBySprint)
+	mux.HandleFunc("PATCH /api/esfuerzos/{id}/horas", s.correctEffortHours)
 	mux.HandleFunc("GET /api/sprints/{id}/completados", s.listCompletedItems)
 	mux.HandleFunc("POST /api/sprints/{id}/cerrar", s.closeSprint)
 	mux.HandleFunc("GET /api/sprints/{id}/metricas", s.sprintMetrics)
@@ -177,7 +178,7 @@ func statusFor(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
 		errors.Is(err, sprint.ErrSprintNotFound), errors.Is(err, poker.ErrSessionNotFound),
-		errors.Is(err, defect.ErrDefectNotFound):
+		errors.Is(err, defect.ErrDefectNotFound), errors.Is(err, effort.ErrEffortNotFound):
 		return http.StatusNotFound
 	case errors.Is(err, project.ErrDuplicateName), errors.Is(err, backlog.ErrInvalidTransition),
 		errors.Is(err, project.ErrStartDateNotRegistered), errors.Is(err, project.ErrEndNotAfterStart),
