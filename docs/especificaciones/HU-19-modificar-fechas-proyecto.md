@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #37
 
-Aprobada por: pendiente
+Aprobada por: Peñalbé Hernán (Agile Enabler), 29/10/2026, con D1 a D7 como estaban, 2 Story Points y dos actualizaciones (D0 y D8), que se aplicaron.
 
 ## Historia de usuario
 
@@ -152,9 +152,9 @@ En la sección **Proyectos** de `internal/web`, debajo del formulario "Fecha de 
 - **Fechas guardadas:** se leen solo para verificar que existan (RN-19.4). **No se comparan** con el par nuevo (RN-19.5).
 - **Sprints del proyecto:** **no se consultan**, por el mismo motivo que en HU-18 y HU-41 (el Issue no lo pide y `sprint` ya depende de `project`).
 
-## Decisiones de diseño (a confirmar por el Agile Enabler)
+## Decisiones de diseño (confirmadas por el Agile Enabler)
 
-0. **D0 HU-19 está "fuera de la entrega" en las actas.** El acta de Planning del Sprint 4 dice "Fuera de la entrega: E4 (HU-15 a HU-17), HU-19 y HU-28", y "Si hay tiempo, en este orden: HU-41, HU-24 y HU-14". El Sprint 3 dice lo mismo ("Fuera de la entrega, salvo capacidad sobrante"). Además, HU-19 **no tiene Story Points** estimados (ni en las actas ni en el Issue), y la Definition of Ready los pide. **Hernán tiene que decidir si HU-19 entra en el Sprint 4**, por delante o después de HU-24 y HU-14, y quién la estima. Esta SDD no da por desactualizadas las actas.
+0. **D0 HU-19 se toma con capacidad sobrante.** HU-19 figuraba "fuera de la entrega" en las actas de Planning de los Sprints 3 y 4 ("Fuera de la entrega, salvo capacidad sobrante" y "Fuera de la entrega: E4 (HU-15 a HU-17), HU-19 y HU-28"). Hernán la tomó con capacidad sobrante y la asignó el 29/10/2026 a Sosa Ricardo, con **2 Story Points**, como HU-41. Ya no depende del orden de HU-24 ni de HU-14, que están en `main`.
 1. **D1 Se exige que el proyecto ya tenga las dos fechas.** Es lo que pide el borrador ("un proyecto que ya las tiene") y separa "modificar" (HU-19) de "registrar" (HU-18 y HU-41). *Alternativa:* permitir que este endpoint registre las fechas por primera vez. Es más cómoda para el cliente, pero duplica HU-18 y HU-41 y deja dos caminos para registrar, con reglas distintas (HU-41 exige el inicio antes que el fin).
 2. **D2 Un error nuevo, `ErrDatesNotRegistered`.** Para "el proyecto no tiene las dos fechas registradas". `ErrStartDateNotRegistered` de HU-41 no alcanza, porque un proyecto puede tener inicio sin fin. *Alternativa:* reutilizar `ErrStartDateNotRegistered` si falta el inicio y agregar otro error solo para el fin; son dos errores en lugar de uno.
 3. **D3 Las dos fechas son obligatorias.** Si se manda una sola, la otra llega en cero y se rechaza (`ErrMissingStartDate` o `ErrMissingEndDate`, 400). Para cambiar una sola fecha ya existen `PATCH …/fecha-inicio` y `PATCH …/fecha-fin`. *Alternativa:* una fecha ausente conserva la guardada; complica la regla de RN-19.5 (habría que comparar contra la guardada) y vuelve a los problemas de orden de "Contexto".
@@ -166,7 +166,7 @@ En la sección **Proyectos** de `internal/web`, debajo del formulario "Fecha de 
 5. **D5 Orden de validación.** Inicio ausente, fin ausente, existencia, fechas registradas y relación del par. La relación del par se valida después de la existencia aunque no necesite el repositorio, para que un proyecto inexistente o sin fechas dé su error antes que un par inválido. *Alternativa:* validar el par antes de consultar el repositorio, como se hace con las fechas ausentes (un par inválido sobre un proyecto inexistente daría 409 y no 404).
 6. **D6 Operación nueva y no un cambio en `PUT /api/proyectos/{id}`.** Por el mismo motivo que D1 de HU-18: `PUT` reemplaza todos los campos y un cliente que no mande las fechas las borraría.
 7. **D7 Interfaz.** Un formulario aparte, "Modificar fechas", en lugar de cambiar los de HU-18 y HU-41, que siguen sirviendo para registrar cada fecha por separado.
-8. **D8 PR #151 (HU-40) abierto.** Toca `internal/httpapi/server.go`, `server_test.go`, `web_test.go`, `internal/web/app.js`, `index.html`, `README.md`, `docs/reportes/cobertura.md` y `docs/ia/registro.md`, que HU-19 también va a tocar. Antes del RED conviene traer `main` con HU-40, si ya entró, para resolver los conflictos una sola vez.
+8. **D8 `main` traído antes del RED.** El PR #151 (HU-40), que tocaba archivos que HU-19 también toca, ya entró. `main` (con HU-40, HU-24, TEC-06 y HU-14) se trajo a la rama en `7c80e8a`, sin conflictos y sin cambios para esta SDD.
 
 ## Restricciones
 
@@ -269,7 +269,7 @@ En la sección **Proyectos** de `internal/web`, debajo del formulario "Fecha de 
 - **Sprint 3** (`docs/actas/sprint-3/planning.md`): E5 "no es requerimiento mínimo de la consigna" y se toma solo con capacidad sobrante, salvo HU-18; HU-19 queda "Fuera de la entrega, salvo capacidad sobrante". La tabla de dependencias pone a HU-18 como bloqueante de HU-41 y HU-19.
 - **Sprint 4** (`docs/actas/sprint-4/planning.md`): "Fuera de la entrega: E4 (HU-15 a HU-17), HU-19 y HU-28". La lista "Si hay tiempo" es HU-41, HU-24 y HU-14, y no incluye a HU-19.
 
-**Hay una diferencia con las actas:** HU-19 está fuera de la entrega y no tiene Story Points. Esta SDD se escribió a pedido, pero **no da por desactualizadas las actas**: la decisión de tomarla, su estimación y su lugar respecto de HU-24 y HU-14 son de Hernán (D0). El alcance técnico no contradice las actas: depende de HU-18 y de HU-41, las dos en `main`, y no cambia el esquema.
+**Diferencia con las actas:** HU-19 figuraba fuera de la entrega en las actas de los Sprints 3 y 4. Hernán la tomó con capacidad sobrante y la asignó el 29/10/2026 a Sosa Ricardo, con 2 Story Points, como HU-41 (D0). Ya no depende del orden de HU-24 ni de HU-14, que están en `main`. El alcance técnico no contradice las actas: depende de HU-18 y de HU-41, las dos en `main`, y no cambia el esquema.
 
 Las precisiones que las actas no detallan, y que Hernán tiene que confirmar, son D1 a D5.
 
@@ -306,7 +306,7 @@ Las precisiones que las actas no detallan, y que Hernán tiene que confirmar, so
 - `docs/evidencias/HU-19-tdd.md`, `docs/reportes/cobertura.md` y `docs/ia/registro.md` (paso 7).
 - `internal/project/doc.go`: mencionar HU-19.
 
-`docs/documentacion-tecnica.md` es de TEC-06 (responsable Peñalbé Hernán): se le avisa del endpoint y del error nuevo, pero no se modifica en esta historia.
+`docs/documentacion-tecnica.md` es de TEC-06 (responsable Peñalbé Hernán): no se modifica en esta historia. La actualiza Hernán después del merge, con el endpoint `PATCH /api/proyectos/{id}/fechas`, `SetDates` y `ErrDatesNotRegistered`.
 
 ## Fuera de alcance
 
