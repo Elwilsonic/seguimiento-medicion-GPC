@@ -1,7 +1,8 @@
 package httpapi
 
-// Handlers de proyectos (HU-01, HU-02 y HU-03), expuestos desde TEC-01, y
-// fechas de inicio (HU-18) y de fin (HU-41).
+// Handlers de proyectos (HU-01, HU-02 y HU-03), expuestos desde TEC-01,
+// fechas de inicio (HU-18) y de fin (HU-41) y modificación de las dos fechas
+// (HU-19).
 
 import (
 	"net/http"
@@ -25,6 +26,12 @@ type startDateRequest struct {
 // (HU-41).
 type endDateRequest struct {
 	FechaFin string `json:"fecha_fin"`
+}
+
+// datesRequest es el cuerpo de PATCH /api/proyectos/{id}/fechas (HU-19).
+type datesRequest struct {
+	FechaInicio string `json:"fecha_inicio"`
+	FechaFin    string `json:"fecha_fin"`
 }
 
 type projectResponse struct {
@@ -133,6 +140,38 @@ func (s *server) setProjectEndDate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.projects.SetEndDate(id, date)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toProjectResponse(p))
+}
+
+// HU-19. Las dos fechas usan el formato de HU-18 y HU-41 y se leen en ese
+// orden (primero fecha_inicio); una fecha vacía o ausente llega al Manager en
+// cero (ErrMissingStartDate o ErrMissingEndDate).
+func (s *server) setProjectDates(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	var req datesRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
+		return
+	}
+	start, err := parseDate(req.FechaInicio)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	end, err := parseDate(req.FechaFin)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	p, err := s.projects.SetDates(id, start, end)
 	if err != nil {
 		writeError(w, err)
 		return
