@@ -1127,6 +1127,33 @@ func TestInterfaz_GraficosUsanVariablesDeColor(t *testing.T) {
 	}
 }
 
+// CA-37.1 · Corrección de un defecto: el ancho de cada grupo de barras tiene
+// en cuenta el nombre del sprint y la nota de desviación, así un texto más
+// largo que el grupo, como "Desviación: -2.5 h (-19.2 %)", no queda cortado
+// en el borde del gráfico ni se pisa con el del sprint siguiente. El dibujo se
+// verifica en el navegador (evidencia TDD de HU-37).
+func TestInterfaz_GraficoDeBarrasEnsanchaLosGruposSegunSusTextos(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	if !strings.Contains(js, "function anchoDeTexto(") {
+		t.Fatal("app.js no tiene la función anchoDeTexto")
+	}
+	start := strings.Index(js, "function graficoDeBarras(")
+	if start == -1 {
+		t.Fatal("app.js no tiene la función graficoDeBarras")
+	}
+	end := strings.Index(js[start:], "\n}\n")
+	if end == -1 {
+		t.Fatal("la función graficoDeBarras no se cierra")
+	}
+	body := js[start : start+end]
+	for _, want := range []string{"anchoDeTexto(g.nombre)", "anchoDeTexto(g.nota)"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("graficoDeBarras no calcula el ancho del grupo con %q", want)
+		}
+	}
+}
+
 // HU-38 · Generar el reporte del proyecto (Issue #56)
 //
 // Trazabilidad: CA-38.7. La interfaz tiene una sección "Reportes" con el
