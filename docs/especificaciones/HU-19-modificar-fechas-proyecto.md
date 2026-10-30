@@ -271,7 +271,7 @@ En la sección **Proyectos** de `internal/web`, debajo del formulario "Fecha de 
 
 **Diferencia con las actas:** HU-19 figuraba fuera de la entrega en las actas de los Sprints 3 y 4. Hernán la tomó con capacidad sobrante y la asignó el 29/10/2026 a Sosa Ricardo, con 2 Story Points, como HU-41 (D0). Ya no depende del orden de HU-24 ni de HU-14, que están en `main`. El alcance técnico no contradice las actas: depende de HU-18 y de HU-41, las dos en `main`, y no cambia el esquema.
 
-Las precisiones que las actas no detallan, y que Hernán tiene que confirmar, son D1 a D5.
+Las precisiones que las actas no detallan son D1 a D5; Hernán las confirmó el 29/10/2026, junto con la aprobación de la SDD.
 
 ## Comparación con los criterios del Issue #37 (borrador)
 
