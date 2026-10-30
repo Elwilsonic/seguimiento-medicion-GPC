@@ -1,6 +1,6 @@
 package httpapi
 
-// Handlers de sprints (HU-10 a HU-13), expuestos desde TEC-04 (CA-TEC04.9).
+// Handlers de sprints (HU-10 a HU-14), expuestos desde TEC-04 (CA-TEC04.9).
 
 import (
 	"cmp"
@@ -55,6 +55,25 @@ func (s *server) createSprint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, toSprintResponse(sp))
+}
+
+// HU-14
+func (s *server) listProjectSprints(w http.ResponseWriter, r *http.Request) {
+	projectID, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	sprints, err := s.sprints.History(projectID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	resp := make([]sprintResponse, 0, len(sprints))
+	for _, sp := range sprints {
+		resp = append(resp, toSprintResponse(sp))
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // HU-11

@@ -183,14 +183,16 @@ function celda(texto) {
   return td;
 }
 
-function boton(texto, fn, clase) {
+// boton crea un botón que ejecuta fn y muestra su error en msgId (por
+// defecto, el mensaje del backlog).
+function boton(texto, fn, clase, msgId = "msg-backlog") {
   const b = document.createElement("button");
   b.type = "button";
   b.textContent = texto;
   if (clase) {
     b.className = clase;
   }
-  b.addEventListener("click", () => accion("msg-backlog", fn));
+  b.addEventListener("click", () => accion(msgId, fn));
   return b;
 }
 
@@ -242,7 +244,27 @@ $("btn-revelar-poker").addEventListener("click", () =>
     }));
     lista.hidden = false;
     mostrarEstimarPoker(s);
+    mostrarDiferenciasPoker(s.comparacion);
     mostrar("msg-poker", "Votos revelados en la sesión " + s.id + ".", false);
+  }));
+
+// mostrarDiferenciasPoker muestra si los votos revelados coinciden o el voto
+// menor y el mayor con sus integrantes (HU-24).
+function mostrarDiferenciasPoker(c) {
+  $("diferencias-poker").textContent = c.hay_diferencias
+    ? "Hay diferencias: menor " + c.menor.puntos + " (" + c.menor.integrantes.join(", ") +
+      "), mayor " + c.mayor.puntos + " (" + c.mayor.integrantes.join(", ") + ")."
+    : "Todos votaron " + c.menor.puntos + ".";
+}
+
+// "Repetir ronda" vuelve a abrir la sesión revelada en la ronda siguiente y
+// sin votos (HU-24); mostrarPoker vuelve a mostrar los botones de voto.
+$("btn-repetir-ronda-poker").addEventListener("click", () =>
+  accion("msg-poker", async () => {
+    const form = $("form-votar-poker");
+    const s = await api("POST", "/poker-sessions/" + form.dataset.sessionId + "/rounds");
+    mostrarPoker(s);
+    mostrar("msg-poker", "Ronda " + s.ronda + " iniciada en la sesión " + s.id + ".", false);
   }));
 
 // mostrarEstimarPoker muestra un botón por carta para registrar la estimación
@@ -418,19 +440,64 @@ $("form-crear-sprint").addEventListener("submit", (e) => {
   });
 });
 
+// mostrarCompletados muestra los ítems completados del sprint (HU-12) y los
+// devuelve. La usan "Ver ítems completados" y cada fila de sprints (HU-14).
+async function mostrarCompletados(sprint) {
+  const items = await api("GET", "/sprints/" + sprint + "/completados");
+  $("completados").replaceChildren(
+    ...items.map((it) => {
+      const li = document.createElement("li");
+      li.textContent = it.id + " · " + it.titulo;
+      return li;
+    }),
+  );
+  return items;
+}
+
 $("ver-completados").addEventListener("click", () =>
   accion("msg-sprints", async () => {
     const sprint = sprintActual();
-    const items = await api("GET", "/sprints/" + sprint + "/completados");
-    const lista = $("completados");
-    lista.replaceChildren(
-      ...items.map((it) => {
-        const li = document.createElement("li");
-        li.textContent = it.id + " · " + it.titulo;
-        return li;
+    const items = await mostrarCompletados(sprint);
+    mostrar("msg-sprints", items.length + " ítem(s) completado(s) en el sprint " + sprint + ".", false);
+  }),
+);
+
+// HU-14 · Sprints del proyecto actual. El botón de cada fila deja ese sprint
+// como sprint actual y lo avisa, porque "Cerrar sprint" y "Registrar
+// esfuerzo" usan el sprint actual.
+$("ver-sprints").addEventListener("click", () =>
+  accion("msg-sprints", async () => {
+    const proyecto = proyectoActual();
+    const sprints = await api("GET", "/proyectos/" + proyecto + "/sprints");
+    $("lista-sprints").replaceChildren(
+      ...sprints.map((s) => {
+        const tr = document.createElement("tr");
+        const acciones = document.createElement("td");
+        acciones.append(
+          boton(
+            "Ver ítems completados",
+            async () => {
+              mostrarSprint(s);
+              const items = await mostrarCompletados(s.id);
+              mostrar("msg-sprints", "Sprint " + s.id + " seleccionado: " + items.length + " ítem(s) completado(s).", false);
+            },
+            "secundario",
+            "msg-sprints",
+          ),
+        );
+        tr.append(
+          celda(s.id),
+          celda(s.nombre),
+          celda(s.fecha_inicio),
+          celda(s.fecha_fin),
+          celda(s.objetivo),
+          celda(s.estado),
+          acciones,
+        );
+        return tr;
       }),
     );
-    mostrar("msg-sprints", items.length + " ítem(s) completado(s) en el sprint " + sprint + ".", false);
+    mostrar("msg-sprints", sprints.length + " sprint(s) en el proyecto " + proyecto + ".", false);
   }),
 );
 
@@ -782,6 +849,38 @@ $("generar-reporte").addEventListener("click", () =>
     const nombres = r.integrantes.integrantes;
     $("reporte-integrantes").textContent =
       "Integrantes que registraron esfuerzo: " + (nombres.length === 0 ? "ninguno" : nombres.join(", "));
+  }),
+);
+
+// HU-40 · PDF del reporte del proyecto (CA-40.1). Descarga el archivo del
+// proyecto actual; si la API responde con error, muestra su mensaje (JSON).
+$("descargar-reporte-pdf").addEventListener("click", () =>
+  accion("msg-reporte", async () => {
+    const id = proyectoActual();
+    let response;
+    try {
+      response = await fetch("/api/proyectos/" + id + "/reporte/pdf");
+    } catch {
+      throw new Error("No se pudo conectar con el servidor. ¿Está en ejecución?");
+    }
+    if (!response.ok) {
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        // Sin JSON, se informa por el código.
+      }
+      throw new Error((data && data.error) || "Error " + response.status + " del servidor.");
+    }
+    const url = URL.createObjectURL(await response.blob());
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = "reporte-proyecto-" + id + ".pdf";
+    enlace.click();
+    // Se libera después del clic: liberarlo en el mismo paso puede cancelar
+    // la descarga en algunos navegadores.
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    mostrar("msg-reporte", "PDF del proyecto " + id + " descargado.", false);
   }),
 );
 

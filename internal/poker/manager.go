@@ -124,6 +124,38 @@ func (m *Manager) Estimate(sessionID int, points int) (Session, error) {
 	return cloneSession(session), nil
 }
 
+// RepeatRound repite la ronda de una sesión REVELADA en la misma sesión
+// (HU-24): vuelve a ABIERTA, pasa a la ronda siguiente y descarta los votos.
+// Todo va bajo el mutex de poker, igual que OpenSession, así una apertura
+// simultánea para el mismo ítem no deja dos sesiones ABIERTA (RN-24.11).
+func (m *Manager) RepeatRound(sessionID int) (Session, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	session, err := m.repo.GetByID(sessionID)
+	if err != nil {
+		return Session{}, err
+	}
+	if session.Status != StatusRevealed {
+		return Session{}, ErrSessionNotRevealed
+	}
+	// RN-24.7: con D10 de HU-23 y HU-25 pudo abrirse otra sesión para el ítem
+	// mientras esta estaba REVELADA; reabrirla rompería RN-21.2.
+	if _, exists, err := m.repo.OpenByItem(session.ItemID); err != nil {
+		return Session{}, err
+	} else if exists {
+		return Session{}, ErrSessionAlreadyOpen
+	}
+
+	session.Status = StatusOpen
+	session.Round++
+	session.Votes = []Vote{}
+	if _, err := m.repo.Update(session); err != nil {
+		return Session{}, err
+	}
+	return cloneSession(session), nil
+}
+
 func validCard(points int) bool {
 	for _, card := range Cards() {
 		if card == points {

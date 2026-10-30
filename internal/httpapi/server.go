@@ -82,12 +82,15 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("POST /api/poker-sessions/{id}/reveal", s.revealPokerSession)
 	mux.HandleFunc("GET /api/poker-sessions/{id}/estimate", methodNotAllowed)
 	mux.HandleFunc("POST /api/poker-sessions/{id}/estimate", s.estimatePokerSession)
+	mux.HandleFunc("GET /api/poker-sessions/{id}/rounds", methodNotAllowed)
+	mux.HandleFunc("POST /api/poker-sessions/{id}/rounds", s.repeatRoundPokerSession)
 	mux.HandleFunc("POST /api/items/{id}/defectos", s.registerDefect)
 	mux.HandleFunc("PATCH /api/defectos/{id}/estado", s.changeDefectStatus)
 	mux.HandleFunc("GET /api/proyectos/{id}/defectos", s.listDefectsByProject)
 	mux.HandleFunc("GET /api/sprints/{id}/defectos", s.listDefectsBySprint)
 	mux.HandleFunc("GET /api/items/{id}/esfuerzos", s.listEffortsByItem)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
+	mux.HandleFunc("GET /api/proyectos/{id}/sprints", s.listProjectSprints)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/completar", s.completeItem)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}/esfuerzos", s.registerEffort)
@@ -99,6 +102,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("GET /api/proyectos/{id}/metricas/sprints", s.projectSprintsMetrics)
 	mux.HandleFunc("GET /api/proyectos/{id}/resumen", s.projectSummary)
 	mux.HandleFunc("GET /api/proyectos/{id}/reporte", s.projectReport)
+	mux.HandleFunc("GET /api/proyectos/{id}/reporte/pdf", s.projectReportPDF)
 	mux.HandleFunc("GET /api/sprints/{id}/reporte", s.sprintReport)
 	// La interfaz web responde en / (CA-TEC04.8); las rutas /api/… son más
 	// específicas, así que no la tapan.

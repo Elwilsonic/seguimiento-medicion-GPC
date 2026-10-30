@@ -18,11 +18,25 @@ type pokerSessionResponse struct {
 	Ronda  int                 `json:"ronda"`
 	Votos  []pokerVoteResponse `json:"votos"`
 	Cartas []int               `json:"cartas"`
+	// Comparacion solo la completa la revelación (HU-24, D2); las demás rutas
+	// la omiten y su JSON no cambia.
+	Comparacion *pokerComparisonResponse `json:"comparacion,omitempty"`
 }
 
 type pokerVoteResponse struct {
 	Integrante string `json:"integrante"`
 	Puntos     int    `json:"puntos"`
+}
+
+type pokerComparisonResponse struct {
+	HayDiferencias bool                   `json:"hay_diferencias"`
+	Menor          pokerVoteGroupResponse `json:"menor"`
+	Mayor          pokerVoteGroupResponse `json:"mayor"`
+}
+
+type pokerVoteGroupResponse struct {
+	Puntos      int      `json:"puntos"`
+	Integrantes []string `json:"integrantes"`
 }
 
 // methodNotAllowed responde 405 a los métodos distintos de POST en la ruta de
@@ -112,9 +126,36 @@ func (s *server) revealPokerSession(w http.ResponseWriter, r *http.Request) {
 	for i, voto := range session.Votes {
 		votos[i] = pokerVoteResponse{Integrante: voto.Voter, Puntos: voto.Points}
 	}
+	// HU-24, RN-24.3: la comparación se calcula sobre los votos revelados.
+	comparison := poker.CompareVotes(session.Votes)
 	writeJSON(w, http.StatusOK, pokerSessionResponse{
 		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
 		Ronda: session.Round, Votos: votos, Cartas: poker.Cards(),
+		Comparacion: &pokerComparisonResponse{
+			HayDiferencias: comparison.HasDifferences,
+			Menor:          pokerVoteGroupResponse{Puntos: comparison.Lowest.Points, Integrantes: comparison.Lowest.Voters},
+			Mayor:          pokerVoteGroupResponse{Puntos: comparison.Highest.Points, Integrantes: comparison.Highest.Voters},
+		},
+	})
+}
+
+// repeatRoundPokerSession atiende POST /api/poker-sessions/{id}/rounds:
+// repite la ronda de una sesión revelada (HU-24, CA-24.12). La ruta no recibe
+// cuerpo; si llega uno, se ignora.
+func (s *server) repeatRoundPokerSession(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	session, err := s.poker.RepeatRound(id)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, pokerSessionResponse{
+		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+		Ronda: session.Round, Votos: []pokerVoteResponse{}, Cartas: poker.Cards(),
 	})
 }
 
