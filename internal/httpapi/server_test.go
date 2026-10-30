@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/httpapi"
+	"seguimiento-medicion-gpc/internal/member"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/project"
 	"seguimiento-medicion-gpc/internal/sprint"
@@ -70,7 +71,13 @@ func newHandler() http.Handler {
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
+}
+
+// newMembers crea el Manager de integrantes (HU-15) en memoria, sobre el
+// Manager de proyectos del handler.
+func newMembers(projects *project.Manager) *member.Manager {
+	return member.NewManager(member.NewMemoryRepository(), projects)
 }
 
 // do hace un pedido a la API y verifica que la respuesta sea JSON.
@@ -203,6 +210,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"registrar fecha de fin", http.MethodPatch, "/api/proyectos/abc/fecha-fin", `{"fecha_fin":"2026-12-18"}`},
 		// HU-19, CA-19.8: modificar las fechas del proyecto.
 		{"modificar fechas", http.MethodPatch, "/api/proyectos/abc/fechas", `{"fecha_inicio":"2027-01-11","fecha_fin":"2027-03-19"}`},
+		// HU-15, CA-15.7: registrar un integrante del proyecto.
+		{"registrar integrante", http.MethodPost, "/api/proyectos/abc/integrantes", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
 		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
 		// TEC-04, CA-TEC04.9: endpoints de ítems.
@@ -440,7 +449,7 @@ func TestRegistrarFechaInicioProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
 
@@ -598,7 +607,7 @@ func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas"}`)
 
@@ -764,6 +773,20 @@ var bodyEndpoints = []bodyEndpoint{
 		path:   "/api/defectos/1/estado",
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
+		},
+	},
+	// HU-15, CA-15.7: el cuerpo se rechaza antes de llegar al Manager. No hay
+	// una consulta de integrantes (HU-17): se comprueba que el primer
+	// registro válido recibe el ID 1, así que no se guardó nada antes.
+	{
+		name:   "registrar integrante",
+		method: http.MethodPost,
+		path:   "/api/proyectos/1/integrantes",
+		untouched: func(t *testing.T, h http.Handler) {
+			t.Helper()
+			rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
+			expectStatus(t, rec, http.StatusCreated)
+			expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
 		},
 	},
 }

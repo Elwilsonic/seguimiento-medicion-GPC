@@ -307,7 +307,7 @@ func TestReporteProyecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) 
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 
 	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")

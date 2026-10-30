@@ -81,6 +81,23 @@
       <p class="mensaje" id="msg-proyectos" role="alert" hidden></p>
     </section>
 
+    <section id="integrantes">
+      <h2>Integrantes</h2>
+      <form id="form-registrar-integrante">
+        <h3>Registrar integrante</h3>
+        <label>Nombre <input name="nombre" required></label>
+        <label>Rol
+          <select name="rol">
+            <option value="PRODUCT_ARCHITECT">Product Architect</option>
+            <option value="AGILE_ENABLER">Agile Enabler</option>
+            <option value="PRODUCT_BUILDER">Product Builder</option>
+          </select>
+        </label>
+        <button type="submit">Registrar integrante</button>
+      </form>
+      <p class="mensaje" id="msg-integrantes" role="alert" hidden></p>
+    </section>
+
     <section id="backlog">
       <h2>Product Backlog</h2>
       <div class="columnas">

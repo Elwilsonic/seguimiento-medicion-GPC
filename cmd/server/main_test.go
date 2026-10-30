@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
+	"seguimiento-medicion-gpc/internal/member"
 	"seguimiento-medicion-gpc/internal/poker"
 	"seguimiento-medicion-gpc/internal/postgrestest"
 	"seguimiento-medicion-gpc/internal/project"
@@ -166,6 +167,9 @@ func TestNewRepositories_MemoriaNoNecesitaBase(t *testing.T) {
 	if _, ok := repos.defects.(*defect.MemoryRepository); !ok {
 		t.Errorf("defects es %T, se esperaba *defect.MemoryRepository", repos.defects)
 	}
+	if _, ok := repos.members.(*member.MemoryRepository); !ok {
+		t.Errorf("members es %T, se esperaba *member.MemoryRepository", repos.members)
+	}
 }
 
 // HU-21 · Abrir una sesión de Planning Poker (Issue #39): con
@@ -219,6 +223,9 @@ func TestNewRepositories_PostgresUsaElRepositorioDeDefectos(t *testing.T) {
 
 	if _, ok := repos.defects.(*defect.PostgresRepository); !ok {
 		t.Errorf("defects es %T, se esperaba *defect.PostgresRepository", repos.defects)
+	}
+	if _, ok := repos.members.(*member.PostgresRepository); !ok {
+		t.Errorf("members es %T, se esperaba *member.PostgresRepository", repos.members)
 	}
 }
 

@@ -225,7 +225,7 @@ func TestModificarFechasProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", fechas("2027-01-11", "2027-03-19"))
 

@@ -297,7 +297,7 @@ func TestAsignarStoryPoints_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":5}`)
 

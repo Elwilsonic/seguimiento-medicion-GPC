@@ -123,7 +123,7 @@ func TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, poker.NewManager(brokenPokerRepository{}, items), defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, poker.NewManager(brokenPokerRepository{}, items), defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
 
@@ -191,7 +191,7 @@ func TestVotarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
 	if _, err := pokerRepo.Update(session); err != nil {
 		t.Fatal(err)
 	}
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
 
@@ -230,7 +230,7 @@ func TestVotarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 		t.Fatal(err)
 	}
 	pokerRepo.failUpdate = true
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
 
@@ -328,7 +328,7 @@ func TestRevelarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 		t.Fatal(err)
 	}
 	pokerRepo.failUpdate = true
-	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
 
@@ -466,7 +466,7 @@ func newEstimateHandler(pokerRepo poker.Repository) http.Handler {
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 }
 
 func TestRegistrarEstimacionPoker_ItemInexistenteDevuelve404(t *testing.T) {

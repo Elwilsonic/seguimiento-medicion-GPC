@@ -376,7 +376,7 @@ func TestListarSprintsDelProyecto_FallaDeUnRepositorioDevuelve500(t *testing.T) 
 		efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
 		pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
 		defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-		return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects)
+		return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 	}
 	projectsBroken := newHandlerWith(brokenRepository{}, sprint.NewMemoryRepository())
 	sprintsBroken := newHandlerWith(project.NewMemoryRepository(),
