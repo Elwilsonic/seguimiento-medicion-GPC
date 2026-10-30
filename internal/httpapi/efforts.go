@@ -121,3 +121,38 @@ func toEffortResponse(e effort.Effort) effortResponse {
 		Horas:      e.Hours,
 	}
 }
+
+// effortHoursRequest es el cuerpo de PATCH /api/esfuerzos/{id}/horas (HU-28),
+// con las horas en el mismo formato que el registro de HU-26.
+type effortHoursRequest struct {
+	Horas json.Number `json:"horas"`
+}
+
+// correctEffortHours atiende PATCH /api/esfuerzos/{id}/horas (HU-28). Las horas
+// ausentes o no numéricas dan ErrInvalidHours, como en HU-26.
+func (s *server) correctEffortHours(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	var req effortHoursRequest
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeError(w, err)
+		return
+	}
+
+	hours, err := strconv.ParseFloat(string(req.Horas), 64)
+	if err != nil {
+		writeError(w, effort.ErrInvalidHours)
+		return
+	}
+
+	corrected, err := s.efforts.CorrectHours(id, hours)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toEffortResponse(corrected))
+}

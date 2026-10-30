@@ -208,6 +208,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"registrar fecha de inicio", http.MethodPatch, "/api/proyectos/abc/fecha-inicio", `{"fecha_inicio":"2026-10-23"}`},
 		// HU-41, CA-41.13: registrar la fecha de fin del proyecto.
 		{"registrar fecha de fin", http.MethodPatch, "/api/proyectos/abc/fecha-fin", `{"fecha_fin":"2026-12-18"}`},
+		// HU-19, CA-19.8: modificar las fechas del proyecto.
+		{"modificar fechas", http.MethodPatch, "/api/proyectos/abc/fechas", `{"fecha_inicio":"2027-01-11","fecha_fin":"2027-03-19"}`},
 		// HU-15, CA-15.7: registrar un integrante del proyecto.
 		{"registrar integrante", http.MethodPost, "/api/proyectos/abc/integrantes", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
@@ -250,6 +252,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		// HU-27, CA-27.10: listado de esfuerzos por historia y por sprint.
 		{"listar esfuerzos del ítem", http.MethodGet, "/api/items/abc/esfuerzos", ""},
 		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},
+		// HU-28, CA-28.7: corregir las horas de un esfuerzo.
+		{"corregir esfuerzo", http.MethodPatch, "/api/esfuerzos/abc/horas", `{"horas":10}`},
 		// HU-30, CA-30.9: cambiar el estado de un defecto.
 		{"cambiar estado de defecto", http.MethodPatch, "/api/defectos/abc/estado", `{"estado":"EN_CORRECCION"}`},
 		// HU-31, CA-31.9: consultar los defectos de un proyecto y de un sprint.
@@ -685,6 +689,22 @@ var bodyEndpoints = []bodyEndpoint{
 			decode(t, rec, &p)
 			if p.FechaFin != "" {
 				t.Errorf("proyecto = %+v, se esperaba sin fecha de fin", p)
+			}
+		},
+	},
+	// HU-19, CA-19.8: el cuerpo se rechaza antes de llegar al Manager, así
+	// que el proyecto 1 sigue sin fechas.
+	{
+		name:   "modificar fechas",
+		method: http.MethodPatch,
+		path:   "/api/proyectos/1/fechas",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			expectStatus(t, rec, http.StatusOK)
+			var p projectJSON
+			decode(t, rec, &p)
+			if p.FechaInicio != "" || p.FechaFin != "" {
+				t.Errorf("proyecto = %+v, se esperaba sin fechas", p)
 			}
 		},
 	},

@@ -250,3 +250,12 @@ func (brokenEffortRepository) ListByItem(int) ([]effort.Effort, error) {
 func (brokenEffortRepository) ListBySprint(int) ([]effort.Effort, error) {
 	return nil, errStorage
 }
+
+// GetByID y Update fallan con el mismo error (HU-28).
+func (brokenEffortRepository) GetByID(int) (effort.Effort, error) {
+	return effort.Effort{}, errStorage
+}
+
+func (brokenEffortRepository) Update(effort.Effort) (effort.Effort, error) {
+	return effort.Effort{}, errStorage
+}

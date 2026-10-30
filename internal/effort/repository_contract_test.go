@@ -1,6 +1,7 @@
 package effort
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -181,6 +182,109 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 		}
 		if again[0].Member != "García Santiago" || again[0].Hours != 2.5 {
 			t.Errorf("el esfuerzo guardado cambió: %+v", again[0])
+		}
+	})
+
+	// HU-28 · Corregir un registro de esfuerzo (Issue #46): GetByID y Update
+	// cumplen el mismo contrato en memoria y en PostgreSQL (RN-28.11).
+	t.Run("GetByID devuelve el esfuerzo guardado", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+		second := contractSave(t, repo, contractEffort("Buttini", "Revisar", 1))
+
+		got, err := repo.GetByID(second.ID)
+
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertEffort(t, "GetByID", got, second)
+	})
+
+	t.Run("GetByID de un esfuerzo inexistente devuelve ErrEffortNotFound", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+
+		for _, id := range []int{99, 0, -1} {
+			got, err := repo.GetByID(id)
+
+			if !errors.Is(err, ErrEffortNotFound) {
+				t.Errorf("GetByID(%d): err = %v, se esperaba %v", id, err, ErrEffortNotFound)
+			}
+			if got != (Effort{}) {
+				t.Errorf("GetByID(%d) = %+v, se esperaba el valor cero", id, got)
+			}
+		}
+	})
+
+	t.Run("Update reemplaza el esfuerzo y lo devuelve", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 12))
+		other := contractSave(t, repo, contractEffort("Buttini", "Revisar", 1))
+		changed := saved
+		changed.Hours = 10
+
+		got, err := repo.Update(changed)
+
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		contractAssertEffort(t, "Update", got, changed)
+		stored, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertEffort(t, "esfuerzo guardado", stored, changed)
+		untouched, err := repo.GetByID(other.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		contractAssertEffort(t, "otro esfuerzo", untouched, other)
+	})
+
+	t.Run("Update de un esfuerzo inexistente devuelve ErrEffortNotFound sin crear nada", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+		missing := saved
+		missing.ID = 99
+
+		got, err := repo.Update(missing)
+
+		if !errors.Is(err, ErrEffortNotFound) {
+			t.Errorf("err = %v, se esperaba %v", err, ErrEffortNotFound)
+		}
+		if got != (Effort{}) {
+			t.Errorf("Update = %+v, se esperaba el valor cero", got)
+		}
+		list, err := repo.ListBySprint(contractSprintID)
+		if err != nil {
+			t.Fatalf("ListBySprint devolvió un error inesperado: %v", err)
+		}
+		if len(list) != 1 || list[0].ID != saved.ID {
+			t.Errorf("esfuerzos = %+v, se esperaba solo el esfuerzo %d", list, saved.ID)
+		}
+	})
+
+	t.Run("GetByID y Update devuelven copias", func(t *testing.T) {
+		repo := newRepo(t)
+		saved := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
+
+		got, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		got.Hours = 99
+		updated, err := repo.Update(saved)
+		if err != nil {
+			t.Fatalf("Update devolvió un error inesperado: %v", err)
+		}
+		updated.Hours = 77
+
+		again, err := repo.GetByID(saved.ID)
+		if err != nil {
+			t.Fatalf("GetByID devolvió un error inesperado: %v", err)
+		}
+		if again.Hours != 2.5 {
+			t.Errorf("el esfuerzo guardado cambió: %+v", again)
 		}
 	})
 }

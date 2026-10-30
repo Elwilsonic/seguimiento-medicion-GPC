@@ -67,6 +67,16 @@
           </label>
           <button type="submit">Registrar fecha de fin</button>
         </form>
+        <form id="form-modificar-fechas-proyecto">
+          <h3>Modificar fechas</h3>
+          <label>Nueva fecha de inicio
+            <input name="fecha_inicio" type="date" required>
+          </label>
+          <label>Nueva fecha de fin
+            <input name="fecha_fin" type="date" required>
+          </label>
+          <button type="submit">Modificar fechas</button>
+        </form>
       </div>
       <p class="mensaje" id="msg-proyectos" role="alert" hidden></p>
     </section>
@@ -306,6 +316,13 @@
         <label>Actividad <input name="actividad"></label>
         <label>Horas <input name="horas" type="number" step="any" placeholder="Ej.: 2.5"></label>
         <button type="submit">Registrar esfuerzo</button>
+      </form>
+
+      <form id="form-corregir-esfuerzo">
+        <h3>Corregir esfuerzo</h3>
+        <label>Esfuerzo (ID) <input name="esfuerzo_id" type="number" min="1" placeholder="Ej.: 1"></label>
+        <label>Horas <input name="horas" type="number" step="any" placeholder="Ej.: 2.5"></label>
+        <button type="submit">Corregir esfuerzo</button>
       </form>
 
       <form id="form-consultar-esfuerzos">
