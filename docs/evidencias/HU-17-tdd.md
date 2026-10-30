@@ -164,6 +164,10 @@ Se hizo con el servidor compilado de la rama (`PORT=18917`, datos en memoria) y 
 | `GET /api/proyectos/99/integrantes` | 404, `{"error":"no existe un proyecto con ese id"}` |
 | `GET /api/proyectos/abc/integrantes` | 400, `{"error":"el id debe ser un número entero"}` |
 
+### Uso desde el navegador
+
+Buttini Cristobal hizo el recorrido en el navegador el 30/10/2026 y confirmó que funciona: con el proyecto actual, tocó "Ver integrantes del proyecto" y la tabla mostró los integrantes con su ID, su nombre y su rol.
+
 ## Refactor
 
 No hubo. `List` y `listMembers` siguen el patrón de `History` y `listProjectSprints` (HU-14) y del registro (HU-15), y no hay duplicación que extraer.
