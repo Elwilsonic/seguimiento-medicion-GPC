@@ -71,6 +71,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PUT /api/proyectos/{id}", s.updateProject)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-inicio", s.setProjectStartDate)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-fin", s.setProjectEndDate)
+	mux.HandleFunc("PATCH /api/proyectos/{id}/fechas", s.setProjectDates)
 	mux.HandleFunc("POST /api/proyectos/{id}/integrantes", s.registerMember)
 	mux.HandleFunc("POST /api/proyectos/{id}/backlog", s.createItem)
 	mux.HandleFunc("GET /api/proyectos/{id}/backlog", s.listItems)
@@ -180,7 +181,7 @@ func statusFor(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, project.ErrDuplicateName), errors.Is(err, backlog.ErrInvalidTransition),
 		errors.Is(err, project.ErrStartDateNotRegistered), errors.Is(err, project.ErrEndNotAfterStart),
-		errors.Is(err, project.ErrStartNotBeforeEnd),
+		errors.Is(err, project.ErrStartNotBeforeEnd), errors.Is(err, project.ErrDatesNotRegistered),
 		errors.Is(err, backlog.ErrItemAlreadyAssigned), errors.Is(err, backlog.ErrItemFinished),
 		errors.Is(err, sprint.ErrOpenSprintExists),
 		errors.Is(err, sprint.ErrItemFromAnotherProject), errors.Is(err, sprint.ErrSprintClosed),

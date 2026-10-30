@@ -84,6 +84,9 @@ function mostrarProyecto(p) {
   const inicio = p.fecha_inicio ? "inicio: " + p.fecha_inicio : "sin fecha de inicio";
   // HU-41: fecha_fin es "" si no está registrada.
   $("form-fecha-fin-proyecto").fecha_fin.value = p.fecha_fin;
+  // HU-19: el formulario "Modificar fechas" parte de las fechas registradas.
+  $("form-modificar-fechas-proyecto").fecha_inicio.value = p.fecha_inicio;
+  $("form-modificar-fechas-proyecto").fecha_fin.value = p.fecha_fin;
   const fin = p.fecha_fin ? "fin: " + p.fecha_fin : "sin fecha de fin";
   $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + "), " + inicio + ", " + fin;
 }
@@ -153,6 +156,22 @@ $("form-fecha-fin-proyecto").addEventListener("submit", (e) => {
     });
     mostrarProyecto(p);
     mostrar("msg-proyectos", "Fecha de fin del proyecto " + p.id + " registrada: " + p.fecha_fin + ".", false);
+  });
+});
+
+// HU-19: modifica juntas las dos fechas del proyecto actual, que ya tiene que
+// tenerlas registradas. El par se valida entre sí, así que se puede postergar
+// o adelantar el proyecto sin un orden.
+$("form-modificar-fechas-proyecto").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-proyectos", async () => {
+    const p = await api("PATCH", "/proyectos/" + proyectoActual() + "/fechas", {
+      fecha_inicio: form.fecha_inicio.value,
+      fecha_fin: form.fecha_fin.value,
+    });
+    mostrarProyecto(p);
+    mostrar("msg-proyectos", "Fechas del proyecto " + p.id + " modificadas: inicio " + p.fecha_inicio + ", fin " + p.fecha_fin + ".", false);
   });
 });
 
