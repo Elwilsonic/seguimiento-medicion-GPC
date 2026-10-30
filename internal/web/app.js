@@ -211,6 +211,22 @@ $("form-modificar-integrante").addEventListener("submit", (e) => {
   });
 });
 
+// HU-17: lista los integrantes del proyecto actual con su rol legible.
+$("ver-integrantes").addEventListener("click", () =>
+  accion("msg-integrantes", async () => {
+    const proyecto = proyectoActual();
+    const integrantes = await api("GET", "/proyectos/" + proyecto + "/integrantes");
+    $("lista-integrantes").replaceChildren(
+      ...integrantes.map((m) => {
+        const tr = document.createElement("tr");
+        tr.append(celda(m.id), celda(m.nombre), celda(nombresDeRoles[m.rol]));
+        return tr;
+      }),
+    );
+    mostrar("msg-integrantes", integrantes.length + " integrante(s) en el proyecto " + proyecto + ".", false);
+  }),
+);
+
 // --- Product Backlog (HU-04 a HU-09 y HU-20) ---
 
 // escalaStoryPoints es la escala de backlog.StoryPointScale() (HU-20). Un test

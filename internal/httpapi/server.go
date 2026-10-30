@@ -73,6 +73,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-fin", s.setProjectEndDate)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fechas", s.setProjectDates)
 	mux.HandleFunc("POST /api/proyectos/{id}/integrantes", s.registerMember)
+	mux.HandleFunc("GET /api/proyectos/{id}/integrantes", s.listMembers)
 	mux.HandleFunc("POST /api/proyectos/{id}/backlog", s.createItem)
 	mux.HandleFunc("GET /api/proyectos/{id}/backlog", s.listItems)
 	mux.HandleFunc("GET /api/items/{id}", s.getItem)
