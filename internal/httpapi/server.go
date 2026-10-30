@@ -93,6 +93,8 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	mux.HandleFunc("GET /api/proyectos/{id}/defectos", s.listDefectsByProject)
 	mux.HandleFunc("GET /api/sprints/{id}/defectos", s.listDefectsBySprint)
 	mux.HandleFunc("GET /api/items/{id}/esfuerzos", s.listEffortsByItem)
+	mux.HandleFunc("PUT /api/integrantes/{id}", s.updateMember)
+	mux.HandleFunc("GET /api/integrantes/{id}", memberMethodNotAllowed)
 	mux.HandleFunc("POST /api/proyectos/{id}/sprints", s.createSprint)
 	mux.HandleFunc("GET /api/proyectos/{id}/sprints", s.listProjectSprints)
 	mux.HandleFunc("POST /api/sprints/{id}/items/{itemId}", s.assignItem)
@@ -178,7 +180,8 @@ func statusFor(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),
 		errors.Is(err, sprint.ErrSprintNotFound), errors.Is(err, poker.ErrSessionNotFound),
-		errors.Is(err, defect.ErrDefectNotFound), errors.Is(err, effort.ErrEffortNotFound):
+		errors.Is(err, defect.ErrDefectNotFound), errors.Is(err, member.ErrMemberNotFound),
+		errors.Is(err, effort.ErrEffortNotFound):
 		return http.StatusNotFound
 	case errors.Is(err, project.ErrDuplicateName), errors.Is(err, backlog.ErrInvalidTransition),
 		errors.Is(err, project.ErrStartDateNotRegistered), errors.Is(err, project.ErrEndNotAfterStart),

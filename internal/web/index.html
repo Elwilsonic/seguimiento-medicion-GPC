@@ -95,6 +95,19 @@
         </label>
         <button type="submit">Registrar integrante</button>
       </form>
+      <form id="form-modificar-integrante">
+        <h3>Modificar integrante</h3>
+        <label>ID del integrante <input name="id" type="number" required></label>
+        <label>Nombre <input name="nombre" required></label>
+        <label>Rol
+          <select name="rol">
+            <option value="PRODUCT_ARCHITECT">Product Architect</option>
+            <option value="AGILE_ENABLER">Agile Enabler</option>
+            <option value="PRODUCT_BUILDER">Product Builder</option>
+          </select>
+        </label>
+        <button type="submit">Guardar cambios</button>
+      </form>
       <p class="mensaje" id="msg-integrantes" role="alert" hidden></p>
     </section>
 

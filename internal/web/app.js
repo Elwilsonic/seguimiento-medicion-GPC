@@ -198,6 +198,19 @@ $("form-registrar-integrante").addEventListener("submit", (e) => {
   });
 });
 
+// HU-16: modifica el nombre y el rol de un integrante por su ID, que es global.
+$("form-modificar-integrante").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const form = e.target;
+  accion("msg-integrantes", async () => {
+    const m = await api("PUT", "/integrantes/" + form.id.value, {
+      nombre: form.nombre.value,
+      rol: form.rol.value,
+    });
+    mostrar("msg-integrantes", "Integrante " + m.id + " modificado: " + m.nombre + " (" + nombresDeRoles[m.rol] + ").", false);
+  });
+});
+
 // --- Product Backlog (HU-04 a HU-09 y HU-20) ---
 
 // escalaStoryPoints es la escala de backlog.StoryPointScale() (HU-20). Un test

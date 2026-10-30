@@ -37,10 +37,8 @@ func (m *Manager) Register(projectID int, name, role string) (Member, error) {
 	}
 	// RN-15.4: el mismo nombre en el proyecto, sin distinguir mayúsculas y
 	// con cualquier rol, es el mismo integrante (D1).
-	for _, other := range members {
-		if strings.EqualFold(other.Name, name) {
-			return Member{}, ErrDuplicateMember
-		}
+	if nameTaken(members, name, 0) {
+		return Member{}, ErrDuplicateMember
 	}
 
 	return m.repo.Save(Member{ProjectID: projectID, Name: name, Role: normalized})
