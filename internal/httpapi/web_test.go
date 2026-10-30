@@ -774,6 +774,114 @@ func TestInterfaz_DatosDelProyectoMuestranLaFechaDeFin(t *testing.T) {
 	}
 }
 
+// HU-19 · Modificar las fechas del proyecto (Issue #37)
+//
+// Trazabilidad: CA-19.8. La sección Proyectos tiene, debajo de "Fecha de
+// fin", el formulario "Modificar fechas" con los dos campos de fecha para el
+// proyecto actual; app.js llama a PATCH /proyectos/{id}/fechas, muestra el
+// mensaje de éxito y precarga los dos campos en mostrarProyecto. El recorrido
+// en el navegador queda en la evidencia TDD.
+
+// formularioModificarFechas devuelve el formulario "Modificar fechas" de la
+// sección Proyectos.
+func formularioModificarFechas(t *testing.T, seccion string) string {
+	t.Helper()
+	inicio := strings.Index(seccion, `<form id="form-modificar-fechas-proyecto">`)
+	if inicio == -1 {
+		t.Fatal("la sección de proyectos no contiene el formulario \"Modificar fechas\"")
+	}
+	fin := strings.Index(seccion[inicio:], "</form>")
+	if fin == -1 {
+		t.Fatal("el formulario \"Modificar fechas\" no está cerrado")
+	}
+	return seccion[inicio : inicio+fin]
+}
+
+// manejadorModificarFechas devuelve el manejador del formulario "Modificar
+// fechas" en app.js.
+func manejadorModificarFechas(t *testing.T, js string) string {
+	t.Helper()
+	inicio := strings.Index(js, `$("form-modificar-fechas-proyecto").addEventListener("submit"`)
+	if inicio == -1 {
+		t.Fatal("app.js no maneja el envío del formulario \"Modificar fechas\"")
+	}
+	fin := strings.Index(js[inicio:], "\n});")
+	if fin == -1 {
+		t.Fatal("el manejador del formulario \"Modificar fechas\" no está cerrado")
+	}
+	return js[inicio : inicio+fin]
+}
+
+func TestInterfaz_FormularioModificarFechasDelProyecto(t *testing.T) {
+	seccion := seccionProyectos(t, get(t, newHandler(), "/").Body.String())
+
+	form := formularioModificarFechas(t, seccion)
+	for _, want := range []string{
+		"<h3>Modificar fechas</h3>",
+		`name="fecha_inicio" type="date" required`,
+		`name="fecha_fin" type="date" required`,
+		`<button type="submit">Modificar fechas</button>`,
+	} {
+		if !strings.Contains(form, want) {
+			t.Errorf("el formulario \"Modificar fechas\" no contiene %q", want)
+		}
+	}
+	fechaFin := strings.Index(seccion, `id="form-fecha-fin-proyecto"`)
+	modificar := strings.Index(seccion, `id="form-modificar-fechas-proyecto"`)
+	if fechaFin == -1 || modificar < fechaFin {
+		t.Error("el formulario \"Modificar fechas\" no está debajo de \"Fecha de fin\"")
+	}
+}
+
+func TestInterfaz_ModificarFechasLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	manejador := manejadorModificarFechas(t, js)
+	for _, want := range []string{
+		`accion("msg-proyectos"`,
+		`api("PATCH", "/proyectos/" + proyectoActual() + "/fechas"`,
+		"fecha_inicio: form.fecha_inicio.value",
+		"fecha_fin: form.fecha_fin.value",
+		"mostrarProyecto(p)",
+	} {
+		if !strings.Contains(manejador, want) {
+			t.Errorf("el manejador de \"Modificar fechas\" no contiene %q", want)
+		}
+	}
+}
+
+func TestInterfaz_ModificarFechasMuestraElMensajeDeExito(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	manejador := manejadorModificarFechas(t, js)
+	want := `mostrar("msg-proyectos", "Fechas del proyecto " + p.id + " modificadas: inicio " + p.fecha_inicio + ", fin " + p.fecha_fin + ".", false)`
+	if !strings.Contains(manejador, want) {
+		t.Errorf("el manejador de \"Modificar fechas\" no contiene %q", want)
+	}
+}
+
+func TestInterfaz_DatosDelProyectoPrecarganElFormularioModificarFechas(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	inicio := strings.Index(js, "function mostrarProyecto(p)")
+	if inicio == -1 {
+		t.Fatal("app.js no contiene mostrarProyecto")
+	}
+	fin := strings.Index(js[inicio:], "\n}")
+	if fin == -1 {
+		t.Fatal("mostrarProyecto no está cerrada")
+	}
+	funcion := js[inicio : inicio+fin]
+	for _, want := range []string{
+		`$("form-modificar-fechas-proyecto").fecha_inicio.value = p.fecha_inicio`,
+		`$("form-modificar-fechas-proyecto").fecha_fin.value = p.fecha_fin`,
+	} {
+		if !strings.Contains(funcion, want) {
+			t.Errorf("mostrarProyecto no contiene %q", want)
+		}
+	}
+}
+
 // HU-36 · Ver el resumen del estado del proyecto (Issue #54)
 //
 // Trazabilidad: CA-36.6. La interfaz tiene una sección "Dashboard" con el

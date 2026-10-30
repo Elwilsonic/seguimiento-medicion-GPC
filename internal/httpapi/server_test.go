@@ -201,6 +201,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"registrar fecha de inicio", http.MethodPatch, "/api/proyectos/abc/fecha-inicio", `{"fecha_inicio":"2026-10-23"}`},
 		// HU-41, CA-41.13: registrar la fecha de fin del proyecto.
 		{"registrar fecha de fin", http.MethodPatch, "/api/proyectos/abc/fecha-fin", `{"fecha_fin":"2026-12-18"}`},
+		// HU-19, CA-19.8: modificar las fechas del proyecto.
+		{"modificar fechas", http.MethodPatch, "/api/proyectos/abc/fechas", `{"fecha_inicio":"2027-01-11","fecha_fin":"2027-03-19"}`},
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
 		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
 		// TEC-04, CA-TEC04.9: endpoints de ítems.
@@ -675,6 +677,22 @@ var bodyEndpoints = []bodyEndpoint{
 			decode(t, rec, &p)
 			if p.FechaFin != "" {
 				t.Errorf("proyecto = %+v, se esperaba sin fecha de fin", p)
+			}
+		},
+	},
+	// HU-19, CA-19.8: el cuerpo se rechaza antes de llegar al Manager, así
+	// que el proyecto 1 sigue sin fechas.
+	{
+		name:   "modificar fechas",
+		method: http.MethodPatch,
+		path:   "/api/proyectos/1/fechas",
+		untouched: func(t *testing.T, h http.Handler) {
+			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			expectStatus(t, rec, http.StatusOK)
+			var p projectJSON
+			decode(t, rec, &p)
+			if p.FechaInicio != "" || p.FechaFin != "" {
+				t.Errorf("proyecto = %+v, se esperaba sin fechas", p)
 			}
 		},
 	},
