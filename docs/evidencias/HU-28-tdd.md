@@ -183,6 +183,10 @@ Medición local sin base, en Windows con go1.27.2, `go test -count=1 -p 1 -cover
 
 `CorrectHours`, `validHours`, `GetByID` y `Update` de memoria y `correctEffortHours` quedan en 100.0%. `internal/effort` baja de 71.6% a 70.5% y el total de 84.2% a 84.0% porque `GetByID` y `Update` de PostgreSQL (0.0%) no se ejecutan sin base: sus casos del contrato se omiten sin `TEST_DATABASE_URL` (7 tests de PostgreSQL omitidos en `internal/effort`). `internal/httpapi` sube de 98.5% a 98.6%. No se midió con PostgreSQL: el motor de Docker no se levantó; el contrato de `GetByID` y `Update` corre igual en el CI cuando hay base, y queda para otro integrante con la base disponible.
 
+### Prueba con PostgreSQL (revisión del PR)
+
+En la revisión del PR, Sosa Ricardo verificó sobre `be69125` con PostgreSQL 17 en Docker (puerto 5434): los 5 subtests nuevos de `TestPostgresRepository_Contrato` pasan, y `go test ./... -count=1 -v` con `TEST_DATABASE_URL` dio 2462 PASS, 0 FAIL y 0 SKIP. Fue una corrida de tests, no una medición de cobertura: la columna "Con base" de `docs/reportes/cobertura.md` sigue siendo la de HU-47.
+
 ## Desvíos y límites
 
 1. **Test agregado después del GREEN.** `841cfc0` (ver la sección anterior): la rama de error de la segunda lectura de `CorrectHours` no tenía test en el RED.
