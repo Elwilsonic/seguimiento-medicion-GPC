@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #46
 
-Aprobada por: pendiente (Agile Enabler).
+Aprobada por: Peñalbé Hernán (Agile Enabler), 30/10/2026, con 3 SP y dos ajustes (HU-28 en el Sprint 4 con capacidad sobrante y cambios en paralelo con HU-15 y HU-19), que se aplicaron.
 
 ## Historia de usuario
 
@@ -119,7 +119,7 @@ En la sección "Sprints", después de "Registrar esfuerzo" y antes de "Consultar
   | `internal/httpapi/server.go` | La ruta `PATCH /api/esfuerzos/{id}/horas` y `effort.ErrEffortNotFound` en el 404 de `statusFor` |
   | `internal/web/index.html` y `app.js` | El formulario "Corregir esfuerzo" y su manejo |
 
-- **Cambios en paralelo.** HU-19 (rama `feature/HU-19-modificar-fechas-proyecto`, todavía sin Pull Request) modifica `internal/httpapi/server.go` (incluido `statusFor`), `server_test.go`, `web_test.go`, `index.html` y `app.js`. HU-28 agrega líneas propias en esos archivos, en otros bloques, así que al traer `main` puede haber conflictos triviales que se resuelven conservando los dos cambios. HU-14 ya está en `main`.
+- **Cambios en paralelo.** HU-15 y HU-19 ya están en `main`. HU-15 suma `members` a `NewHandler`, así que todo test que arme el handler a mano (como el del 500) usa `newMembers(projects)`, como los demás; HU-19 modificó `server.go` (incluido `statusFor`), `server_test.go`, `web_test.go`, `index.html` y `app.js`. La rama trae `main` antes del RED, y HU-28 agrega líneas propias en esos archivos, en otros bloques.
 - **Repositorios de prueba.** Dos dobles de `effort.Repository` implementan la interfaz entera sin embeberla: `failingEffortRepository` (`internal/effort/register_test.go`) y `brokenEffortRepository` (`internal/httpapi/efforts_test.go`). Necesitan `GetByID` y `Update` para compilar, así que se les agregan en el RED, devolviendo su mismo error, sin cambiar su comportamiento. Los demás dobles (`recordingEffortRepository` y los espías de `internal/metrics` e `internal/report`) embeben un repositorio y no cambian.
 - **Concurrencia.** Sin mutex nuevo: la corrección se serializa con el mutex del sprint (RN-28.5), con el orden de locks sprint → effort de HU-26.
 - **Tests.**
@@ -183,7 +183,7 @@ En la sección "Sprints", después de "Registrar esfuerzo" y antes de "Consultar
 
 **HU-28 no está en el alcance del Sprint 4.** El acta del Sprint 4 la lista en "Fuera de la entrega", junto con E4 (HU-15 a HU-17) y HU-19, como ya hacía el acta del Sprint 3 ("Fuera de la entrega, salvo capacidad sobrante"). El acta del Sprint 1 la ubicaba en el Sprint 4, con HU-27, y el acta del Sprint 3 la registra como bloqueada por HU-26. HU-26 y HU-27 ya están en `main`.
 
-Esta historia **se adelanta al Sprint 5**, antes de su Planning, como se hizo con HU-32 y HU-34 en el Sprint 3: sus **Story Points se estiman en el Planning del Sprint 5**, y el adelanto se registra en la Daily y en el acta de ese Planning. Hasta entonces la historia no cumple la Definition of Ready en lo que respecta a los Story Points, y la implementación espera esa decisión del Agile Enabler.
+No hay Sprint 5: el Sprint 4 es el último (entrega el 02/11). HU-28 **se toma en el Sprint 4 con capacidad sobrante**, asignada por Peñalbé Hernán el 29/10, como HU-15 y HU-19, que también figuraban en "Fuera de la entrega". **Story Points: 3**, estimados por Peñalbé Hernán al aprobar esta SDD el 30/10/2026.
 
 ## Comparación con los criterios del Issue #46 (borrador)
 
@@ -209,6 +209,6 @@ Los criterios del Issue se cierran con CA-28.1 a CA-28.7 cuando se apruebe esta 
 7. **Validar antes de leer.** Mismo orden que HU-26 y HU-30: el error de horas (400) no depende de que el esfuerzo exista.
 8. **Métricas y reportes sin cambios.** M5 a M7 y los reportes se calculan en el momento (TEC-03, HU-35, HU-38 y HU-39), así que no hace falta tocar `internal/metrics` ni `internal/report`; un test de API verifica que las métricas y la consulta de esfuerzos del sprint reflejen la corrección.
 9. **Formulario propio en "Sprints"**, junto a "Registrar esfuerzo" y "Consultar esfuerzos", con el ID del esfuerzo que muestra la tabla de HU-27. *Alternativa descartada:* un botón "Corregir" en cada fila de la tabla de HU-27, que cambia una función compartida (`filaEsfuerzo`) que usan los reportes de HU-38 y HU-39.
-10. **Story Points.** Se estiman en el Planning del Sprint 5.
+10. **Story Points.** 3 SP, estimados por Peñalbé Hernán al aprobar la SDD; no se divide.
 
 HU-28: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
