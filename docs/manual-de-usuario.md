@@ -154,7 +154,7 @@ Un ítem `TERMINADO` no se puede reestimar.
 
    ![Votos revelados, con diferencias](img/manual-de-usuario/09-poker-revelar.png)
 
-4. **Repetir la ronda (HU-24):** si hay diferencias y el equipo quiere volver a votar, tocá **Repetir ronda**. La misma sesión vuelve a `ABIERTA`, en la ronda siguiente y sin votos.
+4. **Repetir la ronda (HU-24):** si el equipo quiere volver a votar, tocá **Repetir ronda**. Lo habitual es hacerlo cuando hay diferencias, pero también se puede repetir aunque todos hayan votado lo mismo. La misma sesión vuelve a `ABIERTA`, en la ronda siguiente y sin votos.
 5. **Registrar la estimación acordada (HU-25):** en **Registrar estimación acordada**, tocá la carta que acordó el equipo. La sesión queda `CERRADA` y los story points se guardan en el ítem (columna **SP** del backlog).
 
    ![Estimación registrada](img/manual-de-usuario/10-poker-estimacion.png)
