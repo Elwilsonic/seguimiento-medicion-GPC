@@ -242,3 +242,50 @@ func TestCorrectHours_ErrorDelRepositorio(t *testing.T) {
 		t.Errorf("err = %v, se esperaba %v", err, errEffortRepository)
 	}
 }
+
+// errSecondRead es el error de la segunda lectura del esfuerzo.
+var errSecondRead = errors.New("falla la segunda lectura del esfuerzo")
+
+// secondReadFailingRepository delega en el repositorio en memoria, falla solo
+// en el segundo GetByID y cuenta las llamadas a Update.
+type secondReadFailingRepository struct {
+	*MemoryRepository
+	gets, updates int
+}
+
+func (r *secondReadFailingRepository) GetByID(id int) (Effort, error) {
+	r.gets++
+	if r.gets == 2 {
+		return Effort{}, errSecondRead
+	}
+	return r.MemoryRepository.GetByID(id)
+}
+
+func (r *secondReadFailingRepository) Update(e Effort) (Effort, error) {
+	r.updates++
+	return r.MemoryRepository.Update(e)
+}
+
+// RN-28.5 · Si falla la segunda lectura, la que se hace con el mutex del
+// sprint tomado, se devuelve ese error sin llamar a Update. Agregado después
+// del GREEN (ver la evidencia).
+func TestCorrectHours_ErrorEnLaSegundaLecturaSePropaga(t *testing.T) {
+	env, saved, _ := envForCorrect(t)
+	repo := &secondReadFailingRepository{MemoryRepository: env.memory}
+	env.manager = NewManager(repo, env.sprints, env.items)
+
+	got, err := env.manager.CorrectHours(saved.ID, 10)
+
+	if !errors.Is(err, errSecondRead) {
+		t.Errorf("err = %v, se esperaba %v", err, errSecondRead)
+	}
+	if got != (Effort{}) {
+		t.Errorf("CorrectHours = %+v, se esperaba el valor cero", got)
+	}
+	if repo.gets != 2 || repo.updates != 0 {
+		t.Errorf("GetByID y Update = %d y %d llamadas, se esperaba 2 y 0", repo.gets, repo.updates)
+	}
+	if stored := storedEffort(t, env, saved.ID); stored != saved {
+		t.Errorf("el esfuerzo guardado cambió: %+v", stored)
+	}
+}
