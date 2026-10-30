@@ -21,4 +21,7 @@ var (
 	ErrEmptyActivity = errors.New("la actividad es obligatoria")
 	ErrMissingDate   = errors.New("la fecha del esfuerzo es obligatoria")
 	ErrInvalidHours  = errors.New("las horas trabajadas deben ser un número positivo")
+	// ErrEffortNotFound indica que no existe un esfuerzo con ese ID, incluidos
+	// los IDs 0 y negativos (HU-28).
+	ErrEffortNotFound = errors.New("no existe un esfuerzo con ese id")
 )

@@ -54,3 +54,15 @@ func (r *MemoryRepository) ListBySprint(sprintID int) ([]Effort, error) {
 	}
 	return efforts, nil
 }
+
+// GetByID devuelve una copia del esfuerzo con ese ID (HU-28). Firma vacía del
+// RED: se implementa en el GREEN.
+func (r *MemoryRepository) GetByID(id int) (Effort, error) {
+	return Effort{}, nil
+}
+
+// Update reemplaza el esfuerzo con ese ID (HU-28). Firma vacía del RED: se
+// implementa en el GREEN.
+func (r *MemoryRepository) Update(effort Effort) (Effort, error) {
+	return Effort{}, nil
+}

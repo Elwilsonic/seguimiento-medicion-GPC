@@ -82,3 +82,15 @@ func (r *PostgresRepository) listEfforts(filter string, id int) ([]Effort, error
 	}
 	return efforts, nil
 }
+
+// GetByID devuelve el esfuerzo con ese ID (HU-28). Firma vacía del RED: se
+// implementa en el GREEN.
+func (r *PostgresRepository) GetByID(id int) (Effort, error) {
+	return Effort{}, nil
+}
+
+// Update reemplaza el esfuerzo con ese ID (HU-28). Firma vacía del RED: se
+// implementa en el GREEN.
+func (r *PostgresRepository) Update(effort Effort) (Effort, error) {
+	return Effort{}, nil
+}
