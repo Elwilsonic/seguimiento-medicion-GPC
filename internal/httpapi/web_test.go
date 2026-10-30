@@ -1495,3 +1495,65 @@ func TestInterfaz_CorregirEsfuerzoLlamaALaAPI(t *testing.T) {
 		}
 	}
 }
+
+// HU-17 · Consultar los integrantes de un proyecto (Issue #31)
+//
+// Trazabilidad: CA-17.6. La sección "Integrantes" tiene el botón "Ver
+// integrantes del proyecto", que llena una tabla con el ID, el nombre y el
+// rol legible de los integrantes del proyecto actual.
+
+// CA-17.6 · El botón y la tabla están en la sección "Integrantes", después
+// del formulario "Modificar integrante" y antes del mensaje.
+func TestInterfaz_SeccionIntegrantesTieneElBotonVerIntegrantes(t *testing.T) {
+	page := get(t, newHandler(), "/").Body.String()
+
+	inicio := strings.Index(page, `<section id="integrantes">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de integrantes")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de integrantes no se cierra")
+	}
+	seccion := page[inicio : inicio+fin]
+	for _, want := range []string{
+		`<button type="button" id="ver-integrantes" class="secundario">Ver integrantes del proyecto</button>`,
+		`<tbody id="lista-integrantes"></tbody>`,
+		"<th>ID</th><th>Nombre</th><th>Rol</th>",
+	} {
+		if !strings.Contains(seccion, want) {
+			t.Errorf("la sección de integrantes no contiene %q", want)
+		}
+	}
+	modificar := strings.Index(seccion, `id="form-modificar-integrante"`)
+	boton := strings.Index(seccion, `id="ver-integrantes"`)
+	mensaje := strings.Index(seccion, `id="msg-integrantes"`)
+	if !(modificar < boton && boton < mensaje) {
+		t.Error("el botón Ver integrantes tiene que estar entre Modificar integrante y el mensaje")
+	}
+}
+
+// CA-17.1, CA-17.2 y CA-17.6 · "Ver integrantes del proyecto" llama a la ruta
+// con el proyecto actual, llena la tabla con el rol legible e informa la
+// cantidad.
+func TestInterfaz_VerIntegrantesLlamaALaAPIConElProyectoActual(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+	body := handlerBody(t, js, "ver-integrantes")
+
+	for _, want := range []string{
+		`accion("msg-integrantes"`,
+		`api("GET", "/proyectos/" + proyecto + "/integrantes")`,
+		`$("lista-integrantes")`,
+		"m.id",
+		"m.nombre",
+		"nombresDeRoles[m.rol]",
+		`" integrante(s) en el proyecto "`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("el handler de ver-integrantes no contiene %q", want)
+		}
+	}
+	if strings.Contains(body, "innerHTML") {
+		t.Error("el handler de ver-integrantes usa innerHTML")
+	}
+}

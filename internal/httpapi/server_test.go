@@ -212,6 +212,8 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"modificar fechas", http.MethodPatch, "/api/proyectos/abc/fechas", `{"fecha_inicio":"2027-01-11","fecha_fin":"2027-03-19"}`},
 		// HU-15, CA-15.7: registrar un integrante del proyecto.
 		{"registrar integrante", http.MethodPost, "/api/proyectos/abc/integrantes", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},
+		// HU-17, CA-17.4: listar los integrantes del proyecto.
+		{"listar integrantes", http.MethodGet, "/api/proyectos/abc/integrantes", ""},
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
 		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
 		// TEC-04, CA-TEC04.9: endpoints de ítems.
