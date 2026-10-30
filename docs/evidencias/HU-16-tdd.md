@@ -268,6 +268,6 @@ Con base, con los mismos comandos y `TEST_DATABASE_URL`: `internal/member` 95.6%
 | RED | `9925147` | `test(HU-16): agregar tests (RED)` |
 | GREEN | `5738455` | `feat(HU-16): modificar el nombre y el rol de un integrante (GREEN)` |
 | Traer `main` | `1775b40` | `chore(HU-16): traer main con HU-19 y HU-28` |
-| Evidencia y cobertura | (propuesto) | `docs(HU-16): agregar evidencia TDD y cobertura` |
+| Evidencia y cobertura | `e51d920` | `docs(HU-16): agregar evidencia TDD y cobertura` |
 
 HU-16: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
