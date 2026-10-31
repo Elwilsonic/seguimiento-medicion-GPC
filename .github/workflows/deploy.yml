@@ -1,0 +1,141 @@
+# Despliegue en Azure Container Apps (TEC-09): en cada push a main (es decir,
+# al integrar un Pull Request) y a mano desde la pestaña Actions, construye la
+# imagen del Dockerfile, la sube al registro de la cátedra y crea o actualiza
+# la Container App del Grupo12.
+#
+# Los valores que no son secretos son los de la planilla de grupos de la
+# cátedra. La contraseña del registro y las credenciales de Azure se leen solo
+# de los Secrets del repositorio (Settings → Secrets and variables → Actions):
+# ACR_PASSWORD y AZURE_CREDENTIALS. Nunca se escriben en un archivo.
+name: Despliegue
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un despliegue a la vez; si se integran dos PR seguidos, el segundo espera.
+concurrency:
+  group: despliegue-azure
+  cancel-in-progress: false
+
+env:
+  CONTAINER_APP_NAME: grupo12-seguimiento-medicion-gpc
+  ACR_NAME: ingcalidad2026
+  ACR_LOGIN_SERVER: ingcalidad2026.azurecr.io
+  AZURE_RESOURCE_GROUP: frsrutn
+  AZURE_CONTAINERAPPS_ENVIRONMENT: utnapp-env
+
+jobs:
+  deploy:
+    name: Construir y desplegar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Verificar que estén los Secrets
+        env:
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          faltan=""
+          [ -n "$ACR_PASSWORD" ] || faltan="$faltan ACR_PASSWORD"
+          [ -n "$AZURE_CREDENTIALS" ] || faltan="$faltan AZURE_CREDENTIALS"
+          if [ -n "$faltan" ]; then
+            echo "Faltan los Secrets:$faltan (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Construir la imagen (Go de go.mod)
+        run: |
+          go_version=$(sed -n 's/^go //p' go.mod)
+          image="$ACR_LOGIN_SERVER/$CONTAINER_APP_NAME:$GITHUB_SHA"
+          docker build --build-arg GO_VERSION="$go_version" -t "$image" .
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+
+      - name: Subir la imagen al registro
+        env:
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        run: |
+          echo "$ACR_PASSWORD" | docker login "$ACR_LOGIN_SERVER" --username "$ACR_NAME" --password-stdin
+          docker push "$IMAGE"
+
+      - name: Iniciar sesión en Azure
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          client_id=$(jq -r .clientId <<< "$AZURE_CREDENTIALS")
+          client_secret=$(jq -r .clientSecret <<< "$AZURE_CREDENTIALS")
+          tenant_id=$(jq -r .tenantId <<< "$AZURE_CREDENTIALS")
+          subscription_id=$(jq -r .subscriptionId <<< "$AZURE_CREDENTIALS")
+          # GitHub oculta el Secret completo, pero no cada campo por separado.
+          echo "::add-mask::$client_id"
+          echo "::add-mask::$client_secret"
+          echo "::add-mask::$tenant_id"
+          echo "::add-mask::$subscription_id"
+          az login --service-principal --username "$client_id" --password "$client_secret" --tenant "$tenant_id" --output none
+          az account set --subscription "$subscription_id"
+          az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
+
+      # Una sola réplica, siempre encendida: con almacenamiento en memoria,
+      # varias réplicas tendrían datos distintos y escalar a cero los borraría.
+      - name: Crear o actualizar la Container App
+        env:
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        run: |
+          if az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --output none 2>/dev/null; then
+            # Por si la Container App ya existía sin el registro o sin ingreso
+            # externo: los dos comandos se pueden repetir sin cambiar nada.
+            az containerapp registry set \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --server "$ACR_LOGIN_SERVER" \
+              --username "$ACR_NAME" \
+              --password "$ACR_PASSWORD" \
+              --output none
+            az containerapp ingress enable \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --type external --target-port 8080 \
+              --output none
+            az containerapp update \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --image "$IMAGE" \
+              --min-replicas 1 --max-replicas 1 \
+              --output none
+          else
+            az containerapp create \
+              --name "$CONTAINER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --environment "$AZURE_CONTAINERAPPS_ENVIRONMENT" \
+              --image "$IMAGE" \
+              --registry-server "$ACR_LOGIN_SERVER" \
+              --registry-username "$ACR_NAME" \
+              --registry-password "$ACR_PASSWORD" \
+              --ingress external --target-port 8080 \
+              --min-replicas 1 --max-replicas 1 \
+              --output none
+          fi
+
+      - name: Verificar que la aplicación responda
+        run: |
+          fqdn=$(az containerapp show --name "$CONTAINER_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn --output tsv)
+          url="https://$fqdn/"
+          for intento in $(seq 1 30); do
+            codigo=$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)
+            if [ "$codigo" = "200" ]; then
+              echo "La aplicación responde en $url"
+              echo "### Aplicación desplegada: $url" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "Intento $intento: código $codigo; se reintenta en 10 s."
+            sleep 10
+          done
+          echo "La aplicación no respondió 200 en $url"
+          exit 1
