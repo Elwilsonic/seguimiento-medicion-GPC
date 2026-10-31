@@ -312,6 +312,7 @@ Las reglas completas están en [`AGENTS.md`](../AGENTS.md), y el checklist previ
 - **Commits:** `tipo(ID): descripción`, con `tipo` en `test`, `feat`, `refactor`, `docs`, `ci`, `chore` o `fix`, e `ID` de la historia, la tarea o el sprint (por ejemplo `test(HU-01): agregar tests (RED)`). El cuerpo lleva `Refs #N` con el Issue; el commit de cierre lleva `Closes #N`.
 - **Pull Request:** hacia `main`, con la aprobación de un integrante distinto del responsable y la CI en verde. Se integra con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR.
 - **CI** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml), TEC-02): en cada Pull Request hacia `main` verifica el formato (`gofmt -l`), corre `go vet ./...` y `go test -race -p 1 -v -coverprofile=coverage.out ./...`, y muestra la cobertura total. Levanta PostgreSQL 17 como servicio (`postgres:17-alpine`, base `gpc_test`), crea el esquema con `db/init/01-schema.sql` y define `TEST_DATABASE_URL`, así que corre también las pruebas de integración; si algún test se omite, el CI falla (acción 8 de la Retrospectiva del Sprint 4).
+- **Despliegue** ([`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml), TEC-09): en cada push a `main` y a mano, construye la imagen del [`Dockerfile`](../Dockerfile) y la despliega en Azure Container Apps (sección 8).
 - **Trazabilidad:** cada Issue de historia tiene la sección "## Trazabilidad" con los links a su SDD, BDD y evidencia.
 - **Definition of Ready y Done:** [`docs/definition-of-ready-done.md`](definition-of-ready-done.md).
 - **Uso de IA:** se registra en [`docs/ia/registro.md`](ia/registro.md).
@@ -325,3 +326,30 @@ Las reglas completas están en [`AGENTS.md`](../AGENTS.md), y el checklist previ
 | `github.com/cucumber/godog` v0.16.0 | Ejecución de los escenarios BDD (solo tests) | Aprobada por el equipo (AGENTS.md) |
 
 El resto usa solo la biblioteca estándar de Go. Agregar otra librería requiere la aprobación del equipo.
+
+## 8. Despliegue en Azure Container Apps
+
+La cátedra provee una cuenta de Azure con un registro de imágenes y un entorno de Container Apps para cada grupo (TEC-09). Los pasos para construir la imagen, los Secrets que hay que cargar y el límite del despliegue están en el [README](../README.md#despliegue-en-azure).
+
+### 8.1 Imagen
+
+El [`Dockerfile`](../Dockerfile) tiene dos etapas:
+
+1. **Compilación:** `golang:<versión de go.mod>-alpine` compila `./cmd/server` como binario estático (`CGO_ENABLED=0`, `-trimpath`). La interfaz web va adentro del binario (`embed`, TEC-04).
+2. **Imagen final:** `gcr.io/distroless/static-debian12:nonroot`, con el binario solo: sin código fuente, sin compilador y sin shell, y con el usuario `nonroot`. Define `PORT=8080` y `STORAGE=memory`.
+
+El [`.dockerignore`](../.dockerignore) deja entrar solo `go.mod`, `go.sum`, `cmd/` e `internal/` (sin los tests). La imagen pesa unos 23 MB.
+
+### 8.2 Workflow
+
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) corre en cada push a `main` y a mano (`workflow_dispatch`), de a un despliegue por vez. Solo usa `actions/checkout`, como el CI; lo demás son comandos de `docker` y de la CLI `az`, que ya vienen en los runners de GitHub.
+
+| Paso | Qué hace |
+|---|---|
+| Secrets | Falla al principio si falta `ACR_PASSWORD` o `AZURE_CREDENTIALS`, y dice cuál |
+| Imagen | `docker build` con la versión de Go de `go.mod` y el hash del commit como etiqueta, y `docker push` a `ingcalidad2026.azurecr.io` (la contraseña entra por `--password-stdin`) |
+| Azure | `az login` con el service principal de `AZURE_CREDENTIALS`. Cada campo del JSON se oculta en los logs con `::add-mask::` |
+| Container App | Si `grupo12-seguimiento-medicion-gpc` no existe, la crea en `frsrutn` / `utnapp-env` con el registro, ingreso externo al puerto 8080 y una réplica. Si existe, vuelve a configurar el registro y el ingreso y actualiza la imagen |
+| Verificación | Espera hasta 5 minutos a que `https://<fqdn>/` responda 200 y escribe la URL en el resumen de la ejecución |
+
+El CI de los Pull Requests (sección 6) no cambia.

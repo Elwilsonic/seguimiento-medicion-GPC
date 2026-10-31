@@ -1,0 +1,8 @@
+# Solo entra a la imagen lo necesario para compilar el servidor (TEC-09).
+*
+!go.mod
+!go.sum
+!cmd/
+!internal/
+# Los tests no hacen falta para compilar.
+**/*_test.go
