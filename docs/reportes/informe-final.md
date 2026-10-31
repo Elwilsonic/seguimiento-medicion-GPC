@@ -6,6 +6,7 @@ Informe final del proyecto "Software Metrics & Estimation" (TEC-08): las métric
 
 - **Fecha de corte:** 30/10/2026, día del cierre del desarrollo; la entrega es el 02/11/2026.
 - **Código medido:** `main` en `a39592c`. Lo que se integre después solo cambia documentación (actas del Sprint 4 y este informe).
+- **Actualización del 31/10/2026:** después de la Review se agregó HU-49 (historias y estimaciones en el reporte). Las cifras de las secciones 1 a 8 son las del corte; lo que cambia con HU-49 está en la [sección 10](#10-actualización-hu-49-historias-en-el-reporte).
 - **Entorno de medición:** Go 1.27.1 en Linux; PostgreSQL 16.15 para las pruebas de integración.
 - **Fórmulas:** las de [`docs/metricas.md`](../metricas.md) (TEC-03), aplicadas al proceso del equipo (sección 2).
 
@@ -365,3 +366,24 @@ git worktree add ../medicion sprint-2
 ```
 
 La cobertura de un tag se mide con el esquema de ese tag (`db/init/01-schema.sql` de esa versión). Si la base local se creó antes de HU-15, hay que recrearla con `docker compose down -v`.
+
+## 10. Actualización: HU-49 (historias en el reporte)
+
+El 31/10/2026, después de la Review del Sprint 4, la comparación con la consigna mostró que el requerimiento 9 pide que el reporte incluya las historias planificadas y completadas y las estimaciones. Hasta ese momento, el reporte las informaba solo como cantidades y sumas de las métricas.
+
+Se agregó **HU-49** (Issue #170, 3 Story Points, Sprint 4): los reportes del proyecto y del sprint listan cada historia con su estado y su estimación, en la API, en la interfaz y en el PDF. El detalle está en su [evidencia TDD](../evidencias/HU-49-tdd.md) y en la [sección agregada al acta de la Review](../actas/sprint-4/review.md#historia-agregada-después-de-la-review-hu-49).
+
+Cómo cambian los indicadores de la sección 1 cuando HU-49 llegue a `main`:
+
+| Indicador | Al corte (`a39592c`) | Con HU-49 | Fuente |
+|---|---|---|---|
+| Historias de usuario completadas | 42 de 42 | 43 de 43 | Issue #170 |
+| Story Points completados | 139 (21 + 25 + 34 + 59) | 142 (21 + 25 + 34 + 62) | Acta de Review del Sprint 4 |
+| Velocidad (M3, últimos 3 Sprints) | 39.3 | 40.3 ((25 + 34 + 62) / 3) | Fórmula de `docs/metricas.md` |
+| Archivos `.feature`, escenarios escritos y ejecutados | 42, 486 y 656 | 43, 495 y 665 | `features/HU-49-historias-en-reporte.feature` (9 escenarios, sin esquemas) |
+| Funciones de test en Go | 1108 | 1127 | `git grep '^func Test' -- '*_test.go'` (19 nuevas de HU-49) |
+| Criterios de aceptación con prueba automatizada | 341 de 341 | 348 de 348 | CA-49.1 a CA-49.7 (evidencia de HU-49) |
+| Cobertura sin base | 84.5 % | 84.7 % | Medida sobre el GREEN de HU-49 (`e136df7`) |
+| Cobertura con PostgreSQL (`-coverpkg=./...`) | 96.2 % | 96.2 % | Ídem |
+
+Los commits y los Pull Requests de la sección 7 no se recalculan: HU-49 suma los suyos, que quedan registrados en su evidencia y en su Pull Request.

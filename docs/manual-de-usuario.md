@@ -4,7 +4,7 @@
 
 Cómo usar la aplicación "Software Metrics & Estimation" desde la interfaz web (TEC-07), paso a paso. Cubre todas las historias integradas en `main`, agrupadas por épica. Para instalar, ejecutar y probar el código, ver el [README](../README.md) y la [documentación técnica](documentacion-tecnica.md) (TEC-06).
 
-Las capturas se tomaron sobre la versión final de la interfaz (`main` con HU-17), con un proyecto de ejemplo, "Sistema de ventas", que se arma a lo largo del manual. Si seguís los pasos en orden sobre una aplicación recién iniciada, vas a obtener los mismos IDs que en las capturas.
+Las capturas se tomaron sobre la versión final de la interfaz (`main` con HU-17; la de "Reportes", con HU-49), con un proyecto de ejemplo, "Sistema de ventas", que se arma a lo largo del manual. Si seguís los pasos en orden sobre una aplicación recién iniciada, vas a obtener los mismos IDs que en las capturas.
 
 ## Contenido
 
@@ -20,7 +20,7 @@ Las capturas se tomaron sobre la versión final de la interfaz (`main` con HU-17
 10. [Defectos](#10-defectos-hu-29-a-hu-31)
 11. [Métricas](#11-métricas-hu-32-a-hu-35-y-hu-47)
 12. [Dashboard](#12-dashboard-hu-36-y-hu-37)
-13. [Reportes](#13-reportes-hu-38-a-hu-40)
+13. [Reportes](#13-reportes-hu-38-a-hu-40-y-hu-49)
 14. [Mensajes de error comunes](#14-mensajes-de-error-comunes)
 15. [Límites de la aplicación](#15-límites-de-la-aplicación)
 
@@ -257,11 +257,12 @@ Todas salen de una sola consulta (HU-35). Si una métrica no se puede calcular (
 
 ![Dashboard con el resumen y los gráficos](img/manual-de-usuario/17-dashboard.png)
 
-## 13. Reportes (HU-38 a HU-40)
+## 13. Reportes (HU-38 a HU-40 y HU-49)
 
-1. **Reporte del proyecto (HU-38):** con el proyecto actual elegido, en **Reportes** tocá **Generar reporte**. Muestra los datos del proyecto, sus métricas, la tabla de esfuerzos con el total de horas, la tabla de defectos con la cantidad y los integrantes que registraron esfuerzo.
-2. **Exportar a PDF (HU-40):** tocá **Descargar PDF**. El navegador descarga el mismo reporte del proyecto como `reporte-proyecto-N.pdf`, donde N es el ID del proyecto.
-3. **Reporte del sprint (HU-39):** con el sprint actual elegido, tocá **Generar reporte del sprint**. Muestra lo mismo acotado al sprint, abierto o cerrado: sus datos, sus métricas, sus esfuerzos, los defectos detectados o resueltos en él y los integrantes que registraron esfuerzo en el sprint.
+1. **Reporte del proyecto (HU-38):** con el proyecto actual elegido, en **Reportes** tocá **Generar reporte**. Muestra los datos del proyecto, sus métricas, la tabla de historias, la tabla de esfuerzos con el total de horas, la tabla de defectos con la cantidad y los integrantes que registraron esfuerzo.
+2. **Historias del reporte (HU-49):** la tabla de historias lista cada historia del backlog con su prioridad, su estado, sus Story Points ("—" si no está estimada), sus horas estimadas y su sprint ("—" si no está asignada). Debajo indica cuántas historias hay y cuántas están completadas (`TERMINADO`).
+3. **Exportar a PDF (HU-40):** tocá **Descargar PDF**. El navegador descarga el mismo reporte del proyecto como `reporte-proyecto-N.pdf`, donde N es el ID del proyecto. El PDF incluye la sección "Historias".
+4. **Reporte del sprint (HU-39):** con el sprint actual elegido, tocá **Generar reporte del sprint**. Muestra lo mismo acotado al sprint, abierto o cerrado: sus datos, sus métricas, las historias asignadas al sprint, sus esfuerzos, los defectos detectados o resueltos en él y los integrantes que registraron esfuerzo en el sprint.
 
 ![Reporte del proyecto, PDF descargado y reporte del sprint 1](img/manual-de-usuario/18-reportes.png)
 

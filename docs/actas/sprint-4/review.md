@@ -175,6 +175,30 @@ Los profesores no asistieron a la Review ni enviaron observaciones.
 - **Mejora posible, fuera de la entrega:** un listado de proyectos en la interfaz (hoy el proyecto se elige por su ID, límite documentado en el manual). No hay una historia que lo pida; queda registrada como mejora posible.
 - **Detalles de Issues ya cerrados, para corregir:** los criterios de #48 (HU-30), #58 (HU-40, además con "(borrador)"), #28 (HU-14), #31 (HU-17) y #46 (HU-28) siguen sin tildar.
 
+## Historia agregada después de la Review (HU-49)
+
+El 31/10, después de esta Review, al comparar el proyecto con la consigna se vio que el requerimiento 9 pide que el reporte incluya las historias planificadas y completadas y las estimaciones. HU-38 y HU-39 las informaban solo como cantidades y sumas de las métricas (decisión 9 de la SDD de HU-38), sin el detalle de cada historia.
+
+Por decisión del Agile Enabler se creó **HU-49 "Ver las historias y sus estimaciones en el reporte"** (Issue #170, épica E11, prioridad MEDIA, 3 Story Points) y se sumó al Sprint 4, que termina con la entrega del 02/11:
+
+- **El reporte del proyecto** lista cada historia del backlog con su prioridad, estado, Story Points, horas estimadas y sprint.
+- **El reporte del sprint** lista las historias asignadas al sprint.
+- **Los dos** muestran la cantidad de historias y de completadas, en la API, en la interfaz y, en el del proyecto, en el PDF.
+
+**Responsable:** Peñalbé Hernán. La SDD, la evidencia TDD y el Pull Request están enlazados en el Issue #170.
+
+**Cómo cambian los números de esta acta cuando HU-49 llegue a `main`:**
+
+| Dato | Al cierre de la Review | Con HU-49 |
+|---|---|---|
+| Historias del Product Backlog cerradas | 42 | 43 |
+| Velocidad del Sprint 4 | 59 | 62 |
+| Story Points completados por el proyecto | 139 | 142 |
+| Archivos `.feature` y escenarios BDD ejecutados | 42 y 656 | 43 y 665 |
+| Cobertura sin base y con PostgreSQL (`-coverpkg=./...`) | 84.5% y 96.2% | 84.7% y 96.2% |
+
+Los Story Points de HU-49 los estimó el Agile Enabler al crear la historia, comparándola con HU-39, que reutiliza la estructura de los reportes de HU-38. No pasaron por un Planning. El tag `sprint-4` se mueve sobre `main` después de integrar HU-49.
+
 ## Línea base
 
 El tag `sprint-4` se crea sobre `main` después de integrar esta acta y TEC-08, para que la línea base de la entrega incluya el informe final.

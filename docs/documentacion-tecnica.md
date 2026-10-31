@@ -37,7 +37,7 @@ La capa HTTP solo llama a los Manager; los Manager solo acceden a los datos a tr
 | `internal/defect` | Defectos: registrar descripción, severidad (`CRITICA`, `ALTA`, `MEDIA`, `BAJA`) y sprint de detección (nacen `ABIERTO`); cambiar el estado de a un paso (`ABIERTO` ↔ `EN_CORRECCION` ↔ `RESUELTO`), con sprint de resolución al resolver; y listar los defectos de un proyecto o los detectados en un sprint, con filtro opcional por estado | HU-29, HU-30, HU-31 |
 | `internal/metrics` | Métricas M1 a M10 de [`docs/metricas.md`](metricas.md), calculadas a partir del backlog, los sprints, los esfuerzos y los defectos: story points planificados y completados, ítems sin estimar, velocidad, horas estimadas y reales, desviación, porcentaje de historias completadas y defectos detectados y resueltos. `Sprint` y `Project` las devuelven todas en una sola consulta, y `ProjectSprints` cada sprint del proyecto con sus métricas (para los gráficos). No tiene almacenamiento propio | TEC-03, HU-32 a HU-35, HU-37, HU-47 |
 | `internal/dashboard` | Resumen del estado de un proyecto: nombre y estado, cantidad de ítems por estado y sprint actual (el `ABIERTO`). No tiene almacenamiento propio | HU-36 |
-| `internal/report` | Reportes en una sola consulta: el del proyecto (`Project`: datos, métricas M1 a M10, esfuerzos de todos sus sprints con el total, defectos e integrantes que registraron esfuerzo) y el de un sprint (`Sprint`: lo mismo acotado al sprint, con los defectos detectados o resueltos en él). `WriteProjectPDF` (`pdf.go`) escribe el reporte del proyecto como PDF; es el único archivo que usa la librería `go-pdf/fpdf`. No tiene almacenamiento propio | HU-38, HU-39, HU-40 |
+| `internal/report` | Reportes en una sola consulta: el del proyecto (`Project`: datos, métricas M1 a M10, esfuerzos de todos sus sprints con el total, defectos, integrantes que registraron esfuerzo y las historias del backlog con la cantidad de completadas) y el de un sprint (`Sprint`: lo mismo acotado al sprint, con los defectos detectados o resueltos en él y las historias asignadas al sprint). `WriteProjectPDF` (`pdf.go`) escribe el reporte del proyecto como PDF; es el único archivo que usa la librería `go-pdf/fpdf`. No tiene almacenamiento propio | HU-38, HU-39, HU-40, HU-49 |
 | `internal/httpapi` | Rutas HTTP (`server.go`), un archivo de handlers por tema, lectura del JSON (máximo 1 MiB, sin texto después del JSON) y la traducción de errores a códigos (`statusFor`) | TEC-01, TEC-04 y el endpoint de cada historia |
 | `internal/web` | `index.html`, `app.js` y `styles.css`, embebidos con `embed` y servidos en `/`. Sin frameworks: usa la API con `fetch`. Los gráficos del dashboard (HU-37) son SVG armados en `app.js`, sin librerías | TEC-04 y la interfaz de cada historia |
 | `internal/postgres` | `Open`: abre el pool de `pgx/v5` y verifica la conexión; el error nunca incluye la URL | TEC-05 |
@@ -67,6 +67,7 @@ graph TD
     metrics --> effort
     metrics --> defect
     report --> project
+    report --> backlog
     report --> sprint
     report --> metrics
     report --> effort
@@ -91,7 +92,7 @@ graph TD
 - `poker` usa `backlog` para verificar el ítem y guardar los story points acordados.
 - `member` usa `project` para verificar que el proyecto exista al registrar o listar integrantes.
 - `effort` y `defect` usan `sprint` (`WithOpenSprint`: el sprint existe y está abierto mientras se registra un esfuerzo o un defecto, o mientras se resuelve un defecto) y `backlog` (el ítem existe y da el proyecto del defecto). Para listar los defectos de un proyecto, `defect` lee sus ítems con `backlog`, que valida el proyecto.
-- `metrics` lee ítems, sprints, esfuerzos (`effort.Manager.ListBySprint`) y defectos (`defect.Manager.ListByProject`) a través de sus Manager. `dashboard` lee el proyecto, sus ítems y sus sprints. `report` lee el proyecto, los sprints, las métricas (con el mismo Manager de `metrics` del servidor), los esfuerzos y los defectos, y no calcula nada nuevo: cada parte del reporte sale de una operación que ya existe. `httpapi` crea los tres en `NewHandler`.
+- `metrics` lee ítems, sprints, esfuerzos (`effort.Manager.ListBySprint`) y defectos (`defect.Manager.ListByProject`) a través de sus Manager. `dashboard` lee el proyecto, sus ítems y sus sprints. `report` lee el proyecto, los sprints, las métricas (con el mismo Manager de `metrics` del servidor), los esfuerzos, los defectos y, al final, las historias del backlog (`backlog.Manager.ListItems`, HU-49), y no calcula nada nuevo: cada parte del reporte sale de una operación que ya existe. `httpapi` crea los tres en `NewHandler`.
 
 Un Manager nunca accede al repositorio de otro: pasa siempre por su Manager, así las validaciones de cada dominio no se pueden saltear.
 
@@ -152,8 +153,8 @@ Todas las rutas están en `internal/httpapi/server.go` (`NewHandler`) y usan sol
 | Métricas del proyecto | Las del sprint con `proyecto_id` en lugar de `sprint_id`, más `velocidad` y `sprints_cerrados` después de `items_sin_estimar` |
 | Resumen del proyecto | `proyecto_id`, `nombre`, `estado`, `items_pendientes`, `items_en_curso`, `items_terminados`, `sprint_actual` (un sprint, o `null` si no hay ninguno abierto) |
 | Métricas por sprint | Lista de `{sprint, metricas}`, con un sprint y sus métricas del sprint, ordenada por ID de sprint |
-| Reporte del proyecto | `proyecto`, `metricas` (del proyecto), `esfuerzos` (lista de esfuerzos de todos sus sprints), `defectos` (lista de defectos) e `integrantes` (`{integrantes, cantidad}`: los que registraron esfuerzo, sin repetir) |
-| Reporte del sprint | `sprint`, `metricas` (del sprint), `esfuerzos` (del sprint), `defectos` (los detectados o resueltos en el sprint) e `integrantes` |
+| Reporte del proyecto | `proyecto`, `metricas` (del proyecto), `historias` (`{historias, cantidad, completadas}`: las del backlog, cada una con el formato de un ítem, HU-49), `esfuerzos` (lista de esfuerzos de todos sus sprints), `defectos` (lista de defectos) e `integrantes` (`{integrantes, cantidad}`: los que registraron esfuerzo, sin repetir) |
+| Reporte del sprint | `sprint`, `metricas` (del sprint), `historias` (las asignadas al sprint, HU-49), `esfuerzos` (del sprint), `defectos` (los detectados o resueltos en el sprint) e `integrantes` |
 | Error | `error` (mensaje en español) |
 
 Una lista vacía se devuelve como `[]`, nunca como `null`.
@@ -200,9 +201,9 @@ Una lista vacía se devuelve como `[]`, nunca como `null`.
 | `GET /api/proyectos/{id}/metricas` | — | 200, métricas del proyecto | HU-32 a HU-35, HU-47 |
 | `GET /api/proyectos/{id}/metricas/sprints` | — | 200, métricas por sprint (`[]` sin sprints) | HU-37 |
 | `GET /api/proyectos/{id}/resumen` | — | 200, resumen del proyecto | HU-36 |
-| `GET /api/proyectos/{id}/reporte` | — | 200, reporte del proyecto | HU-38 |
+| `GET /api/proyectos/{id}/reporte` | — | 200, reporte del proyecto | HU-38, HU-49 |
 | `GET /api/proyectos/{id}/reporte/pdf` | — | 200, el reporte del proyecto como archivo PDF (`application/pdf`, `reporte-proyecto-{id}.pdf`); los errores responden en JSON | HU-40 |
-| `GET /api/sprints/{id}/reporte` | — | 200, reporte del sprint, abierto o cerrado | HU-39 |
+| `GET /api/sprints/{id}/reporte` | — | 200, reporte del sprint, abierto o cerrado | HU-39, HU-49 |
 | `GET /` | — | 200, interfaz web | TEC-04 |
 
 En las métricas, cada endpoint hace una sola consulta (HU-35). Las horas, la velocidad y el porcentaje van redondeados a un decimal; los story points y las cantidades son enteros. Cuatro campos son `null` cuando no se pueden calcular, y la respuesta trae igual las demás métricas: `velocidad` (sin sprints cerrados), `porcentaje_completadas` (sin ítems) y `desviacion_horas` y `desviacion_porcentual` (sin horas estimadas o sin horas registradas). Las fórmulas están en [`docs/metricas.md`](metricas.md) y los ejemplos completos del contrato, en la SDD de HU-35. Los reportes (HU-38 y HU-39) reutilizan esos mismos formatos en cada parte, así que sus valores coinciden con los de los endpoints de origen. El PDF (HU-40) usa los mismos valores redondeados, en texto, con los textos de la interfaz.

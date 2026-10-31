@@ -226,8 +226,19 @@
       <button type="button" id="generar-reporte">Generar reporte</button>
       <button type="button" id="descargar-reporte-pdf">Descargar PDF</button>
       <div id="datos-reporte">
-        <p id="reporte-proyecto" class="vacio">Genera el reporte del proyecto actual: sus datos, métricas, esfuerzos, defectos e integrantes.</p>
+        <p id="reporte-proyecto" class="vacio">Genera el reporte del proyecto actual: sus datos, métricas, historias, esfuerzos, defectos e integrantes.</p>
         <p id="reporte-metricas"></p>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Título</th><th>Prioridad</th><th>Estado</th><th>SP</th><th>Horas estimadas</th><th>Sprint</th>
+              </tr>
+            </thead>
+            <tbody id="reporte-historias"></tbody>
+          </table>
+        </div>
+        <p id="reporte-cantidad-historias"></p>
         <div class="tabla">
           <table>
             <thead>
@@ -255,8 +266,19 @@
       <p class="mensaje" id="msg-reporte" role="alert" hidden></p>
       <button type="button" id="generar-reporte-sprint">Generar reporte del sprint</button>
       <div id="datos-reporte-sprint">
-        <p id="reporte-sprint" class="vacio">Genera el reporte del sprint actual: sus datos, métricas, esfuerzos, defectos e integrantes.</p>
+        <p id="reporte-sprint" class="vacio">Genera el reporte del sprint actual: sus datos, métricas, historias, esfuerzos, defectos e integrantes.</p>
         <p id="reporte-sprint-metricas"></p>
+        <div class="tabla">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th><th>Título</th><th>Prioridad</th><th>Estado</th><th>SP</th><th>Horas estimadas</th><th>Sprint</th>
+              </tr>
+            </thead>
+            <tbody id="reporte-sprint-historias"></tbody>
+          </table>
+        </div>
+        <p id="reporte-sprint-cantidad-historias"></p>
         <div class="tabla">
           <table>
             <thead>

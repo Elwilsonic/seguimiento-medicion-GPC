@@ -103,6 +103,16 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
     "defectos_detectados": 1,
     "defectos_resueltos": 1
   },
+  "historias": {
+    "historias": [
+      {"id": 1, "proyecto_id": 1, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": 1},
+      {"id": 2, "proyecto_id": 1, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": 1},
+      {"id": 3, "proyecto_id": 1, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": 1},
+      {"id": 4, "proyecto_id": 1, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": 1}
+    ],
+    "cantidad": 4,
+    "completadas": 2
+  },
   "esfuerzos": {
     "esfuerzos": [
       {"id": 1, "sprint_id": 1, "item_id": 1, "integrante": "Ana", "fecha": "2026-10-06", "actividad": "Desarrollo", "horas": 12},
@@ -170,6 +180,11 @@ func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
     "items_sin_horas_estimadas": 0,
     "defectos_detectados": 0,
     "defectos_resueltos": 0
+  },
+  "historias": {
+    "historias": [],
+    "cantidad": 0,
+    "completadas": 0
   },
   "esfuerzos": {
     "esfuerzos": [],
@@ -322,6 +337,34 @@ func TestReporteSprint_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+
+	rec := do(t, h, http.MethodGet, "/api/sprints/1/reporte", "")
+
+	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}
+
+// CA-49.2, CA-49.3 y RN-49.10 · El reporte del sprint tiene solo las
+// historias asignadas al sprint, cada una igual a GET /api/items/{id}, y las
+// cantidades coinciden con las métricas del sprint; la historia sin sprint no
+// aparece.
+func TestReporteSprint_CadaHistoriaEsIgualASuConsultaEnElBacklog(t *testing.T) {
+	h := newHandler()
+	sprintReportTEC03(t, h)
+	createHoursItem(t, h, "E", 0)
+
+	parts := reportParts(t, h, "/api/sprints/1/reporte")
+
+	if ids := expectStoriesMatchSources(t, h, parts); fmt.Sprint(ids) != "[1 2 3 4]" {
+		t.Errorf("historias = %v, se esperaba [1 2 3 4]", ids)
+	}
+}
+
+// CA-49.5 · Si falla la lectura de las historias del reporte del sprint, la
+// API responde 500 sin detalle.
+func TestReporteSprint_FallaLaLecturaDeLasHistoriasDevuelve500(t *testing.T) {
+	h, repo := newHandlerWithFailingStories()
+	sprintReportTEC03(t, h)
+	failStoriesRead(t, h, repo, "/api/sprints/1/metricas", "/api/proyectos/1/defectos")
 
 	rec := do(t, h, http.MethodGet, "/api/sprints/1/reporte", "")
 

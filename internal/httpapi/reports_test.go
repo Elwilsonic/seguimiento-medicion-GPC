@@ -113,6 +113,16 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
     "defectos_detectados": 1,
     "defectos_resueltos": 1
   },
+  "historias": {
+    "historias": [
+      {"id": 1, "proyecto_id": 1, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": 1},
+      {"id": 2, "proyecto_id": 1, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": 1},
+      {"id": 3, "proyecto_id": 1, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": 1},
+      {"id": 4, "proyecto_id": 1, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": 1}
+    ],
+    "cantidad": 4,
+    "completadas": 2
+  },
   "esfuerzos": {
     "esfuerzos": [
       {
@@ -202,6 +212,11 @@ func TestReporteProyecto_ContratoDelProyectoVacio(t *testing.T) {
     "items_sin_horas_estimadas": 0,
     "defectos_detectados": 0,
     "defectos_resueltos": 0
+  },
+  "historias": {
+    "historias": [],
+    "cantidad": 0,
+    "completadas": 0
   },
   "esfuerzos": {
     "esfuerzos": [],
@@ -313,4 +328,129 @@ func TestReporteProyecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) 
 	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}
+
+// reportStories es la parte "historias" de un reporte (HU-49).
+type reportStories struct {
+	Historias   []json.RawMessage `json:"historias"`
+	Cantidad    int               `json:"cantidad"`
+	Completadas int               `json:"completadas"`
+}
+
+// expectStoriesMatchSources verifica la parte "historias" de un reporte
+// (CA-49.3, RN-49.5 y RN-49.10): cada historia es igual a la respuesta de
+// GET /api/items/{id}, la cantidad es la de la lista y las cantidades
+// coinciden con items_totales e items_terminados de "metricas". Devuelve los
+// IDs de las historias, en orden.
+func expectStoriesMatchSources(t *testing.T, h http.Handler, parts map[string]json.RawMessage) []int {
+	t.Helper()
+	raw, ok := parts["historias"]
+	if !ok {
+		t.Fatal("el reporte no tiene la parte \"historias\"")
+	}
+	var stories reportStories
+	if err := json.Unmarshal(raw, &stories); err != nil {
+		t.Fatalf("historias inválidas (%v): %s", err, raw)
+	}
+	var m struct {
+		ItemsTotales    int `json:"items_totales"`
+		ItemsTerminados int `json:"items_terminados"`
+	}
+	if err := json.Unmarshal(parts["metricas"], &m); err != nil {
+		t.Fatalf("métricas inválidas (%v): %s", err, parts["metricas"])
+	}
+	if stories.Cantidad != len(stories.Historias) || stories.Cantidad != m.ItemsTotales || stories.Completadas != m.ItemsTerminados {
+		t.Errorf("cantidad = %d y completadas = %d con %d historias; las métricas dicen %d y %d",
+			stories.Cantidad, stories.Completadas, len(stories.Historias), m.ItemsTotales, m.ItemsTerminados)
+	}
+	ids := []int{}
+	for _, story := range stories.Historias {
+		var it struct {
+			ID int `json:"id"`
+		}
+		if err := json.Unmarshal(story, &it); err != nil {
+			t.Fatalf("historia inválida (%v): %s", err, story)
+		}
+		ids = append(ids, it.ID)
+		path := fmt.Sprintf("/api/items/%d", it.ID)
+		source := do(t, h, http.MethodGet, path, "")
+		expectStatus(t, source, http.StatusOK)
+		if got, want := compactJSON(t, story), compactJSON(t, source.Body.Bytes()); got != want {
+			t.Errorf("historia %d =\n%s\nse esperaba la respuesta de %s\n%s", it.ID, got, path, want)
+		}
+	}
+	return ids
+}
+
+// CA-49.1, CA-49.3 y RN-49.10 · Cada historia del reporte del proyecto es
+// igual a GET /api/items/{id}, incluida la que no está en ningún sprint, y
+// las cantidades coinciden con las métricas.
+func TestReporteProyecto_CadaHistoriaEsIgualASuConsultaEnElBacklog(t *testing.T) {
+	h := newHandler()
+	reportTEC03(t, h)
+	createHoursItem(t, h, "E", 0)
+
+	parts := reportParts(t, h, "/api/proyectos/1/reporte")
+
+	if ids := expectStoriesMatchSources(t, h, parts); fmt.Sprint(ids) != "[1 2 3 4 5]" {
+		t.Errorf("historias = %v, se esperaba [1 2 3 4 5]", ids)
+	}
+}
+
+// failingStoriesItemRepository cuenta las lecturas de los ítems de un proyecto y
+// falla desde la lectura número failAt (0 = nunca), para hacer fallar solo la
+// lectura de las historias del reporte (HU-49).
+type failingStoriesItemRepository struct {
+	backlog.Repository
+	calls, failAt int
+}
+
+func (r *failingStoriesItemRepository) ListByProject(projectID int) ([]backlog.Item, error) {
+	r.calls++
+	if r.failAt > 0 && r.calls >= r.failAt {
+		return nil, errStorage
+	}
+	return r.Repository.ListByProject(projectID)
+}
+
+// newHandlerWithFailingStories arma el handler con el repositorio de ítems que
+// cuenta las lecturas.
+func newHandlerWithFailingStories() (http.Handler, *failingStoriesItemRepository) {
+	repo := &failingStoriesItemRepository{Repository: backlog.NewMemoryRepository()}
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(repo, projects)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects)), repo
+}
+
+// failStoriesRead hace fallar la lectura de ítems que sigue a las que hacen
+// las rutas de antes (las mismas lecturas que el reporte hace antes de las
+// historias, RN-49.7).
+func failStoriesRead(t *testing.T, h http.Handler, repo *failingStoriesItemRepository, before ...string) {
+	t.Helper()
+	repo.calls = 0
+	for _, path := range before {
+		expectStatus(t, do(t, h, http.MethodGet, path, ""), http.StatusOK)
+	}
+	repo.failAt = repo.calls + 1
+	repo.calls = 0
+}
+
+// CA-49.5 · Si falla la lectura de las historias del reporte del proyecto, la
+// API responde 500 sin detalle, también al exportar el PDF (sin PDF a
+// medias).
+func TestReporteProyecto_FallaLaLecturaDeLasHistoriasDevuelve500(t *testing.T) {
+	h, repo := newHandlerWithFailingStories()
+	reportTEC03(t, h)
+
+	for _, path := range []string{"/api/proyectos/1/reporte", "/api/proyectos/1/reporte/pdf"} {
+		failStoriesRead(t, h, repo, "/api/proyectos/1/metricas", "/api/proyectos/1/defectos")
+
+		rec := do(t, h, http.MethodGet, path, "")
+
+		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+	}
 }

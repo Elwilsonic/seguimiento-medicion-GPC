@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-pdf/fpdf"
 
+	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 )
@@ -62,6 +63,18 @@ func projectReportLines(rep ProjectReport) []pdfLine {
 	lines = append(lines,
 		pdfLine{Text: deviation},
 		pdfLine{Text: fmt.Sprintf("Defectos: %d detectados, %d resuelto(s).", m.Defects.Detected, m.Defects.Resolved)},
+		pdfLine{Text: "Historias", Heading: true},
+	)
+
+	// HU-49: entre las métricas y los esfuerzos, en el orden del reporte.
+	for _, it := range rep.Stories.Stories {
+		lines = append(lines, pdfLine{Text: storyText(it)})
+	}
+	if len(rep.Stories.Stories) == 0 {
+		lines = append(lines, pdfLine{Text: "Sin historias en el backlog."})
+	}
+	lines = append(lines,
+		pdfLine{Text: fmt.Sprintf("Cantidad: %d historia(s), %d completada(s)", len(rep.Stories.Stories), rep.Stories.Completed)},
 		pdfLine{Text: "Esfuerzos", Heading: true},
 	)
 
@@ -109,6 +122,26 @@ func effortText(ef effort.Effort) string {
 	return fmt.Sprintf("#%d · %s · %s · %s · ítem %d · sprint %d · %s h",
 		ef.ID, ef.Date.Format(time.DateOnly), ef.Member, ef.Activity, ef.ItemID, ef.SprintID,
 		strconv.FormatFloat(ef.Hours, 'f', -1, 64))
+}
+
+// storyText escribe una historia con su estimación (HU-49). 0 Story Points
+// es "sin estimar", 0 horas es "sin horas estimadas" y 0 en el sprint es
+// "sin sprint" (RN-49.3); las horas van con un decimal, como las métricas.
+func storyText(it backlog.Item) string {
+	points := "sin estimar"
+	if it.StoryPoints != 0 {
+		points = fmt.Sprintf("%d SP", it.StoryPoints)
+	}
+	hours := "sin horas estimadas"
+	if it.EstimatedHours != 0 {
+		hours = oneDecimal(it.EstimatedHours) + " h estimadas"
+	}
+	sprintText := "sin sprint"
+	if it.SprintID != 0 {
+		sprintText = fmt.Sprintf("sprint %d", it.SprintID)
+	}
+	return fmt.Sprintf("#%d · %s · %s · %s · %s · %s · %s",
+		it.ID, it.Title, it.Priority, it.Status, points, hours, sprintText)
 }
 
 // defectText escribe un defecto; 0 en el sprint de resolución es ninguno.

@@ -1287,6 +1287,109 @@ func TestInterfaz_GenerarReporteDelSprintMuestraCadaParte(t *testing.T) {
 	}
 }
 
+// HU-49 · Ver las historias y sus estimaciones en el reporte (Issue #170)
+//
+// Trazabilidad: CA-49.7. En los dos bloques de la sección "Reportes", después
+// del texto de las métricas y antes de la tabla de esfuerzos, hay una tabla de
+// historias con las columnas ID, Título, Prioridad, Estado, SP, Horas
+// estimadas y Sprint, y debajo la cantidad de historias y de completadas.
+
+// seccionReportes devuelve el HTML de la sección "Reportes".
+func seccionReportes(t *testing.T) string {
+	t.Helper()
+	page := get(t, newHandler(), "/").Body.String()
+	inicio := strings.Index(page, `<section id="reportes">`)
+	if inicio == -1 {
+		t.Fatal("la página no contiene la sección de reportes")
+	}
+	fin := strings.Index(page[inicio:], "</section>")
+	if fin == -1 {
+		t.Fatal("la sección de reportes no se cierra")
+	}
+	return page[inicio : inicio+fin]
+}
+
+func TestInterfaz_ReportesTienenLaTablaDeHistorias(t *testing.T) {
+	seccion := seccionReportes(t)
+
+	const encabezado = "<th>ID</th><th>Título</th><th>Prioridad</th><th>Estado</th><th>SP</th><th>Horas estimadas</th><th>Sprint</th>"
+	for _, bloque := range []struct{ metricas, historias, cantidad, esfuerzos string }{
+		{`id="reporte-metricas"`, `id="reporte-historias"`, `id="reporte-cantidad-historias"`, `id="reporte-esfuerzos"`},
+		{`id="reporte-sprint-metricas"`, `id="reporte-sprint-historias"`, `id="reporte-sprint-cantidad-historias"`, `id="reporte-sprint-esfuerzos"`},
+	} {
+		metricas := strings.Index(seccion, bloque.metricas)
+		historias := strings.Index(seccion, bloque.historias)
+		cantidad := strings.Index(seccion, bloque.cantidad)
+		esfuerzos := strings.Index(seccion, bloque.esfuerzos)
+		if metricas == -1 || historias == -1 || cantidad == -1 || esfuerzos == -1 {
+			t.Errorf("la sección de reportes no contiene %s, %s y %s", bloque.historias, bloque.cantidad, bloque.esfuerzos)
+			continue
+		}
+		if !(metricas < historias && historias < cantidad && cantidad < esfuerzos) {
+			t.Errorf("%s y %s no están entre %s y %s", bloque.historias, bloque.cantidad, bloque.metricas, bloque.esfuerzos)
+		}
+		if !strings.Contains(seccion[metricas:historias], encabezado) {
+			t.Errorf("la tabla de %s no tiene las columnas %q", bloque.historias, encabezado)
+		}
+	}
+}
+
+func TestInterfaz_GenerarLosReportesMuestraLasHistorias(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	for _, want := range []string{
+		`$("reporte-historias")`,
+		`$("reporte-cantidad-historias")`,
+		`$("reporte-sprint-historias")`,
+		`$("reporte-sprint-cantidad-historias")`,
+		"r.historias.historias",
+		"r.historias.cantidad",
+		"r.historias.completadas",
+		" historia(s), ",
+		" completada(s)",
+		"Sin historias en el backlog.",
+		"Sin historias en el sprint.",
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
+// CA-49.4 y CA-49.7 · La fila de una historia del reporte muestra "—" en SP si
+// no está estimada y en Sprint si no está asignada, como la tabla del backlog,
+// y las horas estimadas.
+func TestInterfaz_FilaDeHistoriaDelReporteIndicaSinEstimarYSinSprint(t *testing.T) {
+	js := get(t, newHandler(), "/app.js").Body.String()
+
+	inicio := strings.Index(js, "function filaHistoriaReporte(")
+	if inicio == -1 {
+		t.Fatal("app.js no tiene la función filaHistoriaReporte")
+	}
+	fin := strings.Index(js[inicio:], "\n}\n")
+	if fin == -1 {
+		t.Fatal("la función filaHistoriaReporte no se cierra")
+	}
+	cuerpo := js[inicio : inicio+fin]
+	for _, want := range []string{
+		`h.story_points === 0 ? "—" : h.story_points`,
+		"h.horas_estimadas",
+		`h.sprint_id === 0 ? "—" : h.sprint_id`,
+	} {
+		if !strings.Contains(cuerpo, want) {
+			t.Errorf("filaHistoriaReporte no contiene %q", want)
+		}
+	}
+	for _, want := range []string{
+		`filasReporte($("reporte-historias"), r.historias.historias, filaHistoriaReporte`,
+		`filasReporte($("reporte-sprint-historias"), r.historias.historias, filaHistoriaReporte`,
+	} {
+		if !strings.Contains(js, want) {
+			t.Errorf("app.js no contiene %q", want)
+		}
+	}
+}
+
 // HU-40 · Exportar un reporte a un archivo PDF (Issue #58)
 //
 // Trazabilidad: CA-40.1. La sección "Reportes" tiene el botón "Descargar PDF",
