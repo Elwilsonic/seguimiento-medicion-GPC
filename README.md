@@ -246,6 +246,7 @@ Cada historia sigue la cadena: **Historia de Usuario → Especificación SDD →
 | Cobertura y métricas | [`docs/reportes/`](docs/reportes/) |
 | Informe final de métricas y cobertura | [`docs/reportes/informe-final.md`](docs/reportes/informe-final.md) |
 | Documentación técnica | [`docs/documentacion-tecnica.md`](docs/documentacion-tecnica.md) |
+| Decisiones técnicas y su por qué | [`docs/decisiones-tecnicas.md`](docs/decisiones-tecnicas.md) |
 | Manual de usuario | [`docs/manual-de-usuario.md`](docs/manual-de-usuario.md) |
 | Actas de Planning, Daily, Review y Retrospective (una carpeta por Sprint) | [`docs/actas/`](docs/actas/) |
 | Registro de uso de IA | [`docs/ia/registro.md`](docs/ia/registro.md) |
@@ -349,6 +350,7 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `docs/antes-de-empezar.md` | Checklist para ponerse al día antes de empezar una historia, con o sin IA |
 | `docs/definition-of-ready-done.md` | Definition of Ready y Definition of Done vigentes |
 | `docs/documentacion-tecnica.md` | Documentación técnica: arquitectura, repositorios, API, cómo ejecutar y probar, y flujo de trabajo (TEC-06) |
+| `docs/decisiones-tecnicas.md` | Decisiones técnicas del proyecto, con su por qué y dónde se tomaron (TEC-06) |
 | `docs/especificaciones/` | Especificaciones SDD (`HU-XX-nombre.md`) |
 | `docs/evidencias/` | Evidencia TDD por historia (`HU-XX-tdd.md`) |
 | `docs/reportes/` | Reportes de cobertura y métricas, y el informe final de métricas y cobertura (`informe-final.md`, TEC-08) |
