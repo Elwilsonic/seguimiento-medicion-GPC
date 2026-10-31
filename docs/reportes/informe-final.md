@@ -109,7 +109,7 @@ Se cuentan como defectos los errores de comportamiento que llegaron a un commit 
 | Sprint 4 | 2 | 2 |
 | **Proyecto** | **3** | **3** |
 
-Fuente: los commits `fix` de `main` (`git log --no-merges --format=%s | grep '^fix'`), las evidencias de HU-01, HU-40 y HU-37, y los PR citados. Los dos commits `fix(HU-22)` de la revisión del PR #125 (`7647967` y `8e828d9`) agregan tests y limpian comentarios pedidos en la revisión; no corrigen un comportamiento, así que no se cuentan como defectos. **Un solo defecto llegó a `main`** (el del gráfico de HU-37), y se corrigió en el mismo Sprint.
+Fuente: los commits `fix` de `main` (`git log --no-merges --format=%s | grep '^fix'`), las evidencias de HU-01, HU-40 y HU-37, y los PR citados. Los dos commits `fix(HU-22)` de la revisión del PR #125 (`7647967` y `8e828d9`) agregan tests y limpian comentarios pedidos en la revisión; no corrigen un comportamiento, así que no se cuentan como defectos. **Dos defectos llegaron a `main`** (el de HU-01, corregido en el PR #72, y el del gráfico de HU-37), y los dos se corrigieron con TDD.
 
 ## 3. Cobertura de pruebas
 
@@ -311,7 +311,7 @@ Fuente: API de GitHub Actions (`actions/runs`).
 | Historias de usuario (`tipo:historia`) | 42 | 42 |
 | Épicas | 13 (E1 a E11, más dos sin etiqueta de épica) | 13 |
 | Tareas técnicas (`tipo:tecnica`) | 9 (TEC-01 a TEC-08 y el seguimiento #73 de HU-01) | 7; TEC-06 y TEC-08 se cierran con el PR de este informe |
-| Ceremonias (`tipo:scrum`) | 15 | 13; la Review y la Retrospectiva del Sprint 4 se cierran con el PR #164 |
+| Ceremonias (`tipo:scrum`) | 15 | 15 |
 
 Cada ceremonia de los Sprints 1 a 4 tiene su acta en [`docs/actas/`](../actas/) (Planning, Daily, Review y Retrospectiva) y el Sprint 0, su acta de cierre. Fuente: API de GitHub (`issues`).
 
@@ -321,7 +321,7 @@ Cada ceremonia de los Sprints 1 a 4 tiene su acta en [`docs/actas/`](../actas/) 
 
 - **Alcance completo:** las 42 historias del Product Backlog y los nueve requerimientos mínimos de la consigna, incluidas las historias que en los Sprints 3 y 4 figuraban "fuera de la entrega" (E4, HU-19 y HU-28).
 - **Sin deuda de compromiso:** cada Sprint completó el 100 % de los Story Points comprometidos (M8 = 100 % en los cuatro).
-- **Calidad medible:** 96.2 % de cobertura con PostgreSQL, todos los criterios de aceptación con prueba automatizada, el RED antes del GREEN en todas las historias y un solo defecto que llegó a `main`, corregido con TDD el mismo día.
+- **Calidad medible:** 96.2 % de cobertura con PostgreSQL, todos los criterios de aceptación con prueba automatizada, el RED antes del GREEN en todas las historias y dos defectos que llegaron a `main` (HU-01 y HU-37), corregidos con TDD.
 - **Proceso trazable:** cada historia tiene SDD aprobada, `.feature`, evidencia TDD, Trazabilidad en su Issue y un Pull Request revisado; cada ceremonia tiene su Issue y su acta.
 
 ### Qué se desvió y por qué
@@ -331,7 +331,7 @@ Cada ceremonia de los Sprints 1 a 4 tiene su acta en [`docs/actas/`](../actas/) 
 - **Desviación en horas no disponible:** el equipo estimó en Story Points y no en horas, así que M6 y M7 del proceso no se pueden calcular. Las horas reales registradas (259.5 h) están por debajo de las trabajadas, por las Dailys incompletas y el último día de cada Sprint sin registro (sección 2.3).
 - **Cobertura sin base por debajo de la con base (84.5 % frente a 96.2 %):** el CI no tiene PostgreSQL, así que los repositorios de PostgreSQL solo se prueban a mano. Es la acción 8 de la Retrospectiva del Sprint 4.
 - **Cierre de los Issues:** cinco historias del Sprint 4 quedaron con los criterios sin tildar en su Issue, aunque el código y las pruebas están completos (acciones 1 a 4 de la Retrospectiva del Sprint 4).
-- **Defecto de la interfaz que llegó a `main`:** el dibujo de los gráficos no tiene pruebas automatizadas en el navegador; se detectó al armar el manual de usuario.
+- **Dos defectos que llegaron a `main`:** el paso BDD de HU-01 se corrigió en el PR #72, después del merge del PR #68; el del gráfico de HU-37 se detectó al armar el manual de usuario, porque el dibujo de los gráficos no tiene pruebas automatizadas en el navegador.
 
 ## 9. Cómo volver a medir
 
