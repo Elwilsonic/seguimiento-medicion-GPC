@@ -1,6 +1,8 @@
 # Integración continua (TEC-02): controla el formato, corre el análisis
 # estático (go vet, acción 8 de la Retrospectiva del Sprint 1) y corre los
-# tests (con el detector de carreras) en cada Pull Request hacia main.
+# tests (con el detector de carreras) en cada Pull Request hacia main. Desde
+# la acción 8 de la Retrospectiva del Sprint 4, los tests corren contra una
+# base PostgreSQL, así que las pruebas de integración ya no se omiten.
 name: CI
 
 on:
@@ -14,6 +16,25 @@ jobs:
   ci:
     name: gofmt y tests
     runs-on: ubuntu-latest
+    # Base de pruebas con la misma imagen y credenciales que docker-compose.yml.
+    # Se llama gpc_test porque internal/postgrestest solo acepta bases que
+    # terminan en _test (CA-TEC05.7).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: gpc
+          POSTGRES_PASSWORD: gpc_dev
+          POSTGRES_DB: gpc_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gpc -d gpc_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://gpc:gpc_dev@localhost:5432/gpc_test?sslmode=disable
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
@@ -43,6 +64,11 @@ jobs:
           # un formato de Printf que no coincide o un sync.Mutex copiado).
           go vet ./...
 
+      - name: Crear el esquema en la base de pruebas
+        env:
+          PGPASSWORD: gpc_dev
+        run: psql -h localhost -U gpc -d gpc_test -v ON_ERROR_STOP=1 -f db/init/01-schema.sql
+
       - name: Correr los tests con cobertura (go test -race -cover ./...)
         run: |
           # Mientras el repositorio no tenga paquetes Go, no hay tests que correr.
@@ -51,9 +77,18 @@ jobs:
             exit 0
           fi
           # -race detecta accesos concurrentes sin protección (CA-01.7), sin
-          # depender de la cantidad de procesadores del runner.
-          go test -race -coverprofile=coverage.out ./...
+          # depender de la cantidad de procesadores del runner. -p 1 corre los
+          # paquetes de a uno, porque comparten la base de pruebas.
+          # -v lista cada test, para poder detectar los omitidos; pipefail
+          # mantiene el error de go test aunque la salida pase por tee.
+          set -o pipefail
+          go test -race -p 1 -v -coverprofile=coverage.out ./... | tee test.log
+          # Con TEST_DATABASE_URL ningún test se omite: si alguno hace t.Skip,
+          # es que la base no está disponible y el CI falla.
+          if grep -q -- '--- SKIP' test.log; then
+            echo "Hay tests omitidos: la base de pruebas no está disponible."
+            exit 1
+          fi
           # Cobertura total del módulo, para comparar con la evidencia TDD del
-          # Pull Request (acción 2 de la Retrospectiva del Sprint 1). Los tests
-          # de PostgreSQL hacen t.Skip en el CI, así que esa parte no suma.
+          # Pull Request (acción 2 de la Retrospectiva del Sprint 1).
           go tool cover -func=coverage.out | tail -n 1
