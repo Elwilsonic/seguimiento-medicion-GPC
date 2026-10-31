@@ -211,6 +211,42 @@ HU-40 usa **`github.com/go-pdf/fpdf`** (versión `v0.9.0`, licencia MIT) para ex
 
 Se usa solo en `internal/report/pdf.go`. Las fuentes estándar del PDF escriben en Windows-1252: las tildes, la ñ y los signos del español se ven bien, y un carácter de otro alfabeto se reemplaza por ".". La última versión es de 2023 (ver los límites conocidos de la [SDD de HU-40](docs/especificaciones/HU-40-exportar-reporte-pdf.md)).
 
+## Despliegue en Azure
+
+La aplicación se despliega en Azure Container Apps, en la cuenta de la cátedra (TEC-09). El servidor se empaqueta como imagen Docker con el [`Dockerfile`](Dockerfile), y el workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) la construye y la despliega en cada push a `main` (al integrar un Pull Request) o a mano, desde la pestaña **Actions** → **Despliegue** → **Run workflow**.
+
+| Dato | Valor (planilla de grupos de la cátedra, Grupo12) |
+|---|---|
+| Container App | `grupo12-seguimiento-medicion-gpc` |
+| Registro de imágenes | `ingcalidad2026.azurecr.io` |
+| Grupo de recursos y entorno | `frsrutn` y `utnapp-env` |
+
+### Construir y probar la imagen localmente
+
+```
+docker build --build-arg GO_VERSION=1.27.1 -t gpc .
+docker run --rm -p 8080:8080 gpc
+```
+
+Después se abre <http://localhost:8080/>. La imagen tiene solo el servidor compilado (sin el código fuente), corre sin root y guarda los datos en memoria.
+
+### Secrets del repositorio
+
+El workflow necesita dos Secrets, que carga el dueño del repositorio en **Settings** → **Secrets and variables** → **Actions**, con los valores de la planilla de la cátedra:
+
+- `ACR_PASSWORD`: la contraseña del registro de imágenes.
+- `AZURE_CREDENTIALS`: el JSON con las credenciales de Azure (`clientId`, `clientSecret`, `subscriptionId` y `tenantId`).
+
+Esos valores **nunca** se escriben en un archivo del repositorio, en un Issue ni en un Pull Request: son de la cuenta de la cátedra. Si falta alguno, el workflow falla al principio y dice cuál.
+
+### Qué hace el workflow
+
+1. Construye la imagen con la versión de Go de `go.mod`, con el hash del commit como etiqueta, y la sube al registro.
+2. Inicia sesión en Azure y crea la Container App (o la actualiza, si ya existe) con ingreso externo al puerto 8080 y una sola réplica siempre encendida.
+3. Espera a que la URL pública responda y la muestra en el resumen de la ejecución.
+
+**Límite:** en Azure la aplicación usa almacenamiento en memoria, porque la cátedra no provee una base de datos: los datos se pierden al reiniciar el contenedor o al volver a desplegar (cada integración a `main`). Por eso usa una sola réplica: con varias, cada una tendría sus propios datos.
+
 ## Equipo
 
 | Rol | Integrante |
@@ -330,6 +366,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-40 | [#58](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/58) | Exportar un reporte a un archivo PDF | [SDD](docs/especificaciones/HU-40-exportar-reporte-pdf.md) | [BDD](features/HU-40-exportar-reporte-pdf.feature) | [Evidencia](docs/evidencias/HU-40-tdd.md) | [#151](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/151) |
 | HU-41 | [#115](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/115) | Registrar la fecha de fin del proyecto | [SDD](docs/especificaciones/HU-41-fecha-fin-proyecto.md) | [BDD](features/HU-41-fecha-fin-proyecto.feature) | [Evidencia](docs/evidencias/HU-41-tdd.md) | [#150](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/150) |
 | HU-47 | [#128](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/128) | Calcular los defectos detectados y resueltos | [SDD](docs/especificaciones/HU-47-defectos-detectados-resueltos.md) | [BDD](features/HU-47-defectos-detectados-resueltos.feature) | [Evidencia](docs/evidencias/HU-47-tdd.md) | [#144](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/144) |
+| TEC-09 | [#172](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/172) | Despliegue en Azure Container Apps | — | — | [Evidencia](docs/evidencias/TEC-09-despliegue.md) | — |
 
 ## Estructura del repositorio
 
@@ -338,10 +375,11 @@ Las carpetas se van creando a medida que aparece su contenido.
 | Ruta | Contenido |
 |---|---|
 | `AGENTS.md` | Instrucciones del flujo de trabajo (SDD → BDD → TDD) |
-| `.github/` | Workflow de CI, plantillas de Issue (historia, tarea técnica, ceremonia y defecto) y plantilla de Pull Request |
+| `.github/` | Workflows de CI y de despliegue en Azure (TEC-09), plantillas de Issue (historia, tarea técnica, ceremonia y defecto) y plantilla de Pull Request |
 | `cmd/` | Punto de entrada ejecutable de la aplicación |
 | `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests; `internal/httpapi` expone la API, `internal/web` tiene la interfaz web (TEC-04), `internal/postgres` abre la conexión a PostgreSQL e `internal/postgrestest` prepara la base de las pruebas de integración |
 | `docker-compose.yml` | Base de datos PostgreSQL en Docker (TEC-05) |
+| `Dockerfile` y `.dockerignore` | Imagen del servidor para el despliegue en Azure (TEC-09) |
 | `db/init/` | Scripts que crean el esquema de la base y la base de pruebas la primera vez que arranca |
 | `.env.example` | Valores de ejemplo de las variables de entorno (el `.env` real no se sube) |
 | `features/` | Escenarios BDD en Gherkin (`HU-XX-nombre.feature`) |
