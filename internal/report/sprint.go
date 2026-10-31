@@ -16,6 +16,7 @@ type SprintReport struct {
 	Efforts Efforts
 	Defects Defects
 	Members Members
+	Stories Stories
 }
 
 // Sprint devuelve el reporte de un sprint existente, abierto o cerrado

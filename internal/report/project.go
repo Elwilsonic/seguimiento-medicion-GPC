@@ -16,6 +16,7 @@ type ProjectReport struct {
 	Efforts Efforts
 	Defects Defects
 	Members Members
+	Stories Stories
 }
 
 // Efforts son los esfuerzos de los sprints del proyecto, ordenados por sprint
