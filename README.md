@@ -307,7 +307,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-32 | [#50](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/50) | Calcular Story Points planificados, completados y velocidad | [SDD](docs/especificaciones/HU-32-sp-velocidad.md) | [BDD](features/HU-32-sp-velocidad.feature) | [Evidencia](docs/evidencias/HU-32-tdd.md) | [#123](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/123) |
 | HU-34 | [#52](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/52) | Calcular el porcentaje de historias completadas | [SDD](docs/especificaciones/HU-34-porcentaje-completadas.md) | [BDD](features/HU-34-porcentaje-completadas.feature) | [Evidencia](docs/evidencias/HU-34-tdd.md) | [#129](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/129) |
 
-### Sprint 4 — La Entrega (27/10 al 02/11) · [Planning](docs/actas/sprint-4/planning.md) · [Daily](docs/actas/sprint-4/daily.md)
+### Sprint 4 — La Entrega (27/10 al 02/11) · [Planning](docs/actas/sprint-4/planning.md) · [Daily](docs/actas/sprint-4/daily.md) · [Review](docs/actas/sprint-4/review.md) · [Retrospectiva](docs/actas/sprint-4/retrospectiva.md)
 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
@@ -377,10 +377,12 @@ Las épicas se estimaron por Planning Poker con talles de ropa (XS, S, M, L, XL)
 
 ## Estado del proyecto
 
-🟡 En desarrollo — Sprint 1 (El MVP) cerrado el 15/10, Sprint 2 (La Interfaz) cerrado el 22/10 y Sprint 3 (La Estimación) en curso, del 23/10 al 29/10
+🟢 Desarrollo terminado — Sprint 1 (El MVP) cerrado el 15/10, Sprint 2 (La Interfaz) el 22/10, Sprint 3 (La Estimación) el 26/10 y Sprint 4 (La Entrega) con el desarrollo cerrado el 30/10; entrega el 02/11/2026
 
 **Sprint 1:** se cumplió el Sprint Goal ("Poder crear, modificar y consultar proyectos y cargar y listar su Product Backlog desde una aplicación ejecutable, con cada cambio validado por integración continua"), con 21 de 21 Story Points completados y la historia opcional HU-05. La aplicación se ejecuta como indica la sección [Cómo ejecutar](#cómo-ejecutar). Ver las actas de [Planning](docs/actas/sprint-1/planning.md), [Review](docs/actas/sprint-1/review.md) y [Retrospectiva](docs/actas/sprint-1/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-1/daily.md).
 
 **Sprint 2:** se cumplió el Sprint Goal ("Usar la aplicación desde el navegador para gestionar proyectos, su Product Backlog y sus sprints, con los datos guardados en PostgreSQL"), con 25 de 25 Story Points completados (HU-07 a HU-13) y las tareas técnicas TEC-04 (interfaz web) y TEC-05 (PostgreSQL en Docker). La interfaz se usa como indica la sección [Interfaz web](#interfaz-web). Ver las actas de [Planning](docs/actas/sprint-2/planning.md), [Review](docs/actas/sprint-2/review.md) y [Retrospectiva](docs/actas/sprint-2/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-2/daily.md).
 
-**Sprint 3 (en curso):** Sprint Goal "Estimar ítems con Planning Poker y registrar el esfuerzo y los defectos de cada sprint, con las fórmulas de las métricas definidas para el Sprint 4", con 29 Story Points comprometidos (HU-18, HU-20 a HU-23, HU-25 a HU-27 y HU-29) y TEC-03. Ver el acta de [Planning](docs/actas/sprint-3/planning.md).
+**Sprint 3:** se cumplió el Sprint Goal ("Estimar ítems con Planning Poker y registrar el esfuerzo y los defectos de cada sprint, con las fórmulas de las métricas definidas para el Sprint 4"), con 29 de 29 Story Points completados (HU-18, HU-20 a HU-23, HU-25 a HU-27 y HU-29), TEC-03 y dos historias adelantadas del Sprint 4 (HU-32 y HU-34): velocidad de 34. Ver las actas de [Planning](docs/actas/sprint-3/planning.md), [Review](docs/actas/sprint-3/review.md) y [Retrospectiva](docs/actas/sprint-3/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-3/daily.md).
+
+**Sprint 4:** se cumplió el Sprint Goal ("Ver las métricas del proyecto en el dashboard y generar sus reportes, con la gestión de defectos completa y la documentación final lista para la entrega"), con 35 de 35 Story Points comprometidos y 24 más tomados con capacidad sobrante: velocidad de 59. Las 42 historias del Product Backlog están cerradas y todos los requerimientos mínimos de la consigna quedan cubiertos. La documentación técnica (TEC-06) y el [manual de usuario](docs/manual-de-usuario.md) (TEC-07) están en `main`; el informe final (TEC-08) se completa antes de la entrega. Ver las actas de [Planning](docs/actas/sprint-4/planning.md), [Review](docs/actas/sprint-4/review.md) y [Retrospectiva](docs/actas/sprint-4/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-4/daily.md).
