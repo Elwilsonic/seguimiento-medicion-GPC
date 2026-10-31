@@ -21,7 +21,8 @@ import (
 // texto (CA-40.3); el archivo (WriteProjectPDF) se prueba buscando cada línea
 // en los bytes del PDF, que se escribe sin comprimir (decisión 6 de la SDD).
 
-// tec03Lines son las 24 líneas del ejemplo de TEC-03 de la SDD.
+// tec03Lines son las 24 líneas del ejemplo de TEC-03 de la SDD, más las 6 de
+// la sección "Historias" de HU-49 (CA-49.6).
 var tec03Lines = []pdfLine{
 	{Text: "Reporte del proyecto «Software Metrics»", Heading: true},
 	{Text: "Proyecto", Heading: true},
@@ -37,6 +38,12 @@ var tec03Lines = []pdfLine{
 	{Text: "Horas: 20.0 estimadas, 20.0 reales, 1 ítem(s) sin horas estimadas."},
 	{Text: "Desviación: 0.0 h (0.0 %)."},
 	{Text: "Defectos: 1 detectados, 1 resuelto(s)."},
+	{Text: "Historias", Heading: true},
+	{Text: "#1 · A · MEDIA · TERMINADO · 5 SP · 10.0 h estimadas · sprint 1"},
+	{Text: "#2 · B · MEDIA · TERMINADO · 3 SP · 6.0 h estimadas · sprint 1"},
+	{Text: "#3 · C · MEDIA · EN_CURSO · 2 SP · sin horas estimadas · sprint 1"},
+	{Text: "#4 · D · MEDIA · PENDIENTE · sin estimar · 4.0 h estimadas · sprint 1"},
+	{Text: "Cantidad: 4 historia(s), 2 completada(s)"},
 	{Text: "Esfuerzos", Heading: true},
 	{Text: "#1 · 2026-10-06 · Ana · Desarrollo · ítem 1 · sprint 1 · 12 h"},
 	{Text: "#2 · 2026-10-06 · Luis · Desarrollo · ítem 2 · sprint 1 · 5 h"},
@@ -49,7 +56,8 @@ var tec03Lines = []pdfLine{
 	{Text: "Integrantes que registraron esfuerzo: Ana, Luis"},
 }
 
-// emptyProjectLines son las líneas de un proyecto recién creado, sin datos.
+// emptyProjectLines son las líneas de un proyecto recién creado, sin datos,
+// con la sección "Historias" vacía de HU-49 (CA-49.4 y CA-49.6).
 var emptyProjectLines = []pdfLine{
 	{Text: "Reporte del proyecto «Proyecto vacío»", Heading: true},
 	{Text: "Proyecto", Heading: true},
@@ -65,6 +73,9 @@ var emptyProjectLines = []pdfLine{
 	{Text: "Horas: 0.0 estimadas, 0.0 reales, 0 ítem(s) sin horas estimadas."},
 	{Text: "Desviación: sin datos."},
 	{Text: "Defectos: 0 detectados, 0 resuelto(s)."},
+	{Text: "Historias", Heading: true},
+	{Text: "Sin historias en el backlog."},
+	{Text: "Cantidad: 0 historia(s), 0 completada(s)"},
 	{Text: "Esfuerzos", Heading: true},
 	{Text: "Sin esfuerzos registrados."},
 	{Text: "Total: 0.0 horas"},
@@ -159,6 +170,27 @@ func TestProjectReportLines_ProyectoSinDatos(t *testing.T) {
 	if !reflect.DeepEqual(got, emptyProjectLines) {
 		t.Errorf("líneas =\n%v\nse esperaba\n%v", got, emptyProjectLines)
 	}
+}
+
+// CA-49.4 y CA-49.6 · La línea de una historia indica la prioridad, el
+// estado, los Story Points, las horas estimadas con un decimal y el sprint, o
+// "sin estimar", "sin horas estimadas" y "sin sprint".
+func TestProjectReportLines_HistoriasConYSinEstimacion(t *testing.T) {
+	e := newReportEnv()
+	projectID := e.project(t, "Sistema de ventas", "")
+	s := e.openSprint(t, projectID, "Sprint 1")
+	e.story(t, projectID, "Registrar venta", backlog.PriorityHigh, 3, 8, backlog.StatusFinished, s.ID)
+	e.story(t, projectID, "Consultar stock", backlog.PriorityMedium, 0, 0, backlog.StatusPending, 0)
+	e.story(t, projectID, "Emitir factura", backlog.PriorityLow, 0, 2.25, backlog.StatusInProgress, 0)
+
+	got := projectReportLines(generate(t, e, projectID))
+
+	expectLines(t, got,
+		"#1 · Registrar venta · ALTA · TERMINADO · 3 SP · 8.0 h estimadas · sprint 1",
+		"#2 · Consultar stock · MEDIA · PENDIENTE · sin estimar · sin horas estimadas · sin sprint",
+		"#3 · Emitir factura · BAJA · EN_CURSO · sin estimar · 2.3 h estimadas · sin sprint",
+		"Cantidad: 3 historia(s), 1 completada(s)",
+	)
 }
 
 // CA-40.3 · Con la fecha de fin de HU-41 registrada, se muestra.

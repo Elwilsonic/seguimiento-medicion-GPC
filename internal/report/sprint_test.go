@@ -61,7 +61,7 @@ func newSprintReportEnv() *sprintReportEnv {
 	e.efforts = effort.NewManager(e.effortSpy, e.sprints, e.items)
 	e.defects = defect.NewManager(e.defectSpy, e.items, e.sprints)
 	e.metrics = metrics.NewManager(e.items, e.sprints, e.efforts, e.defects)
-	e.reports = NewManager(e.projects, e.sprints, e.metrics, e.efforts, e.defects)
+	e.reports = NewManager(e.projects, e.items, e.sprints, e.metrics, e.efforts, e.defects)
 	return &sprintReportEnv{reportEnv: e, sprintGetSpy: get}
 }
 

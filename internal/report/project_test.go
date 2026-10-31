@@ -143,7 +143,7 @@ func newReportEnv() *reportEnv {
 	e.efforts = effort.NewManager(e.effortSpy, e.sprints, e.items)
 	e.defects = defect.NewManager(e.defectSpy, e.items, e.sprints)
 	e.metrics = metrics.NewManager(e.items, e.sprints, e.efforts, e.defects)
-	e.reports = NewManager(e.projects, e.sprints, e.metrics, e.efforts, e.defects)
+	e.reports = NewManager(e.projects, e.items, e.sprints, e.metrics, e.efforts, e.defects)
 	return e
 }
 
@@ -202,12 +202,18 @@ func (e *reportEnv) closeSprint(t *testing.T, sprintID int) {
 // estado pedido.
 func (e *reportEnv) item(t *testing.T, projectID int, title string, points int, hours float64, status backlog.Status, sprintID int) backlog.Item {
 	t.Helper()
+	return e.story(t, projectID, title, backlog.PriorityMedium, points, hours, status, sprintID)
+}
+
+// story es item con la prioridad pedida (HU-49).
+func (e *reportEnv) story(t *testing.T, projectID int, title string, priority backlog.Priority, points int, hours float64, status backlog.Status, sprintID int) backlog.Item {
+	t.Helper()
 	criteria := []string{"Criterio de " + title}
-	it, err := e.items.Create(projectID, title, "", "MEDIA", criteria)
+	it, err := e.items.Create(projectID, title, "", string(priority), criteria)
 	if err != nil {
 		t.Fatalf("crear el ítem %q: %v", title, err)
 	}
-	if it, err = e.items.Update(it.ID, title, "", "MEDIA", criteria, hours); err != nil {
+	if it, err = e.items.Update(it.ID, title, "", string(priority), criteria, hours); err != nil {
 		t.Fatalf("asignar %v horas a %q: %v", hours, title, err)
 	}
 	if points > 0 {

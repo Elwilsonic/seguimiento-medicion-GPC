@@ -1,6 +1,7 @@
 package report
 
 import (
+	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/defect"
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/metrics"
@@ -8,14 +9,16 @@ import (
 )
 
 // ProjectReport es el reporte de un proyecto (HU-38): sus datos, sus
-// métricas M1 a M10, sus esfuerzos, sus defectos y los integrantes que
-// registraron esfuerzo, cada parte en su propio tipo (RN-38.1).
+// métricas M1 a M10, sus esfuerzos, sus defectos, los integrantes que
+// registraron esfuerzo y las historias del backlog (HU-49), cada parte en su
+// propio tipo (RN-38.1).
 type ProjectReport struct {
 	Project project.Project
 	Metrics metrics.ProjectMetrics
 	Efforts Efforts
 	Defects Defects
 	Members Members
+	Stories Stories
 }
 
 // Efforts son los esfuerzos de los sprints del proyecto, ordenados por sprint
@@ -40,8 +43,9 @@ type Members struct {
 // Project devuelve el reporte de un proyecto existente (HU-38) en una sola
 // consulta (RN-38.1). Lee, en este orden, el proyecto (que valida que exista,
 // project.ErrProjectNotFound), las métricas, los sprints del proyecto, los
-// esfuerzos de cada sprint en orden de ID y los defectos del proyecto, y
-// corta en el primer error, sin reporte parcial (RN-38.3).
+// esfuerzos de cada sprint en orden de ID, los defectos del proyecto y, al
+// final, sus historias (RN-49.7), y corta en el primer error, sin reporte
+// parcial (RN-38.3).
 func (m *Manager) Project(projectID int) (ProjectReport, error) {
 	p, err := m.projects.Get(projectID)
 	if err != nil {
@@ -70,6 +74,11 @@ func (m *Manager) Project(projectID int) (ProjectReport, error) {
 	if err != nil {
 		return ProjectReport{}, err
 	}
+	// RN-49.1: todas las historias del backlog, en cualquier estado.
+	items, err := m.items.ListItems(projectID)
+	if err != nil {
+		return ProjectReport{}, err
+	}
 
 	return ProjectReport{
 		Project: p,
@@ -77,6 +86,7 @@ func (m *Manager) Project(projectID int) (ProjectReport, error) {
 		Efforts: efforts,
 		Defects: Defects{Defects: defects},
 		Members: membersOf(efforts.Efforts),
+		Stories: storiesOf(items, func(backlog.Item) bool { return true }),
 	}, nil
 }
 

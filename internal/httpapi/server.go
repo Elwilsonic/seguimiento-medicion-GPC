@@ -60,11 +60,12 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	// HU-47 suma el Manager de defectos para calcular M9 y M10.
 	// HU-36: dashboard tampoco tiene repositorio ni estado, y se crea igual.
 	// HU-38: report tampoco tiene repositorio ni estado; lee las métricas con
-	// el mismo Manager de métricas del servidor.
+	// el mismo Manager de métricas del servidor. HU-49 suma el Manager del
+	// backlog para leer las historias.
 	s := &server{projects: projects, items: items, sprints: sprints, efforts: efforts, poker: pokerManager, defects: defects, members: members,
 		metrics:   metrics.NewManager(items, sprints, efforts, defects),
 		dashboard: dashboard.NewManager(projects, items, sprints)}
-	s.reports = report.NewManager(projects, sprints, s.metrics, efforts, defects)
+	s.reports = report.NewManager(projects, items, sprints, s.metrics, efforts, defects)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)

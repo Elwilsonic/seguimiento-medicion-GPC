@@ -4,11 +4,11 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 
 ## Cobertura actual
 
-- **Fecha:** 30/10/2026
-- **Última historia con cobertura medida:** HU-17, rama `feature/HU-17-consultar-integrantes`, medida sobre el GREEN `c112570` (rama creada desde `main` `3edc9e9`, con HU-16) en Windows con go1.27.1, sin base. La comparación con `main` (`3edc9e9`) se hizo con el mismo Go y los mismos comandos, en una copia temporal con `git worktree`. La columna "Con base" es la de HU-16: HU-17 no cambia los repositorios ni el esquema, y no se volvió a medir con PostgreSQL.
-- **Comandos:** sin base, `go test -count=1 -p 1 -coverprofile=cover.out ./...` con `GOTMPDIR` en otra carpeta (Windows bloqueó al azar algunos ejecutables de prueba, como en HU-24) y `go tool cover -func=cover.out`; con base, los mismos con `TEST_DATABASE_URL`, y además con `-coverpkg=./...` para el total. Total: 84.5% sin base (HU-17) y 95.1% con base (HU-16) (96.1% con `-coverpkg=./...`). `-race` no corre localmente (sin cgo). El CI (Linux) es la fuente autoritativa, pero omite los tests de PostgreSQL.
+- **Fecha:** 31/10/2026
+- **Última historia con cobertura medida:** HU-49, rama `feature/HU-49-historias-en-reporte`, medida sobre el GREEN `e136df7` (rama creada desde `main` `9e85d72`) en Linux con go1.27.1, sin base y con PostgreSQL 16.15. La comparación con `main` (`9e85d72`) se hizo con el mismo Go y los mismos comandos, en una copia temporal con `git worktree`. La columna "Con base" es la de HU-16: HU-49 no cambia los repositorios ni el esquema, y con base el total queda igual.
+- **Comandos:** sin base, `go test -count=1 -p 1 -coverprofile=cover.out ./...` y `go tool cover -func=cover.out`; con base, los mismos con `TEST_DATABASE_URL` y `-coverpkg=./...` para el total. Total: 84.7% sin base (HU-49) y 96.2% con base y `-coverpkg=./...` (HU-49, igual que `main`). El CI (Linux) corre los tests con `-race` y con un servicio PostgreSQL, y falla si se omite alguno.
 
-| Paquete | Sin base (HU-17, Windows, go1.27.1) | Con base (HU-16, PostgreSQL 17.11) |
+| Paquete | Sin base (HU-49, Linux, go1.27.1) | Con base (HU-16, PostgreSQL 17.11) |
 |---|---|---|
 | `cmd/server` | 29.8% | 31.6% |
 | `internal/backlog` | 83.3% | 99.0% |
@@ -25,6 +25,8 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 | `internal/postgrestest` | 36.8% | 36.8% |
 | `internal/project` | 74.8% | 98.1% |
 | `internal/sprint` | 77.1% | 97.2% |
+
+Con HU-49, `storiesOf`, `storyText` y `toStoryListResponse` entran en 100.0%, y `Project`, `Sprint` y `projectReportLines` de `internal/report` siguen en 100.0%. `internal/report` sigue en 100.0% e `internal/httpapi` en 98.7%; los demás paquetes conservan sus porcentajes (la columna "Sin base" de la tabla da lo mismo en la rama). Sin base, el total del perfil sube de **84.5%** en `main` (`9e85d72`, mismo go1.27.1 y comandos) a **84.7%**. Con PostgreSQL 16.15, sin SKIP (0 SKIP, 1127 PASS de primer nivel y 0 FAIL con `go test -count=1 -p 1 -v ./...`), el total con `-coverpkg=./...` queda en **96.2%**, igual que en `main`. La interfaz (la tabla de historias de "Reportes") la verifican los tests de `internal/httpapi` sobre el contenido de `app.js` e `index.html` y la prueba en el navegador de la evidencia.
 
 Con HU-17, `List` de `internal/member` y `listMembers` de `internal/httpapi` entran en 100.0%. Sin base, sobre `c112570`, `internal/member` sube de 65.5% en `main` (`3edc9e9`, mismo go1.27.1 y mismos comandos) a 68.8% y el total del perfil de **84.3%** a **84.5%**; los demás paquetes conservan sus porcentajes, incluido `internal/httpapi` en 98.7%. HU-17 no cambia los repositorios ni el esquema (reutiliza `ListByProject`, que cubren los tests de contrato de HU-15), así que no se midió con PostgreSQL. La interfaz (el botón "Ver integrantes del proyecto") la verifican los tests de `internal/httpapi` sobre el contenido de `app.js` e `index.html`. `-race` no corre localmente (sin cgo); lo ejecuta el CI, y lo necesita `TestList_ConsultasSimultaneasConRegistros`.
 
