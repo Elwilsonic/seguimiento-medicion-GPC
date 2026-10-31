@@ -262,7 +262,7 @@ go test -run TestFeatures ./internal/backlog/
 
 ### 4.4 Pruebas de integración con PostgreSQL
 
-Los tests de los repositorios PostgreSQL y del wiring de `cmd/server` corren solo si está definida `TEST_DATABASE_URL`; si no, hacen `t.Skip` (por eso el CI pasa sin base). Con la base levantada (sección 5):
+Los tests de los repositorios PostgreSQL y del wiring de `cmd/server` corren solo si está definida `TEST_DATABASE_URL`; si no, hacen `t.Skip`, así que en una máquina sin Docker los tests pasan igual. El CI sí define `TEST_DATABASE_URL` y corre estos tests (sección 6). Con la base levantada (sección 5):
 
 ```
 $env:TEST_DATABASE_URL="postgres://gpc:gpc_dev@localhost:5433/gpc_test?sslmode=disable"; go test -count=1 ./...
@@ -310,7 +310,7 @@ Las reglas completas están en [`AGENTS.md`](../AGENTS.md), y el checklist previ
 - **Ramas:** una por historia o tarea, desde `main` actualizado: `feature/HU-XX-nombre-corto` o `feature/TEC-XX-nombre-corto`. Nunca se trabaja sobre `main`.
 - **Commits:** `tipo(ID): descripción`, con `tipo` en `test`, `feat`, `refactor`, `docs`, `ci`, `chore` o `fix`, e `ID` de la historia, la tarea o el sprint (por ejemplo `test(HU-01): agregar tests (RED)`). El cuerpo lleva `Refs #N` con el Issue; el commit de cierre lleva `Closes #N`.
 - **Pull Request:** hacia `main`, con la aprobación de un integrante distinto del responsable y la CI en verde. Se integra con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR.
-- **CI** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml), TEC-02): en cada Pull Request hacia `main` verifica el formato (`gofmt -l`), corre `go vet ./...` y `go test -race -coverprofile=coverage.out ./...`, y muestra la cobertura total. No tiene base de datos: los tests de PostgreSQL se omiten.
+- **CI** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml), TEC-02): en cada Pull Request hacia `main` verifica el formato (`gofmt -l`), corre `go vet ./...` y `go test -race -p 1 -v -coverprofile=coverage.out ./...`, y muestra la cobertura total. Levanta PostgreSQL 17 como servicio (`postgres:17-alpine`, base `gpc_test`), crea el esquema con `db/init/01-schema.sql` y define `TEST_DATABASE_URL`, así que corre también las pruebas de integración; si algún test se omite, el CI falla (acción 8 de la Retrospectiva del Sprint 4).
 - **Trazabilidad:** cada Issue de historia tiene la sección "## Trazabilidad" con los links a su SDD, BDD y evidencia.
 - **Definition of Ready y Done:** [`docs/definition-of-ready-done.md`](definition-of-ready-done.md).
 - **Uso de IA:** se registra en [`docs/ia/registro.md`](ia/registro.md).

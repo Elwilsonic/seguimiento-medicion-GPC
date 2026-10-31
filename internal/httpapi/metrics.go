@@ -113,7 +113,14 @@ func (s *server) projectMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, projectMetricsResponse{
+	writeJSON(w, http.StatusOK, toProjectMetricsResponse(m))
+}
+
+// toProjectMetricsResponse arma la respuesta de las métricas del proyecto. La
+// usan GET /api/proyectos/{id}/metricas (HU-35) y la parte "metricas" del
+// reporte del proyecto (HU-38).
+func toProjectMetricsResponse(m metrics.ProjectMetrics) projectMetricsResponse {
+	return projectMetricsResponse{
 		ProyectoID:         m.ProjectID,
 		SPPlanificados:     m.Points.Planned,
 		SPCompletados:      m.Points.Completed,
@@ -123,7 +130,7 @@ func (s *server) projectMetrics(w http.ResponseWriter, r *http.Request) {
 		completionResponse: toCompletionResponse(m.Completion),
 		hoursResponse:      toHoursResponse(m.Hours),
 		defectsResponse:    toDefectsResponse(m.Defects),
-	})
+	}
 }
 
 // defectsResponse son los campos de M9 y M10 (HU-47), enteros (RN-47.8).
