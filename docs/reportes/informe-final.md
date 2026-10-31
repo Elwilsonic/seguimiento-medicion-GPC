@@ -300,7 +300,7 @@ Fuente: API de GitHub (`pulls` y `pulls/{n}/reviews`), sobre los 82 PR integrado
 
 - **152 ejecuciones** del workflow "CI" ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), job "gofmt y tests", TEC-02) en Pull Requests: **151 en verde**. La única fallida fue la primera versión del workflow (10/10), en la rama de TEC-02, antes de integrarse. Además hubo una ejecución del agente de Copilot que armó esa primera versión, que no es del CI.
 - En cada Pull Request, el CI verifica `gofmt -l`, corre `go vet ./...` y `go test -race -coverprofile=coverage.out ./...`, y muestra la cobertura total.
-- **Límite:** el CI no levanta PostgreSQL, así que esos tests se omiten allí. Los revisores los corrieron a mano con base en varias historias (HU-16, HU-24, HU-28, HU-40, entre otras). Sumar PostgreSQL al CI es la acción 8 de la [Retrospectiva del Sprint 4](../actas/sprint-4/retrospectiva.md).
+- **Límite:** hasta la fecha de corte, el CI no levantaba PostgreSQL, así que esos tests se omitían allí. Los revisores los corrieron a mano con base en varias historias (HU-16, HU-24, HU-28, HU-40, entre otras). Después del cierre, la acción 8 de la [Retrospectiva del Sprint 4](../actas/sprint-4/retrospectiva.md) sumó PostgreSQL al CI, que ahora corre las pruebas de integración y falla si alguna se omite.
 
 Fuente: API de GitHub Actions (`actions/runs`).
 
