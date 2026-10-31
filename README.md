@@ -288,7 +288,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | TEC-04 | [#34](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/34) | Interfaz usable | — | — | [Evidencia](docs/evidencias/TEC-04-tdd.md) | [#104](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/104), [#105](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/105), [#106](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/106) |
 | TEC-05 | [#35](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/35) | Persistencia con PostgreSQL en Docker | — | — | [Evidencia](docs/evidencias/TEC-05-tdd.md) | [#96](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/96) |
 
-### Sprint 3 — La Estimación (23/10 al 29/10) · [Planning](docs/actas/sprint-3/planning.md)
+### Sprint 3 — La Estimación (23/10 al 29/10) · [Planning](docs/actas/sprint-3/planning.md) · [Daily](docs/actas/sprint-3/daily.md) · [Review](docs/actas/sprint-3/review.md) · [Retrospectiva](docs/actas/sprint-3/retrospectiva.md)
 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
@@ -304,7 +304,7 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 | HU-32 | [#50](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/50) | Calcular Story Points planificados, completados y velocidad | [SDD](docs/especificaciones/HU-32-sp-velocidad.md) | [BDD](features/HU-32-sp-velocidad.feature) | [Evidencia](docs/evidencias/HU-32-tdd.md) | [#123](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/123) |
 | HU-34 | [#52](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/52) | Calcular el porcentaje de historias completadas | [SDD](docs/especificaciones/HU-34-porcentaje-completadas.md) | [BDD](features/HU-34-porcentaje-completadas.feature) | [Evidencia](docs/evidencias/HU-34-tdd.md) | [#129](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/129) |
 
-### Sprint 4 — La Entrega (27/10 al 02/11) · [Planning](docs/actas/sprint-4/planning.md)
+### Sprint 4 — La Entrega (27/10 al 02/11) · [Planning](docs/actas/sprint-4/planning.md) · [Daily](docs/actas/sprint-4/daily.md)
 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
