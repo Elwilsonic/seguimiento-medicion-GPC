@@ -17,11 +17,18 @@ import (
 // sigue a las lecturas de ítems que ya hacen las métricas y los defectos;
 // los dos helpers de abajo las cuentan haciendo esas mismas consultas.
 
-// projectItemReadsBeforeStories devuelve cuántas lecturas de ítems hacen las
-// partes del reporte del proyecto que se leen antes de las historias
-// (proyecto → métricas → sprints → esfuerzos → defectos), y deja los
+// readsBeforeStories son las lecturas que hace un reporte antes de leer las
+// historias (RN-49.7): las de ítems, esfuerzos y defectos, incluidas las que
+// hacen las métricas (M5 lee los esfuerzos; M9 y M10, los defectos).
+type readsBeforeStories struct {
+	items, efforts, defects int
+}
+
+// projectReadsBeforeStories cuenta las lecturas de las partes del reporte del
+// proyecto que se leen antes de las historias (proyecto → métricas → sprints
+// → esfuerzos → defectos) haciendo esas mismas consultas, y deja los
 // contadores en cero.
-func (e *reportEnv) projectItemReadsBeforeStories(t *testing.T, projectID int) int {
+func (e *reportEnv) projectReadsBeforeStories(t *testing.T, projectID int) readsBeforeStories {
 	t.Helper()
 	e.resetReads()
 	_, _ = e.projects.Get(projectID)
@@ -31,23 +38,23 @@ func (e *reportEnv) projectItemReadsBeforeStories(t *testing.T, projectID int) i
 		_, _ = e.efforts.ListBySprint(sp.ID)
 	}
 	_, _ = e.defects.ListByProject(projectID)
-	n := e.itemSpy.calls
+	reads := readsBeforeStories{items: e.itemSpy.calls, efforts: e.effortSpy.calls, defects: e.defectSpy.calls}
 	e.resetReads()
-	return n
+	return reads
 }
 
-// sprintItemReadsBeforeStories es lo mismo para el reporte del sprint
-// (sprint → métricas → esfuerzos → defectos).
-func (e *sprintReportEnv) sprintItemReadsBeforeStories(t *testing.T, sprintID int) int {
+// sprintReadsBeforeStories es lo mismo para el reporte del sprint (sprint →
+// métricas → esfuerzos → defectos).
+func (e *sprintReportEnv) sprintReadsBeforeStories(t *testing.T, sprintID int) readsBeforeStories {
 	t.Helper()
 	e.resetSprintReads()
 	sp, _ := e.sprints.Get(sprintID)
 	_, _ = e.metrics.Sprint(sprintID)
 	_, _ = e.efforts.ListBySprint(sprintID)
 	_, _ = e.defects.ListByProject(sp.ProjectID)
-	n := e.itemSpy.calls
+	reads := readsBeforeStories{items: e.itemSpy.calls, efforts: e.effortSpy.calls, defects: e.defectSpy.calls}
 	e.resetSprintReads()
-	return n
+	return reads
 }
 
 // storedItems devuelve las historias guardadas del proyecto, sin pasar por
@@ -208,8 +215,9 @@ func TestSprint_SinHistorias(t *testing.T) {
 // del reporte, sin reporte parcial.
 func TestProject_FallaLaLecturaDeLasHistorias(t *testing.T) {
 	e := newReportEnv()
-	projectID, sprints := e.multiSprintProject(t)
-	e.itemSpy.failAt = e.projectItemReadsBeforeStories(t, projectID) + 1
+	projectID, _ := e.multiSprintProject(t)
+	before := e.projectReadsBeforeStories(t, projectID)
+	e.itemSpy.failAt = before.items + 1
 
 	got, err := e.reports.Project(projectID)
 
@@ -219,9 +227,9 @@ func TestProject_FallaLaLecturaDeLasHistorias(t *testing.T) {
 	if !reflect.DeepEqual(got, ProjectReport{}) {
 		t.Errorf("Project = %+v, se esperaba el valor cero", got)
 	}
-	if e.effortSpy.calls != len(sprints) || e.defectSpy.calls != 1 {
-		t.Errorf("lecturas de esfuerzos y defectos = %d y %d; se esperaba %d y 1, antes de las historias",
-			e.effortSpy.calls, e.defectSpy.calls, len(sprints))
+	if e.effortSpy.calls != before.efforts || e.defectSpy.calls != before.defects {
+		t.Errorf("lecturas de esfuerzos y defectos = %d y %d; se esperaba %d y %d, todas antes de las historias",
+			e.effortSpy.calls, e.defectSpy.calls, before.efforts, before.defects)
 	}
 }
 
@@ -229,7 +237,8 @@ func TestProject_FallaLaLecturaDeLasHistorias(t *testing.T) {
 func TestSprint_FallaLaLecturaDeLasHistorias(t *testing.T) {
 	e := newSprintReportEnv()
 	s := e.tec03Sprint(t)
-	e.itemSpy.failAt = e.sprintItemReadsBeforeStories(t, s.ID) + 1
+	before := e.sprintReadsBeforeStories(t, s.ID)
+	e.itemSpy.failAt = before.items + 1
 
 	got, err := e.reports.Sprint(s.ID)
 
@@ -239,9 +248,9 @@ func TestSprint_FallaLaLecturaDeLasHistorias(t *testing.T) {
 	if !reflect.DeepEqual(got, SprintReport{}) {
 		t.Errorf("Sprint = %+v, se esperaba el valor cero", got)
 	}
-	if e.effortSpy.calls != 1 || e.defectSpy.calls != 1 {
-		t.Errorf("lecturas de esfuerzos y defectos = %d y %d; se esperaba 1 y 1, antes de las historias",
-			e.effortSpy.calls, e.defectSpy.calls)
+	if e.effortSpy.calls != before.efforts || e.defectSpy.calls != before.defects {
+		t.Errorf("lecturas de esfuerzos y defectos = %d y %d; se esperaba %d y %d, todas antes de las historias",
+			e.effortSpy.calls, e.defectSpy.calls, before.efforts, before.defects)
 	}
 }
 
@@ -251,13 +260,13 @@ func TestReports_LeenLasHistoriasUnaSolaVez(t *testing.T) {
 	e := newSprintReportEnv()
 	projectID, sprints := e.multiSprintProject(t)
 
-	before := e.projectItemReadsBeforeStories(t, projectID)
+	before := e.projectReadsBeforeStories(t, projectID).items
 	generate(t, e.reportEnv, projectID)
 	if e.itemSpy.calls != before+1 {
 		t.Errorf("proyecto: lecturas de ítems = %d, se esperaba %d", e.itemSpy.calls, before+1)
 	}
 
-	before = e.sprintItemReadsBeforeStories(t, sprints[0].ID)
+	before = e.sprintReadsBeforeStories(t, sprints[0].ID).items
 	generateSprint(t, e, sprints[0].ID)
 	if e.itemSpy.calls != before+1 {
 		t.Errorf("sprint: lecturas de ítems = %d, se esperaba %d", e.itemSpy.calls, before+1)

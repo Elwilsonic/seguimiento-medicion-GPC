@@ -42,6 +42,9 @@ type storiesScenario struct {
 
 	// failStories indica que tiene que fallar la lectura de las historias.
 	failStories bool
+	// readsBefore son las lecturas que el reporte hace antes de las
+	// historias, contadas cuando failStories es true.
+	readsBefore readsBeforeStories
 
 	projectID int
 	// kind es "proyecto" o "sprint": el reporte que se generó.
@@ -153,7 +156,8 @@ func (s *storiesScenario) generateProject(projectID int) error {
 	s.kind = "proyecto"
 	s.before = s.stored()
 	if s.failStories {
-		s.env.itemSpy.failAt = s.env.projectItemReadsBeforeStories(s.t, projectID) + 1
+		s.readsBefore = s.env.projectReadsBeforeStories(s.t, projectID)
+		s.env.itemSpy.failAt = s.readsBefore.items + 1
 	}
 	s.env.resetSprintReads()
 	s.projectReport, s.err = s.env.reports.Project(projectID)
@@ -165,7 +169,8 @@ func (s *storiesScenario) generateSprintByName(name string) error {
 	s.before = s.stored()
 	sp := s.sprints[name]
 	if s.failStories {
-		s.env.itemSpy.failAt = s.env.sprintItemReadsBeforeStories(s.t, sp.ID) + 1
+		s.readsBefore = s.env.sprintReadsBeforeStories(s.t, sp.ID)
+		s.env.itemSpy.failAt = s.readsBefore.items + 1
 	}
 	s.env.resetSprintReads()
 	s.sprintReport, s.err = s.env.reports.Sprint(sp.ID)
@@ -342,9 +347,12 @@ func (s *storiesScenario) failsWithReadError() error {
 	return nil
 }
 
+// storiesReadAfterDefects verifica que, al fallar las historias, ya se
+// hicieron todas las lecturas de esfuerzos y defectos del reporte (RN-49.7).
 func (s *storiesScenario) storiesReadAfterDefects() error {
-	if s.env.defectSpy.calls != 1 {
-		return fmt.Errorf("lecturas de defectos = %d, se esperaba 1 antes de las historias", s.env.defectSpy.calls)
+	if s.env.effortSpy.calls != s.readsBefore.efforts || s.env.defectSpy.calls != s.readsBefore.defects {
+		return fmt.Errorf("lecturas de esfuerzos y defectos = %d y %d, se esperaba %d y %d antes de las historias",
+			s.env.effortSpy.calls, s.env.defectSpy.calls, s.readsBefore.efforts, s.readsBefore.defects)
 	}
 	return nil
 }
