@@ -141,7 +141,10 @@ $ git diff --stat a396ae2 7d7bfb2
 
 ## Refactor
 
-No hubo commit de refactor.
+En el GREEN no hubo commit de refactor. Después del cierre del Sprint 4 se hizo el refactor que dejaba pendiente el desvío 5:
+
+- **Refactor (`14cffba`), acción 9 de la Retrospectiva del Sprint 4.** Con HU-37 ya integrada, la conversión de `metrics.ProjectMetrics` a `projectMetricsResponse` se unifica en `toProjectMetricsResponse` (`internal/httpapi/metrics.go`), que usan el handler `projectMetrics` (HU-35) y `toProjectReportResponse` (HU-38). Se elimina `toReportMetricsResponse` de `reports.go`. No cambia ningún test ni el comportamiento: `TestReporteProyecto_CadaParteEsIgualASuEndpoint` sigue verificando que "metricas" es igual a `GET /api/proyectos/{id}/metricas`.
+- **Validación** sobre `main` (`6f93166`) con el refactor, en Linux con go1.27.1: `gofmt -l` y `go vet ./...` sin salida; `go test -race -count=1 ./...` da `ok` en los 14 paquetes; `projectMetrics`, `toProjectMetricsResponse` y `toProjectReportResponse` en 100.0%, `internal/httpapi` sigue en 98.7% y el total del perfil en 84.5% (sin base).
 
 ## Prueba de punta a punta
 
@@ -164,7 +167,7 @@ Es el JSON del ejemplo 1 de la SDD. En la interfaz, "Generar reporte" con el pro
 2. **Dos tests corregidos antes del commit RED.** El esperado de `TestProject_TotalDeHorasExactoEIgualAHorasReales` se calculaba como `(0.1 + 0.2) + 0.3`: Go evalúa esa suma de constantes de forma exacta (0.6) y no coincide con la suma en `float64` que hace el código (0.6000000000000001); ahora suma variables `float64` en el orden de RN-38.4. El paso "generar el reporte de nuevo da el mismo resultado" pasaba solo en el RED porque comparaba dos reportes vacíos; ahora exige los datos del proyecto y sus esfuerzos.
 3. **Columnas de la tabla de esfuerzos.** La tabla de la sección "Reportes" reutiliza `filaEsfuerzo`, así que sigue su orden de columnas (ID, Fecha, Integrante, Actividad, Ítem, Sprint, Horas), no el que lista la SDD.
 4. **Ids extra en la interfaz.** Además de los de la SDD, la sección tiene `reporte-total-horas` y `reporte-cantidad-defectos`, para el total y la cantidad debajo de cada tabla.
-5. **Conversión de las métricas duplicada.** `toReportMetricsResponse` (`internal/httpapi/reports.go`) duplica la conversión del handler `projectMetrics` de HU-35, para no modificar `metrics.go` mientras HU-37 lo cambia. `TestReporteProyecto_CadaParteEsIgualASuEndpoint` verifica que "metricas" sea igual a la respuesta de `GET /api/proyectos/{id}/metricas`. Se unifica cuando HU-37 y HU-38 estén en `main` (límite conocido de la SDD).
+5. **Conversión de las métricas duplicada (resuelto en el refactor posterior, ver "Refactor").** `toReportMetricsResponse` (`internal/httpapi/reports.go`) duplica la conversión del handler `projectMetrics` de HU-35, para no modificar `metrics.go` mientras HU-37 lo cambia. `TestReporteProyecto_CadaParteEsIgualASuEndpoint` verifica que "metricas" sea igual a la respuesta de `GET /api/proyectos/{id}/metricas`. Se unifica cuando HU-37 y HU-38 estén en `main` (límite conocido de la SDD).
 6. **Límites conocidos de la SDD.** El reporte llama una sola vez a cada operación, pero reutiliza `metrics.Manager.Project` sin cambios. Para un proyecto con N sprints, a nivel de repositorio, se leen 4 veces el proyecto, 3 veces los ítems, 2 veces la lista de sprints, 2N veces un sprint por ID, 2N veces los esfuerzos de un sprint y 2 veces los defectos (tabla de "Límites conocidos" de la SDD; `TestProject_ErroresEnElOrdenDeLectura` verifica las lecturas de sprints, esfuerzos y defectos). Las lecturas de fuentes distintas no son atómicas. El reporte no lista los ítems del backlog: las historias planificadas y completadas y sus estimaciones salen de M1, M2, M4 y M8. Los integrantes se comparan por texto: "Ana" y "ana" son dos integrantes.
 7. **`-race`.** `go test -race` no se corrió en la máquina local: requiere cgo y no hay `gcc`. Lo corre el CI (`go test -race -coverprofile=coverage.out ./...`).
 8. **PostgreSQL.** Localmente se saltaron 34 tests por falta de `TEST_DATABASE_URL` (`cmd/server` 4, backlog 3, defect 10, effort 7, poker 2, project 4 y sprint 4). En el CI también se saltan: el workflow no levanta una base. HU-38 no toca la persistencia.
@@ -256,6 +259,6 @@ ok   seguimiento-medicion-gpc/internal/sprint        coverage: 76.3% of statemen
 | GREEN | 7d7bfb2 | `feat(HU-38): generar el reporte del proyecto (GREEN)` |
 | Merge de `main` | f58b5e7 | `chore(HU-38): traer main con TEC-06` |
 | Merge de `main` | 0f98b48 | `chore(HU-38): traer main con HU-37` |
-| Refactor | — | No hubo |
+| Refactor (después del cierre) | 14cffba | `refactor(HU-38): unificar la conversión de las métricas del proyecto` |
 
 HU-38: Historia → SDD → Criterios de Aceptación → BDD → Tests → Código Go
