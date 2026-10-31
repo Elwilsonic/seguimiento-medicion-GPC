@@ -244,6 +244,9 @@ Cada historia sigue la cadena: **Historia de Usuario → Especificación SDD →
 | Tests y código Go | [`internal/`](internal/) y [`cmd/`](cmd/) |
 | Evidencia TDD por historia | [`docs/evidencias/`](docs/evidencias/) |
 | Cobertura y métricas | [`docs/reportes/`](docs/reportes/) |
+| Informe final de métricas y cobertura | [`docs/reportes/informe-final.md`](docs/reportes/informe-final.md) |
+| Documentación técnica | [`docs/documentacion-tecnica.md`](docs/documentacion-tecnica.md) |
+| Manual de usuario | [`docs/manual-de-usuario.md`](docs/manual-de-usuario.md) |
 | Actas de Planning, Daily, Review y Retrospective (una carpeta por Sprint) | [`docs/actas/`](docs/actas/) |
 | Registro de uso de IA | [`docs/ia/registro.md`](docs/ia/registro.md) |
 | Flujo de trabajo (SDD → BDD → TDD) | [`AGENTS.md`](AGENTS.md) |
@@ -348,7 +351,8 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `docs/documentacion-tecnica.md` | Documentación técnica: arquitectura, repositorios, API, cómo ejecutar y probar, y flujo de trabajo (TEC-06) |
 | `docs/especificaciones/` | Especificaciones SDD (`HU-XX-nombre.md`) |
 | `docs/evidencias/` | Evidencia TDD por historia (`HU-XX-tdd.md`) |
-| `docs/reportes/` | Reportes de cobertura y métricas |
+| `docs/reportes/` | Reportes de cobertura y métricas, y el informe final de métricas y cobertura (`informe-final.md`, TEC-08) |
+| `docs/manual-de-usuario.md` | Manual de usuario: cómo usar cada funcionalidad desde la interfaz, con capturas (TEC-07) |
 | `docs/ia/` | Registro de uso de herramientas de IA |
 
 El Product Backlog y los Sprint Backlogs están en el tablero de GitHub Projects.
@@ -381,4 +385,4 @@ Las épicas se estimaron por Planning Poker con talles de ropa (XS, S, M, L, XL)
 
 **Sprint 3:** se cumplió el Sprint Goal ("Estimar ítems con Planning Poker y registrar el esfuerzo y los defectos de cada sprint, con las fórmulas de las métricas definidas para el Sprint 4"), con 29 de 29 Story Points completados (HU-18, HU-20 a HU-23, HU-25 a HU-27 y HU-29), TEC-03 y dos historias adelantadas del Sprint 4 (HU-32 y HU-34): velocidad de 34. Ver las actas de [Planning](docs/actas/sprint-3/planning.md), [Review](docs/actas/sprint-3/review.md) y [Retrospectiva](docs/actas/sprint-3/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-3/daily.md).
 
-**Sprint 4:** se cumplió el Sprint Goal ("Ver las métricas del proyecto en el dashboard y generar sus reportes, con la gestión de defectos completa y la documentación final lista para la entrega"), con 35 de 35 Story Points comprometidos y 24 más tomados con capacidad sobrante: velocidad de 59. Las 42 historias del Product Backlog están cerradas y todos los requerimientos mínimos de la consigna quedan cubiertos. La documentación técnica (TEC-06) y el [manual de usuario](docs/manual-de-usuario.md) (TEC-07) están en `main`; el informe final (TEC-08) se completa antes de la entrega. Ver las actas de [Planning](docs/actas/sprint-4/planning.md), [Review](docs/actas/sprint-4/review.md) y [Retrospectiva](docs/actas/sprint-4/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-4/daily.md).
+**Sprint 4:** se cumplió el Sprint Goal ("Ver las métricas del proyecto en el dashboard y generar sus reportes, con la gestión de defectos completa y la documentación final lista para la entrega"), con 35 de 35 Story Points comprometidos y 24 más tomados con capacidad sobrante: velocidad de 59. Las 42 historias del Product Backlog están cerradas y todos los requerimientos mínimos de la consigna quedan cubiertos. La [documentación técnica](docs/documentacion-tecnica.md) (TEC-06), el [manual de usuario](docs/manual-de-usuario.md) (TEC-07) y el [informe final de métricas y cobertura](docs/reportes/informe-final.md) (TEC-08) están en `main`. Ver las actas de [Planning](docs/actas/sprint-4/planning.md), [Review](docs/actas/sprint-4/review.md) y [Retrospectiva](docs/actas/sprint-4/retrospectiva.md), y el [registro de las Dailys](docs/actas/sprint-4/daily.md).
