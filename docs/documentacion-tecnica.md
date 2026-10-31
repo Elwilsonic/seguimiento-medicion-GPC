@@ -4,7 +4,7 @@
 
 Cómo está construida la aplicación "Software Metrics & Estimation" y cómo se ejecuta y se prueba, para que cualquier integrante o evaluador pueda entender el código, correrlo y probarlo sin ayuda (TEC-06). Describe el código integrado en `main`. Cada sección indica la historia o tarea que la originó; el detalle de cada regla de negocio está en su SDD (`docs/especificaciones/`).
 
-Para el uso de la aplicación desde la interfaz, ver el [manual de usuario](manual-de-usuario.md) (TEC-07) y el [README](../README.md#interfaz-web). Para las fórmulas de las métricas, ver [`docs/metricas.md`](metricas.md) (TEC-03).
+Para el uso de la aplicación desde la interfaz, ver el [manual de usuario](manual-de-usuario.md) (TEC-07) y el [README](../README.md#interfaz-web). El "por qué" de cada decisión técnica (lenguaje, arquitectura, persistencia, librerías, pruebas y proceso) está en [`docs/decisiones-tecnicas.md`](decisiones-tecnicas.md). Para las fórmulas de las métricas, ver [`docs/metricas.md`](metricas.md) (TEC-03).
 
 ## 1. Arquitectura
 
