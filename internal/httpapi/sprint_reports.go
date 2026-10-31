@@ -9,11 +9,12 @@ import (
 
 // sprintReportResponse es la respuesta de GET /api/sprints/{id}/reporte
 // (HU-39). Cada parte tiene el formato de una respuesta que ya existe: sprint
-// (HU-10), métricas (HU-35), esfuerzos (HU-27), defectos (HU-31) e
-// integrantes (HU-38) (RN-39.9).
+// (HU-10), métricas (HU-35), historias (HU-49), esfuerzos (HU-27), defectos
+// (HU-31) e integrantes (HU-38) (RN-39.9).
 type sprintReportResponse struct {
 	Sprint      sprintResponse        `json:"sprint"`
 	Metricas    sprintMetricsResponse `json:"metricas"`
+	Historias   storyListResponse     `json:"historias"`
 	Esfuerzos   effortListResponse    `json:"esfuerzos"`
 	Defectos    defectListResponse    `json:"defectos"`
 	Integrantes memberListResponse    `json:"integrantes"`
@@ -39,6 +40,7 @@ func toSprintReportResponse(rep report.SprintReport) sprintReportResponse {
 		Sprint: toSprintResponse(rep.Sprint),
 		// La misma conversión que GET /api/sprints/{id}/metricas (decisión 4).
 		Metricas:    toSprintMetricsResponse(rep.Metrics),
+		Historias:   toStoryListResponse(rep.Stories),
 		Esfuerzos:   toEffortListResponse(effort.Summary{Efforts: rep.Efforts.Efforts, TotalHours: rep.Efforts.TotalHours}),
 		Defectos:    toDefectListResponse(rep.Defects.Defects),
 		Integrantes: toMemberListResponse(rep.Members),

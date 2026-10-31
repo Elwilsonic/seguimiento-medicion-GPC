@@ -932,6 +932,28 @@ function filasReporte(tbody, lista, fila, textoVacio) {
   }
 }
 
+// HU-49 · Historias del reporte (CA-49.7). filaHistoriaReporte arma la fila
+// de una historia como la tabla del backlog: "—" si no está estimada o no
+// está asignada a un sprint (TEC-03). historiasReporte llena la tabla y la
+// cantidad de un reporte.
+function filaHistoriaReporte(h) {
+  const tr = document.createElement("tr");
+  tr.append(
+    celda(h.id),
+    celda(h.titulo),
+    celda(h.prioridad),
+    celda(h.estado),
+    celda(h.story_points === 0 ? "—" : h.story_points),
+    celda(h.horas_estimadas),
+    celda(h.sprint_id === 0 ? "—" : h.sprint_id),
+  );
+  return tr;
+}
+
+function cantidadHistorias(r) {
+  return r.historias.cantidad + " historia(s), " + r.historias.completadas + " completada(s)";
+}
+
 $("generar-reporte").addEventListener("click", () =>
   accion("msg-reporte", async () => {
     const r = await api("GET", "/proyectos/" + proyectoActual() + "/reporte");
@@ -943,6 +965,8 @@ $("generar-reporte").addEventListener("click", () =>
     const m = r.metricas;
     $("reporte-metricas").textContent =
       storyPointsReporte(m) + " " + historiasCompletadas(m) + " " + horasYDesviacion(m) + " " + defectos(m);
+    filasReporte($("reporte-historias"), r.historias.historias, filaHistoriaReporte, "Sin historias en el backlog.");
+    $("reporte-cantidad-historias").textContent = cantidadHistorias(r);
     filasReporte($("reporte-esfuerzos"), r.esfuerzos.esfuerzos, filaEsfuerzo, "Sin esfuerzos registrados.");
     $("reporte-total-horas").textContent = "Total: " + r.esfuerzos.total_horas.toFixed(1) + " horas";
     filasReporte($("reporte-defectos"), r.defectos.defectos, filaDefecto, "Sin defectos registrados.");
@@ -1001,6 +1025,8 @@ $("generar-reporte-sprint").addEventListener("click", () =>
       m.sp_planificados + " SP planificados, " + m.sp_completados + " SP completados, " +
       m.items_sin_estimar + " ítem(s) sin estimar. " +
       historiasCompletadas(m) + " " + horasYDesviacion(m) + " " + defectos(m);
+    filasReporte($("reporte-sprint-historias"), r.historias.historias, filaHistoriaReporte, "Sin historias en el sprint.");
+    $("reporte-sprint-cantidad-historias").textContent = cantidadHistorias(r);
     filasReporte($("reporte-sprint-esfuerzos"), r.esfuerzos.esfuerzos, filaEsfuerzo, "Sin esfuerzos registrados.");
     $("reporte-sprint-total-horas").textContent = "Total: " + r.esfuerzos.total_horas.toFixed(1) + " horas";
     filasReporte($("reporte-sprint-defectos"), r.defectos.defectos, filaDefecto, "Sin defectos registrados.");
