@@ -92,6 +92,20 @@ No se usó `actionlint`, porque bajar y ejecutar esa herramienta externa no esta
 
 `.github/workflows/ci.yml` no cambia. El workflow nuevo no corre en los Pull Requests, solo en los push a `main` y a mano.
 
+## Primera ejecución en Azure
+
+La primera ejecución del workflow (run 41247679503, después del merge del PR #173) falló en el paso "Crear o actualizar la Container App". Los pasos anteriores funcionaron: Secrets, construcción y subida de la imagen, y login en Azure.
+
+```text
+ERROR: The environment '/subscriptions/***/resourceGroups/frsrutn/providers/Microsoft.App/managedEnvironments/utnapp-env' does not exist. Specify a valid environment
+```
+
+El entorno `utnapp-env` de la planilla no existe en el grupo de recursos `frsrutn`. Para corregirlo se agregó el paso "Buscar el entorno de Container Apps", que hace esto:
+- busca el entorno por nombre en toda la suscripción y usa su ID completo al crear la Container App;
+- si no lo encuentra, lista los entornos que existen (nombre, grupo y región) y falla con ese mensaje.
+
+El paso se probó con un `az` simulado en los dos casos.
+
 ## Límites
 
 1. **Almacenamiento en memoria.** La cátedra no provee una base de datos, así que en Azure los datos se pierden al reiniciar el contenedor o al volver a desplegar, en cada integración a `main`. Por eso la Container App tiene una sola réplica, siempre encendida.
