@@ -81,6 +81,21 @@ jobs:
           az account set --subscription "$subscription_id"
           az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
 
+      # El entorno se busca por nombre en toda la suscripción: en la primera
+      # ejecución, utnapp-env no estaba en el grupo de recursos frsrutn. Si no
+      # aparece, se listan los entornos que existen, para elegir el correcto.
+      - name: Buscar el entorno de Container Apps
+        run: |
+          env_id=$(az containerapp env list \
+            --query "[?name=='$AZURE_CONTAINERAPPS_ENVIRONMENT'].id | [0]" --output tsv)
+          if [ -z "$env_id" ]; then
+            echo "No existe el entorno $AZURE_CONTAINERAPPS_ENVIRONMENT en la suscripción. Entornos disponibles:"
+            az containerapp env list --query "[].{nombre:name, grupo:resourceGroup, region:location}" --output table
+            exit 1
+          fi
+          echo "Entorno: $env_id"
+          echo "ENVIRONMENT_ID=$env_id" >> "$GITHUB_ENV"
+
       # Una sola réplica, siempre encendida: con almacenamiento en memoria,
       # varias réplicas tendrían datos distintos y escalar a cero los borraría.
       - name: Crear o actualizar la Container App
@@ -112,7 +127,7 @@ jobs:
             az containerapp create \
               --name "$CONTAINER_APP_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
-              --environment "$AZURE_CONTAINERAPPS_ENVIRONMENT" \
+              --environment "$ENVIRONMENT_ID" \
               --image "$IMAGE" \
               --registry-server "$ACR_LOGIN_SERVER" \
               --registry-username "$ACR_NAME" \

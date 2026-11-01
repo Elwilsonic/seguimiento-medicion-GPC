@@ -349,7 +349,8 @@ El [`.dockerignore`](../.dockerignore) deja entrar solo `go.mod`, `go.sum`, `cmd
 | Secrets | Falla al principio si falta `ACR_PASSWORD` o `AZURE_CREDENTIALS`, y dice cuál |
 | Imagen | `docker build` con la versión de Go de `go.mod` y el hash del commit como etiqueta, y `docker push` a `ingcalidad2026.azurecr.io` (la contraseña entra por `--password-stdin`) |
 | Azure | `az login` con el service principal de `AZURE_CREDENTIALS`. Cada campo del JSON se oculta en los logs con `::add-mask::` |
-| Container App | Si `grupo12-seguimiento-medicion-gpc` no existe, la crea en `frsrutn` / `utnapp-env` con el registro, ingreso externo al puerto 8080 y una réplica. Si existe, vuelve a configurar el registro y el ingreso y actualiza la imagen |
+| Entorno | Busca `utnapp-env` por nombre en toda la suscripción y usa su ID. Si no existe, lista los entornos disponibles y falla |
+| Container App | Si `grupo12-seguimiento-medicion-gpc` no existe, la crea en `frsrutn`, en el entorno encontrado, con el registro, ingreso externo al puerto 8080 y una réplica. Si existe, vuelve a configurar el registro y el ingreso y actualiza la imagen |
 | Verificación | Espera hasta 5 minutos a que `https://<fqdn>/` responda 200 y escribe la URL en el resumen de la ejecución |
 
 El CI de los Pull Requests (sección 6) no cambia.
