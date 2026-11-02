@@ -106,6 +106,19 @@ El entorno `utnapp-env` de la planilla no existe en el grupo de recursos `frsrut
 
 El paso se probó con un `az` simulado en los dos casos.
 
+## Segunda ejecución en Azure
+
+La segunda ejecución (run 41266550028, después del merge del PR #174) llegó al paso nuevo y no encontró ningún entorno de Container Apps en la suscripción: la lista de entornos disponibles vino vacía.
+
+Por eso el paso pasó a "Buscar o crear el entorno de Container Apps". Si `utnapp-env` no existe, hace esto:
+1. lee la región de `frsrutn`;
+2. registra el proveedor `Microsoft.App` si no está registrado;
+3. crea el entorno en `frsrutn`, sin espacio de logs (`--logs-destination none`), como haría la acción oficial de Azure.
+
+Los otros grupos de la cátedra pueden reutilizarlo. El paso se probó con un `az` simulado, en el caso en que el entorno existe y en el caso en que hay que crearlo.
+
+Si las credenciales no tienen permiso para crear recursos en `frsrutn` o para registrar el proveedor, la ejecución falla con el mensaje de Azure. En ese caso, el entorno lo tiene que crear la cátedra.
+
 ## Límites
 
 1. **Almacenamiento en memoria.** La cátedra no provee una base de datos, así que en Azure los datos se pierden al reiniciar el contenedor o al volver a desplegar, en cada integración a `main`. Por eso la Container App tiene una sola réplica, siempre encendida.
