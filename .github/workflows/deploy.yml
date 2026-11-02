@@ -81,17 +81,32 @@ jobs:
           az account set --subscription "$subscription_id"
           az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
 
-      # El entorno se busca por nombre en toda la suscripción: en la primera
-      # ejecución, utnapp-env no estaba en el grupo de recursos frsrutn. Si no
-      # aparece, se listan los entornos que existen, para elegir el correcto.
-      - name: Buscar el entorno de Container Apps
+      # El entorno se busca por nombre en toda la suscripción. En las dos
+      # primeras ejecuciones no existía ninguno (ni en frsrutn ni en otro
+      # grupo), así que, si falta, se crea en frsrutn, en la región del grupo
+      # de recursos, como haría la acción oficial de Azure. Se crea sin espacio
+      # de logs (--logs-destination none) para no sumar otro recurso.
+      - name: Buscar o crear el entorno de Container Apps
         run: |
           env_id=$(az containerapp env list \
             --query "[?name=='$AZURE_CONTAINERAPPS_ENVIRONMENT'].id | [0]" --output tsv)
           if [ -z "$env_id" ]; then
-            echo "No existe el entorno $AZURE_CONTAINERAPPS_ENVIRONMENT en la suscripción. Entornos disponibles:"
-            az containerapp env list --query "[].{nombre:name, grupo:resourceGroup, region:location}" --output table
-            exit 1
+            echo "No existe el entorno $AZURE_CONTAINERAPPS_ENVIRONMENT: se crea en $AZURE_RESOURCE_GROUP."
+            region=$(az group show --name "$AZURE_RESOURCE_GROUP" --query location --output tsv)
+            echo "Región del grupo de recursos: $region"
+            estado=$(az provider show --namespace Microsoft.App --query registrationState --output tsv)
+            echo "Proveedor Microsoft.App: $estado"
+            if [ "$estado" != "Registered" ]; then
+              az provider register --namespace Microsoft.App --wait
+            fi
+            az containerapp env create \
+              --name "$AZURE_CONTAINERAPPS_ENVIRONMENT" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --location "$region" \
+              --logs-destination none \
+              --output none
+            env_id=$(az containerapp env show --name "$AZURE_CONTAINERAPPS_ENVIRONMENT" \
+              --resource-group "$AZURE_RESOURCE_GROUP" --query id --output tsv)
           fi
           echo "Entorno: $env_id"
           echo "ENVIRONMENT_ID=$env_id" >> "$GITHUB_ENV"
