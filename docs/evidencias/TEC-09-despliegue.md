@@ -23,7 +23,7 @@ Issue #172 → Criterios de Aceptación → Verificación → Configuración
 | CA-TEC09.4 — secretos solo en Secrets | Búsqueda de fragmentos de los valores en el repositorio y prueba del ocultamiento en los logs | Ver "Secretos" |
 | CA-TEC09.5 — `.dockerignore` y CI sin cambios | Lista de archivos de la imagen; `ci.yml` sin cambios | Ver "Imagen" y "CI" |
 | CA-TEC09.6 — documentación | [README](../../README.md#despliegue-en-azure) y [documentación técnica, sección 8](../documentacion-tecnica.md#8-despliegue-en-azure-container-apps) | — |
-| CA-TEC09.7 — despliegue real y URL | Pendiente: necesita el merge a `main` y los Secrets cargados | Se registra en el Issue #172 |
+| CA-TEC09.7 — despliegue real y URL | Ejecución del workflow en Azure, después del merge del PR #175 | Ver "Tercera ejecución en Azure"; la URL también está en el Issue #172 |
 
 ## Imagen
 
@@ -118,6 +118,22 @@ Por eso el paso pasó a "Buscar o crear el entorno de Container Apps". Si `utnap
 Los otros grupos de la cátedra pueden reutilizarlo. El paso se probó con un `az` simulado, en el caso en que el entorno existe y en el caso en que hay que crearlo.
 
 Si las credenciales no tienen permiso para crear recursos en `frsrutn` o para registrar el proveedor, la ejecución falla con el mensaje de Azure. En ese caso, el entorno lo tiene que crear la cátedra.
+
+## Tercera ejecución en Azure: despliegue
+
+La tercera ejecución ([run 41518323439](https://github.com/Elwilsonic/seguimiento-medicion-GPC/actions/runs/41518323439), 02/11/2026, después del merge del PR #175) terminó en verde, con los 9 pasos.
+
+- **Entorno:** el paso "Buscar o crear el entorno de Container Apps" encontró `utnapp-env` en `frsrutn` (Switzerland North) y no tuvo que crearlo. El entorno se creó entre la segunda ejecución y esta, fuera de nuestro workflow.
+- **App:** `az containerapp create` creó `grupo12-seguimiento-medicion-gpc` con la imagen `ingcalidad2026.azurecr.io/grupo12-seguimiento-medicion-gpc:24afc19…`.
+- **Verificación:** el último paso confirmó que la URL responde 200.
+
+```text
+Entorno: /subscriptions/***/resourceGroups/frsrutn/providers/Microsoft.App/managedEnvironments/utnapp-env
+Container app created. Access your app at https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/
+La aplicación responde en https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/
+```
+
+**URL pública:** <https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/>
 
 ## Límites
 

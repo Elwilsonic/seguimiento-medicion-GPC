@@ -218,6 +218,7 @@ La aplicación se despliega en Azure Container Apps, en la cuenta de la cátedra
 | Dato | Valor (planilla de grupos de la cátedra, Grupo12) |
 |---|---|
 | Container App | `grupo12-seguimiento-medicion-gpc` |
+| URL pública | <https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/> |
 | Registro de imágenes | `ingcalidad2026.azurecr.io` |
 | Grupo de recursos y entorno | `frsrutn` y `utnapp-env` |
 
