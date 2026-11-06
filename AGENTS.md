@@ -127,6 +127,24 @@ Seguí este orden:
 4. Pedí la revisión de otro integrante del equipo en el Pull Request (campo "Reviewers"). El merge requiere su aprobación y la CI en verde. Lo hace el equipo con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR y que los hashes de la evidencia sigan existiendo en main. "Closes" cierra el Issue recién cuando el commit llega a main.
 5. Después del merge, verificá que los tres links de la sección abran archivos existentes en main y avisame el resultado.
 
+## Cambios con OpenSpec (desde TEC-10)
+
+Desde TEC-10 (Issue #177), cada historia o tarea nueva se especifica con OpenSpec (`openspec/`, decisión 22 de `docs/decisiones-tecnicas.md`). La cadena es la misma de arriba; solo cambian el paso 2 y el cierre:
+
+- **Paso 0:** igual. Además, leé `openspec/config.yaml` y las specs de `openspec/specs/` del área que vas a tocar. Con `/opsx:explore`, el agente lee ese código antes de proponer.
+- **Pasos 1 y 2:** la historia y la SDD se escriben con `/opsx:propose nombre-del-cambio`, que crea `openspec/changes/nombre-del-cambio/` con:
+  - `proposal.md`: la historia, el por qué, el alcance y lo que queda fuera;
+  - `specs/`: los requisitos y escenarios WHEN/THEN, como diferencias `ADDED`, `MODIFIED` o `REMOVED` sobre el comportamiento actual;
+  - `design.md`: el diseño y las decisiones;
+  - `tasks.md`: los pasos.
+
+  Cada requisito cita su historia y su criterio (HU-XX, CA-XX.N). Se compara con el acta de Planning como en el paso 2, y **se frena hasta la aprobación explícita del Agile Enabler**.
+- **Pasos 3 a 7:** iguales: escenarios BDD con godog en `features/HU-XX-*.feature`, RED, GREEN, refactor y evidencia. `/opsx:apply` sigue `tasks.md`, y los commits siguen necesitando autorización. Cada test lleva un comentario con su historia, su criterio y qué verifica.
+  - La evidencia TDD incluye la tabla criterio → test → código, que dice qué función y qué archivo implementan cada criterio. Así se llega desde la historia hasta el código sin buscar a mano.
+- **Paso 8:** igual. Además, con el Pull Request integrado en `main`, `/opsx:archive` archiva el cambio y suma sus requisitos a `openspec/specs/`. Eso va en un commit propio (`docs(HU-XX): archivar el cambio en OpenSpec`), con autorización.
+
+Un cambio sobre algo que ya existe se vincula a su historia original en `proposal.md` (por ejemplo, "vinculada a HU-03"). Las SDD de `docs/especificaciones/` de las 43 historias anteriores no se rehacen: sirven de consulta para el comportamiento actual.
+
 ## Trazabilidad en el Issue
 
 Es OBLIGATORIO, para toda historia sin excepción: agregá (o verificá que ya tenga) esta sección en el body del Issue, con el mismo formato siempre y los links reales al repo:

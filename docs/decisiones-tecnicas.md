@@ -29,6 +29,7 @@ Las decisiones técnicas del proyecto, cada una con su "por qué", las alternati
 | 19 | Ramas por historia, Pull Request y "Create a merge commit" | Planning del Sprint 1, tema 13 |
 | 20 | Integrantes como texto libre en el esfuerzo y en Planning Poker | SDD de HU-15 y HU-16 |
 | 21 | Los reportes listan los integrantes que registraron esfuerzo | Planning del Sprint 4, tema 5 |
+| 22 | SDD con OpenSpec para los cambios sobre el proyecto heredado | Revisión del 05/11/2026; TEC-10 (#177) |
 
 ## Arquitectura y lenguaje
 
@@ -175,3 +176,32 @@ Las decisiones técnicas del proyecto, cada una con su "por qué", las alternati
 - **Decisión:** los reportes del proyecto (HU-38) y del sprint (HU-39) listan los integrantes que registraron esfuerzo, no los integrantes registrados en E4.
 - **Por qué:** cuando se planificó HU-38, E4 estaba fuera de la entrega; el criterio CA-38.1 se ajustó para que el reporte no dependiera de una épica sin hacer.
 - **Fuente:** tema 5 del acta de Planning del Sprint 4; SDD de HU-38.
+
+## Especificación
+
+### 22. SDD con OpenSpec para los cambios sobre el proyecto heredado
+
+- **Decisión:** los cambios nuevos se especifican con **OpenSpec** (https://github.com/Fission-AI/OpenSpec, versión 1.16.0, licencia MIT). Cada cambio pasa por estas fases:
+  1. propuesta;
+  2. especificación, con requisitos y escenarios WHEN/THEN;
+  3. diseño;
+  4. tareas;
+  5. implementación con TDD;
+  6. archivo.
+
+  Las 43 historias ya integradas no se rehacen: sus SDD (`docs/especificaciones/`) quedan como material de consulta del comportamiento actual.
+- **Por qué:** en la revisión del 05/11/2026, el profesor pidió aplicar SDD con una herramienta reconocida y tratar el proyecto como heredado. Las SDD anteriores seguían un formato propio (`AGENTS.md`, paso 2), sin las fases de una metodología estándar. OpenSpec está pensada para proyectos existentes:
+  - cada cambio se escribe como diferencia (`ADDED`, `MODIFIED` y `REMOVED`) sobre el comportamiento actual;
+  - las especificaciones de `openspec/specs/` crecen cambio a cambio, sin documentar todo el sistema de entrada, que es lo que recomienda su guía para proyectos existentes.
+- **Alternativa descartada:** GitHub Spec Kit (fases constitución, especificar, planificar, tareas e implementar). Está orientada a funcionalidades nuevas, cada una en su carpeta numerada, y no tiene el formato de diferencias sobre un sistema existente.
+- **Revisión antes de usarla:**
+  - **Instalación:** no tiene scripts que se ejecuten al instalarla.
+  - **Archivos que crea:** `openspec init` agrega solo `openspec/` (configuración, specs y cambios) y `.claude/` (6 comandos y 6 skills para el agente). No modifica archivos existentes.
+  - **Skills:** solo pueden ejecutar comandos `openspec`, no descargan nada ni usan credenciales, y la de propuesta no toca el código hasta que el usuario lo apruebe.
+  - **Conexiones:** manda telemetría anónima (el comando y la versión) y consulta si hay versiones nuevas. La telemetría se apaga con `OPENSPEC_TELEMETRY=0` o `DO_NOT_TRACK=1`, y en CI se apaga sola.
+  - **Dependencias:** es una herramienta de desarrollo en Node.js (22.12 o superior). No es una dependencia del código Go.
+- **Configuración:** `openspec/config.yaml` es la "constitución" del proyecto. Lleva el contexto (stack, arquitectura y metodología) y las reglas de cada fase, tomadas de `AGENTS.md` y de la Definition of Done. Por ejemplo:
+  - cada requisito cita su historia y su criterio;
+  - cada escenario se automatiza con godog;
+  - cada test lleva un comentario con su historia y su criterio.
+- **Fuente:** revisión del profesor del 05/11/2026; TEC-10 (Issue #177).

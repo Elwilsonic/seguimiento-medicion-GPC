@@ -248,6 +248,40 @@ Esos valores **nunca** se escriben en un archivo del repositorio, en un Issue ni
 
 **Límite:** en Azure la aplicación usa almacenamiento en memoria, porque la cátedra no provee una base de datos: los datos se pierden al reiniciar el contenedor o al volver a desplegar (cada integración a `main`). Por eso usa una sola réplica: con varias, cada una tendría sus propios datos.
 
+## Especificación de cambios con OpenSpec
+
+Desde TEC-10, los cambios nuevos sobre el proyecto se especifican con [OpenSpec](https://github.com/Fission-AI/OpenSpec), una herramienta de SDD pensada para proyectos existentes. El motivo y la revisión de seguridad están en la [decisión 22](docs/decisiones-tecnicas.md#22-sdd-con-openspec-para-los-cambios-sobre-el-proyecto-heredado). Las 43 historias anteriores conservan sus SDD en `docs/especificaciones/`, que sirven de material de consulta.
+
+### Instalación
+
+OpenSpec es una herramienta de desarrollo: se instala en la computadora de quien trabaja y no es una dependencia del código Go. Necesita Node.js 22.12 o superior. Se usa siempre la misma versión:
+
+```
+npm install -g @fission-ai/openspec@1.16.0
+openspec --version
+```
+
+Con la telemetría apagada (OpenSpec manda estadísticas anónimas de uso si no se desactiva):
+
+```
+openspec config set telemetry.enabled false
+```
+
+### Cómo se usa
+
+El repositorio ya tiene OpenSpec configurado: no hace falta correr `openspec init`. En el chat de Claude Code:
+
+| Comando | Qué hace |
+|---|---|
+| `/opsx:explore` | El agente lee la parte del código que se va a cambiar y explica cómo funciona hoy |
+| `/opsx:propose nombre-del-cambio` | Crea `openspec/changes/nombre-del-cambio/` con `proposal.md` (por qué y alcance), `specs/` (requisitos y escenarios WHEN/THEN), `design.md` (cómo) y `tasks.md` (pasos). No toca el código |
+| `/opsx:apply` | Implementa las tareas, con TDD como siempre, después de que el Agile Enabler aprueba la propuesta |
+| `/opsx:archive` | Con el Pull Request integrado, archiva el cambio y suma sus requisitos a `openspec/specs/` |
+
+Desde la terminal, `openspec list` muestra los cambios en curso, `openspec status --change nombre` el avance de sus fases y `openspec validate nombre` verifica que estén bien escritas.
+
+`openspec/config.yaml` es la "constitución" del proyecto: el contexto y las reglas que OpenSpec le pasa al agente en cada fase (stack, arquitectura, cadena SDD → BDD → TDD y trazabilidad con las historias).
+
 ## Equipo
 
 | Rol | Integrante |
@@ -382,6 +416,8 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests; `internal/httpapi` expone la API, `internal/web` tiene la interfaz web (TEC-04), `internal/postgres` abre la conexión a PostgreSQL e `internal/postgrestest` prepara la base de las pruebas de integración |
 | `docker-compose.yml` | Base de datos PostgreSQL en Docker (TEC-05) |
 | `Dockerfile` y `.dockerignore` | Imagen del servidor para el despliegue en Azure (TEC-09) |
+| `openspec/` | Especificaciones con OpenSpec (TEC-10): `config.yaml` (contexto y reglas), `specs/` (cómo funciona hoy cada área) y `changes/` (cambios en curso y archivados) |
+| `.claude/` | Comandos (`/opsx:*`) y skills de OpenSpec para Claude Code (TEC-10) |
 | `db/init/` | Scripts que crean el esquema de la base y la base de pruebas la primera vez que arranca |
 | `.env.example` | Valores de ejemplo de las variables de entorno (el `.env` real no se sube) |
 | `features/` | Escenarios BDD en Gherkin (`HU-XX-nombre.feature`) |
