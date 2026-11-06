@@ -142,6 +142,21 @@ Desde TEC-10 (Issue #177), cada historia o tarea nueva se especifica con OpenSpe
 - **Pasos 3 a 7:** iguales: escenarios BDD con godog en `features/HU-XX-*.feature`, RED, GREEN, refactor y evidencia. `/opsx:apply` sigue `tasks.md`, y los commits siguen necesitando autorización. Cada test lleva un comentario con su historia, su criterio y qué verifica.
   - La evidencia TDD incluye la tabla criterio → test → código, que dice qué función y qué archivo implementan cada criterio. Así se llega desde la historia hasta el código sin buscar a mano.
 - **Paso 8:** igual. Además, con el Pull Request integrado en `main`, `/opsx:archive` archiva el cambio y suma sus requisitos a `openspec/specs/`. Eso va en un commit propio (`docs(HU-XX): archivar el cambio en OpenSpec`), con autorización.
+- **Trazabilidad en el Issue:** al archivar, OpenSpec mueve la carpeta del cambio a `openspec/changes/archive/AAAA-MM-DD-nombre-del-cambio/`, así que los links se escriben en dos momentos:
+  1. **Con el Pull Request abierto:** la sección "## Trazabilidad" lleva los links al BDD y a la evidencia, como siempre, y a la propuesta del cambio en `openspec/changes/nombre-del-cambio/proposal.md`.
+  2. **Con el archivo integrado en `main`:** se reemplaza el link a la propuesta por los links definitivos, que ya no se mueven, y se verifica que abran:
+
+  ```markdown
+  ## Trazabilidad
+
+  - Especificación (OpenSpec): [openspec/specs/<área>/spec.md](https://github.com/Elwilsonic/seguimiento-medicion-GPC/blob/main/openspec/specs/<área>/spec.md)
+  - Cambio (propuesta, diseño y tareas): [openspec/changes/archive/AAAA-MM-DD-nombre-del-cambio/](https://github.com/Elwilsonic/seguimiento-medicion-GPC/tree/main/openspec/changes/archive/AAAA-MM-DD-nombre-del-cambio)
+  - Escenarios BDD: [features/HU-XX-nombre.feature](https://github.com/Elwilsonic/seguimiento-medicion-GPC/blob/main/features/HU-XX-nombre.feature)
+  - Evidencia TDD: [docs/evidencias/HU-XX-tdd.md](https://github.com/Elwilsonic/seguimiento-medicion-GPC/blob/main/docs/evidencias/HU-XX-tdd.md)
+  - Trazabilidad: Historia → Especificación → Criterios de Aceptación → BDD → Tests → Código Go
+  ```
+
+  Para estos cambios, este formato reemplaza al de la sección "Trazabilidad en el Issue", cuyo link a `docs/especificaciones/` queda para las 43 historias anteriores.
 
 Un cambio sobre algo que ya existe se vincula a su historia original en `proposal.md` (por ejemplo, "vinculada a HU-03"). Las SDD de `docs/especificaciones/` de las 43 historias anteriores no se rehacen: sirven de consulta para el comportamiento actual.
 
