@@ -28,6 +28,10 @@ env:
   ACR_LOGIN_SERVER: ingcalidad2026.azurecr.io
   AZURE_RESOURCE_GROUP: frsrutn
   AZURE_CONTAINERAPPS_ENVIRONMENT: utnapp-env
+  # Región donde se crea el entorno si no existe. La suscripción de la cátedra
+  # solo permite algunas regiones: el grupo de recursos está en South Central
+  # US, que la política rechaza, y el entorno funcionó en Switzerland North.
+  AZURE_LOCATION: switzerlandnorth
 
 jobs:
   deploy:
@@ -83,17 +87,17 @@ jobs:
 
       # El entorno se busca por nombre en toda la suscripción. En las dos
       # primeras ejecuciones no existía ninguno (ni en frsrutn ni en otro
-      # grupo), así que, si falta, se crea en frsrutn, en la región del grupo
-      # de recursos, como haría la acción oficial de Azure. Se crea sin espacio
-      # de logs (--logs-destination none) para no sumar otro recurso.
+      # grupo), así que, si falta, se crea en frsrutn, como haría la acción
+      # oficial de Azure. Se crea en la región AZURE_LOCATION, no en la del
+      # grupo de recursos, que la política de la suscripción rechaza. Va sin
+      # espacio de logs (--logs-destination none) para no sumar otro recurso.
       - name: Buscar o crear el entorno de Container Apps
         run: |
           env_id=$(az containerapp env list \
             --query "[?name=='$AZURE_CONTAINERAPPS_ENVIRONMENT'].id | [0]" --output tsv)
           if [ -z "$env_id" ]; then
             echo "No existe el entorno $AZURE_CONTAINERAPPS_ENVIRONMENT: se crea en $AZURE_RESOURCE_GROUP."
-            region=$(az group show --name "$AZURE_RESOURCE_GROUP" --query location --output tsv)
-            echo "Región del grupo de recursos: $region"
+            echo "Región: $AZURE_LOCATION"
             estado=$(az provider show --namespace Microsoft.App --query registrationState --output tsv)
             echo "Proveedor Microsoft.App: $estado"
             if [ "$estado" != "Registered" ]; then
@@ -102,7 +106,7 @@ jobs:
             az containerapp env create \
               --name "$AZURE_CONTAINERAPPS_ENVIRONMENT" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
-              --location "$region" \
+              --location "$AZURE_LOCATION" \
               --logs-destination none \
               --output none
             env_id=$(az containerapp env show --name "$AZURE_CONTAINERAPPS_ENVIRONMENT" \

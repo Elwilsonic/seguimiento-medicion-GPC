@@ -135,6 +135,19 @@ La aplicación responde en https://grupo12-seguimiento-medicion-gpc.braveocean-c
 
 **URL pública:** <https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/>
 
+## Quinta ejecución en Azure: el entorno desapareció
+
+La ejecución que siguió al merge del PR #178 (TEC-10, 07/11/2026) falló en "Buscar o crear el entorno de Container Apps". El entorno `utnapp-env`, que el 02/11 estaba en `frsrutn` (Switzerland North), ya no existía: se borró fuera de nuestro workflow. Al intentar recrearlo en la región del grupo de recursos (South Central US), Azure lo rechazó por la política de regiones permitidas de la suscripción:
+
+```text
+No existe el entorno utnapp-env: se crea en frsrutn.
+Región del grupo de recursos: southcentralus
+Proveedor Microsoft.App: Registered
+ERROR: (RequestDisallowedByAzure) Resource 'utnapp-env' was disallowed by Azure: This policy maintains a set of best available regions where your subscription can deploy resources. [...]
+```
+
+Para corregirlo, el workflow crea el entorno en una región fija, `AZURE_LOCATION: switzerlandnorth`, la misma donde funcionó, en lugar de la región del grupo de recursos. Si la cátedra indica otra región, se cambia esa variable.
+
 ## Límites
 
 1. **Almacenamiento en memoria.** La cátedra no provee una base de datos, así que en Azure los datos se pierden al reiniciar el contenedor o al volver a desplegar, en cada integración a `main`. Por eso la Container App tiene una sola réplica, siempre encendida.
