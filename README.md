@@ -218,7 +218,7 @@ La aplicación se despliega en Azure Container Apps, en la cuenta de la cátedra
 | Dato | Valor (planilla de grupos de la cátedra, Grupo12) |
 |---|---|
 | Container App | `grupo12-seguimiento-medicion-gpc` |
-| URL pública | <https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/> |
+| URL pública | <https://grupo12-seguimiento-medicion-gpc.whitegrass-79fde84d.switzerlandnorth.azurecontainerapps.io/> |
 | Registro de imágenes | `ingcalidad2026.azurecr.io` |
 | Grupo de recursos y entorno | `frsrutn` y `utnapp-env` |
 
@@ -243,10 +243,10 @@ Esos valores **nunca** se escriben en un archivo del repositorio, en un Issue ni
 ### Qué hace el workflow
 
 1. Construye la imagen con la versión de Go de `go.mod`, con el hash del commit como etiqueta, y la sube al registro.
-2. Inicia sesión en Azure y crea la Container App (o la actualiza, si ya existe) con ingreso externo al puerto 8080 y una sola réplica siempre encendida.
+2. Inicia sesión en Azure y crea la Container App (o la actualiza, si ya existe) con ingreso externo al puerto 8080 y como máximo una réplica, que se apaga sola cuando nadie la usa.
 3. Espera a que la URL pública responda y la muestra en el resumen de la ejecución.
 
-**Límite:** en Azure la aplicación usa almacenamiento en memoria, porque la cátedra no provee una base de datos: los datos se pierden al reiniciar el contenedor o al volver a desplegar (cada integración a `main`). Por eso usa una sola réplica: con varias, cada una tendría sus propios datos.
+**Límite:** en Azure la aplicación usa almacenamiento en memoria, porque la cátedra no provee una base de datos: los datos se pierden al reiniciar el contenedor o al volver a desplegar (cada integración a `main`). Por eso usa como máximo una réplica: con varias, cada una tendría sus propios datos. Además, para no gastar el crédito de Azure que comparten los grupos de la cátedra, la app se apaga sola cuando nadie la usa (mínimo cero réplicas). Al apagarse también se pierden los datos, y la primera visita después tarda unos segundos en arrancar. Para una demo, cargá los datos justo antes de mostrarla.
 
 ## Especificación de cambios con OpenSpec
 
