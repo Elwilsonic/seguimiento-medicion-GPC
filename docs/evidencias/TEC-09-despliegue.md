@@ -133,7 +133,7 @@ Container app created. Access your app at https://grupo12-seguimiento-medicion-g
 La aplicación responde en https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/
 ```
 
-**URL pública:** <https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/>
+**URL pública en ese momento:** <https://grupo12-seguimiento-medicion-gpc.braveocean-c591f3f5.switzerlandnorth.azurecontainerapps.io/>. Dejó de existir cuando se borró el entorno (ver la quinta y la sexta ejecución).
 
 ## Quinta ejecución en Azure: el entorno desapareció
 
@@ -148,8 +148,27 @@ ERROR: (RequestDisallowedByAzure) Resource 'utnapp-env' was disallowed by Azure:
 
 Para corregirlo, el workflow crea el entorno en una región fija, `AZURE_LOCATION: switzerlandnorth`, la misma donde funcionó, en lugar de la región del grupo de recursos. Si la cátedra indica otra región, se cambia esa variable.
 
+## Sexta ejecución en Azure: el entorno se volvió a crear
+
+La ejecución que siguió al merge del PR #180 ([run 42319309005](https://github.com/Elwilsonic/seguimiento-medicion-GPC/actions/runs/42319309005), 07/11/2026) terminó en verde:
+- **Entorno:** no encontró `utnapp-env` y lo creó en `frsrutn`, en Switzerland North (78 s).
+- **App:** creó la Container App de nuevo.
+- **Verificación:** confirmó que la URL responde 200.
+
+Como el entorno es nuevo, la URL cambió:
+
+```text
+Entorno: /subscriptions/***/resourceGroups/frsrutn/providers/Microsoft.App/managedEnvironments/utnapp-env
+Container app created. Access your app at https://grupo12-seguimiento-medicion-gpc.whitegrass-79fde84d.switzerlandnorth.azurecontainerapps.io/
+La aplicación responde en https://grupo12-seguimiento-medicion-gpc.whitegrass-79fde84d.switzerlandnorth.azurecontainerapps.io/
+```
+
+**URL pública:** <https://grupo12-seguimiento-medicion-gpc.whitegrass-79fde84d.switzerlandnorth.azurecontainerapps.io/>
+
+**Costo:** el crédito de Azure de la cátedra (unos 100 dólares) lo comparten los 16 grupos. Una app con una réplica siempre encendida cuesta aproximadamente entre 10 y 30 dólares por mes. Es una estimación con los precios públicos, sin acceso a la facturación real. Por eso, desde el PR que sigue al #180, la app tiene mínimo cero réplicas y se apaga sola cuando nadie la usa.
+
 ## Límites
 
-1. **Almacenamiento en memoria.** La cátedra no provee una base de datos, así que en Azure los datos se pierden al reiniciar el contenedor o al volver a desplegar, en cada integración a `main`. Por eso la Container App tiene una sola réplica, siempre encendida.
+1. **Almacenamiento en memoria.** La cátedra no provee una base de datos, así que en Azure los datos se pierden al reiniciar el contenedor o al volver a desplegar, en cada integración a `main`. Por eso la Container App tiene como máximo una réplica. Desde el 07/11 tiene mínimo cero: se apaga sola cuando nadie la usa, para cuidar el crédito compartido de la cátedra, y al apagarse también se pierden los datos.
 2. **Credenciales compartidas.** La contraseña del registro y las credenciales de Azure son las mismas para todos los grupos de la cátedra. El repositorio no las guarda, pero quien las tenga puede usar la cuenta.
 3. **Primera ejecución.** El workflow supone que el service principal de la cátedra puede crear y actualizar Container Apps en `frsrutn`. Si la cátedra ya creó la Container App, el workflow le vuelve a configurar el registro y el ingreso antes de actualizarla.
