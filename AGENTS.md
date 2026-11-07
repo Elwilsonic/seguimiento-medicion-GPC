@@ -127,6 +127,39 @@ Seguí este orden:
 4. Pedí la revisión de otro integrante del equipo en el Pull Request (campo "Reviewers"). El merge requiere su aprobación y la CI en verde. Lo hace el equipo con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR y que los hashes de la evidencia sigan existiendo en main. "Closes" cierra el Issue recién cuando el commit llega a main.
 5. Después del merge, verificá que los tres links de la sección abran archivos existentes en main y avisame el resultado.
 
+## Cambios con OpenSpec (desde TEC-10)
+
+Desde TEC-10 (Issue #177), cada historia o tarea nueva se especifica con OpenSpec (`openspec/`, decisión 22 de `docs/decisiones-tecnicas.md`). La cadena es la misma de arriba; solo cambian el paso 2 y el cierre:
+
+- **Paso 0:** igual. Además, leé `openspec/config.yaml` y las specs de `openspec/specs/` del área que vas a tocar. Con `/opsx:explore`, el agente lee ese código antes de proponer.
+- **Pasos 1 y 2:** la historia y la SDD se escriben con `/opsx:propose nombre-del-cambio`, que crea `openspec/changes/nombre-del-cambio/` con:
+  - `proposal.md`: la historia, el por qué, el alcance y lo que queda fuera;
+  - `specs/`: los requisitos y escenarios WHEN/THEN, como diferencias `ADDED`, `MODIFIED` o `REMOVED` sobre el comportamiento actual;
+  - `design.md`: el diseño y las decisiones;
+  - `tasks.md`: los pasos.
+
+  Cada requisito cita su historia y su criterio (HU-XX, CA-XX.N). Se compara con el acta de Planning como en el paso 2, y **se frena hasta la aprobación explícita del Agile Enabler**.
+- **Pasos 3 a 7:** iguales: escenarios BDD con godog en `features/HU-XX-*.feature`, RED, GREEN, refactor y evidencia. `/opsx:apply` sigue `tasks.md`, y los commits siguen necesitando autorización. Cada test lleva un comentario con su historia, su criterio y qué verifica.
+  - La evidencia TDD incluye la tabla criterio → test → código, que dice qué función y qué archivo implementan cada criterio. Así se llega desde la historia hasta el código sin buscar a mano.
+- **Paso 8:** igual. Además, con el Pull Request integrado en `main`, `/opsx:archive` archiva el cambio y suma sus requisitos a `openspec/specs/`. Eso va en un commit propio (`docs(HU-XX): archivar el cambio en OpenSpec`), con autorización.
+- **Trazabilidad en el Issue:** al archivar, OpenSpec mueve la carpeta del cambio a `openspec/changes/archive/AAAA-MM-DD-nombre-del-cambio/`, así que los links se escriben en dos momentos:
+  1. **Con el Pull Request abierto:** la sección "## Trazabilidad" lleva los links al BDD y a la evidencia, como siempre, y a la propuesta del cambio en `openspec/changes/nombre-del-cambio/proposal.md`.
+  2. **Con el archivo integrado en `main`:** se reemplaza el link a la propuesta por los links definitivos, que ya no se mueven, y se verifica que abran:
+
+  ```markdown
+  ## Trazabilidad
+
+  - Especificación (OpenSpec): [openspec/specs/<área>/spec.md](https://github.com/Elwilsonic/seguimiento-medicion-GPC/blob/main/openspec/specs/<área>/spec.md)
+  - Cambio (propuesta, diseño y tareas): [openspec/changes/archive/AAAA-MM-DD-nombre-del-cambio/](https://github.com/Elwilsonic/seguimiento-medicion-GPC/tree/main/openspec/changes/archive/AAAA-MM-DD-nombre-del-cambio)
+  - Escenarios BDD: [features/HU-XX-nombre.feature](https://github.com/Elwilsonic/seguimiento-medicion-GPC/blob/main/features/HU-XX-nombre.feature)
+  - Evidencia TDD: [docs/evidencias/HU-XX-tdd.md](https://github.com/Elwilsonic/seguimiento-medicion-GPC/blob/main/docs/evidencias/HU-XX-tdd.md)
+  - Trazabilidad: Historia → Especificación → Criterios de Aceptación → BDD → Tests → Código Go
+  ```
+
+  Para estos cambios, este formato reemplaza al de la sección "Trazabilidad en el Issue", cuyo link a `docs/especificaciones/` queda para las 43 historias anteriores.
+
+Un cambio sobre algo que ya existe se vincula a su historia original en `proposal.md` (por ejemplo, "vinculada a HU-03"). Las SDD de `docs/especificaciones/` de las 43 historias anteriores no se rehacen: sirven de consulta para el comportamiento actual.
+
 ## Trazabilidad en el Issue
 
 Es OBLIGATORIO, para toda historia sin excepción: agregá (o verificá que ya tenga) esta sección en el body del Issue, con el mismo formato siempre y los links reales al repo:

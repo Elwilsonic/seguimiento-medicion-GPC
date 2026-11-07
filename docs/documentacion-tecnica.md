@@ -308,6 +308,13 @@ Al arrancar, el servidor muestra el almacenamiento elegido: `servidor escuchando
 Las reglas completas están en [`AGENTS.md`](../AGENTS.md), y el checklist previo a cada historia en [`docs/antes-de-empezar.md`](antes-de-empezar.md). En resumen:
 
 - **Cadena por historia:** Historia de usuario → SDD (`docs/especificaciones/HU-XX-*.md`, aprobada por el Agile Enabler antes de seguir) → escenarios BDD (`features/HU-XX-*.feature`) → tests (RED) → código (GREEN) → refactor → evidencia (`docs/evidencias/HU-XX-tdd.md`) y cobertura (`docs/reportes/cobertura.md`). Las tareas técnicas (TEC-XX) parten de los criterios de su Issue, sin historia ni SDD propias.
+- **Cambios con OpenSpec (TEC-10):** desde TEC-10, la historia y la SDD de cada cambio nuevo se escriben con OpenSpec, en `openspec/changes/<cambio>/`:
+  - `proposal.md`: por qué y alcance;
+  - `specs/`: requisitos y escenarios WHEN/THEN, como diferencias sobre el comportamiento actual;
+  - `design.md`: el diseño;
+  - `tasks.md`: los pasos.
+
+  Siguen los escenarios BDD, RED, GREEN y la evidencia como antes. Con el Pull Request integrado, el cambio se archiva y sus requisitos pasan a `openspec/specs/`. La configuración está en `openspec/config.yaml`; el detalle, en `AGENTS.md` ("Cambios con OpenSpec") y en la [decisión 22](decisiones-tecnicas.md#22-sdd-con-openspec-para-los-cambios-sobre-el-proyecto-heredado).
 - **Ramas:** una por historia o tarea, desde `main` actualizado: `feature/HU-XX-nombre-corto` o `feature/TEC-XX-nombre-corto`. Nunca se trabaja sobre `main`.
 - **Commits:** `tipo(ID): descripción`, con `tipo` en `test`, `feat`, `refactor`, `docs`, `ci`, `chore` o `fix`, e `ID` de la historia, la tarea o el sprint (por ejemplo `test(HU-01): agregar tests (RED)`). El cuerpo lleva `Refs #N` con el Issue; el commit de cierre lleva `Closes #N`.
 - **Pull Request:** hacia `main`, con la aprobación de un integrante distinto del responsable y la CI en verde. Se integra con "Create a merge commit" (nunca squash ni rebase), para conservar el historial RED → GREEN → REFACTOR.

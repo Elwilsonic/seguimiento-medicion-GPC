@@ -1,0 +1,74 @@
+# Configuración de OpenSpec del proyecto (TEC-10, Issue #177).
+#
+# Es la "constitución" del proyecto para cada cambio: OpenSpec agrega este
+# contexto y estas reglas a las instrucciones que le da al agente al escribir
+# la propuesta, las especificaciones, el diseño y las tareas. Las reglas salen
+# de AGENTS.md y de docs/definition-of-ready-done.md; si cambian allá, se
+# actualizan acá.
+schema: spec-driven
+
+context: |
+  Language: Spanish
+  All artifacts must be written in Spanish.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Proyecto: "Software Metrics & Estimation" (UTN FRSR), aplicación web para
+  estimar, planificar, seguir y medir la calidad de proyectos de software.
+  Es un proyecto heredado: 43 historias (HU-01 a HU-49) ya están integradas en
+  main, cada una con su SDD en docs/especificaciones/HU-XX-*.md, sus escenarios
+  en features/HU-XX-*.feature y su evidencia en docs/evidencias/HU-XX-tdd.md.
+  Esas SDD son el material de consulta del comportamiento actual: leerlas antes
+  de proponer un cambio sobre esa parte del sistema.
+
+  Stack: Go con la biblioteca estándar y net/http, sin frameworks. Un paquete
+  por dominio en internal/ (project, member, backlog, sprint, poker, effort,
+  defect, metrics, dashboard, report), cada uno con un Manager y una interfaz
+  Repository, con implementación en memoria y en PostgreSQL. API en
+  internal/httpapi, interfaz web propia (HTML y JavaScript) en internal/web.
+  Las consultas devuelven copias, nunca punteros a datos internos.
+  Librerías externas aprobadas: pgx/v5 (PostgreSQL), go-pdf/fpdf (PDF) y
+  godog (solo tests). Ninguna otra sin autorización del Agile Enabler.
+
+  Metodología: Scrum, con Agile Enabler, Product Builders y Product Architect.
+  Cada cambio funcional es una historia (HU-XX) con su Issue de GitHub (#N);
+  cada tarea técnica es una TEC-XX. Un cambio nuevo sobre algo existente se
+  vincula a la historia original (por ejemplo, "vinculada a HU-03").
+
+  Cadena de un cambio: explorar → proponer (proposal, specs, design, tasks) →
+  aprobación del Agile Enabler → escenarios BDD con godog → tests (RED) →
+  código mínimo (GREEN) → refactor → evidencia TDD → Pull Request revisado por
+  otro integrante → archivar. Cada commit y cada push necesitan autorización
+  explícita del Agile Enabler.
+
+rules:
+  proposal:
+    - Indicar el ID de la historia o tarea (HU-XX o TEC-XX) y el número de su Issue (#N).
+    - Indicar a qué historias existentes está vinculado el cambio y qué SDD anteriores se leyeron.
+    - Decir qué queda fuera del alcance.
+    - No agregar funcionalidad que no esté pedida en el Issue.
+  specs:
+    - Cada requisito cita su historia y su criterio de aceptación (por ejemplo, "HU-50, CA-50.1").
+    - Cada escenario usa WHEN/THEN y se automatiza con godog en features/HU-XX-nombre.feature.
+    - Cubrir al menos un caso normal, uno alternativo, uno límite y uno de error.
+    - Si un requisito usa otra entidad por ID, decir si se valida que exista y por qué.
+    - Indicar los códigos HTTP de cada condición de error de la API.
+  design:
+    - Respetar la arquitectura de un Manager y una interfaz Repository por dominio, con implementación en memoria y en PostgreSQL.
+    - Las funciones de consulta y de escritura devuelven copias, nunca punteros a datos internos.
+    - Registrar cada decisión con la alternativa descartada y el porqué.
+    - Indicar qué archivos y funciones implementan cada requisito.
+  tasks:
+    - Seguir el orden escenarios BDD → tests en RED → código en GREEN → refactor → evidencia → Pull Request.
+    - Cada test lleva un comentario con su historia, su criterio y qué verifica (por ejemplo, "HU-50 · CA-50.1 · ...").
+    - Incluir la evidencia TDD (docs/evidencias/HU-XX-tdd.md), la cobertura (docs/reportes/cobertura.md) y la fila del README.
+    - La evidencia TDD incluye la tabla de trazabilidad criterio → test → código, con columnas Criterio (CA-XX.N), Test (nombre y archivo) y Código que lo implementa (función y archivo).
+
+operations:
+  apply:
+    guidance:
+      - No implementar sin la aprobación del Agile Enabler sobre la propuesta.
+      - Escribir los tests antes del código, correr go test ./... y verificar que fallan solo por el cambio nuevo (RED).
+      - No hacer commits ni push sin autorización explícita; proponer el comando exacto.
+  archive:
+    guidance:
+      - Archivar solo cuando el Pull Request del cambio está integrado en main.
