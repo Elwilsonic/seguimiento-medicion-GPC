@@ -197,8 +197,8 @@ Las decisiones técnicas del proyecto, cada una con su "por qué", las alternati
 - **Revisión antes de usarla:**
   - **Instalación:** no tiene scripts que se ejecuten al instalarla.
   - **Archivos que crea:** `openspec init` agrega solo `openspec/` (configuración, specs y cambios) y `.claude/` (6 comandos y 6 skills para el agente). No modifica archivos existentes.
-  - **Skills:** solo pueden ejecutar comandos `openspec`, no descargan nada ni usan credenciales, y la de propuesta no toca el código hasta que el usuario lo apruebe.
-  - **Conexiones:** manda telemetría anónima (el comando y la versión) y consulta si hay versiones nuevas. La telemetría se apaga con `OPENSPEC_TELEMETRY=0` o `DO_NOT_TRACK=1`, y en CI se apaga sola.
+  - **Skills:** solo tienen pre-aprobados los comandos `openspec` (`allowed-tools: Bash(openspec:*)`). La de archivar además indica `mkdir` y `mv` dentro de `openspec/changes/`, y la de sincronizar menciona `git checkout` como ayuda. No usan red ni credenciales, y la de propuesta no toca el código hasta que el usuario lo apruebe.
+  - **Conexiones:** manda telemetría anónima (el comando y la versión) y consulta si hay versiones nuevas. La telemetría se apaga de forma permanente con `openspec config set telemetry.enabled false`, o por sesión con `OPENSPEC_TELEMETRY=0` o `DO_NOT_TRACK=1`; en CI se apaga sola.
   - **Dependencias:** es una herramienta de desarrollo en Node.js (22.12 o superior). No es una dependencia del código Go.
 - **Configuración:** `openspec/config.yaml` es la "constitución" del proyecto. Lleva el contexto (stack, arquitectura y metodología) y las reglas de cada fase, tomadas de `AGENTS.md` y de la Definition of Done. Por ejemplo:
   - cada requisito cita su historia y su criterio;

@@ -261,11 +261,15 @@ npm install -g @fission-ai/openspec@1.16.0
 openspec --version
 ```
 
-Con la telemetría apagada (OpenSpec manda estadísticas anónimas de uso si no se desactiva):
+Con la telemetría apagada (OpenSpec manda estadísticas anónimas de uso si no se desactiva). De forma permanente:
 
 ```
 openspec config set telemetry.enabled false
 ```
+
+o solo para la sesión, con la variable `OPENSPEC_TELEMETRY=0` o `DO_NOT_TRACK=1` (en PowerShell: `$env:OPENSPEC_TELEMETRY="0"`). En CI se apaga sola.
+
+`openspec update` y el comando `/opsx:update` del agente reescriben los archivos de `.claude/` (los comandos y las skills). Por eso, cualquier actualización se revisa como diff en un Pull Request antes de usarla, igual que el código.
 
 ### Cómo se usa
 
