@@ -143,6 +143,7 @@ func assertDefectList(t *testing.T, op string, got, want []Defect) {
 	}
 }
 
+// HU-31 · CA-31.1 · Verifica que se listen todos los defectos del proyecto, en cualquier estado, ordenados por ID.
 func TestListByProject_DevuelveTodosLosDefectosEnCualquierEstadoOrdenadosPorID(t *testing.T) {
 	env := newListEnv(t)
 	open := env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -157,6 +158,7 @@ func TestListByProject_DevuelveTodosLosDefectosEnCualquierEstadoOrdenadosPorID(t
 	assertDefectList(t, "ListByProject", got, []Defect{open, inCorrection, resolved})
 }
 
+// HU-31 · CA-31.2 · Verifica que la consulta de un proyecto no incluya defectos de otro proyecto.
 func TestListByProject_NoIncluyeDefectosDeOtroProyecto(t *testing.T) {
 	env := newListEnv(t)
 	own := env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -176,6 +178,7 @@ func TestListByProject_NoIncluyeDefectosDeOtroProyecto(t *testing.T) {
 	assertDefectList(t, "ListByProject del otro proyecto", got, []Defect{foreign})
 }
 
+// HU-31 · CA-31.4 · Verifica que un proyecto sin historias devuelva una lista vacía, sin error.
 func TestListByProject_ProyectoSinHistoriasDevuelveListaVacia(t *testing.T) {
 	env := newListEnv(t)
 	env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -192,6 +195,7 @@ func TestListByProject_ProyectoSinHistoriasDevuelveListaVacia(t *testing.T) {
 	assertDefectList(t, "ListByProject", got, []Defect{})
 }
 
+// HU-31 · CA-31.4 · Verifica que un proyecto sin defectos devuelva una lista vacía, sin error.
 func TestListByProject_ProyectoSinDefectosDevuelveListaVacia(t *testing.T) {
 	env := newListEnv(t)
 
@@ -203,6 +207,7 @@ func TestListByProject_ProyectoSinDefectosDevuelveListaVacia(t *testing.T) {
 	assertDefectList(t, "ListByProject", got, []Defect{})
 }
 
+// HU-31 · CA-31.5 · Verifica que un proyecto inexistente, incluidos 0 y negativo, devuelva project.ErrProjectNotFound sin leer los defectos.
 func TestListByProject_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	env := newListEnv(t)
 	env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -222,6 +227,7 @@ func TestListByProject_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.
 	}
 }
 
+// HU-31 · CA-31.1 · Verifica que se listen los defectos detectados en el sprint, en cualquier estado, ordenados por ID.
 func TestListBySprint_DevuelveLosDefectosDetectadosEnElSprintEnCualquierEstado(t *testing.T) {
 	env := newListEnv(t)
 	open := env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -236,6 +242,7 @@ func TestListBySprint_DevuelveLosDefectosDetectadosEnElSprintEnCualquierEstado(t
 	assertDefectList(t, "ListBySprint", got, []Defect{open, inCorrection, resolved})
 }
 
+// HU-31 · CA-31.2 · Verifica que la consulta de un sprint no incluya defectos detectados en otro sprint, aunque se resolvieran en él.
 func TestListBySprint_NoIncluyeDefectosDetectadosEnOtroSprintAunqueSeResolvieranEnEl(t *testing.T) {
 	env := newListEnv(t)
 	sprint2 := env.addSprint(t, "Sprint 2", sprint.StatusOpen)
@@ -261,6 +268,7 @@ func TestListBySprint_NoIncluyeDefectosDetectadosEnOtroSprintAunqueSeResolvieran
 	assertDefectList(t, "ListByProject", got, []Defect{resolvedLater, detectedLater})
 }
 
+// HU-31 · CA-31.2 · Verifica que la consulta de un sprint no incluya defectos de sprints de otro proyecto.
 func TestListBySprint_NoIncluyeDefectosDeSprintsDeOtroProyecto(t *testing.T) {
 	env := newListEnv(t)
 	own := env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -275,6 +283,7 @@ func TestListBySprint_NoIncluyeDefectosDeSprintsDeOtroProyecto(t *testing.T) {
 	assertDefectList(t, "ListBySprint", got, []Defect{own})
 }
 
+// HU-31 · CA-31.2 · Verifica que se puedan consultar los defectos de un sprint CERRADO.
 func TestListBySprint_SprintCerradoSeConsulta(t *testing.T) {
 	env := newListEnv(t)
 	closed := env.addSprint(t, "Sprint 0", sprint.StatusClosed)
@@ -288,6 +297,7 @@ func TestListBySprint_SprintCerradoSeConsulta(t *testing.T) {
 	assertDefectList(t, "ListBySprint", got, []Defect{defect})
 }
 
+// HU-31 · CA-31.4 · Verifica que un sprint sin defectos devuelva una lista vacía, sin error.
 func TestListBySprint_SprintSinDefectosDevuelveListaVacia(t *testing.T) {
 	env := newListEnv(t)
 	sprint2 := env.addSprint(t, "Sprint 2", sprint.StatusOpen)
@@ -301,6 +311,7 @@ func TestListBySprint_SprintSinDefectosDevuelveListaVacia(t *testing.T) {
 	assertDefectList(t, "ListBySprint", got, []Defect{})
 }
 
+// HU-31 · CA-31.5 · Verifica que un sprint inexistente, incluidos 0 y negativo, devuelva sprint.ErrSprintNotFound sin leer los defectos.
 func TestListBySprint_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
 	env := newListEnv(t)
 	env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -320,6 +331,7 @@ func TestListBySprint_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.6 · Verifica que modificar la lista o un defecto devuelto no altere los defectos guardados.
 func TestList_ModificarLoDevueltoNoAlteraLoGuardado(t *testing.T) {
 	env := newListEnv(t)
 	first := env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -356,6 +368,7 @@ func TestList_ModificarLoDevueltoNoAlteraLoGuardado(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.6 · Verifica que consultar no modifique los defectos, la historia ni el sprint.
 func TestList_ConsultarNoModificaNada(t *testing.T) {
 	env := newListEnv(t)
 	env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -395,6 +408,7 @@ func TestList_ConsultarNoModificaNada(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.8 · Verifica que, si el repositorio de defectos falla, ListByProject devuelva ese error y ninguna lista.
 func TestListByProject_ErrorDelRepositorioDeDefectos(t *testing.T) {
 	env := newListEnv(t)
 	manager := NewManager(failingDefectRepository{err: errDefectRepository}, env.items, env.sprints)
@@ -407,6 +421,7 @@ func TestListByProject_ErrorDelRepositorioDeDefectos(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.8 · Verifica que, si el repositorio de defectos falla, ListBySprint devuelva ese error y ninguna lista.
 func TestListBySprint_ErrorDelRepositorioDeDefectos(t *testing.T) {
 	env := newListEnv(t)
 	manager := NewManager(failingDefectRepository{err: errDefectRepository}, env.items, env.sprints)
@@ -419,6 +434,7 @@ func TestListBySprint_ErrorDelRepositorioDeDefectos(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.8 · Verifica que, si el backlog falla al listar las historias, ListByProject devuelva ese error y ninguna lista.
 func TestListByProject_ErrorDelBacklog(t *testing.T) {
 	env := newListEnv(t)
 	env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)
@@ -433,6 +449,7 @@ func TestListByProject_ErrorDelBacklog(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.3 · Verifica que ParseStatus acepte los tres estados sin distinguir mayúsculas ni espacios de los extremos.
 func TestParseStatus_NormalizaLosEstadosValidos(t *testing.T) {
 	cases := map[string]Status{
 		"ABIERTO":           StatusOpen,
@@ -454,6 +471,7 @@ func TestParseStatus_NormalizaLosEstadosValidos(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.3 · Verifica que ParseStatus rechace con ErrInvalidStatus cualquier valor que no sea uno de los tres estados.
 func TestParseStatus_RechazaEstadosInvalidos(t *testing.T) {
 	for _, input := range []string{"", "   ", "CERRADO", "PENDIENTE", "ABIERTO X", "EN CORRECCION"} {
 		t.Run(strconv.Quote(input), func(t *testing.T) {
@@ -467,6 +485,7 @@ func TestParseStatus_RechazaEstadosInvalidos(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.3 · Verifica que FilterByStatus devuelva solo los defectos del estado pedido, en el mismo orden.
 func TestFilterByStatus_DevuelveSoloLosDelEstadoEnElMismoOrden(t *testing.T) {
 	defects := []Defect{
 		{ID: 1, Status: StatusOpen},
@@ -487,6 +506,7 @@ func TestFilterByStatus_DevuelveSoloLosDelEstadoEnElMismoOrden(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.4 · Verifica que FilterByStatus sin coincidencias devuelva una lista vacía y no nil.
 func TestFilterByStatus_SinCoincidenciasDevuelveListaVaciaNoNil(t *testing.T) {
 	cases := map[string][]Defect{
 		"sin coincidencias": {{ID: 1, Status: StatusOpen}},
@@ -500,6 +520,7 @@ func TestFilterByStatus_SinCoincidenciasDevuelveListaVaciaNoNil(t *testing.T) {
 	}
 }
 
+// HU-31 · RN-31.10 · Verifica que FilterByStatus devuelva una lista nueva y no modifique la lista recibida.
 func TestFilterByStatus_NoModificaLaListaRecibida(t *testing.T) {
 	defects := []Defect{
 		{ID: 1, Status: StatusOpen},
@@ -518,6 +539,7 @@ func TestFilterByStatus_NoModificaLaListaRecibida(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.7 · Verifica que consultas simultáneas con registros y cambios de estado no produzcan carreras.
 func TestList_ConsultasSimultaneasConRegistrosYCambiosDeEstado(t *testing.T) {
 	env := newListEnv(t)
 	changed := env.saveDefect(t, env.item1.ID, StatusOpen, env.sprint1.ID, 0)

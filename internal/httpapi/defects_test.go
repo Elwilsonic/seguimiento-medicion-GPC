@@ -58,6 +58,7 @@ func newHandlerWithDefectRepository(t *testing.T, repo defect.Repository) http.H
 	return h
 }
 
+// HU-29 · CA-29.11 · Verifica que POST /api/items/{id}/defectos responda 201 con el defecto ABIERTO y el sprint de resolución en 0.
 func TestRegistrarDefecto_Devuelve201ConElDefecto(t *testing.T) {
 	h := newHandlerWithDefects(t)
 
@@ -83,6 +84,7 @@ func TestRegistrarDefecto_Devuelve201ConElDefecto(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.3 · Verifica que la API ignore el estado y el sprint de resolución enviados y registre el defecto ABIERTO con 0.
 func TestRegistrarDefecto_IgnoraEstadoYSprintDeResolucion(t *testing.T) {
 	h := newHandlerWithDefects(t)
 	body := `{"descripcion":"El total no descuenta el descuento","severidad":"ALTA","sprint_deteccion_id":1,"estado":"RESUELTO","sprint_resolucion_id":9}`
@@ -100,6 +102,7 @@ func TestRegistrarDefecto_IgnoraEstadoYSprintDeResolucion(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.2 · Verifica que una descripción vacía, una severidad inválida o un sprint de detección ausente, 0, negativo o null den 400.
 func TestRegistrarDefecto_DatosInvalidosDevuelven400(t *testing.T) {
 	cases := map[string]struct {
 		body string
@@ -141,6 +144,7 @@ func TestRegistrarDefecto_DatosInvalidosDevuelven400(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.11 · Verifica que un cuerpo que no es JSON válido dé 400.
 func TestRegistrarDefecto_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandlerWithDefects(t)
 
@@ -149,6 +153,7 @@ func TestRegistrarDefecto_JSONInvalidoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
 
+// HU-29 · CA-29.11 · Verifica que un sprint de detección decimal o de texto dé 400 por JSON inválido.
 func TestRegistrarDefecto_SprintDeDeteccionNoEnteroDevuelve400(t *testing.T) {
 	cases := map[string]string{
 		"decimal": `{"descripcion":"El total no descuenta el descuento","severidad":"ALTA","sprint_deteccion_id":1.5}`,
@@ -165,6 +170,7 @@ func TestRegistrarDefecto_SprintDeDeteccionNoEnteroDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.11 · Verifica que texto después del JSON dé 400 por JSON inválido.
 func TestRegistrarDefecto_TextoDespuesDelJSONDevuelve400(t *testing.T) {
 	h := newHandlerWithDefects(t)
 
@@ -173,6 +179,7 @@ func TestRegistrarDefecto_TextoDespuesDelJSONDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
 
+// HU-29 · CA-29.11 · Verifica que un {id} de historia que no es un número entero dé 400.
 func TestRegistrarDefecto_ItemIDInvalidoDevuelve400(t *testing.T) {
 	h := newHandlerWithDefects(t)
 
@@ -181,6 +188,7 @@ func TestRegistrarDefecto_ItemIDInvalidoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-29 · CA-29.11 · Verifica que una historia o un sprint de detección inexistentes den 404.
 func TestRegistrarDefecto_InexistenteDevuelve404(t *testing.T) {
 	cases := map[string]struct {
 		path string
@@ -209,6 +217,7 @@ func TestRegistrarDefecto_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.6 · Verifica que registrar un defecto en un sprint de detección CERRADO dé 409.
 func TestRegistrarDefecto_SprintCerradoDevuelve409(t *testing.T) {
 	h := newHandlerWithDefects(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
@@ -218,6 +227,7 @@ func TestRegistrarDefecto_SprintCerradoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, sprint.ErrSprintClosed.Error())
 }
 
+// HU-29 · CA-29.6 · Verifica que registrar un defecto con un sprint de detección de otro proyecto dé 409.
 func TestRegistrarDefecto_SprintDeOtroProyectoDevuelve409(t *testing.T) {
 	h := newHandlerWithDefects(t)
 	createProject(t, h, "Sistema de facturación")
@@ -229,6 +239,7 @@ func TestRegistrarDefecto_SprintDeOtroProyectoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, defect.ErrDetectionSprintFromAnotherProject.Error())
 }
 
+// HU-29 · CA-29.11 · Verifica que un cuerpo mayor a 1 MiB dé 413 y no se procese.
 func TestRegistrarDefecto_CuerpoMayorA1MiBDa413(t *testing.T) {
 	h := newHandlerWithDefects(t)
 	body := "{" + strings.Repeat(" ", 1<<20) + validDefect[1:]
@@ -247,6 +258,7 @@ func TestRegistrarDefecto_CuerpoMayorA1MiBDa413(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.11 · Verifica que una falla del repositorio dé 500 sin detalle.
 func TestRegistrarDefecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	h := newHandlerWithDefectRepository(t, brokenDefectRepository{})
 
@@ -299,6 +311,7 @@ func changeDefectStatus(t *testing.T, h http.Handler, body string) defectJSON {
 	return got
 }
 
+// HU-30 · CA-30.9 · Verifica que PATCH /api/defectos/{id}/estado responda 200 con el defecto actualizado.
 func TestCambiarEstadoDefecto_Devuelve200ConElDefecto(t *testing.T) {
 	h := newHandlerWithDefect(t)
 
@@ -324,6 +337,7 @@ func TestCambiarEstadoDefecto_Devuelve200ConElDefecto(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.2 · Verifica que reabrir un defecto por la API devuelva el sprint de resolución en 0.
 func TestCambiarEstadoDefecto_ReabrirDevuelveElSprintDeResolucionEnCero(t *testing.T) {
 	h := newHandlerWithDefect(t)
 	changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
@@ -337,6 +351,7 @@ func TestCambiarEstadoDefecto_ReabrirDevuelveElSprintDeResolucionEnCero(t *testi
 	}
 }
 
+// HU-30 · CA-30.9 · Verifica que un estado inválido, un sprint de resolución ausente o inválido o un JSON inválido den 400.
 func TestCambiarEstadoDefecto_DatosInvalidosDevuelven400(t *testing.T) {
 	cases := map[string]struct {
 		body string
@@ -364,6 +379,7 @@ func TestCambiarEstadoDefecto_DatosInvalidosDevuelven400(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.9 · Verifica que un {id} de defecto que no es un número entero dé 400.
 func TestCambiarEstadoDefecto_IDInvalidoDevuelve400(t *testing.T) {
 	h := newHandlerWithDefect(t)
 
@@ -372,6 +388,7 @@ func TestCambiarEstadoDefecto_IDInvalidoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-30 · CA-30.9 · Verifica que un defecto o un sprint de resolución inexistentes den 404.
 func TestCambiarEstadoDefecto_InexistenteDevuelve404(t *testing.T) {
 	cases := map[string]struct {
 		path string
@@ -401,6 +418,7 @@ func TestCambiarEstadoDefecto_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.1 · Verifica que una transición no permitida (ABIERTO → RESUELTO) dé 409.
 func TestCambiarEstadoDefecto_TransicionNoPermitidaDevuelve409(t *testing.T) {
 	h := newHandlerWithDefect(t)
 
@@ -409,6 +427,7 @@ func TestCambiarEstadoDefecto_TransicionNoPermitidaDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, defect.ErrInvalidTransition.Error())
 }
 
+// HU-30 · CA-30.2 · Verifica que resolver en un sprint CERRADO dé 409.
 func TestCambiarEstadoDefecto_SprintCerradoDevuelve409(t *testing.T) {
 	h := newHandlerWithDefect(t)
 	changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
@@ -419,6 +438,7 @@ func TestCambiarEstadoDefecto_SprintCerradoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, sprint.ErrSprintClosed.Error())
 }
 
+// HU-30 · CA-30.2 · Verifica que resolver en un sprint de otro proyecto dé 409.
 func TestCambiarEstadoDefecto_SprintDeOtroProyectoDevuelve409(t *testing.T) {
 	h := newHandlerWithDefect(t)
 	changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
@@ -430,6 +450,7 @@ func TestCambiarEstadoDefecto_SprintDeOtroProyectoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, defect.ErrResolutionSprintFromAnotherProject.Error())
 }
 
+// HU-30 · CA-30.9 · Verifica que un cuerpo mayor a 1 MiB dé 413 y no cambie el estado.
 func TestCambiarEstadoDefecto_CuerpoMayorA1MiBDa413(t *testing.T) {
 	h := newHandlerWithDefect(t)
 	body := `{"estado":"EN_CORRECCION"` + strings.Repeat(" ", 1<<20) + `}`
@@ -445,6 +466,7 @@ func TestCambiarEstadoDefecto_CuerpoMayorA1MiBDa413(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.9 · Verifica que una falla del repositorio dé 500 sin detalle.
 func TestCambiarEstadoDefecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	h := newHandlerWithDefectRepository(t, brokenDefectRepository{})
 

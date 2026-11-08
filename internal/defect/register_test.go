@@ -203,6 +203,7 @@ func sameItem(a, b backlog.Item) bool {
 		a.SprintID == b.SprintID && slices.Equal(a.AcceptanceCriteria, b.AcceptanceCriteria)
 }
 
+// HU-29 · CA-29.1 · Verifica que el defecto se guarde con ID correlativo, descripción recortada, severidad normalizada, ABIERTO y su sprint de detección.
 func TestRegister_Exitoso(t *testing.T) {
 	env, item, sp := envForDefectRegister(t)
 
@@ -234,6 +235,7 @@ func TestRegister_Exitoso(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.5 · Verifica que se pueda registrar un defecto sobre una historia TERMINADO sin cambiarla.
 func TestRegister_HistoriaTerminada(t *testing.T) {
 	env := newDefectEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -256,6 +258,7 @@ func TestRegister_HistoriaTerminada(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.6 · Verifica que la historia no necesite estar asignada al sprint de detección.
 func TestRegister_HistoriaDeOtroSprint(t *testing.T) {
 	env := newDefectEnv(t)
 	sp1 := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -274,6 +277,7 @@ func TestRegister_HistoriaDeOtroSprint(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.2 · Verifica que una descripción vacía o con solo espacios devuelva ErrEmptyDescription y no guarde nada.
 func TestRegister_DescripcionObligatoria(t *testing.T) {
 	for _, description := range []string{"", "   "} {
 		t.Run(fmt.Sprintf("descripción %q", description), func(t *testing.T) {
@@ -287,6 +291,7 @@ func TestRegister_DescripcionObligatoria(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.4 · Verifica que una severidad vacía o fuera de la lista devuelva ErrInvalidSeverity y no guarde nada.
 func TestRegister_SeveridadInvalida(t *testing.T) {
 	for _, severity := range []string{"", "   ", "URGENTE", "BLOQUEANTE"} {
 		t.Run("severidad "+strconv.Quote(severity), func(t *testing.T) {
@@ -300,6 +305,7 @@ func TestRegister_SeveridadInvalida(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.6 · Verifica que un sprint de detección 0 o negativo devuelva ErrMissingDetectionSprint y no guarde nada.
 func TestRegister_SprintDeDeteccionObligatorio(t *testing.T) {
 	for _, sprintID := range []int{0, -1} {
 		t.Run("sprint "+strconv.Itoa(sprintID), func(t *testing.T) {
@@ -313,6 +319,7 @@ func TestRegister_SprintDeDeteccionObligatorio(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.6 · Verifica que un sprint de detección inexistente devuelva sprint.ErrSprintNotFound y no guarde nada.
 func TestRegister_SprintDeDeteccionInexistente(t *testing.T) {
 	env, item, _ := envForDefectRegister(t)
 
@@ -322,6 +329,7 @@ func TestRegister_SprintDeDeteccionInexistente(t *testing.T) {
 	assertNoDefects(t, env)
 }
 
+// HU-29 · CA-29.6 · Verifica que un sprint de detección CERRADO devuelva sprint.ErrSprintClosed y no guarde nada.
 func TestRegister_SprintCerrado(t *testing.T) {
 	env := newDefectEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusClosed)
@@ -333,6 +341,7 @@ func TestRegister_SprintCerrado(t *testing.T) {
 	assertNoDefects(t, env)
 }
 
+// HU-29 · CA-29.6 · Verifica que un sprint de detección de otro proyecto devuelva ErrDetectionSprintFromAnotherProject.
 func TestRegister_SprintDeOtroProyecto(t *testing.T) {
 	env, item, _ := envForDefectRegister(t)
 	other, err := env.projects.Create("Sistema de facturación", "")
@@ -347,6 +356,7 @@ func TestRegister_SprintDeOtroProyecto(t *testing.T) {
 	assertNoDefects(t, env)
 }
 
+// HU-29 · CA-29.5 · Verifica que una historia inexistente devuelva backlog.ErrItemNotFound y no guarde nada.
 func TestRegister_HistoriaInexistente(t *testing.T) {
 	env, _, sp := envForDefectRegister(t)
 
@@ -356,6 +366,7 @@ func TestRegister_HistoriaInexistente(t *testing.T) {
 	assertNoDefects(t, env)
 }
 
+// HU-29 · CA-29.2 · Verifica que la descripción, la severidad y el sprint de detección se validen en ese orden, antes que la historia.
 func TestRegister_OrdenDeValidacion(t *testing.T) {
 	cases := map[string]struct {
 		itemID      int
@@ -380,6 +391,7 @@ func TestRegister_OrdenDeValidacion(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.7 · Verifica que registrar un defecto no modifique la historia ni el sprint de detección.
 func TestRegister_NoModificaHistoriaNiSprint(t *testing.T) {
 	env, item, sp := envForDefectRegister(t)
 	itemBefore, err := env.items.GetItem(item.ID)
@@ -411,6 +423,7 @@ func TestRegister_NoModificaHistoriaNiSprint(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.8 · Verifica que modificar el defecto devuelto por Register no altere el guardado.
 func TestRegister_CopiaIndependiente(t *testing.T) {
 	env, item, sp := envForDefectRegister(t)
 
@@ -433,6 +446,7 @@ func TestRegister_CopiaIndependiente(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.10 · Verifica que, si el repositorio falla al guardar, se devuelva ese error y no se guarde nada.
 func TestRegister_ErrorDelRepositorio(t *testing.T) {
 	env, item, sp := envForDefectRegister(t)
 	env.manager = NewManager(failingDefectRepository{err: errDefectRepository}, env.items, env.sprints)
@@ -443,6 +457,7 @@ func TestRegister_ErrorDelRepositorio(t *testing.T) {
 	assertNoDefects(t, env)
 }
 
+// HU-29 · CA-29.9 · Verifica que registros simultáneos se guarden todos, con IDs únicos y sin carreras.
 func TestRegister_Concurrente(t *testing.T) {
 	env, item, sp := envForDefectRegister(t)
 
@@ -481,6 +496,7 @@ func TestRegister_Concurrente(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.9 · Verifica que un cierre simultáneo del sprint no permita guardar un defecto en un sprint ya cerrado.
 func TestRegister_ConcurrenteConCierre(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		t.Run("intento "+strconv.Itoa(i), func(t *testing.T) {
