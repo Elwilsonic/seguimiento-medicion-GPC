@@ -162,6 +162,7 @@ func assertStoredUnchanged(t *testing.T, env *statusEnv, before Defect) {
 	}
 }
 
+// HU-30 · CA-30.1 · Verifica que un defecto ABIERTO pase a EN_CORRECCION y quede guardado así.
 func TestChangeStatus_AbiertoAEnCorreccion(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusOpen, env.sprint1.ID, 0)
@@ -181,6 +182,7 @@ func TestChangeStatus_AbiertoAEnCorreccion(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.1 · Verifica que un defecto EN_CORRECCION pase a RESUELTO con el sprint de resolución recibido.
 func TestChangeStatus_EnCorreccionAResuelto(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusInCorrection, env.sprint1.ID, 0)
@@ -201,6 +203,7 @@ func TestChangeStatus_EnCorreccionAResuelto(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.2 · Verifica que se pueda resolver un defecto en un sprint posterior al de detección.
 func TestChangeStatus_ResolverEnSprintPosteriorAlDeDeteccion(t *testing.T) {
 	env := newStatusEnv(t)
 	detection := env.addSprint(t, "Sprint 0", sprint.StatusClosed)
@@ -216,6 +219,7 @@ func TestChangeStatus_ResolverEnSprintPosteriorAlDeDeteccion(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.1 · Verifica que un defecto EN_CORRECCION pueda volver a ABIERTO, sin sprint de resolución.
 func TestChangeStatus_EnCorreccionAAbierto(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusInCorrection, env.sprint1.ID, 0)
@@ -232,6 +236,7 @@ func TestChangeStatus_EnCorreccionAAbierto(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.2 · Verifica que reabrir un defecto RESUELTO a EN_CORRECCION vuelva el sprint de resolución a 0.
 func TestChangeStatus_ReabrirLimpiaElSprintDeResolucion(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusResolved, env.sprint1.ID, env.sprint1.ID)
@@ -252,6 +257,7 @@ func TestChangeStatus_ReabrirLimpiaElSprintDeResolucion(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.1 · Verifica que ABIERTO → RESUELTO y RESUELTO → ABIERTO devuelvan ErrInvalidTransition sin cambiar el defecto.
 func TestChangeStatus_TransicionesNoPermitidas(t *testing.T) {
 	cases := map[string]struct {
 		from       Status
@@ -274,6 +280,7 @@ func TestChangeStatus_TransicionesNoPermitidas(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.1 · Verifica que pedir el estado actual no dé error, no llame a Update y no cambie el defecto.
 func TestChangeStatus_MismoEstadoEsNoOp(t *testing.T) {
 	cases := map[string]struct {
 		status     Status
@@ -307,6 +314,7 @@ func TestChangeStatus_MismoEstadoEsNoOp(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.2 · Verifica que RESUELTO → RESUELTO con sprint de resolución 0 o negativo devuelva ErrMissingResolutionSprint.
 // RN-30.4: el sprint <= 0 se valida antes de leer el defecto, así que
 // RESUELTO → RESUELTO sin sprint de resolución no es un no-op.
 func TestChangeStatus_ResueltoAResueltoSinSprintDeResolucion(t *testing.T) {
@@ -323,6 +331,7 @@ func TestChangeStatus_ResueltoAResueltoSinSprintDeResolucion(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.3 · Verifica que el estado se acepte sin distinguir mayúsculas ni espacios de los extremos.
 func TestChangeStatus_NormalizaElEstado(t *testing.T) {
 	cases := map[string]struct {
 		from   Status
@@ -348,6 +357,7 @@ func TestChangeStatus_NormalizaElEstado(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.3 · Verifica que un estado vacío o fuera de la lista devuelva ErrInvalidStatus sin cambiar el defecto.
 func TestChangeStatus_EstadoInvalido(t *testing.T) {
 	for _, status := range []string{"", "   ", "CERRADO", "BLOQUEADO"} {
 		t.Run("estado "+strconv.Quote(status), func(t *testing.T) {
@@ -362,6 +372,7 @@ func TestChangeStatus_EstadoInvalido(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.3 · Verifica que el estado inválido se informe antes que la existencia del defecto.
 func TestChangeStatus_EstadoInvalidoSobreDefectoInexistente(t *testing.T) {
 	env := newStatusEnv(t)
 
@@ -370,6 +381,7 @@ func TestChangeStatus_EstadoInvalidoSobreDefectoInexistente(t *testing.T) {
 	assertDefectError(t, err, ErrInvalidStatus)
 }
 
+// HU-30 · CA-30.4 · Verifica que un defecto inexistente, incluidos los IDs 0 y negativo, devuelva ErrDefectNotFound.
 func TestChangeStatus_DefectoInexistente(t *testing.T) {
 	for _, id := range []int{999, 0, -1} {
 		t.Run("ID "+strconv.Itoa(id), func(t *testing.T) {
@@ -384,6 +396,7 @@ func TestChangeStatus_DefectoInexistente(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.2 · Verifica que resolver sin sprint de resolución, o con 0 o negativo, devuelva ErrMissingResolutionSprint.
 func TestChangeStatus_SprintDeResolucionObligatorio(t *testing.T) {
 	for _, sprintID := range []int{0, -1} {
 		t.Run("sprint "+strconv.Itoa(sprintID), func(t *testing.T) {
@@ -398,6 +411,7 @@ func TestChangeStatus_SprintDeResolucionObligatorio(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.2 · Verifica que el sprint de resolución ausente se informe antes que la existencia del defecto.
 // El sprint de resolución se valida antes de consultar el repositorio: un
 // defecto inexistente sin sprint da ErrMissingResolutionSprint.
 func TestChangeStatus_SprintAusenteSobreDefectoInexistente(t *testing.T) {
@@ -408,6 +422,7 @@ func TestChangeStatus_SprintAusenteSobreDefectoInexistente(t *testing.T) {
 	assertDefectError(t, err, ErrMissingResolutionSprint)
 }
 
+// HU-30 · RN-30.5 · Verifica que, con un destino distinto de RESUELTO, el sprint de resolución recibido se ignore y quede en 0.
 func TestChangeStatus_IgnoraElSprintDeResolucionConOtroDestino(t *testing.T) {
 	cases := map[string]struct {
 		from Status
@@ -436,6 +451,7 @@ func TestChangeStatus_IgnoraElSprintDeResolucionConOtroDestino(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.2 · Verifica que resolver en un sprint inexistente devuelva sprint.ErrSprintNotFound sin cambiar el defecto.
 func TestChangeStatus_SprintDeResolucionInexistente(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusInCorrection, env.sprint1.ID, 0)
@@ -446,6 +462,7 @@ func TestChangeStatus_SprintDeResolucionInexistente(t *testing.T) {
 	assertStoredUnchanged(t, env, before)
 }
 
+// HU-30 · CA-30.2 · Verifica que resolver en un sprint CERRADO devuelva sprint.ErrSprintClosed sin cambiar el defecto.
 func TestChangeStatus_SprintDeResolucionCerrado(t *testing.T) {
 	env := newStatusEnv(t)
 	closed := env.addSprint(t, "Sprint 2", sprint.StatusClosed)
@@ -457,6 +474,7 @@ func TestChangeStatus_SprintDeResolucionCerrado(t *testing.T) {
 	assertStoredUnchanged(t, env, before)
 }
 
+// HU-30 · CA-30.2 · Verifica que resolver en un sprint de otro proyecto devuelva ErrResolutionSprintFromAnotherProject.
 func TestChangeStatus_SprintDeResolucionDeOtroProyecto(t *testing.T) {
 	env := newStatusEnv(t)
 	other, err := env.projects.Create("Sistema de facturación", "")
@@ -472,6 +490,7 @@ func TestChangeStatus_SprintDeResolucionDeOtroProyecto(t *testing.T) {
 	assertStoredUnchanged(t, env, before)
 }
 
+// HU-30 · CA-30.2 · Verifica que resolver en un sprint anterior al de detección devuelva ErrResolutionBeforeDetection.
 // RN-30.6: validación defensiva. El defecto se guarda con Save, detectado en
 // un sprint posterior al de resolución, porque con Register no se puede armar.
 func TestChangeStatus_SprintDeResolucionAnteriorAlDeDeteccion(t *testing.T) {
@@ -485,6 +504,7 @@ func TestChangeStatus_SprintDeResolucionAnteriorAlDeDeteccion(t *testing.T) {
 	assertStoredUnchanged(t, env, before)
 }
 
+// HU-30 · CA-30.2 · Verifica que se pueda resolver un defecto en el mismo sprint en que se detectó.
 func TestChangeStatus_ResolverEnElMismoSprintDeDeteccion(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusInCorrection, env.sprint1.ID, 0)
@@ -498,6 +518,7 @@ func TestChangeStatus_ResolverEnElMismoSprintDeDeteccion(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.1 · Verifica que la transición no permitida se informe antes que un sprint de resolución cerrado.
 // La transición se valida antes que el sprint de resolución.
 func TestChangeStatus_TransicionAntesQueSprint(t *testing.T) {
 	env := newStatusEnv(t)
@@ -510,6 +531,7 @@ func TestChangeStatus_TransicionAntesQueSprint(t *testing.T) {
 	assertStoredUnchanged(t, env, before)
 }
 
+// HU-30 · CA-30.5 · Verifica que un cambio válido solo modifique el estado y el sprint de resolución, sin tocar la historia ni el sprint.
 func TestChangeStatus_NoModificaHistoriaSprintsNiOtrosCampos(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusInCorrection, env.sprint1.ID, 0)
@@ -553,6 +575,7 @@ func TestChangeStatus_NoModificaHistoriaSprintsNiOtrosCampos(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.6 · Verifica que modificar el defecto devuelto no altere el defecto guardado.
 func TestChangeStatus_CopiaIndependiente(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusOpen, env.sprint1.ID, 0)
@@ -578,6 +601,7 @@ func TestChangeStatus_CopiaIndependiente(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.8 · Verifica que, si el repositorio falla al buscar o al actualizar, se devuelva ese error y el estado no cambie.
 func TestChangeStatus_ErrorDelRepositorio(t *testing.T) {
 	cases := map[string]func(r *countingDefectRepository){
 		"al buscar":     func(r *countingDefectRepository) { r.getErr = errDefectRepository },
@@ -597,6 +621,7 @@ func TestChangeStatus_ErrorDelRepositorio(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.7 · Verifica que cambios simultáneos sobre el mismo defecto no produzcan carreras y hagan un solo Update.
 func TestChangeStatus_Concurrente(t *testing.T) {
 	env := newStatusEnv(t)
 	before := env.addDefect(t, StatusOpen, env.sprint1.ID, 0)
@@ -629,6 +654,7 @@ func TestChangeStatus_Concurrente(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.7 · Verifica que un cierre simultáneo del sprint no permita resolver un defecto en un sprint ya cerrado.
 func TestChangeStatus_ConcurrenteConCierre(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		t.Run("intento "+strconv.Itoa(i), func(t *testing.T) {
@@ -682,6 +708,7 @@ func TestChangeStatus_ConcurrenteConCierre(t *testing.T) {
 	}
 }
 
+// HU-30 · RN-30.1 · Verifica que StatusValues devuelva ABIERTO, EN_CORRECCION y RESUELTO, en ese orden.
 func TestStatusValues_DevuelveLosEstadosEnOrden(t *testing.T) {
 	want := []string{string(StatusOpen), string(StatusInCorrection), string(StatusResolved)}
 
@@ -690,6 +717,7 @@ func TestStatusValues_DevuelveLosEstadosEnOrden(t *testing.T) {
 	}
 }
 
+// HU-30 · RN-30.1 · Verifica que modificar la lista que devuelve StatusValues no altere los estados válidos.
 func TestStatusValues_DevuelveUnaListaNueva(t *testing.T) {
 	values := StatusValues()
 	values[0] = "MODIFICADO"

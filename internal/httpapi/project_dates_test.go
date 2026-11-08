@@ -47,6 +47,7 @@ func expectProjectDates(t *testing.T, h http.Handler, id, inicio, fin string) {
 	}
 }
 
+// HU-19 · CA-19.1 · Verifica que postergar y adelantar las dos fechas por la API dé 200 sin cambiar los demás datos.
 // CA-19.1 y CA-19.8: postergar y adelantar las dos fechas devuelve 200 con el
 // proyecto, sin cambiar sus demás datos.
 func TestModificarFechasProyecto_Devuelve200ConElProyecto(t *testing.T) {
@@ -73,6 +74,7 @@ func TestModificarFechasProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.5 · Verifica que sin fecha de inicio (vacía, null o ausente) la API dé 400.
 // CA-19.5: sin fecha de inicio (vacía, null o ausente), con o sin fecha de
 // fin, da 400.
 func TestModificarFechasProyecto_FechaDeInicioAusenteDevuelve400(t *testing.T) {
@@ -96,6 +98,7 @@ func TestModificarFechasProyecto_FechaDeInicioAusenteDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.5 · Verifica que sin fecha de fin (vacía, null o ausente) la API dé 400.
 // CA-19.5: sin fecha de fin (vacía, null o ausente), con fecha de inicio
 // válida, da 400.
 func TestModificarFechasProyecto_FechaDeFinAusenteDevuelve400(t *testing.T) {
@@ -116,6 +119,7 @@ func TestModificarFechasProyecto_FechaDeFinAusenteDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.5 · Verifica que una fecha con otro formato o inexistente, en cualquiera de los dos campos, dé 400.
 // CA-19.5 (RN-19.2): una fecha con otro formato o inexistente, en cualquiera
 // de los dos campos, da 400.
 func TestModificarFechasProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T) {
@@ -136,6 +140,7 @@ func TestModificarFechasProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T) 
 	}
 }
 
+// HU-19 · CA-19.8 · Verifica que un cuerpo que no es JSON o una fecha que no es texto dé 400.
 // CA-19.8: un cuerpo que no es JSON o una fecha que no es texto es JSON
 // inválido.
 func TestModificarFechasProyecto_JSONInvalidoDevuelve400(t *testing.T) {
@@ -155,6 +160,7 @@ func TestModificarFechasProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.8 · Verifica que un {id} que no es un número entero dé 400.
 // CA-19.8: un {id} que no es un número entero da 400.
 func TestModificarFechasProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithDates(t), http.MethodPatch, "/api/proyectos/abc/fechas", fechas("2027-01-11", "2027-03-19"))
@@ -162,6 +168,7 @@ func TestModificarFechasProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-19 · CA-19.3 · Verifica que modificar las fechas de un proyecto inexistente dé 404.
 // CA-19.3
 func TestModificarFechasProyecto_InexistenteDevuelve404(t *testing.T) {
 	for _, id := range []string{"999", "0", "-1"} {
@@ -173,6 +180,7 @@ func TestModificarFechasProyecto_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.5 · Verifica que las fechas vacías se validen antes que la existencia del proyecto y den 400.
 // CA-19.5 (orden de validación): las fechas se validan antes que el proyecto.
 func TestModificarFechasProyecto_FechasVaciasEnProyectoInexistenteDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fechas", fechas("", ""))
@@ -180,6 +188,7 @@ func TestModificarFechasProyecto_FechasVaciasEnProyectoInexistenteDevuelve400(t 
 	expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
 }
 
+// HU-19 · CA-19.4 · Verifica que un proyecto sin fechas o solo con fecha de inicio dé 409.
 // CA-19.4: un proyecto sin fechas o solo con fecha de inicio da 409.
 func TestModificarFechasProyecto_SinLasDosFechasDevuelve409(t *testing.T) {
 	t.Run("sin fechas", func(t *testing.T) {
@@ -202,6 +211,7 @@ func TestModificarFechasProyecto_SinLasDosFechasDevuelve409(t *testing.T) {
 	})
 }
 
+// HU-19 · CA-19.2 · Verifica que un fin nuevo igual o anterior al inicio nuevo dé 409 sin cambiar las fechas.
 // CA-19.2 (D4): un fin nuevo igual o anterior al inicio nuevo da 409 y no
 // cambia ninguna de las dos fechas.
 func TestModificarFechasProyecto_FinNoPosteriorAlInicioDevuelve409(t *testing.T) {
@@ -217,6 +227,7 @@ func TestModificarFechasProyecto_FinNoPosteriorAlInicioDevuelve409(t *testing.T)
 	}
 }
 
+// HU-19 · CA-19.6 · Verifica que una falla del repositorio dé 500 sin detalle.
 // CA-19.6 y CA-19.8: una falla del repositorio devuelve 500 sin detalle.
 func TestModificarFechasProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})

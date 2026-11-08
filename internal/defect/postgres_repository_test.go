@@ -85,6 +85,7 @@ func (r *PostgresRepository) stored(t *testing.T) []Defect {
 	return defects
 }
 
+// HU-29 · RN-29.10 · Verifica que el repositorio PostgreSQL cumpla el mismo contrato de Save que el de memoria.
 // El repositorio PostgreSQL cumple el mismo contrato que el de memoria.
 func TestPostgresRepository_Contrato(t *testing.T) {
 	pool := postgrestest.Pool(t)
@@ -93,6 +94,7 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 	})
 }
 
+// HU-29 · RN-29.10 · Verifica que Save guarde el defecto en la tabla defects con todos sus campos.
 // Guarda el defecto en la tabla defects con todos sus campos.
 func TestPostgresRepository_GuardaElDefecto(t *testing.T) {
 	pool := postgrestest.Pool(t)
@@ -108,6 +110,7 @@ func TestPostgresRepository_GuardaElDefecto(t *testing.T) {
 	contractAssertDefect(t, "defecto guardado", got, saved)
 }
 
+// HU-29 · RN-29.10 · Verifica que guardar un defecto con una historia inexistente falle por la clave foránea.
 // Un ítem inexistente falla por la clave foránea (23503).
 func TestPostgresRepository_ItemInexistenteFalla(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
@@ -122,6 +125,7 @@ func TestPostgresRepository_ItemInexistenteFalla(t *testing.T) {
 	}
 }
 
+// HU-29 · RN-29.10 · Verifica que guardar un defecto con un sprint de detección inexistente falle por la clave foránea.
 // Un sprint de detección inexistente falla por la clave foránea (23503).
 func TestPostgresRepository_SprintDeDeteccionInexistenteFalla(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
@@ -136,6 +140,7 @@ func TestPostgresRepository_SprintDeDeteccionInexistenteFalla(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.3 · Verifica que el sprint de resolución 0 se guarde en la tabla sin clave foránea.
 // El sprint de resolución 0 se guarda sin clave foránea (RN-29.4).
 func TestPostgresRepository_SprintDeResolucionCeroSeGuarda(t *testing.T) {
 	pool := postgrestest.Pool(t)
@@ -166,6 +171,7 @@ func TestPostgresRepository_ContratoGetByIDYUpdate(t *testing.T) {
 	})
 }
 
+// HU-30 · CA-30.6 · Verifica que Update guarde el estado y el sprint de resolución en la tabla defects.
 // Update guarda el estado y el sprint de resolución en la tabla defects, sin
 // cambios de esquema (RN-30.9).
 func TestPostgresRepository_UpdateGuardaElCambioEnLaTabla(t *testing.T) {
@@ -188,6 +194,7 @@ func TestPostgresRepository_UpdateGuardaElCambioEnLaTabla(t *testing.T) {
 	contractAssertDefect(t, "defecto actualizado", got, changed)
 }
 
+// HU-30 · RN-30.9 · Verifica que Update de un ID inexistente devuelva ErrDefectNotFound y no cree filas.
 // Update de un ID inexistente no crea filas.
 func TestPostgresRepository_UpdateInexistenteNoCreaFilas(t *testing.T) {
 	pool := postgrestest.Pool(t)
@@ -215,6 +222,7 @@ func TestPostgresRepository_ContratoList(t *testing.T) {
 	})
 }
 
+// HU-31 · CA-31.1 · Verifica que List lea la tabla defects completa, ordenada por ID.
 // List lee la tabla defects completa, ordenada por ID, sin cambios de esquema
 // (RN-31.8 y D5).
 func TestPostgresRepository_ListLeeLaTablaOrdenadaPorID(t *testing.T) {

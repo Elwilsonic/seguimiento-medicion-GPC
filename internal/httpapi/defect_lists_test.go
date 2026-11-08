@@ -83,6 +83,7 @@ func assertDefectIDs(t *testing.T, path string, got defectListJSON, want []int) 
 	}
 }
 
+// HU-31 · CA-31.9 · Verifica que GET /api/proyectos/{id}/defectos responda 200 con los defectos del proyecto y la cantidad.
 func TestListarDefectosDelProyecto_Devuelve200ConLosDefectosYLaCantidad(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 
@@ -114,6 +115,7 @@ func TestListarDefectosDelProyecto_Devuelve200ConLosDefectosYLaCantidad(t *testi
 	assertDefectIDs(t, "proyecto 2", listDefects(t, h, "/api/proyectos/2/defectos"), []int{4})
 }
 
+// HU-31 · CA-31.9 · Verifica que GET /api/sprints/{id}/defectos responda 200 con los defectos detectados en el sprint.
 func TestListarDefectosDelSprint_Devuelve200ConLosDefectosYLaCantidad(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 
@@ -121,6 +123,7 @@ func TestListarDefectosDelSprint_Devuelve200ConLosDefectosYLaCantidad(t *testing
 	assertDefectIDs(t, "sprint 2", listDefects(t, h, "/api/sprints/2/defectos"), []int{4})
 }
 
+// HU-31 · CA-31.3 · Verifica que ?estado= filtre por estado sin distinguir mayúsculas ni espacios de los extremos.
 func TestListarDefectos_FiltraPorEstado(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 	cases := []struct {
@@ -141,6 +144,7 @@ func TestListarDefectos_FiltraPorEstado(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.3 · Verifica que un filtro ausente, vacío o con solo espacios devuelva todos los defectos.
 // D3 (ajuste de Hernán): el handler recorta ?estado= y, si queda vacío, no
 // filtra; un filtro con solo espacios no da 400.
 func TestListarDefectos_FiltroVacioOConSoloEspaciosNoFiltra(t *testing.T) {
@@ -156,6 +160,7 @@ func TestListarDefectos_FiltroVacioOConSoloEspaciosNoFiltra(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.4 · Verifica que sin defectos, o sin coincidencias con el filtro, se responda [] con la cantidad en 0.
 func TestListarDefectos_SinDefectosDevuelveListaVaciaYCantidadCero(t *testing.T) {
 	empty := newHandlerWithDefects(t)
 	populated := newHandlerWithDefectList(t)
@@ -185,6 +190,7 @@ func TestListarDefectos_SinDefectosDevuelveListaVaciaYCantidadCero(t *testing.T)
 	}
 }
 
+// HU-31 · CA-31.3 · Verifica que un estado inválido en el filtro dé 400, antes de comprobar si el proyecto o el sprint existe.
 func TestListarDefectos_EstadoInvalidoDevuelve400(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 
@@ -204,6 +210,7 @@ func TestListarDefectos_EstadoInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.5 · Verifica que un proyecto o un sprint inexistente, incluidos 0 y negativo, dé 404.
 func TestListarDefectos_InexistenteDevuelve404(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 	cases := []struct {
@@ -226,6 +233,7 @@ func TestListarDefectos_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.8 · Verifica que una falla del repositorio dé 500 sin detalle.
 func TestListarDefectos_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	h := newHandlerWithDefectRepository(t, brokenDefectRepository{})
 

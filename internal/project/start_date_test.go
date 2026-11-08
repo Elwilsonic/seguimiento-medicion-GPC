@@ -56,6 +56,7 @@ func mustGet(t *testing.T, manager *project.Manager, id int) project.Project {
 	return p
 }
 
+// HU-18 · CA-18.1 · Verifica que se registre la fecha de inicio y se conserven el nombre, la descripción y el estado.
 // CA-18.1
 func TestSetStartDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	manager, _ := newManager()
@@ -81,6 +82,7 @@ func TestSetStartDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.1 · Verifica que la fecha de inicio se registre en un proyecto PLANIFICADO, EN_CURSO o FINALIZADO.
 // CA-18.1 (RN-18.5): vale en los tres estados del proyecto.
 func TestSetStartDate_SeRegistraEnCualquierEstado(t *testing.T) {
 	for _, status := range []project.Status{project.StatusPlanned, project.StatusInProgress, project.StatusFinished} {
@@ -106,6 +108,7 @@ func TestSetStartDate_SeRegistraEnCualquierEstado(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.1 · Verifica que se acepten fechas pasadas, futuras y un 29 de febrero.
 // CA-18.1 (RN-18.5): no se limita a fechas pasadas ni futuras.
 func TestSetStartDate_AceptaFechasPasadasFuturasYDeAnioBisiesto(t *testing.T) {
 	for _, date := range []string{"2020-01-01", "2030-12-31", "2028-02-29"} {
@@ -127,6 +130,7 @@ func TestSetStartDate_AceptaFechasPasadasFuturasYDeAnioBisiesto(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.5 · Verifica que volver a registrar la fecha de inicio reemplace la anterior.
 // CA-18.5
 func TestSetStartDate_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	manager, _ := newManager()
@@ -148,6 +152,7 @@ func TestSetStartDate_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.5 · Verifica que registrar la misma fecha de inicio sea válido y deje el proyecto igual.
 // CA-18.5 (RN-18.4): registrar la misma fecha es válido.
 func TestSetStartDate_MismaFechaEsValida(t *testing.T) {
 	manager, _ := newManager()
@@ -166,6 +171,7 @@ func TestSetStartDate_MismaFechaEsValida(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.3 · Verifica que una fecha de inicio ausente devuelva ErrMissingStartDate y el proyecto no cambie.
 // CA-18.3
 func TestSetStartDate_FechaAusenteDevuelveErrMissingStartDateYNoCambia(t *testing.T) {
 	manager, _ := newManager()
@@ -187,6 +193,7 @@ func TestSetStartDate_FechaAusenteDevuelveErrMissingStartDateYNoCambia(t *testin
 	}
 }
 
+// HU-18 · CA-18.3 · Verifica que la fecha ausente se informe sin consultar el repositorio, aunque el proyecto no exista o el repositorio falle.
 // CA-18.3 (orden de validación): la fecha ausente se informa sin consultar el
 // repositorio, aunque el proyecto no exista o el repositorio falle.
 func TestSetStartDate_FechaAusenteSeInformaSinConsultarElRepositorio(t *testing.T) {
@@ -207,6 +214,7 @@ func TestSetStartDate_FechaAusenteSeInformaSinConsultarElRepositorio(t *testing.
 	}
 }
 
+// HU-18 · CA-18.4 · Verifica que un proyecto inexistente, incluidos los IDs 0 y negativo, devuelva ErrProjectNotFound.
 // CA-18.4
 func TestSetStartDate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	manager, _ := newManager()
@@ -231,6 +239,7 @@ func TestSetStartDate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T
 	}
 }
 
+// HU-18 · CA-18.4 · Verifica que registrar la fecha sin proyectos creados devuelva ErrProjectNotFound.
 // CA-18.4
 func TestSetStartDate_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	manager, _ := newManager()
@@ -242,6 +251,7 @@ func TestSetStartDate_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T
 	}
 }
 
+// HU-18 · CA-18.1 · Verifica que registrar la fecha de un proyecto no cambie los demás proyectos.
 // CA-18.1 (RN-18.6): registrar la fecha de un proyecto no cambia los demás.
 func TestSetStartDate_NoModificaOtrosProyectos(t *testing.T) {
 	manager, _ := newManager()
@@ -261,6 +271,7 @@ func TestSetStartDate_NoModificaOtrosProyectos(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.6 · Verifica que un proyecto recién creado no tenga fecha de inicio.
 // CA-18.6 (RN-18.7)
 func TestCreate_ProyectoNuevoNoTieneFechaDeInicio(t *testing.T) {
 	manager, _ := newManager()
@@ -278,6 +289,7 @@ func TestCreate_ProyectoNuevoNoTieneFechaDeInicio(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.6 · Verifica que la consulta devuelva la fecha de inicio registrada.
 // CA-18.6: la consulta (HU-03) devuelve la fecha registrada.
 func TestGet_DevuelveLaFechaDeInicioRegistrada(t *testing.T) {
 	manager, _ := newManager()
@@ -293,6 +305,7 @@ func TestGet_DevuelveLaFechaDeInicioRegistrada(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.7 · Verifica que modificar el proyecto devuelto por SetStartDate no altere el guardado.
 // CA-18.7
 func TestSetStartDate_ModificarElResultadoDevueltoNoAlteraElGuardado(t *testing.T) {
 	manager, _ := newManager()
@@ -313,6 +326,7 @@ func TestSetStartDate_ModificarElResultadoDevueltoNoAlteraElGuardado(t *testing.
 	}
 }
 
+// HU-18 · CA-18.8 · Verifica que, si el repositorio falla al buscar o al actualizar, se devuelva ese error y el proyecto no cambie.
 // CA-18.8: si el repositorio falla al buscar o al actualizar, se devuelve su
 // error y el proyecto no cambia.
 func TestSetStartDate_ErrorDelRepositorioSeDevuelveYElProyectoNoCambia(t *testing.T) {
@@ -351,6 +365,7 @@ func TestSetStartDate_ErrorDelRepositorioSeDevuelveYElProyectoNoCambia(t *testin
 	})
 }
 
+// HU-18 · CA-18.8 · Verifica que registros de fecha, modificaciones y consultas simultáneos no produzcan carreras ni se pisen.
 // CA-18.8 (RN-18.10): registros de fecha, modificaciones y consultas
 // simultáneos sobre el mismo proyecto no se pisan. Este test se verifica
 // corriendo con `go test -race` (lo corre el CI).

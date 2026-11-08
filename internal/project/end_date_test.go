@@ -64,6 +64,7 @@ func expectUnchanged(t *testing.T, manager *project.Manager, before project.Proj
 	}
 }
 
+// HU-41 · CA-41.1 · Verifica que se registre la fecha de fin y se conserven el nombre, la descripción, el estado y la fecha de inicio.
 // CA-41.1
 func TestSetEndDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	manager, _ := newManager()
@@ -91,6 +92,7 @@ func TestSetEndDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.1 · Verifica que la fecha de fin se registre en un proyecto PLANIFICADO, EN_CURSO o FINALIZADO.
 // CA-41.1 (RN-41.9): vale en los tres estados del proyecto.
 func TestSetEndDate_SeRegistraEnCualquierEstado(t *testing.T) {
 	for _, status := range []project.Status{project.StatusPlanned, project.StatusInProgress, project.StatusFinished} {
@@ -113,6 +115,7 @@ func TestSetEndDate_SeRegistraEnCualquierEstado(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.1 · Verifica que se acepten el día siguiente al inicio, una fecha futura y un 29 de febrero.
 // CA-41.1 y CA-41.2 (RN-41.9): el día siguiente al inicio, una fecha futura y
 // un 29 de febrero se aceptan.
 func TestSetEndDate_AceptaElDiaSiguienteFechasFuturasYDeAnioBisiesto(t *testing.T) {
@@ -132,6 +135,7 @@ func TestSetEndDate_AceptaElDiaSiguienteFechasFuturasYDeAnioBisiesto(t *testing.
 	}
 }
 
+// HU-41 · CA-41.2 · Verifica que una fecha de fin igual o anterior al inicio devuelva ErrEndNotAfterStart.
 // CA-41.2 (RN-41.5): el mismo día y los días anteriores se rechazan.
 func TestSetEndDate_FechaIgualOAnteriorAlInicioDevuelveErrEndNotAfterStart(t *testing.T) {
 	for _, date := range []string{"2026-10-23", "2026-10-22", "2020-01-01"} {
@@ -152,6 +156,7 @@ func TestSetEndDate_FechaIgualOAnteriorAlInicioDevuelveErrEndNotAfterStart(t *te
 	}
 }
 
+// HU-41 · CA-41.4 · Verifica que una fecha de fin ausente devuelva ErrMissingEndDate.
 // CA-41.4 (RN-41.1)
 func TestSetEndDate_FechaAusenteDevuelveErrMissingEndDate(t *testing.T) {
 	manager, _ := newProjectWithStartDate(t, "2026-10-23")
@@ -165,6 +170,7 @@ func TestSetEndDate_FechaAusenteDevuelveErrMissingEndDate(t *testing.T) {
 	expectUnchanged(t, manager, before)
 }
 
+// HU-41 · CA-41.4 · Verifica que la fecha ausente se informe sin consultar el repositorio, aunque el proyecto no exista.
 // CA-41.4 (orden de validación): la fecha ausente se informa sin consultar el
 // repositorio, aunque el proyecto no exista.
 func TestSetEndDate_FechaAusenteEnProyectoInexistenteDevuelveErrMissingEndDate(t *testing.T) {
@@ -177,6 +183,7 @@ func TestSetEndDate_FechaAusenteEnProyectoInexistenteDevuelveErrMissingEndDate(t
 	}
 }
 
+// HU-41 · CA-41.5 · Verifica que un proyecto inexistente, incluidos los IDs 0 y negativo, devuelva ErrProjectNotFound.
 // CA-41.5 (RN-41.3)
 func TestSetEndDate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	for _, id := range []int{999, 0, -1} {
@@ -192,6 +199,7 @@ func TestSetEndDate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) 
 	}
 }
 
+// HU-41 · CA-41.6 · Verifica que un proyecto sin fecha de inicio devuelva ErrStartDateNotRegistered y no cambie.
 // CA-41.6 (RN-41.4)
 func TestSetEndDate_SinFechaDeInicioDevuelveErrStartDateNotRegistered(t *testing.T) {
 	manager, _ := newManager()
@@ -208,6 +216,7 @@ func TestSetEndDate_SinFechaDeInicioDevuelveErrStartDateNotRegistered(t *testing
 	expectUnchanged(t, manager, before)
 }
 
+// HU-41 · CA-41.7 · Verifica que volver a registrar la fecha de fin reemplace la anterior.
 // CA-41.7 (RN-41.6)
 func TestSetEndDate_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	manager, _ := newProjectWithStartDate(t, "2026-10-23")
@@ -226,6 +235,7 @@ func TestSetEndDate_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.7 · Verifica que volver a registrar una fecha de fin inválida conserve la anterior.
 // CA-41.7: volver a registrar con una fecha inválida conserva la anterior.
 func TestSetEndDate_VolverARegistrarUnaFechaInvalidaConservaLaAnterior(t *testing.T) {
 	manager, _ := newProjectWithStartDate(t, "2026-10-23")
@@ -240,6 +250,7 @@ func TestSetEndDate_VolverARegistrarUnaFechaInvalidaConservaLaAnterior(t *testin
 	expectUnchanged(t, manager, before)
 }
 
+// HU-41 · CA-41.7 · Verifica que registrar la misma fecha de fin sea válido y deje el proyecto igual.
 // CA-41.7 (RN-41.6): registrar la misma fecha es válido y deja el proyecto
 // igual.
 func TestSetEndDate_MismaFechaEsValida(t *testing.T) {
@@ -258,6 +269,7 @@ func TestSetEndDate_MismaFechaEsValida(t *testing.T) {
 	expectUnchanged(t, manager, before)
 }
 
+// HU-41 · CA-41.8 · Verifica que, con fecha de fin, un inicio el mismo día o posterior devuelva ErrStartNotBeforeEnd.
 // CA-41.8 (RN-41.7): con fecha de fin, un inicio el mismo día o después se
 // rechaza. La fecha de fin se guarda con el repositorio para probar
 // SetStartDate de forma aislada.
@@ -278,6 +290,7 @@ func TestSetStartDate_ConFechaDeFinRechazaUnInicioIgualOPosterior(t *testing.T) 
 	}
 }
 
+// HU-41 · CA-41.8 · Verifica que, con fecha de fin, un inicio anterior se acepte y conserve la fecha de fin.
 // CA-41.8: con fecha de fin, un inicio anterior se acepta y la fecha de fin se
 // conserva.
 func TestSetStartDate_ConFechaDeFinAceptaUnInicioAnterior(t *testing.T) {
@@ -298,6 +311,7 @@ func TestSetStartDate_ConFechaDeFinAceptaUnInicioAnterior(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.9 · Verifica que un proyecto recién creado no tenga fecha de fin.
 // CA-41.9 (RN-41.10)
 func TestSetEndDate_ProyectoNuevoNoTieneFechaDeFin(t *testing.T) {
 	manager, _ := newManager()
@@ -312,6 +326,7 @@ func TestSetEndDate_ProyectoNuevoNoTieneFechaDeFin(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.9 · Verifica que Update y SetStartDate conserven la fecha de fin.
 // CA-41.9 (RN-41.8): Update (HU-02) y SetStartDate (HU-18) conservan la fecha
 // de fin.
 func TestSetEndDate_UpdateYSetStartDateConservanLaFechaDeFin(t *testing.T) {
@@ -331,6 +346,7 @@ func TestSetEndDate_UpdateYSetStartDateConservanLaFechaDeFin(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.10 · Verifica que modificar el proyecto devuelto por SetEndDate no altere el guardado.
 // CA-41.10 (RN-41.11)
 func TestSetEndDate_DevuelveUnaCopia(t *testing.T) {
 	manager, _ := newProjectWithStartDate(t, "2026-10-23")
@@ -349,6 +365,7 @@ func TestSetEndDate_DevuelveUnaCopia(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.11 · Verifica que, si el repositorio falla al actualizar, se devuelva ese error y el proyecto no cambie.
 // CA-41.11: si el repositorio falla al actualizar, se devuelve ese error y el
 // proyecto no cambia.
 func TestSetEndDate_ErrorDelRepositorioAlActualizar(t *testing.T) {
@@ -365,6 +382,7 @@ func TestSetEndDate_ErrorDelRepositorioAlActualizar(t *testing.T) {
 	expectUnchanged(t, manager, before)
 }
 
+// HU-41 · CA-41.11 · Verifica que, si el repositorio falla al buscar, se devuelva ese error.
 // CA-41.11: si el repositorio falla al buscar, se devuelve ese error.
 func TestSetEndDate_ErrorDelRepositorioAlBuscar(t *testing.T) {
 	manager := project.NewManager(failingRepository{getErr: errRepository})
@@ -376,6 +394,7 @@ func TestSetEndDate_ErrorDelRepositorioAlBuscar(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.11 · Verifica que registros de fechas simultáneos no produzcan carreras ni dejen el fin igual o anterior al inicio.
 // CA-41.11 (RN-41.13): registros simultáneos de las dos fechas, con
 // modificaciones y consultas, no producen carreras (go test -race) y nunca
 // dejan el fin igual o anterior al inicio. Las fechas de partida (inicio

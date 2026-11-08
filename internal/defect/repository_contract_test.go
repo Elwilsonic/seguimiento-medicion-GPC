@@ -114,6 +114,7 @@ func (r *MemoryRepository) stored(t *testing.T) []Defect {
 	return append([]Defect(nil), r.defects...)
 }
 
+// HU-29 · RN-29.10 · Verifica que el repositorio en memoria cumpla el contrato de Save: IDs correlativos, todos los campos y copias.
 func TestMemoryRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
@@ -230,6 +231,7 @@ func runRepositoryStatusContract(t *testing.T, newRepo func(t *testing.T) Reposi
 	})
 }
 
+// HU-30 · CA-30.6 · Verifica que el repositorio en memoria cumpla el contrato de GetByID y Update, con copias por valor.
 func TestMemoryRepository_ContratoGetByIDYUpdate(t *testing.T) {
 	runRepositoryStatusContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
@@ -302,6 +304,7 @@ func runRepositoryListContract(t *testing.T, newRepo func(t *testing.T) Reposito
 	})
 }
 
+// HU-31 · CA-31.1 · Verifica que el repositorio en memoria cumpla el contrato de List: todos los defectos ordenados por ID y copias.
 func TestMemoryRepository_ContratoList(t *testing.T) {
 	runRepositoryListContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
