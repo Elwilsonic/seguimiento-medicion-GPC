@@ -162,6 +162,7 @@ func TestPostgresRepository_SprintDeResolucionCeroSeGuarda(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.6 · Verifica que el repositorio PostgreSQL cumpla el contrato de GetByID y Update, con copias por valor.
 // HU-30 · Cambiar el estado de un defecto (Issue #48). GetByID y Update
 // cumplen el mismo contrato que en memoria.
 func TestPostgresRepository_ContratoGetByIDYUpdate(t *testing.T) {
@@ -213,6 +214,7 @@ func TestPostgresRepository_UpdateInexistenteNoCreaFilas(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.1 · Verifica que el repositorio PostgreSQL cumpla el contrato de List: todos los defectos ordenados por ID y copias.
 // HU-31 · Consultar los defectos de un proyecto o de un sprint (Issue #49).
 // List cumple el mismo contrato que en memoria.
 func TestPostgresRepository_ContratoList(t *testing.T) {
