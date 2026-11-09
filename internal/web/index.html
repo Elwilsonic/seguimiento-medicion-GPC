@@ -13,7 +13,7 @@
   </header>
 
   <main>
-    <!-- Proyecto y sprint actuales: se eligen por su ID. No hay listado de proyectos (ninguna historia lo pide); el sprint también se elige desde "Ver sprints del proyecto" (HU-14). -->
+    <!-- Proyecto y sprint actuales: se eligen por su ID. El proyecto también se elige desde "Ver proyectos" (HU-50) y el sprint, desde "Ver sprints del proyecto" (HU-14). -->
     <section class="contexto" aria-label="Proyecto y sprint actuales">
       <form id="form-contexto">
         <label>Proyecto actual (ID)
@@ -24,6 +24,19 @@
         </label>
         <button type="submit">Cargar proyecto</button>
       </form>
+      <div class="barra">
+        <button type="button" id="ver-proyectos" class="secundario">Ver proyectos</button>
+      </div>
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Nombre</th><th>Descripción</th><th>Estado</th><th>Inicio</th><th>Fin</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="lista-proyectos"></tbody>
+        </table>
+      </div>
       <p class="mensaje" id="msg-contexto" role="alert" hidden></p>
     </section>
 
