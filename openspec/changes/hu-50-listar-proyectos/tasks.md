@@ -39,26 +39,26 @@ Rama: `feature/HU-50-listar-proyectos`. Cada commit y cada push necesitan la aut
 
 ## 4. Refactor
 
-- [ ] 4.1 Revisar si hay una mejora clara de legibilidad (por ejemplo, armar las filas de la tabla con una función como en HU-14). Si se aplica, verificar con `go test ./...` que sigue en verde y proponer `git commit -m "refactor(HU-50): <qué se mejoró>" -m "Refs #183"`; si no, dejar asentado en la evidencia que no hizo falta.
+- [x] 4.1 Revisar si hay una mejora clara de legibilidad (por ejemplo, armar las filas de la tabla con una función como en HU-14). Si se aplica, verificar con `go test ./...` que sigue en verde y proponer `git commit -m "refactor(HU-50): <qué se mejoró>" -m "Refs #183"`; si no, dejar asentado en la evidencia que no hizo falta.
 
 ## 5. Evidencia, cobertura y README
 
-- [ ] 5.1 Correr `gofmt -w` sobre los archivos Go modificados, `go test ./...` y `go test -cover ./...`, y verificar que `gofmt -l .` no lista archivos.
-- [ ] 5.2 Escribir `docs/evidencias/HU-50-tdd.md` con:
+- [x] 5.1 Correr `gofmt -w` sobre los archivos Go modificados, `go test ./...` y `go test -cover ./...`, y verificar que `gofmt -l .` no lista archivos.
+- [x] 5.2 Escribir `docs/evidencias/HU-50-tdd.md` con:
   - las salidas de RED, GREEN y de los comandos de 5.1;
   - la cantidad exacta de tests y de escenarios BDD por separado;
   - la tabla de commits con "(propuesto)";
   - la tabla de trazabilidad con las columnas Criterio (CA-50.N), Test (nombre y archivo) y Código que lo implementa (función y archivo).
 
   Verificar que cada CA-50.1 a CA-50.7 tiene al menos una fila.
-- [ ] 5.3 Actualizar `docs/reportes/cobertura.md` con la cobertura nueva y verificar que coincide con la salida de `go test -cover ./...`.
-- [ ] 5.4 Actualizar `README.md`:
+- [x] 5.3 Actualizar `docs/reportes/cobertura.md` con la cobertura nueva y verificar que coincide con la salida de `go test -cover ./...`.
+- [x] 5.4 Actualizar `README.md`:
   - manual: «Ver proyectos» y «Elegir», con la nota del orden y de los acentos;
   - tabla de la API: `GET /api/proyectos`;
   - tabla de historias: la fila de HU-50 con links a la propuesta, al BDD y a la evidencia.
 
   Verificar que los links abren en la rama.
-- [ ] 5.5 Registrar el uso de la IA en `docs/ia/registro.md` y proponer `git commit -m "docs(HU-50): agregar evidencia TDD y cobertura" -m "Refs #183"`. Reemplazar "(propuesto)" por el hash real de cada commit apenas se ejecute.
+- [x] 5.5 Registrar el uso de la IA en `docs/ia/registro.md` y proponer `git commit -m "docs(HU-50): agregar evidencia TDD y cobertura" -m "Refs #183"`. Reemplazar "(propuesto)" por el hash real de cada commit apenas se ejecute.
 
 ## 6. Pull Request y trazabilidad
 
