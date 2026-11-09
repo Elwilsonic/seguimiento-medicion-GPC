@@ -299,8 +299,8 @@ Se midió sin `-p 1`. Estos porcentajes son de este entorno (Windows, go1.27.2) 
 | Evidencia y cobertura | 430f5d5 | `docs(HU-50): agregar evidencia TDD y cobertura` |
 | Merge de `main` | 100bb1e | `chore(HU-50): traer main con el acta del Sprint 5 y TEC-11` |
 | Verificación con `-race` | 9e28f6b | `docs(HU-50): registrar la verificación con -race` |
-| Comentarios de los tests (TEC-11) | (propuesto) | `docs(HU-50): ajustar los comentarios de los tests al formato de TEC-11` |
+| Comentarios de los tests (TEC-11) | cb160d1 | `docs(HU-50): ajustar los comentarios de los tests al formato de TEC-11` |
 
-El commit de cierre no se lista, porque un commit no puede contener su propio hash: queda registrado en el Pull Request y en el Issue #183. Por la misma razón, la fila de los comentarios dice "(propuesto)" y su hash se completa en el commit de cierre.
+El commit de cierre no se lista, porque un commit no puede contener su propio hash: queda registrado en el Pull Request y en el Issue #183. Los hashes de las filas se completaron a medida que se hizo cada commit.
 
 HU-50: Historia → SDD (OpenSpec) → Criterios de Aceptación → BDD → Tests → Código Go

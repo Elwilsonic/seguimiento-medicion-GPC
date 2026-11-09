@@ -62,8 +62,8 @@ Rama: `feature/HU-50-listar-proyectos`. Cada commit y cada push necesitan la aut
 
 ## 6. Pull Request y trazabilidad
 
-- [ ] 6.1 Con los commits autorizados y pusheados, abrir el Pull Request de `feature/HU-50-listar-proyectos` hacia `main`, con `Closes #183` en la descripción si no queda nada por cambiar, y pedir la revisión de otro integrante. Verificar que la CI está en verde.
-- [ ] 6.2 Agregar al Issue #183 la sección "## Trazabilidad" con los links (a `blob/main`) a la propuesta (`openspec/changes/hu-50-listar-proyectos/proposal.md`), al BDD y a la evidencia. Verificar que los tres archivos existen en la rama.
+- [x] 6.1 Con los commits autorizados y pusheados, abrir el Pull Request de `feature/HU-50-listar-proyectos` hacia `main`, con `Closes #183` en la descripción si no queda nada por cambiar, y pedir la revisión de otro integrante. Verificar que la CI está en verde.
+- [x] 6.2 Agregar al Issue #183 la sección "## Trazabilidad" con los links (a `blob/main`) a la propuesta (`openspec/changes/hu-50-listar-proyectos/proposal.md`), al BDD y a la evidencia. Verificar que los tres archivos existen en la rama.
 
 ## Workflow follow-up
 
