@@ -33,8 +33,7 @@ func mustList(t *testing.T, m *project.Manager) []project.Project {
 	return got
 }
 
-// HU-50 · CA-50.1 · Verifica que la lista trae todos los proyectos, cada uno
-// con su ID, nombre, descripción, estado y fechas.
+// HU-50 · CA-50.1 · Verifica que la lista traiga todos los proyectos con su ID, nombre, descripción, estado y fechas.
 func TestList_DevuelveTodosLosProyectosConSusDatos(t *testing.T) {
 	manager, _ := newManager()
 	ventas := mustCreate(t, manager, "Sistema de ventas", "Ventas online")
@@ -62,8 +61,7 @@ func TestList_DevuelveTodosLosProyectosConSusDatos(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.1 · Verifica que con un único proyecto la lista tiene
-// exactamente ese proyecto.
+// HU-50 · CA-50.1 · Verifica que con un único proyecto la lista tenga exactamente ese proyecto.
 func TestList_UnUnicoProyecto(t *testing.T) {
 	manager, _ := newManager()
 	agenda := mustCreate(t, manager, "Agenda", "Turnos")
@@ -75,8 +73,7 @@ func TestList_UnUnicoProyecto(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.2 · Verifica que sin proyectos la lista está vacía y no es
-// nil, aunque el repositorio en memoria devuelva nil.
+// HU-50 · CA-50.2 · Verifica que sin proyectos la lista esté vacía y no sea nil, aunque el repositorio en memoria devuelva nil.
 func TestList_SinProyectosDevuelveListaVaciaNoNil(t *testing.T) {
 	manager, _ := newManager()
 
@@ -93,8 +90,7 @@ func TestList_SinProyectosDevuelveListaVaciaNoNil(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.4 · Verifica que modificar los proyectos de la lista devuelta
-// no altera los proyectos guardados.
+// HU-50 · CA-50.4 · Verifica que modificar los proyectos de la lista devuelta no altere los proyectos guardados.
 func TestList_ModificarLaListaDevueltaNoAlteraLosGuardados(t *testing.T) {
 	manager, _ := newManager()
 	agenda := mustCreate(t, manager, "Agenda", "Turnos")
@@ -119,8 +115,7 @@ func TestList_ModificarLaListaDevueltaNoAlteraLosGuardados(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.4 · Verifica que consultar la lista no modifica ningún
-// proyecto: los datos guardados son los mismos antes y después.
+// HU-50 · CA-50.4 · Verifica que consultar la lista no modifique ningún proyecto guardado.
 func TestList_NoModificaLosProyectos(t *testing.T) {
 	manager, repo := newManager()
 	mustCreate(t, manager, "Sistema de ventas", "Ventas online")
@@ -135,8 +130,7 @@ func TestList_NoModificaLosProyectos(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.5 · Verifica que si el repositorio falla al listar se
-// devuelve ese error y ninguna lista.
+// HU-50 · CA-50.5 · Verifica que, si el repositorio falla al listar, List devuelva ese error y ninguna lista.
 func TestList_ErrorDelRepositorioDevuelveElErrorSinLista(t *testing.T) {
 	errStorage := errors.New("falla del almacenamiento")
 	manager := project.NewManager(failingRepository{listErr: errStorage})
@@ -151,8 +145,7 @@ func TestList_ErrorDelRepositorioDevuelveElErrorSinLista(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.6 · Verifica que la lista se ordena por nombre sin distinguir
-// mayúsculas, y no por ID ni por orden de creación.
+// HU-50 · CA-50.6 · Verifica que la lista se ordene por nombre sin distinguir mayúsculas, y no por ID ni por orden de creación.
 func TestList_OrdenaPorNombreSinDistinguirMayusculas(t *testing.T) {
 	manager, _ := newManager()
 	for _, name := range []string{"Sistema de ventas", "inventario", "Agenda", "zeta", "Beta"} {
@@ -167,9 +160,7 @@ func TestList_OrdenaPorNombreSinDistinguirMayusculas(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.7 · Verifica que listar mientras se crean proyectos en
-// simultáneo no tiene condiciones de carrera (go test -race) y que al final
-// la lista tiene todos los proyectos creados.
+// HU-50 · CA-50.7 · Verifica que listar mientras se crean proyectos en simultáneo no tenga condiciones de carrera (go test -race) y que al final estén todos.
 func TestList_ConcurrenteConCreateNoTieneCondicionesDeCarrera(t *testing.T) {
 	manager, _ := newManager()
 	const n = 20

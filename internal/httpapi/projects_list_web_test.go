@@ -25,9 +25,7 @@ func contextSection(t *testing.T) string {
 	return page[inicio : inicio+fin]
 }
 
-// HU-50 · CA-50.3 · Verifica que la sección de proyecto y sprint actuales
-// tiene el botón «Ver proyectos» y la tabla de proyectos con sus columnas, y
-// conserva el campo «Proyecto actual (ID)».
+// HU-50 · CA-50.3 · Verifica que la sección de contexto tenga el botón «Ver proyectos», la tabla con sus columnas y el campo «Proyecto actual».
 func TestInterfaz_ContextoTieneElBotonVerProyectosYLaTabla(t *testing.T) {
 	seccion := contextSection(t)
 
@@ -44,8 +42,7 @@ func TestInterfaz_ContextoTieneElBotonVerProyectosYLaTabla(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.3 · Verifica que la página ya no dice que no hay listado de
-// proyectos.
+// HU-50 · CA-50.3 · Verifica que la página ya no diga que no hay listado de proyectos y cite HU-50.
 func TestInterfaz_ComentarioDelContextoCitaHU50(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -57,10 +54,7 @@ func TestInterfaz_ComentarioDelContextoCitaHU50(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.3 y CA-50.5 · Verifica que «Ver proyectos» consulta GET
-// /api/proyectos, llena la tabla con los datos de cada proyecto y un botón
-// «Elegir» que lo deja como proyecto actual con cargarProyecto, informa la
-// cantidad y muestra los errores en el mensaje del contexto, sin innerHTML.
+// HU-50 · CA-50.3 · Verifica que «Ver proyectos» llene la tabla con un botón «Elegir» que deje el proyecto como proyecto actual, sin innerHTML.
 func TestInterfaz_VerProyectosLlenaLaTablaYPermiteElegir(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 	body := handlerBody(t, js, "ver-proyectos")

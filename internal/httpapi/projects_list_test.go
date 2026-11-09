@@ -39,9 +39,7 @@ func newHandlerWithFailingProjectList() http.Handler {
 	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 }
 
-// HU-50 · CA-50.1, CA-50.5 y CA-50.6 · Verifica que GET /api/proyectos
-// responde 200 con todos los proyectos, ordenados por nombre, cada uno con el
-// mismo formato que GET /api/proyectos/{id}, fechas incluidas.
+// HU-50 · CA-50.1 · Verifica que GET /api/proyectos responda 200 con todos los proyectos, ordenados, con el formato de GET /api/proyectos/{id}.
 func TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID(t *testing.T) {
 	h := newHandler()
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas","descripcion":"Ventas online"}`), http.StatusCreated)
@@ -71,8 +69,7 @@ func TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID(t *te
 	}
 }
 
-// HU-50 · CA-50.2 · Verifica que sin proyectos GET /api/proyectos responde
-// 200 con el arreglo vacío [], no null.
+// HU-50 · CA-50.2 · Verifica que sin proyectos GET /api/proyectos responda 200 con el arreglo vacío [], no null.
 func TestListarProyectos_SinProyectosRespondeArregloVacio(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos", "")
 
@@ -82,8 +79,7 @@ func TestListarProyectos_SinProyectosRespondeArregloVacio(t *testing.T) {
 	}
 }
 
-// HU-50 · CA-50.5 · Verifica que si falla la lectura de los proyectos GET
-// /api/proyectos responde 500 con el mensaje genérico, sin el error interno.
+// HU-50 · CA-50.5 · Verifica que, si falla la lectura de los proyectos, GET /api/proyectos responda 500 sin el error interno.
 func TestListarProyectos_ErrorDelRepositorioResponde500(t *testing.T) {
 	rec := do(t, newHandlerWithFailingProjectList(), http.MethodGet, "/api/proyectos", "")
 

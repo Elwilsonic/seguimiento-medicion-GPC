@@ -18,8 +18,7 @@ import (
 // errListFails es el error del almacenamiento falso de los escenarios de error.
 var errListFails = errors.New("falla del almacenamiento al listar")
 
-// HU-50 · CA-50.1, CA-50.2, CA-50.4, CA-50.5 y CA-50.6 · Verifica que los
-// escenarios de features/HU-50-listar-proyectos.feature se cumplen con godog.
+// HU-50 · CA-50.1 · Verifica que se cumplan los escenarios de features/HU-50-listar-proyectos.feature con godog.
 func TestFeatures_HU50ListarProyectos(t *testing.T) {
 	suite := godog.TestSuite{
 		ScenarioInitializer: initializeListScenario,
