@@ -4,8 +4,8 @@ Rama: `feature/HU-50-listar-proyectos`. Cada commit y cada push necesitan la aut
 
 ## 0. Aprobación
 
-- [ ] 0.1 Peñalbé Hernán (Agile Enabler) aprueba explícitamente esta propuesta (proposal, specs, design y tasks); verificar que la aprobación quedó en el chat o en el Issue #183 antes de seguir.
-- [ ] 0.2 Actualizar los criterios del Issue #183 con CA-50.1 a CA-50.7 de la spec, solo con el permiso del Agile Enabler; verificar que el body del Issue los muestra.
+- [x] 0.1 Peñalbé Hernán (Agile Enabler) aprueba explícitamente esta propuesta (proposal, specs, design y tasks); verificar que la aprobación quedó en el chat o en el Issue #183 antes de seguir.
+- [x] 0.2 Actualizar los criterios del Issue #183 con CA-50.1 a CA-50.7 de la spec, solo con el permiso del Agile Enabler; verificar que el body del Issue los muestra.
 
 ## 1. Escenarios BDD (godog)
 
@@ -68,7 +68,7 @@ Rama: `feature/HU-50-listar-proyectos`. Cada commit y cada push necesitan la aut
 ## Workflow follow-up
 
 - El merge lo hace el equipo con "Create a merge commit" (nunca squash ni rebase), con la aprobación del revisor y la CI en verde.
-- Con el PR integrado en `main`, correr `/opsx:archive` y proponer `git commit -m "docs(HU-50): archivar el cambio en OpenSpec" -m "Refs #183"`. El cambio pasa a `openspec/changes/archive/AAAA-MM-DD-hu-50-listar-proyectos/` y sus requisitos, a `openspec/specs/proyectos/spec.md`.
+- Correr `/opsx:archive` solo cuando se cumplan las dos condiciones: el PR está integrado en `main` y todas las tareas de este archivo están tildadas. Si falta alguna, no se archiva. Con las dos cumplidas, correr `/opsx:archive` y proponer `git commit -m "docs(HU-50): archivar el cambio en OpenSpec" -m "Refs #183"`. El cambio pasa a `openspec/changes/archive/AAAA-MM-DD-hu-50-listar-proyectos/` y sus requisitos, a `openspec/specs/proyectos/spec.md`.
 - En el mismo commit del archivo, actualizar los links de la fila de HU-50 en la tabla de historias del `README.md`: el link a la propuesta pasa a `openspec/changes/archive/AAAA-MM-DD-hu-50-listar-proyectos/proposal.md`, y el de la especificación, a `openspec/specs/proyectos/spec.md`. Verificar que los dos links abren en `main`.
 - Reemplazar en la Trazabilidad del Issue #183 el link a la propuesta por los links definitivos (`openspec/specs/proyectos/spec.md` y la carpeta del archivo) y verificar que abren en `main`.
 - Avisar que TEC-10 (#177) se puede cerrar, porque HU-50 quedó archivada.

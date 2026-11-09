@@ -1,6 +1,8 @@
 # Propuesta: HU-50 · Listar los proyectos
 
 > Issue del repositorio: #183 · Épica E1 · Gestión de proyectos · Vinculada a HU-03 (#16)
+>
+> Aprobada por: Peñalbé Hernán (Agile Enabler), 08/11/2026, con tres detalles menores que se aplicaron.
 
 ## Historia de usuario
 
@@ -36,6 +38,10 @@ Ninguna: `openspec/specs/` todavía está vacío (HU-50 es el primer cambio con 
 - **HU-01** (`HU-01-crear-proyecto.md`): ya usa `Repository.List()` para validar el nombre único (RN-01.3). HU-50 no cambia ese uso. Como los nombres no se repiten, sin distinguir mayúsculas, el orden por nombre no tiene empates.
 - **HU-17** (`HU-17-consultar-integrantes.md`) y **HU-14** (`HU-14-sprints-anteriores.md`): se sigue su forma de listar: lista nueva de copias, vacía y no `nil`, `[]` por HTTP, error del repositorio → 500, y en la interfaz un botón «Ver …» que llena una tabla con un botón por fila y un mensaje "N …(s)".
 - **HU-18, HU-41 y HU-19:** las fechas de inicio y de fin salen en el formato que ya usa `GET /api/proyectos/{id}` (`AAAA-MM-DD`, o `""` si no están registradas).
+
+## Comparación con el acta de Planning
+
+El acta del Planning del Sprint 5 (Issue #182, PR #184) describe HU-50 como la consulta de todos los proyectos y una pantalla para elegirlos, con 3 Story Points y como responsable García Santiago. **El alcance coincide** con esta propuesta: no hay diferencias entre el acta y el cambio.
 
 ## Fuera de alcance
 
