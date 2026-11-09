@@ -291,6 +291,9 @@ func newMemoryRepo(t *testing.T) (Repository, int) {
 	return NewMemoryRepository(), it.ID
 }
 
+// HU-21 · CA-21.8 · Verifica que el repositorio en memoria cumpla el contrato
+// de las sesiones, el mismo que corre contra PostgreSQL. El contrato también
+// incluye subtests de HU-23, HU-24 y HU-25.
 func TestMemoryRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, newMemoryRepo)
 }

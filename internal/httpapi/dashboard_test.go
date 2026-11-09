@@ -52,8 +52,9 @@ func summaryItem(t *testing.T, h http.Handler, title, status string, sprintID in
 	}
 }
 
-// CA-36.1 y CA-36.6 · GET /api/proyectos/{id}/resumen devuelve el proyecto,
-// los ítems por estado y el sprint abierto con los campos de sprintResponse.
+// HU-36 · CA-36.6 · Verifica que GET /api/proyectos/{id}/resumen devuelva el
+// proyecto, los ítems por estado y el sprint abierto con los campos de
+// sprintResponse. También cubre CA-36.1.
 func TestResumenProyecto_Devuelve200ConElResumen(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -86,7 +87,8 @@ func TestResumenProyecto_Devuelve200ConElResumen(t *testing.T) {
 	}
 }
 
-// CA-36.3 y CA-36.6 · Con solo sprints cerrados, sprint_actual es null.
+// HU-36 · CA-36.6 · Verifica que, con solo sprints cerrados, sprint_actual sea
+// null. También cubre CA-36.3.
 func TestResumenProyecto_SinSprintAbiertoSprintActualEsNull(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -101,8 +103,8 @@ func TestResumenProyecto_SinSprintAbiertoSprintActualEsNull(t *testing.T) {
 	}
 }
 
-// CA-36.2 y CA-36.6 · Un proyecto sin ítems ni sprints devuelve las
-// cantidades en 0 y sprint_actual en null.
+// HU-36 · CA-36.6 · Verifica que un proyecto sin ítems ni sprints devuelva las
+// cantidades en 0 y sprint_actual en null. También cubre CA-36.2.
 func TestResumenProyecto_ProyectoSinDatosDevuelveCerosYNull(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -123,14 +125,16 @@ func TestResumenProyecto_ProyectoSinDatosDevuelveCerosYNull(t *testing.T) {
 	}
 }
 
-// CA-36.5 y CA-36.6 · Un proyecto inexistente devuelve 404.
+// HU-36 · CA-36.6 · Verifica que un proyecto inexistente devuelva 404. También
+// cubre CA-36.5.
 func TestResumenProyecto_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/99/resumen", "")
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
 
-// CA-36.6 · Una falla del repositorio devuelve 500 sin exponer el detalle.
+// HU-36 · CA-36.6 · Verifica que una falla del repositorio devuelva 500 sin
+// exponer el detalle.
 func TestResumenProyecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(brokenItemRepository{}, projects)

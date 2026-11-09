@@ -23,7 +23,8 @@ func createTestItem(t *testing.T, manager *Manager, projectID int, title string)
 	return item.ID
 }
 
-// CA-07.1
+// HU-07 · CA-07.1 · Verifica que Update cambie todos los campos editables y
+// conserve el ID, el proyecto, el estado y los story points.
 func TestManagerUpdate_ModificaTodosLosCamposConservaIDProyectoEstadoYStoryPoints(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -63,7 +64,8 @@ func TestManagerUpdate_ModificaTodosLosCamposConservaIDProyectoEstadoYStoryPoint
 	}
 }
 
-// CA-07.1 (Update no toca story points ni estado, aunque no sean los iniciales)
+// HU-07 · CA-07.1 · Verifica que Update no toque los story points ni el
+// estado, aunque no sean los iniciales.
 func TestManagerUpdate_ConservaStoryPointsYEstadoAsignados(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -92,7 +94,8 @@ func TestManagerUpdate_ConservaStoryPointsYEstadoAsignados(t *testing.T) {
 	}
 }
 
-// CA-07.1 (cambiar un solo campo reenviando el resto)
+// HU-07 · CA-07.1 · Verifica que se pueda cambiar un solo campo, las horas,
+// reenviando el resto con su valor actual.
 func TestManagerUpdate_CambiaSoloLasHorasReenviandoElResto(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -114,7 +117,8 @@ func TestManagerUpdate_CambiaSoloLasHorasReenviandoElResto(t *testing.T) {
 	}
 }
 
-// CA-07.4 (el ítem creado por HU-04 queda sin horas estimadas)
+// HU-07 · CA-07.4 · Verifica que el ítem creado por HU-04 quede sin horas
+// estimadas.
 func TestCreate_ItemNuevoQuedaSinHorasEstimadas(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -128,7 +132,7 @@ func TestCreate_ItemNuevoQuedaSinHorasEstimadas(t *testing.T) {
 	}
 }
 
-// CA-07.4
+// HU-07 · CA-07.4 · Verifica que se acepten horas estimadas fraccionadas.
 func TestManagerUpdate_AceptaHorasFraccionadas(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -144,7 +148,8 @@ func TestManagerUpdate_AceptaHorasFraccionadas(t *testing.T) {
 	}
 }
 
-// CA-07.4 (0 significa sin horas y quita el valor anterior)
+// HU-07 · CA-07.4 · Verifica que 0 horas signifique sin horas y quite el valor
+// anterior.
 func TestManagerUpdate_HorasEnCeroDejanElItemSinHoras(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -166,7 +171,8 @@ func TestManagerUpdate_HorasEnCeroDejanElItemSinHoras(t *testing.T) {
 	}
 }
 
-// CA-07.4 (negativo, NaN e infinito son inválidos y el ítem no cambia)
+// HU-07 · CA-07.4 · Verifica que horas negativas, NaN o infinitas sean
+// inválidas y el ítem no cambie.
 func TestManagerUpdate_RechazaHorasNegativasNaN_e_Infinitas(t *testing.T) {
 	invalid := []struct {
 		name  string
@@ -194,7 +200,8 @@ func TestManagerUpdate_RechazaHorasNegativasNaN_e_Infinitas(t *testing.T) {
 	}
 }
 
-// CA-07.2 (los campos obligatorios siguen validándose)
+// HU-07 · CA-07.2 · Verifica que un título vacío devuelva ErrEmptyTitle: los
+// campos obligatorios siguen validándose.
 func TestManagerUpdate_RechazaTituloVacio(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -210,7 +217,8 @@ func TestManagerUpdate_RechazaTituloVacio(t *testing.T) {
 	}
 }
 
-// CA-07.2
+// HU-07 · CA-07.2 · Verifica que una prioridad inválida devuelva
+// ErrInvalidPriority.
 func TestManagerUpdate_RechazaPrioridadInvalida(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -226,7 +234,8 @@ func TestManagerUpdate_RechazaPrioridadInvalida(t *testing.T) {
 	}
 }
 
-// CA-07.2
+// HU-07 · CA-07.2 · Verifica que una modificación sin ningún criterio de
+// aceptación se rechace.
 func TestManagerUpdate_RechazaModificacionSinCriterios(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -244,8 +253,9 @@ func TestManagerUpdate_RechazaModificacionSinCriterios(t *testing.T) {
 	}
 }
 
-// Restricción "Orden de validaciones": el contenido se valida antes de
-// consultar el repositorio; se informa el primer error.
+// HU-07 · Error · Verifica que el contenido se valide antes de consultar el
+// repositorio y se informe el primer error (restricción "Orden de
+// validaciones").
 func TestManagerUpdate_PrimerErrorEsElDelOrdenDeValidacion(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -258,7 +268,8 @@ func TestManagerUpdate_PrimerErrorEsElDelOrdenDeValidacion(t *testing.T) {
 	}
 }
 
-// CA-07.3
+// HU-07 · CA-07.3 · Verifica que modificar un ítem inexistente devuelva
+// ErrItemNotFound.
 func TestManagerUpdate_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -271,7 +282,8 @@ func TestManagerUpdate_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-07.3
+// HU-07 · CA-07.3 · Verifica que, sin ningún ítem creado, Update devuelva
+// ErrItemNotFound.
 func TestManagerUpdate_SinItemsCreadosDevuelveErrItemNotFound(t *testing.T) {
 	manager, _, _, _ := newTestManager()
 
@@ -280,7 +292,8 @@ func TestManagerUpdate_SinItemsCreadosDevuelveErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-07.5 (copia por valor, incluida la lista de criterios)
+// HU-07 · CA-07.5 · Verifica que Update devuelva una copia por valor, incluida
+// la lista de criterios.
 func TestManagerUpdate_CopiaPorValorDelResultado(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -305,7 +318,8 @@ func TestManagerUpdate_CopiaPorValorDelResultado(t *testing.T) {
 	}
 }
 
-// CA-07.7 (error del repositorio al buscar)
+// HU-07 · CA-07.7 · Verifica que, si el repositorio falla al buscar, se
+// devuelva ese error.
 func TestManagerUpdate_ErrorDelRepositorioAlBuscarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	repo := failingRepository{getErr: errRepository}
@@ -316,7 +330,8 @@ func TestManagerUpdate_ErrorDelRepositorioAlBuscarSeDevuelve(t *testing.T) {
 	}
 }
 
-// CA-07.7 (error del repositorio al actualizar)
+// HU-07 · CA-07.7 · Verifica que, si el repositorio falla al actualizar, se
+// devuelva ese error.
 func TestManagerUpdate_ErrorDelRepositorioAlActualizarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	repo := failingRepository{updateErr: errRepository}
@@ -329,8 +344,9 @@ func TestManagerUpdate_ErrorDelRepositorioAlActualizarSeDevuelve(t *testing.T) {
 	}
 }
 
-// CA-07.5 y CA-07.7 en la operación nueva de la interfaz: reemplaza el ítem
-// guardado, devuelve una copia con su propia lista y no toca a los demás.
+// HU-07 · CA-07.5 · Verifica que Update del repositorio reemplace el ítem
+// guardado, devuelva una copia con su propia lista y no toque a los demás.
+// También cubre CA-07.7 en la operación nueva de la interfaz.
 func TestMemoryRepositoryUpdate_ReemplazaElItemYDevuelveCopia(t *testing.T) {
 	repo := NewMemoryRepository()
 	saved, err := repo.Save(Item{ProjectID: 1, Title: validTitle, Priority: PriorityHigh, AcceptanceCriteria: validCriteria()})
@@ -355,7 +371,8 @@ func TestMemoryRepositoryUpdate_ReemplazaElItemYDevuelveCopia(t *testing.T) {
 	}
 }
 
-// CA-07.3 en la operación nueva de la interfaz
+// HU-07 · CA-07.3 · Verifica que Update del repositorio, sobre un ítem
+// inexistente, devuelva ErrItemNotFound (operación nueva de la interfaz).
 func TestMemoryRepositoryUpdate_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	repo := NewMemoryRepository()
 
@@ -364,8 +381,9 @@ func TestMemoryRepositoryUpdate_ItemInexistenteDevuelveErrItemNotFound(t *testin
 	}
 }
 
-// CA-07.6: después de varias modificaciones simultáneas del mismo ítem, el
-// ítem guardado coincide completo con una de las versiones enviadas.
+// HU-07 · CA-07.6 · Verifica que, después de varias modificaciones simultáneas
+// del mismo ítem, el ítem guardado coincida completo con una de las versiones
+// enviadas.
 func TestManagerUpdate_ModificacionesSimultaneasDelMismoItem(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")

@@ -28,7 +28,7 @@ func get(t *testing.T, h http.Handler, path string) *httptest.ResponseRecorder {
 	return rec
 }
 
-// CA-TEC04.8 · La interfaz web responde en /.
+// TEC-04 · CA-TEC04.8 · Verifica que la interfaz web responda en /.
 func TestInterfaz_RaizDevuelveLaPaginaHTML(t *testing.T) {
 	rec := get(t, newHandler(), "/")
 
@@ -41,8 +41,8 @@ func TestInterfaz_RaizDevuelveLaPaginaHTML(t *testing.T) {
 	}
 }
 
-// CA-TEC04.4 · El JavaScript y los estilos de la interfaz se sirven desde el
-// binario, con su tipo de contenido.
+// TEC-04 · CA-TEC04.4 · Verifica que el JavaScript y los estilos de la interfaz
+// se sirvan desde el binario, con su tipo de contenido.
 func TestInterfaz_SirveLosArchivosEstaticos(t *testing.T) {
 	cases := map[string]string{
 		"/app.js":     "text/javascript",
@@ -69,6 +69,8 @@ func TestInterfaz_SirveLosArchivosEstaticos(t *testing.T) {
 // ítem y permite asignarlos. El recorrido en el navegador queda en la
 // evidencia TDD.
 
+// HU-20 · CA-20.8 · Verifica que la tabla del backlog tenga la columna SP y que
+// app.js muestre y asigne los Story Points con PATCH /story-points.
 func TestInterfaz_TablaDelBacklogMuestraYAsignaStoryPoints(t *testing.T) {
 	h := newHandler()
 
@@ -93,6 +95,8 @@ func TestInterfaz_TablaDelBacklogMuestraYAsignaStoryPoints(t *testing.T) {
 // esfuerzo y el campo Horas acepta cualquier decimal positivo (step="any"),
 // igual que la API.
 
+// HU-26 · CA-26.11 · Verifica que el formulario "Registrar esfuerzo" acepte
+// horas con decimales (step="any") y que app.js lo envíe a /esfuerzos.
 func TestInterfaz_FormularioDeEsfuerzoUsaStepAny(t *testing.T) {
 	h := newHandler()
 	page := get(t, h, "/").Body.String()
@@ -110,6 +114,8 @@ func TestInterfaz_FormularioDeEsfuerzoUsaStepAny(t *testing.T) {
 	}
 }
 
+// HU-20 · CA-20.8 · Verifica que el select de Story Points de app.js use los
+// mismos valores que backlog.StoryPointScale().
 func TestInterfaz_SelectDeStoryPointsUsaLaEscalaDelBacklog(t *testing.T) {
 	scale := backlog.StoryPointScale()
 	if len(scale) == 0 {
@@ -134,6 +140,8 @@ func TestInterfaz_SelectDeStoryPointsUsaLaEscalaDelBacklog(t *testing.T) {
 // muestra sus datos y las cartas. El recorrido en el navegador queda en la
 // evidencia TDD.
 
+// HU-21 · CA-21.7 · Verifica que el backlog tenga el botón "Abrir Poker" y que
+// la interfaz muestre la sesión abierta y sus cartas.
 func TestInterfaz_BacklogPermiteAbrirPlanningPoker(t *testing.T) {
 	h := newHandler()
 
@@ -152,7 +160,9 @@ func TestInterfaz_BacklogPermiteAbrirPlanningPoker(t *testing.T) {
 	}
 }
 
-// HU-22 · Votar de forma oculta (Issue #40)
+// HU-22 · CA-22.7 · Verifica que la interfaz tenga el formulario de voto, con el
+// integrante y los botones de cartas, y que app.js envíe el voto a /votes.
+// Votar de forma oculta (Issue #40).
 func TestInterfaz_FormularioDeVoto(t *testing.T) {
 	h := newHandler()
 
@@ -170,8 +180,8 @@ func TestInterfaz_FormularioDeVoto(t *testing.T) {
 	}
 }
 
-// HU-23, CA-23.8 · El botón "Revelar votos" revela la sesión y la interfaz
-// muestra la lista de votos.
+// HU-23 · CA-23.8 · Verifica que el botón "Revelar votos" revele la sesión y la
+// interfaz muestre la lista de votos.
 func TestInterfaz_BotonRevelarVotos(t *testing.T) {
 	h := newHandler()
 
@@ -189,8 +199,8 @@ func TestInterfaz_BotonRevelarVotos(t *testing.T) {
 	}
 }
 
-// HU-25, CA-25.9 · El formulario "Registrar estimación acordada" registra la
-// carta elegida, muestra el mensaje y recarga el backlog.
+// HU-25 · CA-25.9 · Verifica que el formulario "Registrar estimación acordada"
+// registre la carta elegida, muestre el mensaje y recargue el backlog.
 func TestInterfaz_FormularioRegistrarEstimacion(t *testing.T) {
 	h := newHandler()
 
@@ -208,8 +218,8 @@ func TestInterfaz_FormularioRegistrarEstimacion(t *testing.T) {
 	}
 }
 
-// HU-24, CA-24.12 · Después de revelar se muestra la comparación y el botón
-// "Repetir ronda", dentro del bloque de la estimación. El botón es
+// HU-24 · CA-24.12 · Verifica que después de revelar se muestren la comparación
+// y el botón "Repetir ronda", dentro del bloque de la estimación. El botón es
 // type="button" para que el clic no envíe el formulario.
 func TestInterfaz_DiferenciasYBotonRepetirRonda(t *testing.T) {
 	h := newHandler()
@@ -247,8 +257,8 @@ func TestInterfaz_DiferenciasYBotonRepetirRonda(t *testing.T) {
 	}
 }
 
-// HU-32, CA-32.9 · La sección "Métricas" muestra los Story Points del
-// proyecto y del sprint actual, y la velocidad.
+// HU-32 · CA-32.9 · Verifica que la sección "Métricas" muestre los Story Points
+// del proyecto y del sprint actual, y la velocidad.
 func TestInterfaz_SeccionDeMetricas(t *testing.T) {
 	h := newHandler()
 
@@ -266,8 +276,9 @@ func TestInterfaz_SeccionDeMetricas(t *testing.T) {
 	}
 }
 
-// HU-34, CA-34.6 · La sección "Métricas" muestra el porcentaje de historias
-// completadas con un decimal y las cantidades, o "sin datos" si no hay ítems.
+// HU-34 · CA-34.6 · Verifica que la sección "Métricas" muestre el porcentaje de
+// historias completadas con un decimal y las cantidades, o "sin datos" si no
+// hay ítems.
 func TestInterfaz_MetricasMuestraElPorcentajeDeHistoriasCompletadas(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -278,9 +289,9 @@ func TestInterfaz_MetricasMuestraElPorcentajeDeHistoriasCompletadas(t *testing.T
 	}
 }
 
-// HU-33, CA-33.5 y CA-33.9 · La sección "Métricas" muestra M4 a M7 y la
-// cantidad de ítems sin horas estimadas, con un decimal y "sin datos" cuando
-// la desviación no está disponible.
+// HU-33 · CA-33.5 · Verifica que la sección "Métricas" muestre M4 a M7 y la
+// cantidad de ítems sin horas estimadas, con un decimal y "sin datos" cuando la
+// desviación no está disponible. También cubre CA-33.9.
 func TestInterfaz_MetricasMuestraHorasYDesviacion(t *testing.T) {
 	h := newHandler()
 	page := get(t, h, "/").Body.String()
@@ -309,7 +320,7 @@ func TestInterfaz_MetricasMuestraHorasYDesviacion(t *testing.T) {
 	}
 }
 
-// HU-33, CA-33.9 · numero1 convierte el texto "-0.0" en "0.0".
+// HU-33 · CA-33.9 · Verifica que numero1 convierta el texto "-0.0" en "0.0".
 func TestInterfaz_Numero1NormalizaElCeroNegativo(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -327,6 +338,8 @@ func TestInterfaz_Numero1NormalizaElCeroNegativo(t *testing.T) {
 // sprint de detección informado. El mensaje de éxito y el de error usan el
 // mismo mecanismo que los demás formularios.
 
+// HU-29 · CA-29.11 · Verifica que la sección "Defectos" tenga el formulario
+// "Registrar defecto" con sus campos y que app.js lo envíe a /defectos.
 func TestInterfaz_FormularioDeDefecto(t *testing.T) {
 	h := newHandler()
 
@@ -363,6 +376,8 @@ func TestInterfaz_FormularioDeDefecto(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.11 · Verifica que, al registrar un defecto, la interfaz muestre
+// el mensaje de éxito con el defecto y el ítem.
 func TestInterfaz_RegistrarDefectoMuestraElMensajeDeExito(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -373,6 +388,8 @@ func TestInterfaz_RegistrarDefectoMuestraElMensajeDeExito(t *testing.T) {
 	}
 }
 
+// HU-29 · CA-29.11 · Verifica que, si registrar un defecto falla, la interfaz
+// muestre el mensaje de error en msg-defectos.
 func TestInterfaz_RegistrarDefectoMuestraElMensajeDeError(t *testing.T) {
 	h := newHandler()
 
@@ -387,9 +404,9 @@ func TestInterfaz_RegistrarDefectoMuestraElMensajeDeError(t *testing.T) {
 	}
 }
 
-// CA-29.11 y SDD de HU-29 ("Interfaz web"): la lista de severidades de app.js
-// usa los mismos valores que defect.SeverityValues(), para que la interfaz no
-// se desincronice de la validación del paquete.
+// HU-29 · CA-29.11 · Verifica que la lista de severidades de app.js use los
+// mismos valores que defect.SeverityValues(), para que la interfaz no se
+// desincronice de la validación del paquete (SDD de HU-29, "Interfaz web").
 func TestInterfaz_ListaDeSeveridadesDeDefectosCoincideConElPaquete(t *testing.T) {
 	values := defect.SeverityValues()
 	if len(values) == 0 {
@@ -412,6 +429,9 @@ func TestInterfaz_ListaDeSeveridadesDeDefectosCoincideConElPaquete(t *testing.T)
 // valor. El mensaje de éxito y el de error usan el mismo mecanismo que los
 // demás formularios.
 
+// HU-30 · CA-30.9 · Verifica que el formulario "Cambiar estado de defecto" esté
+// debajo de "Registrar defecto", con sus campos, y que app.js envíe el PATCH a
+// /defectos/{id}/estado.
 func TestInterfaz_FormularioCambiarEstadoDeDefecto(t *testing.T) {
 	h := newHandler()
 
@@ -452,6 +472,8 @@ func TestInterfaz_FormularioCambiarEstadoDeDefecto(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.9 · Verifica que, al cambiar el estado de un defecto, la
+// interfaz muestre el estado nuevo y el sprint de resolución.
 func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeExito(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -462,6 +484,8 @@ func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeExito(t *testing.T) {
 	}
 }
 
+// HU-30 · CA-30.9 · Verifica que, si cambiar el estado falla, la interfaz
+// muestre el mensaje de error, igual que al registrar un defecto.
 func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeError(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -471,8 +495,8 @@ func TestInterfaz_CambiarEstadoDeDefectoMuestraElMensajeDeError(t *testing.T) {
 	}
 }
 
-// CA-30.9 y SDD de HU-30 ("Interfaz web"): la lista de estados de app.js usa
-// los mismos valores que defect.StatusValues().
+// HU-30 · CA-30.9 · Verifica que la lista de estados de app.js use los mismos
+// valores que defect.StatusValues() (SDD de HU-30, "Interfaz web").
 func TestInterfaz_ListaDeEstadosDeDefectosCoincideConElPaquete(t *testing.T) {
 	values := defect.StatusValues()
 	if len(values) == 0 {
@@ -508,6 +532,9 @@ func formularioConsultarDefectos(t *testing.T, page string) string {
 	return formulario
 }
 
+// HU-31 · CA-31.9 · Verifica que el formulario "Consultar defectos" esté debajo
+// de "Cambiar estado de defecto", con el tipo, el filtro de estado, la tabla,
+// la cantidad y el mensaje.
 func TestInterfaz_FormularioConsultarDefectos(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -540,6 +567,8 @@ func TestInterfaz_FormularioConsultarDefectos(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.9 · Verifica que la tabla de defectos tenga sus columnas, debajo
+// del formulario de consulta.
 func TestInterfaz_TablaDeDefectosTieneLasColumnas(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 	inicio := strings.Index(page, `<form id="form-consultar-defectos">`)
@@ -556,6 +585,9 @@ func TestInterfaz_TablaDeDefectosTieneLasColumnas(t *testing.T) {
 	}
 }
 
+// HU-31 · CA-31.9 · Verifica que "Consultar defectos" llame a la ruta del
+// proyecto o del sprint actual, con el filtro ?estado=, y muestre la lista, la
+// cantidad o "Sin defectos.".
 func TestInterfaz_ConsultarDefectosLlamaALaAPI(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -578,8 +610,9 @@ func TestInterfaz_ConsultarDefectosLlamaALaAPI(t *testing.T) {
 	}
 }
 
-// SDD de HU-31 ("Interfaz web"): el filtro de estado usa la lista de HU-30,
-// que ya se compara con defect.StatusValues(), y no repite los estados.
+// HU-31 · CA-31.9 · Verifica que el filtro de estado use la lista de HU-30, que
+// ya se compara con defect.StatusValues(), y no repita los estados (SDD de
+// HU-31, "Interfaz web").
 func TestInterfaz_FiltroDeEstadoDeDefectosUsaLaListaDelPaquete(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -597,6 +630,9 @@ func TestInterfaz_FiltroDeEstadoDeDefectosUsaLaListaDelPaquete(t *testing.T) {
 // esfuerzos" con selector Sprint/Historia, una tabla y el total con un
 // decimal. El recorrido en el navegador queda en la evidencia TDD.
 
+// HU-27 · CA-27.10 · Verifica que el formulario "Consultar esfuerzos" permita
+// elegir sprint o historia y que app.js muestre la lista y el total con un
+// decimal. También cubre CA-27.2.
 func TestInterfaz_FormularioDeConsultaDeEsfuerzos(t *testing.T) {
 	h := newHandler()
 	page := get(t, h, "/").Body.String()
@@ -632,6 +668,7 @@ func TestInterfaz_FormularioDeConsultaDeEsfuerzos(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.10 · Verifica que la tabla de esfuerzos tenga sus columnas.
 func TestInterfaz_TablaDeEsfuerzosTieneLasColumnas(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 	indice := strings.Index(page, `<form id="form-consultar-esfuerzos">`)
@@ -647,6 +684,8 @@ func TestInterfaz_TablaDeEsfuerzosTieneLasColumnas(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.10 · Verifica que, si la consulta de esfuerzos falla, la
+// interfaz muestre el mensaje de error.
 func TestInterfaz_ConsultaDeEsfuerzosMuestraElError(t *testing.T) {
 	h := newHandler()
 	page := get(t, h, "/").Body.String()
@@ -678,6 +717,8 @@ func seccionProyectos(t *testing.T, page string) string {
 	return page[inicio:fin]
 }
 
+// HU-18 · CA-18.10 · Verifica que la sección Proyectos tenga el formulario
+// "Registrar fecha de inicio" y que app.js lo envíe a /fecha-inicio.
 func TestInterfaz_FormularioDeFechaDeInicioDelProyecto(t *testing.T) {
 	h := newHandler()
 
@@ -700,6 +741,8 @@ func TestInterfaz_FormularioDeFechaDeInicioDelProyecto(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.10 · Verifica que, al registrar la fecha de inicio, la interfaz
+// muestre el mensaje de éxito con la fecha.
 func TestInterfaz_RegistrarFechaDeInicioMuestraElMensajeDeExito(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -710,6 +753,8 @@ func TestInterfaz_RegistrarFechaDeInicioMuestraElMensajeDeExito(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.10 · Verifica que los datos del proyecto actual muestren la
+// fecha de inicio o "sin fecha de inicio".
 func TestInterfaz_DatosDelProyectoMuestranLaFechaDeInicio(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -727,6 +772,9 @@ func TestInterfaz_DatosDelProyectoMuestranLaFechaDeInicio(t *testing.T) {
 // proyecto actual, y los datos del proyecto muestran la fecha de fin. El
 // recorrido en el navegador queda en la evidencia TDD.
 
+// HU-41 · CA-41.13 · Verifica que la sección Proyectos tenga el formulario
+// "Registrar fecha de fin", debajo del de fecha de inicio, y que app.js lo
+// envíe a /fecha-fin.
 func TestInterfaz_FormularioDeFechaDeFinDelProyecto(t *testing.T) {
 	h := newHandler()
 
@@ -754,6 +802,8 @@ func TestInterfaz_FormularioDeFechaDeFinDelProyecto(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.13 · Verifica que, al registrar la fecha de fin, la interfaz
+// muestre el mensaje de éxito con la fecha.
 func TestInterfaz_RegistrarFechaDeFinMuestraElMensajeDeExito(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -764,6 +814,8 @@ func TestInterfaz_RegistrarFechaDeFinMuestraElMensajeDeExito(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.13 · Verifica que los datos del proyecto actual muestren la
+// fecha de fin o "sin fecha de fin".
 func TestInterfaz_DatosDelProyectoMuestranLaFechaDeFin(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -812,6 +864,8 @@ func manejadorModificarFechas(t *testing.T, js string) string {
 	return js[inicio : inicio+fin]
 }
 
+// HU-19 · CA-19.8 · Verifica que la sección Proyectos tenga el formulario
+// "Modificar fechas", con las dos fechas, debajo del de fecha de fin.
 func TestInterfaz_FormularioModificarFechasDelProyecto(t *testing.T) {
 	seccion := seccionProyectos(t, get(t, newHandler(), "/").Body.String())
 
@@ -833,6 +887,9 @@ func TestInterfaz_FormularioModificarFechasDelProyecto(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.8 · Verifica que "Modificar fechas" envíe el PATCH a
+// /proyectos/{id}/fechas con el proyecto actual y muestre el proyecto
+// actualizado.
 func TestInterfaz_ModificarFechasLlamaALaAPIConElProyectoActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -850,6 +907,8 @@ func TestInterfaz_ModificarFechasLlamaALaAPIConElProyectoActual(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.8 · Verifica que, al modificar las fechas, la interfaz muestre
+// el mensaje de éxito con el inicio y el fin.
 func TestInterfaz_ModificarFechasMuestraElMensajeDeExito(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -860,6 +919,8 @@ func TestInterfaz_ModificarFechasMuestraElMensajeDeExito(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.8 · Verifica que mostrarProyecto precargue el formulario
+// "Modificar fechas" con las fechas del proyecto.
 func TestInterfaz_DatosDelProyectoPrecarganElFormularioModificarFechas(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -889,6 +950,8 @@ func TestInterfaz_DatosDelProyectoPrecarganElFormularioModificarFechas(t *testin
 // proyecto actual y muestra el proyecto, los ítems por estado y el sprint
 // actual, o "ninguno abierto".
 
+// HU-36 · CA-36.6 · Verifica que la sección "Dashboard" tenga el botón "Ver
+// resumen", el lugar de los datos y el mensaje.
 func TestInterfaz_SeccionDashboardConElBotonVerResumen(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -914,6 +977,8 @@ func TestInterfaz_SeccionDashboardConElBotonVerResumen(t *testing.T) {
 	}
 }
 
+// HU-36 · CA-36.6 · Verifica que "Ver resumen" llame a /resumen con el
+// proyecto actual.
 func TestInterfaz_VerResumenLlamaALaAPIConElProyectoActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -924,6 +989,8 @@ func TestInterfaz_VerResumenLlamaALaAPIConElProyectoActual(t *testing.T) {
 	}
 }
 
+// HU-36 · CA-36.6 · Verifica que "Ver resumen" muestre los ítems por estado y
+// el sprint actual, o "ninguno abierto".
 func TestInterfaz_VerResumenMuestraLosItemsPorEstadoYElSprintActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -942,8 +1009,8 @@ func TestInterfaz_VerResumenMuestraLosItemsPorEstadoYElSprintActual(t *testing.T
 	}
 }
 
-// HU-47, CA-47.6 · La sección "Métricas" muestra los defectos detectados y
-// resueltos del proyecto y del sprint actual, como enteros.
+// HU-47 · CA-47.6 · Verifica que la sección "Métricas" muestre los defectos
+// detectados y resueltos del proyecto y del sprint actual, como enteros.
 func TestInterfaz_MetricasMuestraLosDefectosDetectadosYResueltos(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -983,9 +1050,9 @@ func handlerBody(t *testing.T, js, id string) string {
 	return js[start : start+end]
 }
 
-// CA-37.1 · La sección "Dashboard" tiene el botón "Ver gráficos", el texto de
-// las métricas, el contenedor de los gráficos y el mensaje, y conserva el
-// botón "Ver resumen" de HU-36.
+// HU-37 · CA-37.1 · Verifica que la sección "Dashboard" tenga el botón "Ver
+// gráficos", el texto de las métricas, el contenedor de los gráficos y el
+// mensaje, y conserve el botón "Ver resumen" de HU-36.
 func TestInterfaz_DashboardTieneElBotonVerGraficos(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1012,8 +1079,8 @@ func TestInterfaz_DashboardTieneElBotonVerGraficos(t *testing.T) {
 	}
 }
 
-// CA-37.1 y CA-37.3 · "Ver gráficos" pide las métricas del proyecto (HU-35) y
-// las de cada sprint con el proyecto actual.
+// HU-37 · CA-37.1 · Verifica que "Ver gráficos" pida las métricas del proyecto
+// (HU-35) y las de cada sprint con el proyecto actual. También cubre CA-37.3.
 func TestInterfaz_VerGraficosLlamaALasDosRutas(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 	body := handlerBody(t, js, "ver-graficos")
@@ -1031,8 +1098,9 @@ func TestInterfaz_VerGraficosLlamaALasDosRutas(t *testing.T) {
 	}
 }
 
-// CA-37.1 · El texto de M1 a M3 está en una función compartida, que usan
-// "Ver métricas" y "Ver gráficos", junto con las de M4 a M10.
+// HU-37 · CA-37.1 · Verifica que el texto de M1 a M3 esté en una función
+// compartida, que usan "Ver métricas" y "Ver gráficos", junto con las de M4 a
+// M10.
 func TestInterfaz_TextoDeStoryPointsCompartidoPorLosDosBotones(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1049,8 +1117,9 @@ func TestInterfaz_TextoDeStoryPointsCompartidoPorLosDosBotones(t *testing.T) {
 	}
 }
 
-// CA-37.1 · Los tres gráficos tienen su título, la velocidad como línea de
-// referencia y solo los sprints CERRADO en el gráfico de velocidad.
+// HU-37 · CA-37.1 · Verifica que los tres gráficos tengan su título, la
+// velocidad como línea de referencia y solo los sprints CERRADO en el gráfico
+// de velocidad.
 func TestInterfaz_GraficosTienenLosTresTitulos(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1073,8 +1142,9 @@ func TestInterfaz_GraficosTienenLosTresTitulos(t *testing.T) {
 	}
 }
 
-// CA-37.2 · Una métrica no disponible se muestra como "sin datos", y un
-// proyecto sin sprints muestra el aviso en lugar de los gráficos.
+// HU-37 · CA-37.2 · Verifica que una métrica no disponible se muestre como "sin
+// datos", y que un proyecto sin sprints muestre el aviso en lugar de los
+// gráficos.
 func TestInterfaz_GraficosMuestranSinDatos(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1089,8 +1159,9 @@ func TestInterfaz_GraficosMuestranSinDatos(t *testing.T) {
 	}
 }
 
-// CA-37.6 · Los gráficos son SVG creados con createElementNS, los textos se
-// asignan con textContent y no se usa innerHTML ni recursos externos.
+// HU-37 · CA-37.6 · Verifica que los gráficos sean SVG creados con
+// createElementNS, que los textos se asignen con textContent y que no se use
+// innerHTML ni recursos externos.
 func TestInterfaz_GraficosSeDibujanConSVGPropioSinLibrerias(t *testing.T) {
 	h := newHandler()
 	js := get(t, h, "/app.js").Body.String()
@@ -1116,7 +1187,8 @@ func TestInterfaz_GraficosSeDibujanConSVGPropioSinLibrerias(t *testing.T) {
 	}
 }
 
-// CA-37.1 · Los colores de las series salen de variables CSS de styles.css.
+// HU-37 · CA-37.1 · Verifica que los colores de las series salgan de variables
+// CSS de styles.css.
 func TestInterfaz_GraficosUsanVariablesDeColor(t *testing.T) {
 	css := get(t, newHandler(), "/styles.css").Body.String()
 
@@ -1127,11 +1199,11 @@ func TestInterfaz_GraficosUsanVariablesDeColor(t *testing.T) {
 	}
 }
 
-// CA-37.1 · Corrección de un defecto: el ancho de cada grupo de barras tiene
-// en cuenta el nombre del sprint y la nota de desviación, así un texto más
-// largo que el grupo, como "Desviación: -2.5 h (-19.2 %)", no queda cortado
-// en el borde del gráfico ni se pisa con el del sprint siguiente. El dibujo se
-// verifica en el navegador (evidencia TDD de HU-37).
+// HU-37 · CA-37.1 · Verifica la corrección de un defecto: el ancho de cada grupo
+// de barras tiene en cuenta el nombre del sprint y la nota de desviación, así
+// un texto más largo que el grupo, como "Desviación: -2.5 h (-19.2 %)", no queda
+// cortado en el borde del gráfico ni se pisa con el del sprint siguiente. El
+// dibujo se verifica en el navegador (evidencia TDD de HU-37).
 func TestInterfaz_GraficoDeBarrasEnsanchaLosGruposSegunSusTextos(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1160,6 +1232,8 @@ func TestInterfaz_GraficoDeBarrasEnsanchaLosGruposSegunSusTextos(t *testing.T) {
 // botón "Generar reporte", que llama a GET /proyectos/{id}/reporte con el
 // proyecto actual y muestra cada parte del reporte en su bloque.
 
+// HU-38 · CA-38.7 · Verifica que la sección "Reportes" tenga el botón "Generar
+// reporte" y un lugar para cada parte del reporte del proyecto.
 func TestInterfaz_SeccionReportesConElBotonGenerarReporte(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1190,6 +1264,8 @@ func TestInterfaz_SeccionReportesConElBotonGenerarReporte(t *testing.T) {
 	}
 }
 
+// HU-38 · CA-38.7 · Verifica que "Generar reporte" llame a /reporte con el
+// proyecto actual.
 func TestInterfaz_GenerarReporteLlamaALaAPIConElProyectoActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1200,6 +1276,8 @@ func TestInterfaz_GenerarReporteLlamaALaAPIConElProyectoActual(t *testing.T) {
 	}
 }
 
+// HU-38 · CA-38.7 · Verifica que el reporte del proyecto muestre cada parte, con
+// los textos de las secciones vacías. También cubre CA-38.2.
 func TestInterfaz_GenerarReporteMuestraCadaParte(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1227,6 +1305,8 @@ func TestInterfaz_GenerarReporteMuestraCadaParte(t *testing.T) {
 // actual y muestra cada parte del reporte en su propio contenedor, sin tocar
 // los ids del reporte del proyecto (HU-38).
 
+// HU-39 · CA-39.8 · Verifica que la sección "Reportes" tenga el botón "Generar
+// reporte del sprint" y un lugar para cada parte del reporte del sprint.
 func TestInterfaz_SeccionReportesConElBotonGenerarReporteDelSprint(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1258,6 +1338,8 @@ func TestInterfaz_SeccionReportesConElBotonGenerarReporteDelSprint(t *testing.T)
 	}
 }
 
+// HU-39 · CA-39.8 · Verifica que "Generar reporte del sprint" llame a /reporte
+// con el sprint actual.
 func TestInterfaz_GenerarReporteDelSprintLlamaALaAPIConElSprintActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1268,6 +1350,8 @@ func TestInterfaz_GenerarReporteDelSprintLlamaALaAPIConElSprintActual(t *testing
 	}
 }
 
+// HU-39 · CA-39.8 · Verifica que el reporte del sprint muestre cada parte,
+// incluido el objetivo del sprint.
 func TestInterfaz_GenerarReporteDelSprintMuestraCadaParte(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1309,6 +1393,9 @@ func seccionReportes(t *testing.T) string {
 	return page[inicio : inicio+fin]
 }
 
+// HU-49 · CA-49.7 · Verifica que los reportes del proyecto y del sprint tengan la
+// tabla de historias, con sus columnas y su cantidad, entre las métricas y los
+// esfuerzos.
 func TestInterfaz_ReportesTienenLaTablaDeHistorias(t *testing.T) {
 	seccion := seccionReportes(t)
 
@@ -1334,6 +1421,8 @@ func TestInterfaz_ReportesTienenLaTablaDeHistorias(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.7 · Verifica que los dos reportes muestren las historias y las
+// cantidades, o el aviso de que no hay historias.
 func TestInterfaz_GenerarLosReportesMuestraLasHistorias(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1356,9 +1445,9 @@ func TestInterfaz_GenerarLosReportesMuestraLasHistorias(t *testing.T) {
 	}
 }
 
-// CA-49.4 y CA-49.7 · La fila de una historia del reporte muestra "—" en SP si
-// no está estimada y en Sprint si no está asignada, como la tabla del backlog,
-// y las horas estimadas.
+// HU-49 · CA-49.7 · Verifica que la fila de una historia del reporte muestre "—"
+// en SP si no está estimada y en Sprint si no está asignada, como la tabla del
+// backlog, y las horas estimadas. También cubre CA-49.4.
 func TestInterfaz_FilaDeHistoriaDelReporteIndicaSinEstimarYSinSprint(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1396,6 +1485,8 @@ func TestInterfaz_FilaDeHistoriaDelReporteIndicaSinEstimarYSinSprint(t *testing.
 // que pide GET /proyectos/{id}/reporte/pdf con el proyecto actual y descarga
 // el archivo, sin tocar los ids del reporte del proyecto (HU-38).
 
+// HU-40 · CA-40.1 · Verifica que la sección "Reportes" tenga el botón
+// "Descargar PDF", junto a "Generar reporte".
 func TestInterfaz_SeccionReportesConElBotonDescargarPDF(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1419,6 +1510,8 @@ func TestInterfaz_SeccionReportesConElBotonDescargarPDF(t *testing.T) {
 	}
 }
 
+// HU-40 · CA-40.1 · Verifica que "Descargar PDF" llame a /reporte/pdf con el
+// proyecto actual y descargue el archivo reporte-proyecto-N.pdf.
 func TestInterfaz_DescargarPDFLlamaALaAPIConElProyectoActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1447,8 +1540,9 @@ func TestInterfaz_DescargarPDFLlamaALaAPIConElProyectoActual(t *testing.T) {
 // botón "Ver ítems completados", que deja ese sprint como sprint actual y
 // avisa el cambio en el mensaje (ajuste del Agile Enabler en la SDD).
 
-// CA-14.6 · La sección "Sprints" tiene el botón y la tabla de sprints, con sus
-// columnas, y conserva el botón "Ver ítems completados" de HU-12.
+// HU-14 · CA-14.6 · Verifica que la sección "Sprints" tenga el botón y la tabla
+// de sprints, con sus columnas, y conserve el botón "Ver ítems completados" de
+// HU-12.
 func TestInterfaz_SeccionSprintsTieneElBotonVerSprintsDelProyecto(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1474,8 +1568,9 @@ func TestInterfaz_SeccionSprintsTieneElBotonVerSprintsDelProyecto(t *testing.T) 
 	}
 }
 
-// CA-14.1, CA-14.2 y CA-14.6 · "Ver sprints del proyecto" llama a la ruta
-// nueva con el proyecto actual, llena la tabla e informa la cantidad.
+// HU-14 · CA-14.6 · Verifica que "Ver sprints del proyecto" llame a la ruta
+// nueva con el proyecto actual, llene la tabla e informe la cantidad. También
+// cubre CA-14.1 y CA-14.2.
 func TestInterfaz_VerSprintsLlamaALaAPIConElProyectoActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 	body := handlerBody(t, js, "ver-sprints")
@@ -1499,9 +1594,10 @@ func TestInterfaz_VerSprintsLlamaALaAPIConElProyectoActual(t *testing.T) {
 	}
 }
 
-// CA-14.3 y CA-14.6 · El botón de cada fila deja el sprint como sprint actual
-// (mostrarSprint), muestra sus ítems completados con la consulta de HU-12 y
-// avisa "Sprint N seleccionado: M ítem(s) completado(s).".
+// HU-14 · CA-14.3 · Verifica que el botón de cada fila deje el sprint como sprint
+// actual (mostrarSprint), muestre sus ítems completados con la consulta de
+// HU-12 y avise "Sprint N seleccionado: M ítem(s) completado(s).". También
+// cubre CA-14.6.
 func TestInterfaz_FilaDeSprintSeleccionaElSprintYMuestraSusCompletados(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 	body := handlerBody(t, js, "ver-sprints")
@@ -1519,8 +1615,8 @@ func TestInterfaz_FilaDeSprintSeleccionaElSprintYMuestraSusCompletados(t *testin
 	}
 }
 
-// CA-14.3 · La consulta de los ítems completados es una sola función, que usan
-// el botón de HU-12 y el de cada fila.
+// HU-14 · CA-14.3 · Verifica que la consulta de los ítems completados sea una
+// sola función, que usan el botón de HU-12 y el de cada fila.
 func TestInterfaz_CompletadosCompartidosPorLosDosBotones(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1541,6 +1637,8 @@ func TestInterfaz_CompletadosCompartidosPorLosDosBotones(t *testing.T) {
 // "Registrar integrante", que llama a POST /proyectos/{id}/integrantes con el
 // proyecto actual.
 
+// HU-15 · CA-15.7 · Verifica que la sección "Integrantes" tenga el formulario
+// "Registrar integrante", con el nombre y los tres roles.
 func TestInterfaz_SeccionIntegrantesConElFormularioDeRegistro(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1570,6 +1668,8 @@ func TestInterfaz_SeccionIntegrantesConElFormularioDeRegistro(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.7 · Verifica que "Registrar integrante" llame a /integrantes
+// con el proyecto actual y muestre el integrante registrado.
 func TestInterfaz_RegistrarIntegranteLlamaALaAPIConElProyectoActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1591,6 +1691,8 @@ func TestInterfaz_RegistrarIntegranteLlamaALaAPIConElProyectoActual(t *testing.T
 // esfuerzo", con el ID del esfuerzo y las horas, que llama a
 // PATCH /esfuerzos/{id}/horas.
 
+// HU-28 · CA-28.7 · Verifica que el formulario "Corregir esfuerzo" esté en la
+// sección Sprints, entre "Registrar esfuerzo" y "Consultar esfuerzos".
 func TestInterfaz_FormularioCorregirEsfuerzoEnSprints(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1616,6 +1718,8 @@ func TestInterfaz_FormularioCorregirEsfuerzoEnSprints(t *testing.T) {
 	}
 }
 
+// HU-28 · CA-28.7 · Verifica que "Corregir esfuerzo" envíe el PATCH a
+// /esfuerzos/{id}/horas y muestre el esfuerzo corregido.
 func TestInterfaz_CorregirEsfuerzoLlamaALaAPI(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
@@ -1632,8 +1736,9 @@ func TestInterfaz_CorregirEsfuerzoLlamaALaAPI(t *testing.T) {
 // integrantes del proyecto", que llena una tabla con el ID, el nombre y el
 // rol legible de los integrantes del proyecto actual.
 
-// CA-17.6 · El botón y la tabla están en la sección "Integrantes", después
-// del formulario "Modificar integrante" y antes del mensaje.
+// HU-17 · CA-17.6 · Verifica que el botón y la tabla estén en la sección
+// "Integrantes", después del formulario "Modificar integrante" y antes del
+// mensaje.
 func TestInterfaz_SeccionIntegrantesTieneElBotonVerIntegrantes(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -1663,9 +1768,9 @@ func TestInterfaz_SeccionIntegrantesTieneElBotonVerIntegrantes(t *testing.T) {
 	}
 }
 
-// CA-17.1, CA-17.2 y CA-17.6 · "Ver integrantes del proyecto" llama a la ruta
-// con el proyecto actual, llena la tabla con el rol legible e informa la
-// cantidad.
+// HU-17 · CA-17.6 · Verifica que "Ver integrantes del proyecto" llame a la ruta
+// con el proyecto actual, llene la tabla con el rol legible e informe la
+// cantidad. También cubre CA-17.1 y CA-17.2.
 func TestInterfaz_VerIntegrantesLlamaALaAPIConElProyectoActual(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 	body := handlerBody(t, js, "ver-integrantes")

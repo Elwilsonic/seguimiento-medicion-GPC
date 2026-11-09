@@ -59,7 +59,9 @@ func savedSprint(t *testing.T, repo *MemoryRepository, id int) Sprint {
 	return Sprint{}
 }
 
-// CA-10.1, RN-10.1, RN-10.2 y RN-10.7
+// HU-10 · CA-10.1 · Verifica que el primer sprint válido quede guardado con ID 1,
+// estado ABIERTO y nombre y Sprint Goal sin espacios en los extremos.
+// También cubre RN-10.1, RN-10.2 y RN-10.7.
 func TestCreate_SprintValidoQuedaConID1EstadoAbiertoYCamposSinEspacios(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -96,7 +98,8 @@ func TestCreate_SprintValidoQuedaConID1EstadoAbiertoYCamposSinEspacios(t *testin
 	}
 }
 
-// RN-10.6
+// HU-10 · RN-10.6 · Verifica que los IDs sean correlativos y globales: sprints
+// de dos proyectos distintos reciben 1 y 2.
 func TestCreate_IDsCorrelativosYGlobalesEntreProyectos(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	firstProject := createTestProject(t, projects, "Sistema de ventas")
@@ -120,7 +123,8 @@ func TestCreate_IDsCorrelativosYGlobalesEntreProyectos(t *testing.T) {
 	}
 }
 
-// CA-10.4, RN-10.1
+// HU-10 · CA-10.4 · Verifica que un nombre vacío o con solo espacios devuelva
+// ErrEmptyName y no guarde el sprint. También cubre RN-10.1.
 func TestCreate_NombreVacioDevuelveErrEmptyName(t *testing.T) {
 	cases := map[string]string{
 		"vacío":              "",
@@ -144,7 +148,8 @@ func TestCreate_NombreVacioDevuelveErrEmptyName(t *testing.T) {
 	}
 }
 
-// CA-10.4, RN-10.2
+// HU-10 · CA-10.4 · Verifica que un Sprint Goal vacío o con solo espacios
+// devuelva ErrEmptyGoal y no guarde el sprint. También cubre RN-10.2.
 func TestCreate_SprintGoalVacioDevuelveErrEmptyGoal(t *testing.T) {
 	cases := map[string]string{
 		"vacío":              "",
@@ -168,7 +173,8 @@ func TestCreate_SprintGoalVacioDevuelveErrEmptyGoal(t *testing.T) {
 	}
 }
 
-// CA-10.2, RN-10.3
+// HU-10 · CA-10.2 · Verifica que sin fecha de inicio se devuelva
+// ErrMissingStartDate y no se guarde el sprint. También cubre RN-10.3.
 func TestCreate_FechaInicioAusenteDevuelveErrMissingStartDate(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -183,7 +189,8 @@ func TestCreate_FechaInicioAusenteDevuelveErrMissingStartDate(t *testing.T) {
 	}
 }
 
-// CA-10.2, RN-10.3
+// HU-10 · CA-10.2 · Verifica que sin fecha de fin se devuelva
+// ErrMissingEndDate y no se guarde el sprint. También cubre RN-10.3.
 func TestCreate_FechaFinAusenteDevuelveErrMissingEndDate(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -198,7 +205,8 @@ func TestCreate_FechaFinAusenteDevuelveErrMissingEndDate(t *testing.T) {
 	}
 }
 
-// CA-10.2, RN-10.3
+// HU-10 · CA-10.2 · Verifica que una fecha de fin igual o anterior a la de
+// inicio devuelva ErrEndNotAfterStart y no guarde el sprint. También cubre RN-10.3.
 func TestCreate_FinNoPosteriorAlInicioDevuelveErrEndNotAfterStart(t *testing.T) {
 	cases := map[string]time.Time{
 		"fin igual al inicio":    validStart,
@@ -221,7 +229,8 @@ func TestCreate_FinNoPosteriorAlInicioDevuelveErrEndNotAfterStart(t *testing.T) 
 	}
 }
 
-// CA-10.5
+// HU-10 · CA-10.5 · Verifica que un proyecto inexistente, con ID 0 o negativo,
+// devuelva ErrProjectNotFound y no guarde el sprint.
 func TestCreate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	cases := map[string]int{
 		"ID inexistente": 999,
@@ -245,7 +254,8 @@ func TestCreate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
-// CA-10.5
+// HU-10 · CA-10.5 · Verifica que, sin ningún proyecto creado, se devuelva
+// ErrProjectNotFound y no se guarde el sprint.
 func TestCreate_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	manager, repo, _, _ := newTestManager()
 
@@ -259,7 +269,7 @@ func TestCreate_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
-// RN-10.4
+// HU-10 · RN-10.4 · Verifica que un proyecto FINALIZADO acepte sprints nuevos.
 func TestCreate_ProyectoFinalizadoAceptaSprints(t *testing.T) {
 	manager, repo, _, projectRepo := newTestManager()
 
@@ -281,7 +291,9 @@ func TestCreate_ProyectoFinalizadoAceptaSprints(t *testing.T) {
 	}
 }
 
-// CA-10.3, RN-10.5
+// HU-10 · CA-10.3 · Verifica que un segundo sprint abierto en el mismo proyecto
+// devuelva ErrOpenSprintExists, no se guarde y el primero siga ABIERTO.
+// También cubre RN-10.5.
 func TestCreate_SegundoSprintAbiertoEnElMismoProyectoDevuelveErrOpenSprintExists(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -304,7 +316,8 @@ func TestCreate_SegundoSprintAbiertoEnElMismoProyectoDevuelveErrOpenSprintExists
 	}
 }
 
-// RN-10.5
+// HU-10 · RN-10.5 · Verifica que un sprint abierto en otro proyecto no impida
+// crear uno en este.
 func TestCreate_SprintAbiertoEnOtroProyectoNoImpide(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	firstProject := createTestProject(t, projects, "Sistema de ventas")
@@ -324,7 +337,8 @@ func TestCreate_SprintAbiertoEnOtroProyectoNoImpide(t *testing.T) {
 	}
 }
 
-// RN-10.1
+// HU-10 · RN-10.1 · Verifica que se pueda repetir el nombre de un sprint
+// anterior del mismo proyecto, ya CERRADO.
 func TestCreate_NombreRepetidoEnElMismoProyectoConElAnteriorCerradoSePermite(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -353,7 +367,8 @@ func TestCreate_NombreRepetidoEnElMismoProyectoConElAnteriorCerradoSePermite(t *
 	}
 }
 
-// Orden de validación de la SDD
+// HU-10 · Error · Verifica que, con varios datos inválidos, se informe el
+// primer error según el orden de validación de la SDD.
 func TestCreate_InformaElPrimerErrorSegunElOrdenDeValidacion(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -387,7 +402,8 @@ func TestCreate_InformaElPrimerErrorSegunElOrdenDeValidacion(t *testing.T) {
 	}
 }
 
-// CA-10.7, RN-10.8
+// HU-10 · CA-10.7 · Verifica que modificar el sprint devuelto no altere el
+// guardado. También cubre RN-10.8.
 func TestCreate_ModificarElSprintDevueltoNoAlteraElGuardado(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -417,7 +433,9 @@ func TestCreate_ModificarElSprintDevueltoNoAlteraElGuardado(t *testing.T) {
 	}
 }
 
-// CA-10.6
+// HU-10 · CA-10.6 · Verifica que, de 50 creaciones simultáneas en el mismo
+// proyecto, una tenga éxito, las demás devuelvan ErrOpenSprintExists y quede
+// un solo sprint ABIERTO.
 func TestCreate_CreacionesSimultaneasEnElMismoProyectoDejanUnSoloSprintAbierto(t *testing.T) {
 	const attempts = 50
 	manager, repo, projects, _ := newTestManager()
@@ -458,7 +476,9 @@ func TestCreate_CreacionesSimultaneasEnElMismoProyectoDejanUnSoloSprintAbierto(t
 	}
 }
 
-// CA-10.6
+// HU-10 · CA-10.3 · Verifica que 50 creaciones simultáneas en proyectos
+// distintos se guarden todas, con IDs distintos: un sprint abierto en otro
+// proyecto no lo impide.
 func TestCreate_CreacionesSimultaneasEnProyectosDistintosSeCreanTodas(t *testing.T) {
 	const attempts = 50
 	manager, repo, projects, _ := newTestManager()
@@ -527,7 +547,8 @@ func (r failingRepository) Update(sprint Sprint) (Sprint, error) {
 
 var errRepository = errors.New("falla del repositorio")
 
-// CA-10.8
+// HU-10 · CA-10.8 · Verifica que, si el repositorio falla al guardar, se
+// devuelva ese error y un sprint vacío.
 func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
@@ -546,7 +567,8 @@ func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
 	}
 }
 
-// CA-10.8
+// HU-10 · Error · Verifica que, si el repositorio falla al consultar el
+// sprint abierto, se devuelva ese error y un sprint vacío.
 func TestCreate_ErrorDelRepositorioAlConsultarElSprintAbiertoSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
