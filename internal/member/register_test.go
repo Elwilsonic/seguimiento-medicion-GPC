@@ -75,6 +75,7 @@ func (e *memberEnv) stored(t *testing.T, projectID int) []Member {
 	return list
 }
 
+// HU-15 · CA-15.1 · Verifica que se registre un integrante con nombre y rol válidos y quede guardado con su ID y su proyecto.
 // CA-15.1 · Se registra con nombre y rol válidos.
 func TestRegister_GuardaElIntegranteConNombreYRol(t *testing.T) {
 	e := newMemberEnv(t)
@@ -90,6 +91,7 @@ func TestRegister_GuardaElIntegranteConNombreYRol(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.1 · Verifica que se acepten los tres roles y que los IDs sean correlativos.
 // CA-15.1 · Los tres roles son válidos y los IDs son correlativos.
 func TestRegister_AceptaLosTresRolesConIDsCorrelativos(t *testing.T) {
 	e := newMemberEnv(t)
@@ -109,6 +111,7 @@ func TestRegister_AceptaLosTresRolesConIDsCorrelativos(t *testing.T) {
 	}
 }
 
+// HU-15 · RN-15.1 · Verifica que el nombre se guarde sin espacios en los extremos y que el rol se normalice a mayúsculas.
 // RN-15.1 y RN-15.2 · El nombre se guarda sin espacios en los extremos y el
 // rol se normaliza.
 func TestRegister_NormalizaElNombreYElRol(t *testing.T) {
@@ -133,6 +136,7 @@ func TestRegister_NormalizaElNombreYElRol(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.2 · Verifica que un nombre vacío, un rol vacío o un rol inválido devuelvan su error y no guarden nada.
 // CA-15.2 · Nombre y rol son obligatorios, y el rol tiene que ser válido.
 func TestRegister_RechazaNombreORolInvalidos(t *testing.T) {
 	cases := []struct {
@@ -165,6 +169,7 @@ func TestRegister_RechazaNombreORolInvalidos(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.3 · Verifica que el mismo nombre en el proyecto, sin distinguir mayúsculas y con cualquier rol, devuelva ErrDuplicateMember.
 // CA-15.3 · El mismo nombre en el proyecto, sin distinguir mayúsculas y con
 // cualquier rol, es un duplicado.
 func TestRegister_RechazaElMismoNombreEnElProyecto(t *testing.T) {
@@ -192,6 +197,7 @@ func TestRegister_RechazaElMismoNombreEnElProyecto(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.3 · Verifica que el mismo nombre se acepte en otro proyecto.
 // CA-15.3 · El mismo nombre en otro proyecto se acepta.
 func TestRegister_AceptaElMismoNombreEnOtroProyecto(t *testing.T) {
 	e := newMemberEnv(t)
@@ -204,6 +210,7 @@ func TestRegister_AceptaElMismoNombreEnOtroProyecto(t *testing.T) {
 	}
 }
 
+// HU-15 · RN-15.5 · Verifica que se acepten dos integrantes con el mismo rol en el mismo proyecto.
 // RN-15.5 · No hay límite por rol: dos Agile Enabler en el mismo proyecto.
 func TestRegister_AceptaDosIntegrantesConElMismoRol(t *testing.T) {
 	e := newMemberEnv(t)
@@ -216,6 +223,7 @@ func TestRegister_AceptaDosIntegrantesConElMismoRol(t *testing.T) {
 	}
 }
 
+// HU-15 · RN-15.6 · Verifica que se pueda registrar un integrante en un proyecto FINALIZADO.
 // RN-15.6 · Se registra en un proyecto FINALIZADO.
 func TestRegister_AceptaUnProyectoFinalizado(t *testing.T) {
 	e := newMemberEnv(t)
@@ -230,6 +238,7 @@ func TestRegister_AceptaUnProyectoFinalizado(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.4 · Verifica que un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound y no guarde nada.
 // CA-15.4 · Un proyecto inexistente, 0 o negativo devuelve
 // project.ErrProjectNotFound y no se guarda nada.
 func TestRegister_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
@@ -247,6 +256,7 @@ func TestRegister_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
+// HU-15 · RN-15.8 · Verifica que el nombre se valide antes que el proyecto: con los dos inválidos, se devuelve ErrEmptyName.
 // RN-15.8 · Los datos se validan antes que el proyecto.
 func TestRegister_NombreVacioEnProyectoInexistenteDevuelveErrEmptyName(t *testing.T) {
 	e := newMemberEnv(t)
@@ -258,6 +268,7 @@ func TestRegister_NombreVacioEnProyectoInexistenteDevuelveErrEmptyName(t *testin
 	}
 }
 
+// HU-15 · CA-15.5 · Verifica que modificar el integrante devuelto no cambie lo guardado.
 // CA-15.5 · Register devuelve una copia: modificarla no cambia lo guardado.
 func TestRegister_DevuelveUnaCopia(t *testing.T) {
 	e := newMemberEnv(t)
@@ -272,6 +283,7 @@ func TestRegister_DevuelveUnaCopia(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.5 · Verifica que, si falla la lectura de los integrantes, se devuelva ese error y no se guarde nada.
 // CA-15.5 · Si falla la lectura de los integrantes, se devuelve el error y no
 // se guarda nada.
 func TestRegister_ErrorAlLeerLosIntegrantesSePropaga(t *testing.T) {
@@ -288,6 +300,7 @@ func TestRegister_ErrorAlLeerLosIntegrantesSePropaga(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.5 · Verifica que, si falla el guardado, se devuelva ese error.
 // CA-15.5 · Si falla el guardado, se devuelve el error.
 func TestRegister_ErrorAlGuardarSePropaga(t *testing.T) {
 	e := newMemberEnv(t)
@@ -303,6 +316,7 @@ func TestRegister_ErrorAlGuardarSePropaga(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.5 · Verifica que registros simultáneos del mismo nombre no dejen un duplicado.
 // CA-15.5 y RN-15.9 · Dos registros simultáneos del mismo nombre no dejan un
 // duplicado. Corre con go test -race en el CI.
 func TestRegister_RegistrosSimultaneosNoDejanDuplicados(t *testing.T) {

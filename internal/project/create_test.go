@@ -25,6 +25,7 @@ func savedProjects(t *testing.T, repo *project.MemoryRepository) []project.Proje
 	return projects
 }
 
+// HU-01 · CA-01.1 · Verifica que un proyecto válido se cree con ID 1, su nombre, su descripción y el estado inicial PLANIFICADO.
 // CA-01.1, CA-01.4
 func TestCreate_ProyectoValidoQuedaConIDNombreDescripcionYEstadoInicial(t *testing.T) {
 	manager, _ := newManager()
@@ -48,6 +49,7 @@ func TestCreate_ProyectoValidoQuedaConIDNombreDescripcionYEstadoInicial(t *testi
 	}
 }
 
+// HU-01 · CA-01.1 · Verifica que los IDs sean correlativos y empiecen en 1.
 // CA-01.1
 func TestCreate_IDsCorrelativosEmpiezanEnUno(t *testing.T) {
 	manager, _ := newManager()
@@ -63,6 +65,7 @@ func TestCreate_IDsCorrelativosEmpiezanEnUno(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.1 · Verifica que el proyecto creado quede guardado en el repositorio con los mismos datos.
 // CA-01.1
 func TestCreate_ProyectoQuedaGuardado(t *testing.T) {
 	manager, repo := newManager()
@@ -81,6 +84,7 @@ func TestCreate_ProyectoQuedaGuardado(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.2 · Verifica que un nombre vacío o con solo espacios devuelva ErrEmptyName y no cree el proyecto.
 // CA-01.2
 func TestCreate_NombreVacioDevuelveErrEmptyName(t *testing.T) {
 	cases := map[string]string{
@@ -106,6 +110,7 @@ func TestCreate_NombreVacioDevuelveErrEmptyName(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.3 · Verifica que un nombre repetido, sin distinguir mayúsculas ni espacios en los extremos, devuelva ErrDuplicateName.
 // CA-01.3
 func TestCreate_NombreRepetidoDevuelveErrDuplicateName(t *testing.T) {
 	cases := map[string]string{
@@ -134,6 +139,7 @@ func TestCreate_NombreRepetidoDevuelveErrDuplicateName(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.3 · Verifica que un nombre con letras acentuadas y ñ, en otras mayúsculas, se detecte como repetido.
 // CA-01.3
 func TestCreate_NombreRepetidoSinDistinguirMayusculasConLetrasAcentuadas(t *testing.T) {
 	manager, _ := newManager()
@@ -148,6 +154,7 @@ func TestCreate_NombreRepetidoSinDistinguirMayusculasConLetrasAcentuadas(t *test
 	}
 }
 
+// HU-01 · CA-01.3 · Verifica que dos nombres que solo difieren en los espacios internos se consideren distintos.
 // CA-01.3 (caso límite)
 func TestCreate_NombresQueDifierenEnEspaciosInternosSonDistintos(t *testing.T) {
 	manager, repo := newManager()
@@ -203,6 +210,7 @@ func (r failingRepository) Update(p project.Project) (project.Project, error) {
 
 var errRepository = errors.New("falla del repositorio")
 
+// HU-01 · CA-01.2 · Verifica que un nombre vacío devuelva ErrEmptyName sin consultar el repositorio.
 // CA-01.2 (prioridad de errores): si el nombre está vacío, se informa
 // ErrEmptyName sin consultar el repositorio.
 func TestCreate_NombreVacioSeInformaSinConsultarElRepositorio(t *testing.T) {
@@ -215,6 +223,7 @@ func TestCreate_NombreVacioSeInformaSinConsultarElRepositorio(t *testing.T) {
 	}
 }
 
+// HU-01 · Error · Verifica que, si el repositorio falla al listar, se devuelva ese error y no se cree el proyecto.
 // Condición de error: si el repositorio falla al listar, se devuelve su error
 // y no se crea el proyecto.
 func TestCreate_ErrorDelRepositorioAlListarSeDevuelve(t *testing.T) {
@@ -230,6 +239,7 @@ func TestCreate_ErrorDelRepositorioAlListarSeDevuelve(t *testing.T) {
 	}
 }
 
+// HU-01 · Error · Verifica que, si el repositorio falla al guardar, se devuelva ese error y no se cree el proyecto.
 // Condición de error: si el repositorio falla al guardar, se devuelve su error
 // y no se crea el proyecto.
 func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
@@ -245,6 +255,7 @@ func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.5 · Verifica que el nombre se guarde sin los espacios ni tabulaciones de los extremos.
 // CA-01.5
 func TestCreate_NombreSeGuardaSinEspaciosEnLosExtremos(t *testing.T) {
 	manager, repo := newManager()
@@ -262,6 +273,7 @@ func TestCreate_NombreSeGuardaSinEspaciosEnLosExtremos(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.5 · Verifica que el espacio no separable de los extremos también se quite del nombre guardado.
 // CA-01.3 (#73): el espacio no separable cuenta como espacio en los extremos.
 func TestCreate_NombreSeGuardaSinEspaciosNoSeparablesEnLosExtremos(t *testing.T) {
 	manager, repo := newManager()
@@ -279,6 +291,7 @@ func TestCreate_NombreSeGuardaSinEspaciosNoSeparablesEnLosExtremos(t *testing.T)
 	}
 }
 
+// HU-01 · CA-01.5 · Verifica que la descripción se guarde tal como llega, vacía o con espacios en los extremos.
 // CA-01.5
 func TestCreate_DescripcionSeGuardaTalComoLlega(t *testing.T) {
 	cases := map[string]string{
@@ -304,6 +317,7 @@ func TestCreate_DescripcionSeGuardaTalComoLlega(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.6 · Verifica que modificar el proyecto devuelto por Create no altere el guardado.
 // CA-01.6
 func TestCreate_ModificarElProyectoDevueltoNoAlteraElGuardado(t *testing.T) {
 	manager, repo := newManager()
@@ -322,6 +336,7 @@ func TestCreate_ModificarElProyectoDevueltoNoAlteraElGuardado(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.6 · Verifica que modificar la lista que devuelve el repositorio en memoria no altere los proyectos guardados.
 // CA-01.6
 func TestMemoryRepository_ListDevuelveCopias(t *testing.T) {
 	manager, repo := newManager()
@@ -337,6 +352,7 @@ func TestMemoryRepository_ListDevuelveCopias(t *testing.T) {
 	}
 }
 
+// HU-01 · CA-01.7 · Verifica que varias creaciones simultáneas con el mismo nombre creen un solo proyecto.
 // CA-01.7
 func TestCreate_CreacionesSimultaneasConElMismoNombreCreanUnSoloProyecto(t *testing.T) {
 	const attempts = 50
@@ -367,6 +383,7 @@ func TestCreate_CreacionesSimultaneasConElMismoNombreCreanUnSoloProyecto(t *test
 	}
 }
 
+// HU-01 · CA-01.7 · Verifica que varias creaciones simultáneas con nombres distintos reciban IDs distintos.
 // CA-01.7
 func TestCreate_CreacionesSimultaneasConNombresDistintosTienenIDsDistintos(t *testing.T) {
 	const attempts = 50
@@ -397,6 +414,7 @@ func TestCreate_CreacionesSimultaneasConNombresDistintosTienenIDsDistintos(t *te
 	}
 }
 
+// HU-01 · RN-01.6 · Verifica que los estados del proyecto sean PLANIFICADO, EN_CURSO y FINALIZADO.
 // RN-01.6
 func TestStatus_EstadosDelProyecto(t *testing.T) {
 	cases := map[project.Status]string{

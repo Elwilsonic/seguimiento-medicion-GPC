@@ -185,6 +185,7 @@ func (e *metricsEnv) tec03Sprint(t *testing.T, projectID int) sprint.Sprint {
 	return s
 }
 
+// HU-32 · CA-32.1 · Verifica que, con el ejemplo de TEC-03, un sprint dé los Story Points planificados, completados y sin estimar esperados.
 // CA-32.1, CA-32.2 y CA-32.3 · Ejemplo de TEC-03 en un sprint.
 func TestSprintStoryPoints_EjemploDeTEC03(t *testing.T) {
 	e := newMetricsEnv()
@@ -201,6 +202,7 @@ func TestSprintStoryPoints_EjemploDeTEC03(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.1 · Verifica que un sprint sume solo sus ítems, sin los de otro sprint ni los sin asignar.
 // CA-32.1 · Un sprint solo cuenta sus ítems: los de otro sprint y los sin
 // asignar no suman.
 func TestSprintStoryPoints_SoloCuentaLosItemsDelSprint(t *testing.T) {
@@ -221,6 +223,7 @@ func TestSprintStoryPoints_SoloCuentaLosItemsDelSprint(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.4 · Verifica que un sprint sin ítems devuelva 0, sin error.
 // CA-32.4 · Un sprint sin ítems devuelve cero, sin error.
 func TestSprintStoryPoints_SprintSinItemsDevuelveCero(t *testing.T) {
 	e := newMetricsEnv()
@@ -235,6 +238,7 @@ func TestSprintStoryPoints_SprintSinItemsDevuelveCero(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.7 · Verifica que un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound.
 // CA-32.7 · Un sprint inexistente, incluidos 0 y negativos, da
 // ErrSprintNotFound.
 func TestSprintStoryPoints_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
@@ -247,6 +251,7 @@ func TestSprintStoryPoints_SprintInexistenteDevuelveErrSprintNotFound(t *testing
 	}
 }
 
+// HU-32 · CA-32.1 · Verifica que el nivel proyecto sume todo el backlog, asignado o no a un sprint.
 // CA-32.1, CA-32.2 y CA-32.3 · El nivel proyecto usa todo el backlog,
 // asignado o no a un sprint (decisión de TEC-03).
 func TestProjectStoryPoints_UsaTodoElBacklog(t *testing.T) {
@@ -266,6 +271,7 @@ func TestProjectStoryPoints_UsaTodoElBacklog(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.4 · Verifica que un proyecto sin ítems devuelva 0 y la velocidad no disponible, sin error.
 // CA-32.4 y CA-32.6 · Un proyecto sin ítems devuelve cero y la velocidad no
 // está disponible, sin error.
 func TestProjectStoryPoints_ProyectoSinItemsDevuelveCero(t *testing.T) {
@@ -281,6 +287,7 @@ func TestProjectStoryPoints_ProyectoSinItemsDevuelveCero(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.5 · Verifica que la velocidad use los últimos 3 sprints cerrados del proyecto, incluidos los sin ítems, y no los de otro proyecto.
 // CA-32.5 · La velocidad usa los últimos 3 sprints cerrados del proyecto,
 // incluidos los cerrados sin ítems, y no ve los de otros proyectos.
 func TestProjectStoryPoints_VelocidadConLosUltimosSprintsCerrados(t *testing.T) {
@@ -303,6 +310,7 @@ func TestProjectStoryPoints_VelocidadConLosUltimosSprintsCerrados(t *testing.T) 
 	}
 }
 
+// HU-32 · CA-32.6 · Verifica que un sprint abierto no cuente: sin sprints cerrados, la velocidad queda como no disponible.
 // CA-32.5 y CA-32.6 · Un sprint abierto no cuenta: sin sprints cerrados la
 // velocidad no está disponible.
 func TestProjectStoryPoints_SprintAbiertoNoCuentaParaLaVelocidad(t *testing.T) {
@@ -320,6 +328,7 @@ func TestProjectStoryPoints_SprintAbiertoNoCuentaParaLaVelocidad(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.7 · Verifica que un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound.
 // CA-32.7 · Un proyecto inexistente, incluidos 0 y negativos, da
 // ErrProjectNotFound.
 func TestProjectStoryPoints_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
@@ -332,6 +341,7 @@ func TestProjectStoryPoints_ProyectoInexistenteDevuelveErrProjectNotFound(t *tes
 	}
 }
 
+// HU-32 · CA-32.7 · Verifica que consultar las métricas no modifique los ítems ni los sprints.
 // CA-32.7 · Consultar no modifica los ítems ni los sprints.
 func TestStoryPoints_NoModificaNada(t *testing.T) {
 	e := newMetricsEnv()
@@ -375,6 +385,7 @@ func (r failingItemRepository) ListByProject(int) ([]backlog.Item, error) {
 	return nil, r.err
 }
 
+// HU-32 · CA-32.7 · Verifica que, si falla el repositorio de sprints, ProjectStoryPoints devuelva ese error.
 // CA-32.7 · Si falla el repositorio de sprints, ProjectStoryPoints devuelve
 // ese error.
 func TestProjectStoryPoints_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
@@ -387,6 +398,7 @@ func TestProjectStoryPoints_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) 
 	}
 }
 
+// HU-32 · CA-32.7 · Verifica que, si falla el repositorio de ítems, las dos consultas devuelvan ese error.
 // CA-32.7 · Si falla el repositorio de ítems, las dos consultas devuelven
 // ese error.
 func TestStoryPoints_ErrorDelRepositorioDeItemsSePropaga(t *testing.T) {

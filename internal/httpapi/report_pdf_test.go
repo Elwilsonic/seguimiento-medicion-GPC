@@ -49,6 +49,7 @@ func expectPDFHas(t *testing.T, pdf []byte, texts ...string) {
 	}
 }
 
+// HU-40 · CA-40.1 · Verifica que la API responda 200 con el archivo PDF y los encabezados de descarga.
 // CA-40.1 · Responde 200 con el archivo PDF y los encabezados de descarga.
 func TestReportePDF_Devuelve200ConElArchivo(t *testing.T) {
 	h := newHandler()
@@ -79,6 +80,7 @@ func TestReportePDF_Devuelve200ConElArchivo(t *testing.T) {
 	)
 }
 
+// HU-40 · CA-40.3 · Verifica que los valores del PDF sean los mismos que los del reporte en JSON de HU-38, con el mismo redondeo.
 // CA-40.3 · Los valores del PDF son los mismos que los del reporte en JSON
 // (HU-38), con el mismo redondeo.
 func TestReportePDF_TieneLosMismosValoresQueElReporteJSON(t *testing.T) {
@@ -126,6 +128,7 @@ func TestReportePDF_TieneLosMismosValoresQueElReporteJSON(t *testing.T) {
 	)
 }
 
+// HU-40 · CA-40.6 · Verifica que un proyecto inexistente, 0 o negativo responda 404 en JSON.
 // CA-40.6 · Un proyecto inexistente, 0 o negativo devuelve 404 en JSON.
 func TestReportePDF_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
@@ -136,6 +139,7 @@ func TestReportePDF_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-40 · CA-40.1 · Verifica que un {id} no numérico responda 400 en JSON.
 // CA-40.1 · Un {id} no numérico devuelve 400 en JSON.
 func TestReportePDF_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/reporte/pdf", "")
@@ -143,6 +147,7 @@ func TestReportePDF_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-40 · CA-40.2 · Verifica que una falla al armar el reporte responda 500 sin detalle y sin un PDF a medias.
 // CA-40.2 · Una falla al armar el reporte devuelve 500 en JSON, sin detalle
 // y sin un PDF a medias.
 func TestReportePDF_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {

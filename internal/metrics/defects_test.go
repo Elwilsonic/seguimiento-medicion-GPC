@@ -48,6 +48,7 @@ func expectDefects(t *testing.T, got Defects, err error, detected, resolved int)
 	}
 }
 
+// HU-47 · CA-47.1 · Verifica que, con el ejemplo de TEC-03, un sprint cuente 2 defectos detectados y 1 resuelto.
 // CA-47.1 · Ejemplo de TEC-03: un defecto detectado y resuelto en el sprint y
 // otro abierto dan 2 detectados y 1 resuelto (RN-47.1 y RN-47.2).
 func TestSprintDefects_CuentaDetectadosYResueltosDelSprint(t *testing.T) {
@@ -63,6 +64,7 @@ func TestSprintDefects_CuentaDetectadosYResueltosDelSprint(t *testing.T) {
 	expectDefects(t, got, err, 2, 1)
 }
 
+// HU-47 · CA-47.1 · Verifica que no cuenten los defectos detectados en otro sprint del proyecto.
 // CA-47.1 · Los defectos detectados en otro sprint del proyecto no cuentan
 // (RN-47.1).
 func TestSprintDefects_NoCuentaDefectosDeOtroSprint(t *testing.T) {
@@ -79,6 +81,7 @@ func TestSprintDefects_NoCuentaDefectosDeOtroSprint(t *testing.T) {
 	expectDefects(t, got, err, 1, 0)
 }
 
+// HU-47 · RN-47.9 · Verifica que un sprint CERRADO se calcule igual, con el estado actual de los defectos.
 // CA-47.1 · Un sprint CERRADO se calcula igual, con el estado actual de los
 // defectos (RN-47.9).
 func TestSprintDefects_SprintCerradoSeCalculaIgual(t *testing.T) {
@@ -96,6 +99,7 @@ func TestSprintDefects_SprintCerradoSeCalculaIgual(t *testing.T) {
 	expectDefects(t, got, err, 1, 1)
 }
 
+// HU-47 · CA-47.2 · Verifica que el proyecto cuente todos sus defectos como detectados y los RESUELTO como resueltos.
 // CA-47.2 · El proyecto cuenta todos sus defectos como detectados y los
 // RESUELTO como resueltos (RN-47.3 y RN-47.4).
 func TestProjectDefects_CuentaTodosLosDefectosDelProyecto(t *testing.T) {
@@ -114,6 +118,7 @@ func TestProjectDefects_CuentaTodosLosDefectosDelProyecto(t *testing.T) {
 	expectDefects(t, got, err, 3, 1)
 }
 
+// HU-47 · CA-47.2 · Verifica que no cuenten los defectos de otro proyecto.
 // CA-47.2 · Los defectos de otro proyecto no cuentan (RN-47.3).
 func TestProjectDefects_NoCuentaDefectosDeOtroProyecto(t *testing.T) {
 	e := newMetricsEnv()
@@ -131,6 +136,7 @@ func TestProjectDefects_NoCuentaDefectosDeOtroProyecto(t *testing.T) {
 	expectDefects(t, got, err, 1, 0)
 }
 
+// HU-47 · CA-47.1 · Verifica que el defecto de una historia TERMINADO cuente igual en el sprint y en el proyecto.
 // CA-47.1 y CA-47.2 · El defecto de una historia TERMINADO cuenta igual
 // (casos límite de la SDD).
 func TestDefects_DefectoDeHistoriaTerminadaCuenta(t *testing.T) {
@@ -146,6 +152,7 @@ func TestDefects_DefectoDeHistoriaTerminadaCuenta(t *testing.T) {
 	expectDefects(t, got, err, 1, 1)
 }
 
+// HU-47 · CA-47.3 · Verifica que un sprint sin defectos dé cero detectados y cero resueltos, sin error.
 // CA-47.3 · Un sprint sin defectos da cero, sin error (RN-47.7).
 func TestSprintDefects_SinDefectosDaCero(t *testing.T) {
 	e := newMetricsEnv()
@@ -158,6 +165,7 @@ func TestSprintDefects_SinDefectosDaCero(t *testing.T) {
 	expectDefects(t, got, err, 0, 0)
 }
 
+// HU-47 · CA-47.3 · Verifica que un proyecto sin defectos dé cero detectados y cero resueltos, sin error.
 // CA-47.3 · Un proyecto sin defectos da cero, sin error (RN-47.7).
 func TestProjectDefects_SinDefectosDaCero(t *testing.T) {
 	e := newMetricsEnv()
@@ -168,6 +176,7 @@ func TestProjectDefects_SinDefectosDaCero(t *testing.T) {
 	expectDefects(t, got, err, 0, 0)
 }
 
+// HU-47 · CA-47.4 · Verifica que un defecto detectado en un sprint y resuelto en otro cuente en cada uno y una sola vez en el proyecto.
 // CA-47.4 · Un defecto detectado en S1 y resuelto en S2 cuenta como detectado
 // en S1, como resuelto en S2 y una vez en el proyecto (RN-47.6).
 func TestDefects_DeteccionYResolucionEnSprintsDistintos(t *testing.T) {
@@ -186,6 +195,7 @@ func TestDefects_DeteccionYResolucionEnSprintsDistintos(t *testing.T) {
 	expectDefects(t, got, err, 1, 1)
 }
 
+// HU-47 · CA-47.4 · Verifica que un defecto ABIERTO o EN_CORRECCION no cuente como resuelto, aunque tenga sprint de resolución.
 // CA-47.4 · Solo cuenta como resuelto un defecto en RESUELTO: uno ABIERTO o
 // EN_CORRECCION con sprint de resolución cargado no cuenta (RN-47.5).
 func TestDefects_SoloCuentaComoResueltoElEstadoResuelto(t *testing.T) {
@@ -203,6 +213,7 @@ func TestDefects_SoloCuentaComoResueltoElEstadoResuelto(t *testing.T) {
 	expectDefects(t, got, err, 3, 1)
 }
 
+// HU-47 · CA-47.5 · Verifica que un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound.
 // CA-47.5 · Un sprint inexistente, 0 o negativo devuelve
 // sprint.ErrSprintNotFound.
 func TestSprintDefects_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
@@ -221,6 +232,7 @@ func TestSprintDefects_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) 
 	}
 }
 
+// HU-47 · CA-47.5 · Verifica que un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound.
 // CA-47.5 · Un proyecto inexistente, 0 o negativo devuelve
 // project.ErrProjectNotFound.
 func TestProjectDefects_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
@@ -238,6 +250,7 @@ func TestProjectDefects_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing
 	}
 }
 
+// HU-47 · CA-47.5 · Verifica que consultar los defectos no modifique los defectos ni los sprints.
 // CA-47.5 · Consultar no modifica los defectos ni los sprints (RN-47.10).
 func TestDefects_ConsultarNoModificaNada(t *testing.T) {
 	e := newMetricsEnv()
@@ -289,6 +302,7 @@ func (r failingDefectListRepository) List() ([]defect.Defect, error) {
 	return nil, r.err
 }
 
+// HU-47 · Error · Verifica que, si falla la lectura de los defectos, se devuelva ese error y ningún resultado.
 // Condiciones de error de la SDD · Una falla al leer los defectos se propaga
 // y no se devuelve un resultado.
 func TestDefects_ErrorAlLeerLosDefectosSePropaga(t *testing.T) {
@@ -306,6 +320,7 @@ func TestDefects_ErrorAlLeerLosDefectosSePropaga(t *testing.T) {
 	}
 }
 
+// HU-47 · Error · Verifica que, si falla la lectura del sprint, se devuelva ese error.
 // Condiciones de error de la SDD · Una falla al leer el sprint se propaga.
 func TestSprintDefects_ErrorAlLeerElSprintSePropaga(t *testing.T) {
 	errRepo := errors.New("base caída")

@@ -48,6 +48,7 @@ func newHandlerWithProject(t *testing.T) http.Handler {
 	return h
 }
 
+// HU-15 · CA-15.7 · Verifica que registrar un integrante por la API responda 201 con el integrante guardado y normalizado.
 // CA-15.1 y CA-15.7 · Responde 201 con el integrante guardado.
 func TestRegistrarIntegrante_Devuelve201ConElIntegrante(t *testing.T) {
 	h := newHandlerWithProject(t)
@@ -58,6 +59,7 @@ func TestRegistrarIntegrante_Devuelve201ConElIntegrante(t *testing.T) {
 	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
 }
 
+// HU-15 · CA-15.2 · Verifica que un nombre o rol vacío o inválido, o un JSON inválido, responda 400 con su mensaje.
 // CA-15.2 · Nombre vacío, rol vacío o rol inválido devuelven 400.
 func TestRegistrarIntegrante_DatosInvalidosDevuelven400(t *testing.T) {
 	cases := []struct{ name, body, msg string }{
@@ -78,6 +80,7 @@ func TestRegistrarIntegrante_DatosInvalidosDevuelven400(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.4 · Verifica que un proyecto inexistente, 0 o negativo responda 404.
 // CA-15.4 · Un proyecto inexistente, 0 o negativo devuelve 404.
 func TestRegistrarIntegrante_ProyectoInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
@@ -88,6 +91,7 @@ func TestRegistrarIntegrante_ProyectoInexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-15 · CA-15.7 · Verifica que un {id} no numérico responda 400.
 // CA-15.7 · Un {id} no numérico devuelve 400.
 func TestRegistrarIntegrante_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/abc/integrantes", validMember)
@@ -95,6 +99,7 @@ func TestRegistrarIntegrante_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-15 · CA-15.3 · Verifica que registrar el mismo nombre en el proyecto responda 409.
 // CA-15.3 · El mismo nombre en el proyecto devuelve 409.
 func TestRegistrarIntegrante_DuplicadoDevuelve409(t *testing.T) {
 	h := newHandlerWithProject(t)
@@ -113,6 +118,7 @@ func (brokenMemberRepository) Save(member.Member) (member.Member, error) {
 }
 func (brokenMemberRepository) ListByProject(int) ([]member.Member, error) { return nil, errStorage }
 
+// HU-15 · CA-15.7 · Verifica que una falla del almacenamiento responda 500 sin mostrar el error interno.
 // CA-15.5 y CA-15.7 · Una falla del almacenamiento devuelve 500 sin detalle.
 func TestRegistrarIntegrante_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())

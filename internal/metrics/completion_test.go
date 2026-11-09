@@ -34,6 +34,7 @@ func expectCompletionNotAvailable(t *testing.T, got Completion) {
 	}
 }
 
+// HU-34 · CA-34.1 · Verifica que, con el ejemplo de TEC-03, 2 de 4 ítems terminados den 50 %.
 // CA-34.1 · Ejemplo de TEC-03: 2 de 4 ítems terminados = 50 %.
 func TestSprintCompletion_EjemploDeTEC03(t *testing.T) {
 	e := newMetricsEnv()
@@ -47,6 +48,7 @@ func TestSprintCompletion_EjemploDeTEC03(t *testing.T) {
 	expectCompletion(t, got, 4, 2, 50)
 }
 
+// HU-34 · CA-34.1 · Verifica que el sprint cuente solo sus ítems, sin los de otro sprint ni los sin sprint.
 // CA-34.1 y RN-34.1 · El sprint solo cuenta sus ítems: no los de otro sprint
 // ni los que no tienen sprint.
 func TestSprintCompletion_SoloCuentaLosItemsDelSprint(t *testing.T) {
@@ -66,6 +68,7 @@ func TestSprintCompletion_SoloCuentaLosItemsDelSprint(t *testing.T) {
 	expectCompletion(t, got, 2, 1, 50)
 }
 
+// HU-34 · RN-34.8 · Verifica que el porcentaje de un sprint CERRADO se calcule igual que el de uno abierto.
 // CA-34.1 y RN-34.8 · Un sprint CERRADO se calcula igual.
 func TestSprintCompletion_SprintCerradoSeCalculaIgual(t *testing.T) {
 	e := newMetricsEnv()
@@ -79,6 +82,7 @@ func TestSprintCompletion_SprintCerradoSeCalculaIgual(t *testing.T) {
 	expectCompletion(t, got, 2, 2, 100)
 }
 
+// HU-34 · CA-34.1 · Verifica que, sin ítems terminados, el porcentaje sea 0 % y esté disponible.
 // CA-34.1 · Ningún ítem terminado da 0 %, disponible.
 func TestSprintCompletion_NingunoTerminadoEsCeroDisponible(t *testing.T) {
 	e := newMetricsEnv()
@@ -95,6 +99,7 @@ func TestSprintCompletion_NingunoTerminadoEsCeroDisponible(t *testing.T) {
 	expectCompletion(t, got, 2, 0, 0)
 }
 
+// HU-34 · CA-34.3 · Verifica que un sprint sin ítems deje el porcentaje como no disponible, sin error.
 // CA-34.3 y RN-34.6 · Un sprint sin ítems no tiene porcentaje disponible, sin
 // error.
 func TestSprintCompletion_SprintSinItemsNoDisponible(t *testing.T) {
@@ -109,6 +114,7 @@ func TestSprintCompletion_SprintSinItemsNoDisponible(t *testing.T) {
 	expectCompletionNotAvailable(t, got)
 }
 
+// HU-34 · CA-34.5 · Verifica que un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound.
 // CA-34.5 · Un sprint inexistente devuelve sprint.ErrSprintNotFound.
 func TestSprintCompletion_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
 	e := newMetricsEnv()
@@ -126,6 +132,7 @@ func TestSprintCompletion_SprintInexistenteDevuelveErrSprintNotFound(t *testing.
 	}
 }
 
+// HU-34 · CA-34.2 · Verifica que el porcentaje del proyecto use todo su backlog, asignado o no a un sprint.
 // CA-34.2 y RN-34.2 · El proyecto usa todo su backlog, asignado o no a un
 // sprint.
 func TestProjectCompletion_UsaTodoElBacklog(t *testing.T) {
@@ -145,6 +152,7 @@ func TestProjectCompletion_UsaTodoElBacklog(t *testing.T) {
 	expectCompletion(t, got, 4, 2, 50)
 }
 
+// HU-34 · CA-34.2 · Verifica que solo cuenten los ítems del proyecto consultado.
 // CA-34.2 · Solo cuentan los ítems del proyecto consultado.
 func TestProjectCompletion_NoCuentaOtrosProyectos(t *testing.T) {
 	e := newMetricsEnv()
@@ -161,6 +169,7 @@ func TestProjectCompletion_NoCuentaOtrosProyectos(t *testing.T) {
 	expectCompletion(t, got, 1, 1, 100)
 }
 
+// HU-34 · CA-34.3 · Verifica que un proyecto sin ítems deje el porcentaje como no disponible, sin error.
 // CA-34.3 y RN-34.6 · Un proyecto sin ítems no tiene porcentaje disponible,
 // sin error.
 func TestProjectCompletion_ProyectoSinItemsNoDisponible(t *testing.T) {
@@ -175,6 +184,7 @@ func TestProjectCompletion_ProyectoSinItemsNoDisponible(t *testing.T) {
 	expectCompletionNotAvailable(t, got)
 }
 
+// HU-34 · CA-34.5 · Verifica que un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound.
 // CA-34.5 · Un proyecto inexistente devuelve project.ErrProjectNotFound.
 func TestProjectCompletion_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	e := newMetricsEnv()
@@ -191,6 +201,7 @@ func TestProjectCompletion_ProyectoInexistenteDevuelveErrProjectNotFound(t *test
 	}
 }
 
+// HU-34 · CA-34.4 · Verifica que los ítems sin Story Points cuenten igual en el porcentaje.
 // CA-34.4 y RN-34.4 · Los ítems sin Story Points cuentan igual.
 func TestCompletion_CuentaItemsSinStoryPoints(t *testing.T) {
 	e := newMetricsEnv()
@@ -212,6 +223,7 @@ func TestCompletion_CuentaItemsSinStoryPoints(t *testing.T) {
 	expectCompletion(t, projectGot, 2, 1, 50)
 }
 
+// HU-34 · RN-34.5 · Verifica que el dominio no redondee el porcentaje: 1 de 3 da 33,333…
 // RN-34.5 · El dominio no redondea: 1 de 3 es 33,333…
 func TestCompletion_PorcentajeSinRedondear(t *testing.T) {
 	e := newMetricsEnv()
@@ -228,6 +240,7 @@ func TestCompletion_PorcentajeSinRedondear(t *testing.T) {
 	expectCompletion(t, got, 3, 1, 100.0/3)
 }
 
+// HU-34 · CA-34.5 · Verifica que calcular el porcentaje no modifique los ítems ni los sprints.
 // CA-34.5 y RN-34.9 · Calcular no modifica los ítems ni los sprints.
 func TestCompletion_NoModificaNada(t *testing.T) {
 	e := newMetricsEnv()
@@ -263,6 +276,7 @@ func (r failingSprintGetRepository) GetByID(int) (sprint.Sprint, error) {
 	return sprint.Sprint{}, r.err
 }
 
+// HU-34 · Error · Verifica que, si falla la lectura del sprint, se devuelva ese error.
 // CA-34.5 · Una falla al leer el sprint se propaga.
 func TestSprintCompletion_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
 	errRepo := errors.New("base caída")
@@ -278,6 +292,7 @@ func TestSprintCompletion_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
 	}
 }
 
+// HU-34 · Error · Verifica que, si falla la lectura de los ítems, se devuelva ese error en el sprint y en el proyecto.
 // CA-34.5 · Una falla al leer los ítems se propaga en los dos niveles.
 func TestCompletion_ErrorDelRepositorioDeItemsSePropaga(t *testing.T) {
 	errRepo := errors.New("base caída")
