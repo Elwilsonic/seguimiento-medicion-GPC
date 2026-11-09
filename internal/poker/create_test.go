@@ -81,8 +81,8 @@ func countOpenSessions(repo *MemoryRepository, itemID int) int {
 	return count
 }
 
-// CA-21.1 · Abrir una sesión deja una sesión ABIERTA, en la ronda 1 y sin
-// votos, asociada al ítem.
+// HU-21 · CA-21.1 · Verifica que abrir una sesión deje una sesión ABIERTA, en la
+// ronda 1 y sin votos, asociada al ítem.
 func TestOpenSession_CreaSesionAbiertaSinVotos(t *testing.T) {
 	env := newTestEnv(t)
 	it := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -106,7 +106,8 @@ func TestOpenSession_CreaSesionAbiertaSinVotos(t *testing.T) {
 	}
 }
 
-// CA-21.1 · Los IDs de las sesiones son correlativos globales.
+// HU-21 · CA-21.1 · Verifica que los IDs de las sesiones sean correlativos
+// globales.
 func TestOpenSession_AsignaIDsCorrelativosGlobales(t *testing.T) {
 	env := newTestEnv(t)
 	first := env.createItem(t, "Primera historia", backlog.StatusPending, 0)
@@ -129,8 +130,8 @@ func TestOpenSession_AsignaIDsCorrelativosGlobales(t *testing.T) {
 	}
 }
 
-// CA-21.1 · Un ítem EN_CURSO con story points también se puede volver a
-// estimar.
+// HU-21 · CA-21.1 · Verifica que un ítem EN_CURSO con story points también se
+// pueda volver a estimar.
 func TestOpenSession_ItemEnCursoConStoryPoints(t *testing.T) {
 	env := newTestEnv(t)
 	it := env.createItem(t, "Historia estimada", backlog.StatusInProgress, 5)
@@ -145,7 +146,8 @@ func TestOpenSession_ItemEnCursoConStoryPoints(t *testing.T) {
 	}
 }
 
-// CA-21.4 · Un ítem inexistente se informa con el error de HU-04.
+// HU-21 · CA-21.4 · Verifica que un ítem inexistente se informe con el error
+// de HU-04.
 func TestOpenSession_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -156,7 +158,7 @@ func TestOpenSession_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-21.4 · Un ítem TERMINADO no admite una sesión nueva.
+// HU-21 · CA-21.4 · Verifica que un ítem TERMINADO no admita una sesión nueva.
 func TestOpenSession_ItemTerminadoDevuelveErrItemFinished(t *testing.T) {
 	env := newTestEnv(t)
 	it := env.createItem(t, "Historia terminada", backlog.StatusFinished, 0)
@@ -171,7 +173,8 @@ func TestOpenSession_ItemTerminadoDevuelveErrItemFinished(t *testing.T) {
 	}
 }
 
-// CA-21.2 · Un ítem no admite dos sesiones abiertas al mismo tiempo.
+// HU-21 · CA-21.2 · Verifica que un ítem no admita dos sesiones abiertas al
+// mismo tiempo.
 func TestOpenSession_SegundaSesionDevuelveErrSessionAlreadyOpen(t *testing.T) {
 	env := newTestEnv(t)
 	it := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -189,7 +192,8 @@ func TestOpenSession_SegundaSesionDevuelveErrSessionAlreadyOpen(t *testing.T) {
 	}
 }
 
-// RN-21.8 · La sesión devuelta no comparte la lista de votos con la guardada.
+// HU-21 · RN-21.8 · Verifica que la sesión devuelta no comparta la lista de
+// votos con la guardada.
 func TestOpenSession_DevuelveCopiaDeLosVotos(t *testing.T) {
 	env := newTestEnv(t)
 	it := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -209,7 +213,9 @@ func TestOpenSession_DevuelveCopiaDeLosVotos(t *testing.T) {
 	}
 }
 
-// CA-21.6 · Dos aperturas simultáneas dejan una sola sesión abierta.
+// HU-21 · CA-21.6 · Verifica que, de 20 aperturas simultáneas del mismo ítem,
+// una tenga éxito, las demás devuelvan ErrSessionAlreadyOpen y quede una sola
+// sesión abierta.
 func TestOpenSession_ConcurrenteSoloUnaSesionAbierta(t *testing.T) {
 	env := newTestEnv(t)
 	it := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -243,8 +249,8 @@ func TestOpenSession_ConcurrenteSoloUnaSesionAbierta(t *testing.T) {
 	}
 }
 
-// CA-21.5 · Las cartas son la escala de HU-20 y cada llamada devuelve una
-// copia.
+// HU-21 · CA-21.5 · Verifica que las cartas sean la escala de HU-20 y que cada
+// llamada devuelva una copia.
 func TestCards_DevuelveLaEscalaYUnaCopia(t *testing.T) {
 	want := backlog.StoryPointScale()
 
@@ -293,7 +299,8 @@ func (r failingRepository) Update(session Session) (Session, error) {
 	return r.base.Update(session)
 }
 
-// CA-21.4 · Los errores del repositorio se propagan sin convertir.
+// HU-21 · CA-21.6 · Verifica que los errores del repositorio, al buscar la
+// sesión abierta o al guardarla, se propaguen sin convertir.
 func TestOpenSession_ErrorDelRepositorioSEPropaga(t *testing.T) {
 	env := newTestEnv(t)
 	it := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)

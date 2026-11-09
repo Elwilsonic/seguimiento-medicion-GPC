@@ -34,8 +34,8 @@ func newPostgresPokerRepo(t *testing.T, pool *pgxpool.Pool) (Repository, int) {
 	return NewPostgresRepository(pool), it.ID
 }
 
-// CA-21.8 · El repositorio PostgreSQL cumple el mismo contrato que el de
-// memoria.
+// HU-21 · CA-21.8 · Verifica que el repositorio PostgreSQL cumpla el mismo
+// contrato que el de memoria.
 func TestPostgresRepository_Contrato(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	runRepositoryContract(t, func(t *testing.T) (Repository, int) {
@@ -43,7 +43,8 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 	})
 }
 
-// CA-21.8 · La clave foránea impide guardar una sesión de un ítem inexistente.
+// HU-21 · CA-21.8 · Verifica que la clave foránea impida guardar una sesión de
+// un ítem inexistente.
 func TestPostgresRepository_SaveConItemInexistenteFalla(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	repo := NewPostgresRepository(pool)

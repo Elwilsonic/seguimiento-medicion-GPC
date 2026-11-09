@@ -52,8 +52,8 @@ func (e *memberEnv) list(t *testing.T, projectID int) []Member {
 	return got
 }
 
-// CA-17.1, RN-17.1 y RN-17.3 · Se listan los integrantes con su nombre y su
-// rol, ordenados por ID.
+// HU-17 · CA-17.1 · Verifica que se listen los integrantes con su nombre y su
+// rol, ordenados por ID. También cubre RN-17.1 y RN-17.3.
 func TestList_DevuelveLosIntegrantesOrdenadosPorIDConSuRol(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana Pérez", "AGILE_ENABLER")
@@ -72,8 +72,9 @@ func TestList_DevuelveLosIntegrantesOrdenadosPorIDConSuRol(t *testing.T) {
 	}
 }
 
-// CA-17.3 y RN-17.5 · Solo se devuelven los integrantes del proyecto, aunque
-// otro proyecto tenga uno con el mismo nombre.
+// HU-17 · CA-17.3 · Verifica que solo se devuelvan los integrantes del
+// proyecto, aunque otro proyecto tenga uno con el mismo nombre. También cubre
+// RN-17.5.
 func TestList_SoloDevuelveLosIntegrantesDelProyecto(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 2, "Ana", "PRODUCT_BUILDER")
@@ -87,8 +88,8 @@ func TestList_SoloDevuelveLosIntegrantesDelProyecto(t *testing.T) {
 	}
 }
 
-// CA-17.2 y RN-17.4 · Un proyecto sin integrantes devuelve una lista vacía,
-// no nil.
+// HU-17 · CA-17.2 · Verifica que un proyecto sin integrantes devuelva una lista
+// vacía, no nil. También cubre RN-17.4.
 func TestList_ProyectoSinIntegrantesDevuelveListaVacia(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 2, "Ana", "PRODUCT_BUILDER")
@@ -100,8 +101,8 @@ func TestList_ProyectoSinIntegrantesDevuelveListaVacia(t *testing.T) {
 	}
 }
 
-// RN-17.9 · Un integrante modificado con HU-16 aparece con sus datos nuevos,
-// en la misma posición.
+// HU-17 · RN-17.9 · Verifica que un integrante modificado con HU-16 aparezca con
+// sus datos nuevos, en la misma posición.
 func TestList_MuestraLosDatosModificados(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -116,7 +117,8 @@ func TestList_MuestraLosDatosModificados(t *testing.T) {
 	}
 }
 
-// RN-17.2 · Se listan los integrantes de un proyecto FINALIZADO.
+// HU-17 · RN-17.2 · Verifica que se listen los integrantes de un proyecto
+// FINALIZADO.
 func TestList_AceptaUnProyectoFinalizado(t *testing.T) {
 	e := newMemberEnv(t)
 	ana := e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -131,8 +133,9 @@ func TestList_AceptaUnProyectoFinalizado(t *testing.T) {
 	}
 }
 
-// CA-17.4, RN-17.2 y RN-17.8 · Un proyecto inexistente, incluidos los IDs 0
-// y negativos, da ErrProjectNotFound sin leer los integrantes.
+// HU-17 · CA-17.4 · Verifica que un proyecto inexistente, incluidos los IDs 0
+// y negativos, dé ErrProjectNotFound sin leer los integrantes. También cubre
+// RN-17.2 y RN-17.8.
 func TestList_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	repo := &listStubRepository{MemoryRepository: NewMemoryRepository()}
@@ -152,8 +155,8 @@ func TestList_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
-// CA-17.5 y RN-17.6 · Modificar la lista devuelta no cambia los integrantes
-// guardados.
+// HU-17 · CA-17.5 · Verifica que modificar la lista devuelta no cambie los
+// integrantes guardados. También cubre RN-17.6.
 func TestList_ModificarLaListaNoCambiaLosIntegrantesGuardados(t *testing.T) {
 	e := newMemberEnv(t)
 	ana := e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -168,8 +171,8 @@ func TestList_ModificarLaListaNoCambiaLosIntegrantesGuardados(t *testing.T) {
 	}
 }
 
-// RN-17.8 · Una falla del repositorio de proyectos se devuelve sin leer los
-// integrantes.
+// HU-17 · RN-17.8 · Verifica que una falla del repositorio de proyectos se
+// devuelva sin leer los integrantes.
 func TestList_ErrorAlLeerElProyectoSeDevuelve(t *testing.T) {
 	projects := project.NewManager(failingProjectRepository{getErr: errStorage})
 	repo := &listStubRepository{MemoryRepository: NewMemoryRepository()}
@@ -188,8 +191,8 @@ func TestList_ErrorAlLeerElProyectoSeDevuelve(t *testing.T) {
 	}
 }
 
-// RN-17.8 · Una falla del repositorio de integrantes se devuelve sin lista
-// parcial.
+// HU-17 · RN-17.8 · Verifica que una falla del repositorio de integrantes se
+// devuelva sin lista parcial.
 func TestList_ErrorAlLeerLosIntegrantesSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
@@ -211,8 +214,9 @@ func TestList_ErrorAlLeerLosIntegrantesSeDevuelve(t *testing.T) {
 	}
 }
 
-// RN-17.7 · Consultar mientras se registran integrantes no compite con el
-// registro: la lectura va bajo el mutex del Manager (lo detecta -race).
+// HU-17 · RN-17.7 · Verifica que consultar mientras se registran integrantes no
+// compita con el registro: la lectura va bajo el mutex del Manager (lo detecta
+// -race).
 func TestList_ConsultasSimultaneasConRegistros(t *testing.T) {
 	e := newMemberEnv(t)
 	names := []string{"Ana", "Bruno", "Carla", "Diego", "Elena", "Federico", "Gabriela", "Hugo"}

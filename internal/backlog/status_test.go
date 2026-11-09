@@ -47,7 +47,8 @@ func assertOtherFieldsUnchanged(t *testing.T, got, want Item) {
 	}
 }
 
-// CA-08.1
+// HU-08 · CA-08.1 · Verifica que pasar de PENDIENTE a EN_CURSO cambie el estado
+// y conserve el resto de los campos.
 func TestManagerChangeStatus_PendienteAEnCursoConservaElRestoDeLosCampos(t *testing.T) {
 	manager, repo, _, _ := newTestManager()
 	created := seedStatusItem(t, repo, StatusPending)
@@ -66,7 +67,8 @@ func TestManagerChangeStatus_PendienteAEnCursoConservaElRestoDeLosCampos(t *test
 	}
 }
 
-// CA-08.2
+// HU-08 · CA-08.2 · Verifica que pasar de EN_CURSO a TERMINADO actualice el
+// estado.
 func TestManagerChangeStatus_EnCursoATerminado(t *testing.T) {
 	manager, repo, _, _ := newTestManager()
 	created := seedStatusItem(t, repo, StatusInProgress)
@@ -84,7 +86,8 @@ func TestManagerChangeStatus_EnCursoATerminado(t *testing.T) {
 	}
 }
 
-// CA-08.3
+// HU-08 · CA-08.3 · Verifica que volver atrás (EN_CURSO → PENDIENTE) y reabrir
+// (TERMINADO → EN_CURSO) sean transiciones válidas.
 func TestManagerChangeStatus_VolverAtrasYReabrirSonValidos(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -117,7 +120,8 @@ func TestManagerChangeStatus_VolverAtrasYReabrirSonValidos(t *testing.T) {
 	}
 }
 
-// CA-08.4
+// HU-08 · CA-08.4 · Verifica que PENDIENTE → TERMINADO y TERMINADO → PENDIENTE
+// se rechacen con ErrInvalidTransition.
 func TestManagerChangeStatus_RechazaSaltosDeDosEstados(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -144,7 +148,8 @@ func TestManagerChangeStatus_RechazaSaltosDeDosEstados(t *testing.T) {
 	}
 }
 
-// CA-08.5
+// HU-08 · CA-08.5 · Verifica que el estado se acepte sin distinguir mayúsculas
+// ni espacios de los extremos.
 func TestManagerChangeStatus_AceptaElEstadoSinMayusculasNiEspacios(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -176,7 +181,8 @@ func TestManagerChangeStatus_AceptaElEstadoSinMayusculasNiEspacios(t *testing.T)
 	}
 }
 
-// CA-08.5
+// HU-08 · CA-08.5 · Verifica que un estado vacío o inválido se rechace con
+// ErrInvalidStatus y el ítem no cambie.
 func TestManagerChangeStatus_RechazaEstadosInvalidos(t *testing.T) {
 	for _, status := range []string{"", "   ", "BLOQUEADO", "en curso"} {
 		t.Run("estado "+status, func(t *testing.T) {
@@ -195,8 +201,9 @@ func TestManagerChangeStatus_RechazaEstadosInvalidos(t *testing.T) {
 	}
 }
 
-// Restricción "Orden de validación": el estado se valida antes de consultar el
-// repositorio, así que sobre un ítem inexistente igual gana ErrInvalidStatus.
+// HU-08 · Error · Verifica que el estado se valide antes de consultar el
+// repositorio, así que sobre un ítem inexistente igual gana ErrInvalidStatus
+// (restricción "Orden de validación").
 func TestManagerChangeStatus_EstadoInvalidoSobreItemInexistenteDaErrInvalidStatus(t *testing.T) {
 	manager, _, _, _ := newTestManager()
 
@@ -207,7 +214,8 @@ func TestManagerChangeStatus_EstadoInvalidoSobreItemInexistenteDaErrInvalidStatu
 	}
 }
 
-// CA-08.6
+// HU-08 · CA-08.6 · Verifica que cambiar el estado de un ítem inexistente
+// devuelva ErrItemNotFound.
 func TestManagerChangeStatus_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 	for _, id := range []int{999, 0, -1} {
 		t.Run(fmt.Sprintf("ID %d", id), func(t *testing.T) {
@@ -226,7 +234,8 @@ func TestManagerChangeStatus_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-08.6
+// HU-08 · CA-08.6 · Verifica que, sin ningún ítem creado, se devuelva
+// ErrItemNotFound.
 func TestManagerChangeStatus_SinItemsCreadosDaErrItemNotFound(t *testing.T) {
 	manager, _, _, _ := newTestManager()
 
@@ -237,8 +246,9 @@ func TestManagerChangeStatus_SinItemsCreadosDaErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-08.7 (el repositorio falla al actualizar: si el no-op llamara a Update,
-// el cambio devolvería errRepository)
+// HU-08 · CA-08.7 · Verifica que cambiar al mismo estado no dé error y no llame
+// a Update (el repositorio falla al actualizar: si el no-op llamara a Update,
+// el cambio devolvería errRepository).
 func TestManagerChangeStatus_MismoEstadoEsNoOpYNoLlamaAUpdate(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	repo := NewMemoryRepository()
@@ -259,7 +269,8 @@ func TestManagerChangeStatus_MismoEstadoEsNoOpYNoLlamaAUpdate(t *testing.T) {
 	}
 }
 
-// CA-08.8
+// HU-08 · CA-08.8 · Verifica que el cambio quede guardado y que modificar el
+// ítem devuelto no altere el guardado.
 func TestManagerChangeStatus_CambioQuedaGuardadoYElResultadoEsCopia(t *testing.T) {
 	manager, repo, _, _ := newTestManager()
 	created := seedStatusItem(t, repo, StatusPending)
@@ -292,7 +303,8 @@ func TestManagerChangeStatus_CambioQuedaGuardadoYElResultadoEsCopia(t *testing.T
 	}
 }
 
-// CA-08.9
+// HU-08 · CA-08.9 · Verifica que, de 50 cambios simultáneos de PENDIENTE a
+// EN_CURSO, ninguno falle y el ítem quede EN_CURSO.
 func TestManagerChangeStatus_CambiosSimultaneosAlMismoEstado(t *testing.T) {
 	manager, repo, _, _ := newTestManager()
 	created := seedStatusItem(t, repo, StatusPending)
@@ -319,7 +331,8 @@ func TestManagerChangeStatus_CambiosSimultaneosAlMismoEstado(t *testing.T) {
 	}
 }
 
-// CA-08.10 (error del repositorio al buscar)
+// HU-08 · CA-08.10 · Verifica que, si el repositorio falla al buscar, se
+// devuelva ese error.
 func TestManagerChangeStatus_ErrorDelRepositorioAlBuscarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	manager := NewManager(failingRepository{getErr: errRepository}, projects)
@@ -334,7 +347,8 @@ func TestManagerChangeStatus_ErrorDelRepositorioAlBuscarSeDevuelve(t *testing.T)
 	}
 }
 
-// CA-08.10 (error del repositorio al actualizar)
+// HU-08 · CA-08.10 · Verifica que, si el repositorio falla al actualizar, se
+// devuelva ese error y el estado no cambie.
 func TestManagerChangeStatus_ErrorDelRepositorioAlActualizarSeDevuelveYNoCambiaElEstado(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	repo := NewMemoryRepository()

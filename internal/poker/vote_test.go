@@ -19,6 +19,9 @@ func openTestSession(t *testing.T) (*testEnv, Session) {
 	return env, session
 }
 
+// HU-22 · CA-22.1 · Verifica que un voto con una carta de la escala se guarde
+// y que la sesión devuelta no muestre ningún voto. También cubre CA-22.2 y
+// RN-22.8.
 func TestVote_VotoValidoPermaneceOculto(t *testing.T) {
 	env, session := openTestSession(t)
 
@@ -39,6 +42,9 @@ func TestVote_VotoValidoPermaneceOculto(t *testing.T) {
 	}
 }
 
+// HU-22 · CA-22.3 · Verifica que un segundo voto del mismo integrante, sin
+// distinguir mayúsculas, reemplace al anterior sin duplicarlo y guarde el nombre
+// recortado. También cubre RN-22.3.
 func TestVote_ReemplazaVotoYGuardaNombreRecortado(t *testing.T) {
 	env, session := openTestSession(t)
 	if _, err := env.manager.Vote(session.ID, "Ana", 5); err != nil {
@@ -62,6 +68,8 @@ func TestVote_ReemplazaVotoYGuardaNombreRecortado(t *testing.T) {
 	}
 }
 
+// HU-22 · CA-22.4 · Verifica que un votante con solo espacios devuelva
+// ErrEmptyVoter. También cubre RN-22.1.
 func TestVote_VotanteVacioDevuelveError(t *testing.T) {
 	env, session := openTestSession(t)
 
@@ -72,6 +80,8 @@ func TestVote_VotanteVacioDevuelveError(t *testing.T) {
 	}
 }
 
+// HU-22 · CA-22.4 · Verifica que una carta fuera de la escala devuelva
+// ErrInvalidCard. También cubre RN-22.2.
 func TestVote_CartaInvalidaDevuelveError(t *testing.T) {
 	env, session := openTestSession(t)
 
@@ -82,6 +92,8 @@ func TestVote_CartaInvalidaDevuelveError(t *testing.T) {
 	}
 }
 
+// HU-22 · CA-22.5 · Verifica que votar en una sesión inexistente devuelva
+// ErrSessionNotFound. También cubre RN-22.4.
 func TestVote_SesionInexistenteDevuelveError(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -92,6 +104,8 @@ func TestVote_SesionInexistenteDevuelveError(t *testing.T) {
 	}
 }
 
+// HU-22 · CA-22.5 · Verifica que votar en una sesión que no está ABIERTA
+// devuelva ErrSessionNotOpen. También cubre RN-22.5.
 func TestVote_SesionNoAbiertaDevuelveError(t *testing.T) {
 	env, session := openTestSession(t)
 	session.Status = Status("REVELADA")
@@ -118,6 +132,8 @@ func (r *failingVoteRepository) Update(session Session) (Session, error) {
 	return r.MemoryRepository.Update(session)
 }
 
+// HU-22 · CA-22.5 · Verifica que, si falla el guardado, se devuelva el error
+// del repositorio y la sesión guardada no cambie.
 func TestVote_ErrorAlGuardarPropagaErrorYSesionNoSeModifica(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -144,6 +160,8 @@ func TestVote_ErrorAlGuardarPropagaErrorYSesionNoSeModifica(t *testing.T) {
 	}
 }
 
+// HU-22 · CA-22.6 · Verifica que los votos simultáneos de dos integrantes
+// distintos se guarden los dos. También cubre RN-22.7.
 func TestVote_ConcurrenteConservaVotosDeIntegrantesDistintos(t *testing.T) {
 	env, session := openTestSession(t)
 	var wg sync.WaitGroup

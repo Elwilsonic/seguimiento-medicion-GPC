@@ -37,8 +37,9 @@ func (r failingProjectRepository) GetByID(id int) (project.Project, error) {
 	return project.Project{}, r.getErr
 }
 
-// CA-14.1, RN-14.1 y RN-14.3 · History devuelve los sprints cerrados y el
-// abierto, ordenados por ID, con todos sus datos.
+// HU-14 · CA-14.1 · Verifica que History devuelva los sprints cerrados y el
+// abierto, ordenados por ID, con todos sus datos. También cubre RN-14.1 y
+// RN-14.3.
 func TestHistory_DevuelveLosSprintsAbiertosYCerradosOrdenadosPorID(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -68,7 +69,8 @@ func TestHistory_DevuelveLosSprintsAbiertosYCerradosOrdenadosPorID(t *testing.T)
 	}
 }
 
-// CA-14.1 · Solo se devuelven los sprints del proyecto consultado.
+// HU-14 · CA-14.1 · Verifica que solo se devuelvan los sprints del proyecto
+// consultado.
 func TestHistory_SoloDevuelveLosSprintsDelProyecto(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	ventas := createTestProject(t, projects, "Sistema de ventas")
@@ -91,7 +93,8 @@ func TestHistory_SoloDevuelveLosSprintsDelProyecto(t *testing.T) {
 	}
 }
 
-// CA-14.2 y RN-14.4 · Un proyecto sin sprints devuelve una lista vacía, no nil.
+// HU-14 · CA-14.2 · Verifica que un proyecto sin sprints devuelva una lista
+// vacía, no nil. También cubre RN-14.4.
 func TestHistory_ProyectoSinSprintsDevuelveListaVacia(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -106,8 +109,9 @@ func TestHistory_ProyectoSinSprintsDevuelveListaVacia(t *testing.T) {
 	}
 }
 
-// CA-14.4, RN-14.2 y RN-14.7 · Un proyecto inexistente, incluidos los IDs 0
-// y negativos, da ErrProjectNotFound sin leer los sprints.
+// HU-14 · CA-14.4 · Verifica que un proyecto inexistente, incluidos los IDs 0
+// y negativos, dé ErrProjectNotFound sin leer los sprints. También cubre
+// RN-14.2 y RN-14.7.
 func TestHistory_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -128,8 +132,8 @@ func TestHistory_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
-// CA-14.5 y RN-14.5 · Modificar la lista devuelta no cambia los sprints
-// guardados.
+// HU-14 · CA-14.5 · Verifica que modificar la lista devuelta no cambie los
+// sprints guardados. También cubre RN-14.5.
 func TestHistory_ModificarLaListaNoCambiaLosSprintsGuardados(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -157,8 +161,8 @@ func TestHistory_ModificarLaListaNoCambiaLosSprintsGuardados(t *testing.T) {
 	}
 }
 
-// RN-14.7 · Una falla del repositorio de proyectos se devuelve sin leer los
-// sprints.
+// HU-14 · RN-14.7 · Verifica que una falla del repositorio de proyectos se
+// devuelva sin leer los sprints.
 func TestHistory_ErrorAlLeerElProyectoSeDevuelve(t *testing.T) {
 	projects := project.NewManager(failingProjectRepository{getErr: errRepository})
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -178,8 +182,8 @@ func TestHistory_ErrorAlLeerElProyectoSeDevuelve(t *testing.T) {
 	}
 }
 
-// RN-14.7 · Una falla del repositorio de sprints se devuelve sin lista
-// parcial.
+// HU-14 · RN-14.7 · Verifica que una falla del repositorio de sprints se
+// devuelva sin lista parcial.
 func TestHistory_ErrorAlLeerLosSprintsSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	projectID := createTestProject(t, projects, "Sistema de ventas")

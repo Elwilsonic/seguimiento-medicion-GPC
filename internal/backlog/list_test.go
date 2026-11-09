@@ -13,7 +13,9 @@ import (
 
 // HU-06 · Listar el backlog de un proyecto (Issue #21)
 
-// CA-06.1, CA-06.3, RN-06.3 y RN-06.6
+// HU-06 · CA-06.1 · Verifica que se listen solo los ítems del proyecto,
+// ordenados por ID y con todos sus datos. También cubre CA-06.3, RN-06.3 y
+// RN-06.6.
 func TestListItems_DevuelveSoloLosItemsDelProyectoOrdenadosPorIDConTodosSusDatos(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	first := createTestProject(t, projects, "Sistema de ventas")
@@ -75,7 +77,8 @@ func TestListItems_DevuelveSoloLosItemsDelProyectoOrdenadosPorIDConTodosSusDatos
 	}
 }
 
-// CA-06.2 y RN-06.2
+// HU-06 · CA-06.2 · Verifica que un proyecto sin ítems devuelva una lista vacía,
+// no nil, y ningún error. También cubre RN-06.2.
 func TestListItems_ProyectoSinItemsDevuelveListaVaciaNoNil(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -93,7 +96,8 @@ func TestListItems_ProyectoSinItemsDevuelveListaVaciaNoNil(t *testing.T) {
 	}
 }
 
-// CA-06.4 y RN-06.4
+// HU-06 · CA-06.4 · Verifica que listar el backlog de un proyecto inexistente,
+// con ID 0 o negativo, devuelva ErrProjectNotFound. También cubre RN-06.4.
 func TestListItems_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	cases := map[string]int{
 		"ID inexistente": 999,
@@ -117,7 +121,8 @@ func TestListItems_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
-// CA-06.4
+// HU-06 · CA-06.4 · Verifica que, sin ningún proyecto creado, se devuelva
+// ErrProjectNotFound.
 func TestListItems_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	manager, _, _, _ := newTestManager()
 
@@ -131,7 +136,7 @@ func TestListItems_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
-// RN-06.1
+// HU-06 · RN-06.1 · Verifica que un proyecto FINALIZADO liste su backlog igual.
 func TestListItems_ProyectoFinalizadoListaSusItems(t *testing.T) {
 	manager, _, _, projectRepo := newTestManager()
 
@@ -156,7 +161,8 @@ func TestListItems_ProyectoFinalizadoListaSusItems(t *testing.T) {
 	}
 }
 
-// CA-06.6 y RN-06.5
+// HU-06 · CA-06.6 · Verifica que modificar la lista devuelta, un ítem o sus
+// criterios no altere los ítems guardados. También cubre RN-06.5.
 func TestListItems_ModificarLaListaDevueltaNoAlteraLosItemsGuardados(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -200,7 +206,8 @@ func TestListItems_ModificarLaListaDevueltaNoAlteraLosItemsGuardados(t *testing.
 	}
 }
 
-// CA-06.5
+// HU-06 · CA-06.5 · Verifica que listar mientras se crean ítems en simultáneo
+// no produzca accesos concurrentes sin protección (lo detecta -race).
 func TestListItems_ListadosSimultaneosConCreaciones(t *testing.T) {
 	const attempts = 50
 	manager, repo, projects, _ := newTestManager()
@@ -251,7 +258,8 @@ func TestListItems_ListadosSimultaneosConCreaciones(t *testing.T) {
 	}
 }
 
-// CA-06.7
+// HU-06 · CA-06.7 · Verifica que, si el repositorio falla al listar, se devuelva
+// ese error y ninguna lista.
 func TestListItems_ErrorDelRepositorioAlListarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {

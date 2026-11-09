@@ -182,8 +182,9 @@ func expectNoCurrentSprint(t *testing.T, got Summary) {
 	}
 }
 
-// CA-36.1, RN-36.1 a RN-36.3 · El resumen muestra el nombre y el estado del
-// proyecto, los ítems por estado y el sprint abierto.
+// HU-36 · CA-36.1 · Verifica que el resumen muestre el nombre y el estado del
+// proyecto, los ítems por estado y el sprint abierto. También cubre RN-36.1 a
+// RN-36.3.
 func TestProjectSummary_MuestraProyectoItemsPorEstadoYSprintActual(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -205,7 +206,8 @@ func TestProjectSummary_MuestraProyectoItemsPorEstadoYSprintActual(t *testing.T)
 	expectCurrentSprint(t, got, s)
 }
 
-// CA-36.1 y RN-36.2 · Se cuentan los ítems con y sin sprint asignado.
+// HU-36 · CA-36.1 · Verifica que se cuenten los ítems con y sin sprint
+// asignado. También cubre RN-36.2.
 func TestProjectSummary_CuentaLosItemsConYSinSprint(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -217,7 +219,8 @@ func TestProjectSummary_CuentaLosItemsConYSinSprint(t *testing.T) {
 	expectCounts(t, e.summary(t, p), 1, 0, 2)
 }
 
-// CA-36.1 y RN-36.2 · Los estados sin ítems se informan en 0.
+// HU-36 · CA-36.1 · Verifica que los estados sin ítems se informen en 0.
+// También cubre RN-36.2.
 func TestProjectSummary_ItemsEnUnSoloEstadoLosDemasEnCero(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -227,8 +230,8 @@ func TestProjectSummary_ItemsEnUnSoloEstadoLosDemasEnCero(t *testing.T) {
 	expectCounts(t, e.summary(t, p), 0, 2, 0)
 }
 
-// CA-36.2 y RN-36.4 · Un proyecto sin ítems ni sprints devuelve el resumen
-// vacío, sin error.
+// HU-36 · CA-36.2 · Verifica que un proyecto sin ítems ni sprints devuelva el
+// resumen vacío, sin error. También cubre RN-36.4.
 func TestProjectSummary_ProyectoSinDatosDevuelveResumenVacio(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -241,7 +244,8 @@ func TestProjectSummary_ProyectoSinDatosDevuelveResumenVacio(t *testing.T) {
 	}
 }
 
-// CA-36.3 y RN-36.3 · Con solo sprints cerrados no hay sprint actual.
+// HU-36 · CA-36.3 · Verifica que, con solo sprints cerrados, no haya sprint
+// actual. También cubre RN-36.3.
 func TestProjectSummary_SoloSprintsCerradosNoHaySprintActual(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -256,7 +260,8 @@ func TestProjectSummary_SoloSprintsCerradosNoHaySprintActual(t *testing.T) {
 	expectNoCurrentSprint(t, got)
 }
 
-// CA-36.1 y RN-36.3 · El sprint actual es el abierto, aunque haya cerrados.
+// HU-36 · CA-36.1 · Verifica que el sprint actual sea el abierto, aunque haya
+// cerrados. También cubre RN-36.3.
 func TestProjectSummary_ElSprintAbiertoEsElActualAunqueHayaCerrados(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -266,7 +271,8 @@ func TestProjectSummary_ElSprintAbiertoEsElActualAunqueHayaCerrados(t *testing.T
 	expectCurrentSprint(t, e.summary(t, p), s)
 }
 
-// CA-36.1 · No se cuentan ítems ni sprints de otro proyecto.
+// HU-36 · CA-36.1 · Verifica que no se cuenten ítems ni sprints de otro
+// proyecto.
 func TestProjectSummary_NoCuentaItemsNiSprintsDeOtroProyecto(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -282,8 +288,8 @@ func TestProjectSummary_NoCuentaItemsNiSprintsDeOtroProyecto(t *testing.T) {
 	expectNoCurrentSprint(t, got)
 }
 
-// CA-36.4 y RN-36.5 · Después de cambiar el estado de un ítem, el resumen lo
-// refleja.
+// HU-36 · CA-36.4 · Verifica que, después de cambiar el estado de un ítem, el
+// resumen lo refleje. También cubre RN-36.5.
 func TestProjectSummary_ReflejaElCambioDeEstadoDeUnItem(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -296,8 +302,8 @@ func TestProjectSummary_ReflejaElCambioDeEstadoDeUnItem(t *testing.T) {
 	expectCounts(t, e.summary(t, p), 1, 0, 1)
 }
 
-// CA-36.4 y RN-36.5 · Después de cerrar el sprint actual, el resumen ya no
-// tiene sprint actual.
+// HU-36 · CA-36.4 · Verifica que, después de cerrar el sprint actual, el
+// resumen ya no tenga sprint actual. También cubre RN-36.5.
 func TestProjectSummary_ReflejaElCierreDelSprint(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -309,7 +315,7 @@ func TestProjectSummary_ReflejaElCierreDelSprint(t *testing.T) {
 	expectNoCurrentSprint(t, e.summary(t, p))
 }
 
-// CA-36.5 · Un proyecto inexistente, 0 o negativo devuelve
+// HU-36 · CA-36.5 · Verifica que un proyecto inexistente, 0 o negativo devuelva
 // project.ErrProjectNotFound y un resumen vacío.
 func TestProjectSummary_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	e := newDashboardEnv()
@@ -327,8 +333,8 @@ func TestProjectSummary_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing
 	}
 }
 
-// CA-36.5 y RN-36.6 · Consultar dos veces da el mismo resultado y no
-// modifica el proyecto, los ítems ni los sprints.
+// HU-36 · CA-36.5 · Verifica que consultar dos veces dé el mismo resultado y no
+// modifique el proyecto, los ítems ni los sprints. También cubre RN-36.6.
 func TestProjectSummary_ConsultarNoModificaNada(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -350,7 +356,8 @@ func TestProjectSummary_ConsultarNoModificaNada(t *testing.T) {
 	}
 }
 
-// RN-36.7 · Modificar el resumen devuelto no altera el sprint guardado.
+// HU-36 · RN-36.7 · Verifica que modificar el resumen devuelto no altere el
+// sprint guardado.
 func TestProjectSummary_ModificarElResumenNoAlteraLoGuardado(t *testing.T) {
 	e := newDashboardEnv()
 	p := e.project(t, "Sistema de ventas")
@@ -394,8 +401,9 @@ type failingSprintRepository struct {
 
 func (r failingSprintRepository) ListByProject(int) ([]sprint.Sprint, error) { return nil, r.err }
 
-// Condiciones de error · Una falla al leer el proyecto, los ítems o los
-// sprints se propaga y no se devuelve un resumen parcial.
+// HU-36 · Error · Verifica que una falla al leer el proyecto, los ítems o los
+// sprints se propague y no se devuelva un resumen parcial (Condiciones de
+// error).
 func TestProjectSummary_ErrorDeLosRepositoriosSePropaga(t *testing.T) {
 	errRepo := errors.New("base caída")
 	cases := map[string]func() *dashboardEnv{

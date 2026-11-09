@@ -14,7 +14,8 @@ import (
 // estado y proyecto) la hace sprint.Manager.AssignItem, su único llamador
 // (RN-11.7).
 
-// CA-11.1 y RN-11.4
+// HU-11 · CA-11.1 · Verifica que AssignToSprint deje guardado el SprintID en
+// un ítem sin sprint. También cubre RN-11.4.
 func TestAssignToSprint_ItemSinSprintQuedaAsignado(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -44,7 +45,8 @@ func TestAssignToSprint_ItemSinSprintQuedaAsignado(t *testing.T) {
 	}
 }
 
-// CA-11.2 y RN-11.3
+// HU-11 · CA-11.2 · Verifica que AssignToSprint sobre un ítem ya asignado
+// devuelva ErrItemAlreadyAssigned y no lo modifique. También cubre RN-11.3.
 func TestAssignToSprint_ItemYaAsignadoDaErrItemAlreadyAssigned(t *testing.T) {
 	cases := map[string]int{"al mismo sprint": 1, "a otro sprint": 2}
 	for name, secondSprint := range cases {
@@ -72,7 +74,8 @@ func TestAssignToSprint_ItemYaAsignadoDaErrItemAlreadyAssigned(t *testing.T) {
 	}
 }
 
-// CA-11.4
+// HU-11 · CA-11.4 · Verifica que AssignToSprint sobre un ítem inexistente
+// devuelva ErrItemNotFound.
 func TestAssignToSprint_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 	for name, itemID := range map[string]int{"ID grande": 999, "ID cero": 0, "ID negativo": -1} {
 		t.Run(name, func(t *testing.T) {
@@ -92,7 +95,8 @@ func TestAssignToSprint_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-11.5
+// HU-11 · CA-11.5 · Verifica que AssignToSprint no cambie ningún otro campo
+// del ítem.
 func TestAssignToSprint_NoCambiaNingunOtroCampo(t *testing.T) {
 	repo := NewMemoryRepository()
 	projects := project.NewManager(project.NewMemoryRepository())
@@ -129,7 +133,8 @@ func TestAssignToSprint_NoCambiaNingunOtroCampo(t *testing.T) {
 	}
 }
 
-// CA-11.7
+// HU-11 · CA-11.7 · Verifica que modificar el ítem devuelto por AssignToSprint
+// no altere el guardado.
 func TestAssignToSprint_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -156,7 +161,8 @@ func TestAssignToSprint_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) 
 	}
 }
 
-// CA-11.5 y RN-11.5 (la única línea de HU-07 que HU-11 toca)
+// HU-11 · CA-11.5 · Verifica que el Update de HU-07 conserve el SprintID
+// asignado. También cubre RN-11.5 (la única línea de HU-07 que HU-11 toca).
 func TestAssignToSprint_UpdateConservaElSprintID(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -179,7 +185,8 @@ func TestAssignToSprint_UpdateConservaElSprintID(t *testing.T) {
 	}
 }
 
-// RN-11.5 (la única línea de HU-04 que HU-11 toca)
+// HU-11 · RN-11.5 · Verifica que el Create de HU-04 deje el SprintID en 0
+// (la única línea de HU-04 que HU-11 toca).
 func TestAssignToSprint_CreateDejaElSprintIDEnCero(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -193,7 +200,8 @@ func TestAssignToSprint_CreateDejaElSprintIDEnCero(t *testing.T) {
 	}
 }
 
-// CA-11.8
+// HU-11 · CA-11.8 · Verifica que, si el repositorio falla al consultar el
+// ítem, se devuelva ese error.
 func TestAssignToSprint_ErrorDelRepositorioAlConsultarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	manager := NewManager(failingRepository{getErr: errRepository}, projects)
@@ -208,7 +216,8 @@ func TestAssignToSprint_ErrorDelRepositorioAlConsultarSeDevuelve(t *testing.T) {
 	}
 }
 
-// CA-11.8
+// HU-11 · CA-11.8 · Verifica que, si el repositorio falla al escribir, se
+// devuelva ese error.
 func TestAssignToSprint_ErrorDelRepositorioAlEscribirSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	manager := NewManager(failingRepository{updateErr: errRepository}, projects)
