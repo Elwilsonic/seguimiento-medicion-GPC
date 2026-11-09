@@ -41,7 +41,7 @@ Cada test lleva arriba el comentario `// HU-50 · CA-50.N · Verifica que …`.
 | CA-50.4 Consultar no modifica ningún proyecto, y modificar la lista devuelta no altera los guardados | "Modificar la lista devuelta no altera los proyectos guardados" | `TestList_ModificarLaListaDevueltaNoAlteraLosGuardados`, `TestList_NoModificaLosProyectos` (`internal/project/list_test.go`) | `Manager.List`, que ordena la copia que devuelve `Repository.List` (`internal/project/list.go`) |
 | CA-50.5 Se consulta desde la API y la interfaz; si falla la lectura, 500 y el error en la interfaz | "Falla el almacenamiento al listar" | `TestList_ErrorDelRepositorioDevuelveElErrorSinLista` (`internal/project/list_test.go`); `TestListarProyectos_ErrorDelRepositorioResponde500` y los otros dos de API (`internal/httpapi/projects_list_test.go`); `TestInterfaz_VerProyectosLlenaLaTablaYPermiteElegir` (`internal/httpapi/projects_list_web_test.go`) | `Manager.List` (`internal/project/list.go`); `server.listProjects` → `writeError` y la ruta `GET /api/proyectos` (`internal/httpapi/projects.go` y `server.go`); `accion("msg-contexto", …)` en el handler de `ver-proyectos` (`internal/web/app.js`) |
 | CA-50.6 Orden alfabético por nombre sin distinguir mayúsculas, aplicado por el `Manager` | "Los proyectos se ordenan por nombre sin distinguir mayúsculas" | `TestList_OrdenaPorNombreSinDistinguirMayusculas` (`internal/project/list_test.go`); `TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID` (`internal/httpapi/projects_list_test.go`) | `Manager.List`, con `slices.SortStableFunc` y `strings.ToLower` (`internal/project/list.go`) |
-| CA-50.7 Consultas simultáneas sin condiciones de carrera (`go test -race`) | — | `TestList_ConcurrenteConCreateNoTieneCondicionesDeCarrera` (`internal/project/list_test.go`), con `-race` en el CI | `Manager.List`, que lee bajo `m.mu` (`internal/project/list.go`) |
+| CA-50.7 Consultas simultáneas sin condiciones de carrera (`go test -race`) | — | `TestList_ConcurrenteConCreateNoTieneCondicionesDeCarrera` (`internal/project/list_test.go`), con `-race` en Linux sobre `430f5d5` y en el CI | `Manager.List`, que lee bajo `m.mu` (`internal/project/list.go`) |
 
 Conteos:
 
@@ -219,7 +219,9 @@ No hubo (tarea 4.1):
 
 Se midió sobre `2386fb8` en Windows, con go1.27.2 y sin `TEST_DATABASE_URL`, así que se omitieron 35 tests de PostgreSQL. HU-50 no agrega ninguno, porque reutiliza `Repository.List`, que ya cubren los tests de contrato.
 
-`-race` no se corrió localmente, porque necesita cgo (`go: -race requires cgo`). Lo corre el CI, y lo necesita `TestList_ConcurrenteConCreateNoTieneCondicionesDeCarrera` (CA-50.7).
+`-race` no se corrió en esta máquina, porque necesita cgo (`go: -race requires cgo`). Lo necesita `TestList_ConcurrenteConCreateNoTieneCondicionesDeCarrera` (CA-50.7).
+
+**Verificación con `-race`:** se corrió en Linux sobre `430f5d5`. Los 14 paquetes con tests quedaron en verde y no se reportaron condiciones de carrera. Con eso se cumple CA-50.7 y se tildaron las tareas 3.1 y 3.4 de `tasks.md`. El CI lo vuelve a correr en el Pull Request.
 
 **Ejecutables bloqueados por Windows.** En esta máquina, una política de Windows ("An Application Control policy has blocked this file") bloquea a veces el ejecutable de test de algún paquete: `member`, `poker`, `metrics` o `postgres`, según la corrida. Esos paquetes aparecen como `FAIL` sin que se ejecute ningún test, y no es un fallo del código. Cada corrida se repitió hasta que no hubo ningún bloqueo; las salidas de abajo son corridas completas, sin bloqueos.
 

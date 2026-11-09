@@ -32,10 +32,10 @@ Rama: `feature/HU-50-listar-proyectos`. Cada commit y cada push necesitan la aut
 
 ## 3. Código en GREEN
 
-- [ ] 3.1 Crear `internal/project/list.go` con `Manager.List()`: mutex, `nil` → `[]Project{}`, orden de D2 y error sin lista. Verificar con `go test -race ./internal/project/` que pasan los tests y los escenarios de HU-50.
+- [x] 3.1 Crear `internal/project/list.go` con `Manager.List()`: mutex, `nil` → `[]Project{}`, orden de D2 y error sin lista. Verificar con `go test -race ./internal/project/` que pasan los tests y los escenarios de HU-50.
 - [x] 3.2 Agregar `listProjects` en `internal/httpapi/projects.go` y la ruta `GET /api/proyectos` en `server.go`. Verificar que pasan los tests de `projects_list_test.go`.
 - [x] 3.3 Agregar a `internal/web/index.html` el botón «Ver proyectos» y la tabla, y actualizar el comentario de la sección de contexto. Agregar a `internal/web/app.js` el handler de `ver-proyectos` con el botón «Elegir». Verificar que pasan los tests de `projects_list_web_test.go` y probar la interfaz a mano con el servidor local (elegir un proyecto, lista vacía).
-- [ ] 3.4 Correr `go test ./...` y `go test -race ./...`, y verificar que todo está en verde. Mostrar la salida y proponer `git commit -m "feat(HU-50): implementar la lista de proyectos (GREEN)" -m "Refs #183"`.
+- [x] 3.4 Correr `go test ./...` y `go test -race ./...`, y verificar que todo está en verde. Mostrar la salida y proponer `git commit -m "feat(HU-50): implementar la lista de proyectos (GREEN)" -m "Refs #183"`.
 
 ## 4. Refactor
 
