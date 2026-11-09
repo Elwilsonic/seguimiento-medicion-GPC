@@ -57,6 +57,7 @@ func expectHasFechaFin(t *testing.T, op string, body map[string]any, want string
 	}
 }
 
+// HU-41 · CA-41.1 · Verifica que PATCH /api/proyectos/{id}/fecha-fin responda 200 con el proyecto y su fecha de fin.
 // CA-41.1 y CA-41.13
 func TestRegistrarFechaFinProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandlerWithStartDate(t)
@@ -74,6 +75,7 @@ func TestRegistrarFechaFinProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	expectProjectEndDate(t, h, "1", "2026-12-18")
 }
 
+// HU-41 · CA-41.7 · Verifica que volver a registrar la fecha de fin por la API reemplace la anterior.
 // CA-41.7
 func TestRegistrarFechaFinProyecto_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	h := newHandlerWithStartDate(t)
@@ -85,6 +87,7 @@ func TestRegistrarFechaFinProyecto_VolverARegistrarReemplazaLaFecha(t *testing.T
 	expectProjectEndDate(t, h, "1", "2027-01-29")
 }
 
+// HU-41 · CA-41.4 · Verifica que una fecha de fin vacía, null o ausente dé 400.
 // CA-41.4
 func TestRegistrarFechaFinProyecto_FechaAusenteDevuelve400(t *testing.T) {
 	bodies := map[string]string{
@@ -104,6 +107,7 @@ func TestRegistrarFechaFinProyecto_FechaAusenteDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.3 · Verifica que una fecha con otro formato o inexistente en el calendario dé 400.
 // CA-41.3
 func TestRegistrarFechaFinProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T) {
 	for _, date := range []string{"2026-02-30", "2026-13-01", "18/12/2026", "2026-1-5", "2026-12-18T00:00:00Z", " 2026-12-18 "} {
@@ -118,6 +122,7 @@ func TestRegistrarFechaFinProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T
 	}
 }
 
+// HU-41 · CA-41.13 · Verifica que un cuerpo que no es JSON o una fecha que no es texto dé 400.
 // CA-41.13: un cuerpo que no es JSON o una fecha que no es texto es JSON
 // inválido.
 func TestRegistrarFechaFinProyecto_JSONInvalidoDevuelve400(t *testing.T) {
@@ -132,6 +137,7 @@ func TestRegistrarFechaFinProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.5 · Verifica que registrar la fecha de fin de un proyecto inexistente dé 404.
 // CA-41.5
 func TestRegistrarFechaFinProyecto_InexistenteDevuelve404(t *testing.T) {
 	for _, id := range []string{"999", "0", "-1"} {
@@ -143,6 +149,7 @@ func TestRegistrarFechaFinProyecto_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-41 · CA-41.4 · Verifica que la fecha vacía se valide antes que la existencia del proyecto y dé 400.
 // CA-41.4 (orden de validación): la fecha se valida antes que el proyecto.
 func TestRegistrarFechaFinProyecto_FechaVaciaEnProyectoInexistenteDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-fin", fechaFin(""))
@@ -150,6 +157,7 @@ func TestRegistrarFechaFinProyecto_FechaVaciaEnProyectoInexistenteDevuelve400(t 
 	expectError(t, rec, http.StatusBadRequest, project.ErrMissingEndDate.Error())
 }
 
+// HU-41 · CA-41.6 · Verifica que registrar la fecha de fin en un proyecto sin fecha de inicio dé 409.
 // CA-41.6
 func TestRegistrarFechaFinProyecto_SinFechaDeInicioDevuelve409(t *testing.T) {
 	h := newHandler()
@@ -161,6 +169,7 @@ func TestRegistrarFechaFinProyecto_SinFechaDeInicioDevuelve409(t *testing.T) {
 	expectProjectEndDate(t, h, "1", "")
 }
 
+// HU-41 · CA-41.2 · Verifica que una fecha de fin el mismo día o anterior al inicio dé 409.
 // CA-41.2: el mismo día o un día anterior al inicio dan 409.
 func TestRegistrarFechaFinProyecto_FechaNoPosteriorAlInicioDevuelve409(t *testing.T) {
 	for _, date := range []string{"2026-10-23", "2026-10-22"} {
@@ -175,6 +184,7 @@ func TestRegistrarFechaFinProyecto_FechaNoPosteriorAlInicioDevuelve409(t *testin
 	}
 }
 
+// HU-41 · CA-41.11 · Verifica que una falla del repositorio dé 500 sin detalle.
 // CA-41.11 y CA-41.13: una falla del repositorio devuelve 500 sin detalle.
 func TestRegistrarFechaFinProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
@@ -190,6 +200,7 @@ func TestRegistrarFechaFinProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
 
+// HU-41 · CA-41.8 · Verifica que, con fecha de fin, un inicio el mismo día o posterior dé 409 y uno anterior dé 200.
 // CA-41.8: con fecha de fin, un inicio el mismo día o después da 409, y uno
 // anterior da 200 y conserva la fecha de fin.
 func TestRegistrarFechaInicioProyecto_ConFechaDeFinValidaElOrden(t *testing.T) {
@@ -220,6 +231,7 @@ func TestRegistrarFechaInicioProyecto_ConFechaDeFinValidaElOrden(t *testing.T) {
 	})
 }
 
+// HU-41 · CA-41.9 · Verifica que POST, GET, PUT y PATCH …/fecha-inicio devuelvan fecha_fin, vacía si no está registrada.
 // CA-41.9: POST, GET, PUT y PATCH …/fecha-inicio devuelven fecha_fin; "" si
 // no está registrada.
 func TestProyecto_RespuestasIncluyenLaFechaDeFin(t *testing.T) {
@@ -258,6 +270,7 @@ func TestProyecto_RespuestasIncluyenLaFechaDeFin(t *testing.T) {
 	expectHasFechaFin(t, "PATCH fecha-inicio con fecha de fin", body, "2026-12-18")
 }
 
+// HU-41 · CA-41.9 · Verifica que PUT ignore una fecha de fin enviada y conserve la registrada.
 // CA-41.9 (RN-41.8): PUT no recibe la fecha de fin; si un cliente la envía,
 // se ignora y la registrada se conserva.
 func TestModificarProyecto_ConservaLaFechaDeFin(t *testing.T) {
@@ -270,6 +283,7 @@ func TestModificarProyecto_ConservaLaFechaDeFin(t *testing.T) {
 	expectProjectEndDate(t, h, "1", "2026-12-18")
 }
 
+// HU-41 · CA-41.9 · Verifica que el reporte del proyecto incluya la fecha de fin.
 // CA-41.9 (D9): el reporte del proyecto (HU-38) incluye fecha_fin en su campo
 // proyecto.
 func TestReporteProyecto_IncluyeLaFechaDeFin(t *testing.T) {

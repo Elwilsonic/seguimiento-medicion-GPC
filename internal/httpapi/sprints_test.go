@@ -48,6 +48,7 @@ func newHandlerWithSprint(t *testing.T) http.Handler {
 	return h
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que POST /api/proyectos/{id}/sprints cree el sprint de HU-10 y responda 201.
 // CA-TEC04.9 · POST /api/proyectos/{id}/sprints expone HU-10 (crear sprint).
 func TestCrearSprint_Devuelve201ConElSprintCreado(t *testing.T) {
 	h := newHandler()
@@ -65,6 +66,7 @@ func TestCrearSprint_Devuelve201ConElSprintCreado(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que crear un sprint con datos inválidos responda 400 con el error de cada caso.
 func TestCrearSprint_DatosInvalidosDevuelven400(t *testing.T) {
 	cases := map[string]struct {
 		body string
@@ -92,12 +94,14 @@ func TestCrearSprint_DatosInvalidosDevuelven400(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que crear un sprint en un proyecto inexistente responda 404.
 func TestCrearSprint_ProyectoInexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/999/sprints", validSprint)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que crear un sprint cuando ya hay uno abierto en el proyecto responda 409.
 func TestCrearSprint_SprintAbiertoExistenteDevuelve409(t *testing.T) {
 	h := newHandlerWithSprint(t)
 
@@ -106,6 +110,7 @@ func TestCrearSprint_SprintAbiertoExistenteDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, sprint.ErrOpenSprintExists.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que POST /api/sprints/{id}/items/{itemId} asigne el ítem de HU-11 y responda 200.
 // CA-TEC04.9 · POST /api/sprints/{id}/items/{itemId} expone HU-11 (asignar
 // ítem).
 func TestAsignarItem_Devuelve200ConElItemAsignado(t *testing.T) {
@@ -121,6 +126,7 @@ func TestAsignarItem_Devuelve200ConElItemAsignado(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que asignar con un sprint o un ítem inexistente responda 404.
 func TestAsignarItem_InexistenteDevuelve404(t *testing.T) {
 	cases := map[string]struct {
 		path string
@@ -140,6 +146,7 @@ func TestAsignarItem_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que cada conflicto al asignar un ítem a un sprint responda 409.
 func TestAsignarItem_ConflictosDevuelven409(t *testing.T) {
 	cases := map[string]struct {
 		setup func(t *testing.T, h http.Handler)
@@ -181,6 +188,7 @@ func TestAsignarItem_ConflictosDevuelven409(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que POST /api/sprints/{id}/items/{itemId}/completar complete el ítem de HU-12 y responda 200.
 // CA-TEC04.9 · POST /api/sprints/{id}/items/{itemId}/completar expone HU-12
 // (completar ítem).
 func TestCompletarItem_Devuelve200ConElItemTerminado(t *testing.T) {
@@ -198,6 +206,7 @@ func TestCompletarItem_Devuelve200ConElItemTerminado(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que completar con un sprint o un ítem inexistente responda 404.
 func TestCompletarItem_InexistenteDevuelve404(t *testing.T) {
 	cases := map[string]struct {
 		path string
@@ -217,6 +226,7 @@ func TestCompletarItem_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que cada conflicto al completar un ítem responda 409.
 func TestCompletarItem_ConflictosDevuelven409(t *testing.T) {
 	cases := map[string]struct {
 		setup func(t *testing.T, h http.Handler)
@@ -252,6 +262,7 @@ func TestCompletarItem_ConflictosDevuelven409(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que GET /api/sprints/{id}/completados liste los ítems terminados de HU-12.
 // CA-TEC04.9 · GET /api/sprints/{id}/completados expone HU-12 (listar los
 // ítems completados).
 func TestListarCompletados_Devuelve200ConLosItemsTerminados(t *testing.T) {
@@ -272,12 +283,14 @@ func TestListarCompletados_Devuelve200ConLosItemsTerminados(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que listar los completados de un sprint inexistente responda 404.
 func TestListarCompletados_SprintInexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/999/completados", "")
 
 	expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que POST /api/sprints/{id}/cerrar cierre el sprint de HU-13 y responda 200.
 // CA-TEC04.9 · POST /api/sprints/{id}/cerrar expone HU-13 (cerrar sprint).
 func TestCerrarSprint_Devuelve200ConElSprintCerrado(t *testing.T) {
 	h := newHandlerWithSprint(t)
@@ -292,12 +305,14 @@ func TestCerrarSprint_Devuelve200ConElSprintCerrado(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que cerrar un sprint inexistente responda 404.
 func TestCerrarSprint_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/sprints/999/cerrar", "")
 
 	expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que cerrar un sprint ya cerrado responda 409.
 func TestCerrarSprint_YaCerradoDevuelve409(t *testing.T) {
 	h := newHandlerWithSprint(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
@@ -323,6 +338,7 @@ func (r failingSprintListRepository) ListByProject(int) ([]sprint.Sprint, error)
 	return nil, r.err
 }
 
+// HU-14 · CA-14.1 · Verifica que la API devuelva el sprint cerrado y el abierto, en orden de ID y con el formato de la creación.
 // CA-14.1 · Devuelve el sprint cerrado y el abierto, en orden de ID y con el
 // formato exacto de la creación.
 func TestListarSprintsDelProyecto_Devuelve200ConLosSprintsOrdenados(t *testing.T) {
@@ -339,6 +355,7 @@ func TestListarSprintsDelProyecto_Devuelve200ConLosSprintsOrdenados(t *testing.T
 	]`)
 }
 
+// HU-14 · CA-14.2 · Verifica que un proyecto sin sprints responda 200 con [], no null.
 // CA-14.2 · Un proyecto sin sprints devuelve 200 y [], no null.
 func TestListarSprintsDelProyecto_SinSprintsDevuelveListaVacia(t *testing.T) {
 	h := newHandler()
@@ -349,6 +366,7 @@ func TestListarSprintsDelProyecto_SinSprintsDevuelveListaVacia(t *testing.T) {
 	expectRawJSON(t, rec, `[]`)
 }
 
+// HU-14 · CA-14.4 · Verifica que un {id} no numérico responda 400.
 // CA-14.4 · Un {id} no numérico devuelve 400.
 func TestListarSprintsDelProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/sprints", "")
@@ -356,6 +374,7 @@ func TestListarSprintsDelProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-14 · CA-14.4 · Verifica que un proyecto inexistente, 0 o negativo responda 404.
 // CA-14.4 · Un proyecto inexistente, 0 o negativo devuelve 404.
 func TestListarSprintsDelProyecto_ProyectoInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
@@ -366,6 +385,7 @@ func TestListarSprintsDelProyecto_ProyectoInexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-14 · RN-14.7 · Verifica que una falla al leer el proyecto o los sprints responda 500 sin detalle.
 // RN-14.7 · Una falla al leer el proyecto o los sprints devuelve 500 sin
 // detalle. Usa brokenRepository de TEC-01 para los proyectos.
 func TestListarSprintsDelProyecto_FallaDeUnRepositorioDevuelve500(t *testing.T) {

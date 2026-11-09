@@ -148,6 +148,7 @@ type failingWriter struct{ err error }
 
 func (w failingWriter) Write([]byte) (int, error) { return 0, w.err }
 
+// HU-40 · CA-40.3 · Verifica que las líneas del reporte en PDF coincidan con el ejemplo de TEC-03 de la SDD.
 // CA-40.3 · Las líneas del ejemplo de TEC-03 de la SDD.
 func TestProjectReportLines_EjemploDeTEC03(t *testing.T) {
 	e := newReportEnv()
@@ -160,6 +161,7 @@ func TestProjectReportLines_EjemploDeTEC03(t *testing.T) {
 	}
 }
 
+// HU-40 · CA-40.5 · Verifica que un proyecto sin datos tenga las secciones vacías y las métricas como "sin datos".
 // CA-40.5 · Un proyecto sin datos tiene las secciones vacías y "sin datos".
 func TestProjectReportLines_ProyectoSinDatos(t *testing.T) {
 	e := newReportEnv()
@@ -172,6 +174,7 @@ func TestProjectReportLines_ProyectoSinDatos(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.6 · Verifica que la línea de cada historia muestre prioridad, estado, Story Points, horas y sprint, o "sin estimar", "sin horas estimadas" y "sin sprint".
 // CA-49.4 y CA-49.6 · La línea de una historia indica la prioridad, el
 // estado, los Story Points, las horas estimadas con un decimal y el sprint, o
 // "sin estimar", "sin horas estimadas" y "sin sprint".
@@ -193,6 +196,7 @@ func TestProjectReportLines_HistoriasConYSinEstimacion(t *testing.T) {
 	)
 }
 
+// HU-40 · CA-40.3 · Verifica que el PDF muestre la fecha de fin del proyecto cuando está registrada.
 // CA-40.3 · Con la fecha de fin de HU-41 registrada, se muestra.
 func TestProjectReportLines_ConFechaDeFin(t *testing.T) {
 	e := newReportEnv()
@@ -224,6 +228,7 @@ func expectLines(t *testing.T, lines []pdfLine, texts ...string) {
 	}
 }
 
+// HU-40 · RN-40.3 · Verifica que las métricas y el total se redondeen a un decimal como la API, sin -0.0.
 // RN-40.3 · Las métricas y el total se redondean a un decimal como la API,
 // sin -0.0, y se escriben con un decimal.
 func TestProjectReportLines_RedondeaAUnDecimal(t *testing.T) {
@@ -251,6 +256,7 @@ func TestProjectReportLines_RedondeaAUnDecimal(t *testing.T) {
 	)
 }
 
+// HU-40 · RN-40.3 · Verifica que las horas de cada esfuerzo se muestren tal como están guardadas.
 // RN-40.3 · Las horas de cada esfuerzo van tal como están guardadas.
 func TestProjectReportLines_HorasDeCadaEsfuerzoTalCual(t *testing.T) {
 	e := newReportEnv()
@@ -269,6 +275,7 @@ func TestProjectReportLines_HorasDeCadaEsfuerzoTalCual(t *testing.T) {
 	)
 }
 
+// HU-40 · CA-40.3 · Verifica que un defecto sin sprint de resolución lo indique en su línea.
 // CA-40.3 · Un defecto sin sprint de resolución lo indica.
 func TestProjectReportLines_DefectoSinSprintDeResolucion(t *testing.T) {
 	e := newReportEnv()
@@ -285,6 +292,7 @@ func TestProjectReportLines_DefectoSinSprintDeResolucion(t *testing.T) {
 	)
 }
 
+// HU-40 · CA-40.1 · Verifica que se genere un PDF válido con cada línea del reporte y los títulos en negrita.
 // CA-40.1 y CA-40.3 · El archivo es un PDF y contiene cada línea del
 // reporte, con los títulos en negrita.
 func TestWriteProjectPDF_GeneraUnPDFConCadaLineaDelReporte(t *testing.T) {
@@ -300,6 +308,7 @@ func TestWriteProjectPDF_GeneraUnPDFConCadaLineaDelReporte(t *testing.T) {
 	expectPDFContains(t, pdf, "/BaseFont /Helvetica-Bold", "/BaseFont /Helvetica")
 }
 
+// HU-40 · CA-40.5 · Verifica que un proyecto sin datos genere un PDF, no un error.
 // CA-40.5 · Un proyecto sin datos genera un PDF, no un error.
 func TestWriteProjectPDF_ProyectoSinDatos(t *testing.T) {
 	e := newReportEnv()
@@ -313,6 +322,7 @@ func TestWriteProjectPDF_ProyectoSinDatos(t *testing.T) {
 	}
 }
 
+// HU-40 · CA-40.7 · Verifica que las tildes, la ñ y los signos se vean, y que un carácter fuera de Windows-1252 se reemplace por "." sin impedir el PDF.
 // CA-40.7 · Las tildes, la ñ y los signos se ven, y un carácter fuera de
 // Windows-1252 se reemplaza por "." sin impedir el PDF.
 func TestWriteProjectPDF_TildesYCaracteresFueraDeWindows1252(t *testing.T) {
@@ -328,6 +338,7 @@ func TestWriteProjectPDF_TildesYCaracteresFueraDeWindows1252(t *testing.T) {
 	)
 }
 
+// HU-40 · RN-40.1 · Verifica que un texto largo siga en la línea siguiente y que muchos esfuerzos sumen páginas, sin perder contenido.
 // Un texto más largo que el ancho de la página sigue en la línea siguiente, y
 // muchos esfuerzos suman páginas.
 func TestWriteProjectPDF_TextoLargoYVariasPaginas(t *testing.T) {
@@ -348,6 +359,7 @@ func TestWriteProjectPDF_TextoLargoYVariasPaginas(t *testing.T) {
 	}
 }
 
+// HU-40 · CA-40.2 · Verifica que, si el destino no acepta la escritura, se devuelva ese error.
 // CA-40.2 · Si el destino no acepta la escritura, se devuelve ese error.
 func TestWriteProjectPDF_ErrorAlEscribirDevuelveError(t *testing.T) {
 	e := newReportEnv()
@@ -361,6 +373,7 @@ func TestWriteProjectPDF_ErrorAlEscribirDevuelveError(t *testing.T) {
 	}
 }
 
+// HU-40 · CA-40.8 · Verifica que exportar a PDF no modifique el reporte recibido.
 // CA-40.8 · Exportar no modifica el reporte recibido.
 func TestWriteProjectPDF_NoModificaElReporte(t *testing.T) {
 	e := newReportEnv()

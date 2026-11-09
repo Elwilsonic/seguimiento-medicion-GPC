@@ -28,8 +28,9 @@ func expectProjectSprints(t *testing.T, got []SprintWithMetrics, err error, want
 	}
 }
 
-// CA-37.1 y CA-37.4 · El ejemplo de TEC-03 en un sprint cerrado y un sprint
-// abierto después: cada sprint con su copia y sus métricas, en orden de ID.
+// HU-37 · CA-37.4 · Verifica que, con el ejemplo de TEC-03 en un sprint cerrado
+// y un sprint abierto después, cada sprint venga con su copia y sus métricas,
+// en orden de ID. También cubre CA-37.1.
 func TestProjectSprints_EjemploDeTEC03ConUnSprintCerradoYOtroAbierto(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -69,8 +70,9 @@ func TestProjectSprints_EjemploDeTEC03ConUnSprintCerradoYOtroAbierto(t *testing.
 	}
 }
 
-// CA-37.3 y RN-37.1 · Las métricas de cada sprint de la lista son iguales a
-// las de Sprint(id) de HU-35, y cada sprint es igual al guardado.
+// HU-37 · CA-37.3 · Verifica que las métricas de cada sprint de la lista sean
+// iguales a las de Sprint(id) de HU-35, y que cada sprint sea igual al
+// guardado. También cubre RN-37.1.
 func TestProjectSprints_EsIgualASprintParaCadaSprint(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, sprints := e.multiSprintProject(t)
@@ -98,8 +100,8 @@ func TestProjectSprints_EsIgualASprintParaCadaSprint(t *testing.T) {
 	}
 }
 
-// CA-37.4 y RN-37.4 · La lista tiene todos los sprints, abiertos y cerrados,
-// ordenados por ID ascendente.
+// HU-37 · CA-37.4 · Verifica que la lista tenga todos los sprints, abiertos y
+// cerrados, ordenados por ID ascendente. También cubre RN-37.4.
 func TestProjectSprints_OrdenadosPorIDConAbiertosYCerrados(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, sprints := e.multiSprintProject(t)
@@ -123,8 +125,8 @@ func TestProjectSprints_OrdenadosPorIDConAbiertosYCerrados(t *testing.T) {
 	}
 }
 
-// CA-37.3 · Un ítem sin sprint no cuenta en ningún sprint de la lista: en
-// multiSprintProject, E y F no tienen sprint.
+// HU-37 · CA-37.3 · Verifica que un ítem sin sprint no cuente en ningún sprint
+// de la lista: en multiSprintProject, E y F no tienen sprint.
 func TestProjectSprints_ItemSinSprintNoCuentaEnNingunSprint(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, _ := e.multiSprintProject(t)
@@ -146,8 +148,8 @@ func TestProjectSprints_ItemSinSprintNoCuentaEnNingunSprint(t *testing.T) {
 	}
 }
 
-// CA-37.2 y CA-37.4 · Un proyecto sin sprints devuelve una lista vacía, no
-// nil, aunque tenga ítems.
+// HU-37 · CA-37.4 · Verifica que un proyecto sin sprints devuelva una lista
+// vacía, no nil, aunque tenga ítems. También cubre CA-37.2.
 func TestProjectSprints_SinSprintsDevuelveListaVaciaNoNil(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -163,8 +165,8 @@ func TestProjectSprints_SinSprintsDevuelveListaVaciaNoNil(t *testing.T) {
 	}
 }
 
-// CA-37.2 · Un sprint sin ítems tiene todo en 0, y el porcentaje y la
-// desviación no disponibles.
+// HU-37 · CA-37.2 · Verifica que un sprint sin ítems tenga todo en 0, y el
+// porcentaje y la desviación no disponibles.
 func TestProjectSprints_SprintSinItemsTodoEnCeroYNoDisponibles(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -177,8 +179,8 @@ func TestProjectSprints_SprintSinItemsTodoEnCeroYNoDisponibles(t *testing.T) {
 	})
 }
 
-// CA-37.2 · Un sprint con horas estimadas y sin esfuerzos tiene la
-// desviación no disponible (M5 = 0).
+// HU-37 · CA-37.2 · Verifica que un sprint con horas estimadas y sin esfuerzos
+// tenga la desviación no disponible (M5 = 0).
 func TestProjectSprints_SinEsfuerzosLaDesviacionNoDisponible(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -200,7 +202,7 @@ func TestProjectSprints_SinEsfuerzosLaDesviacionNoDisponible(t *testing.T) {
 	})
 }
 
-// CA-37.4 · Un proyecto inexistente, 0 o negativo devuelve
+// HU-37 · CA-37.4 · Verifica que un proyecto inexistente, 0 o negativo devuelva
 // ErrProjectNotFound y ninguna lista.
 func TestProjectSprints_InexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	e := newSummaryEnv()
@@ -216,9 +218,9 @@ func TestProjectSprints_InexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
-// CA-37.4 y RN-37.2 · Se lee ítems → sprints → esfuerzos → defectos: se
-// devuelve el error de la primera lectura que falla, sin lista parcial, y no
-// se hacen las siguientes.
+// HU-37 · CA-37.4 · Verifica que se lean ítems → sprints → esfuerzos →
+// defectos: se devuelve el error de la primera lectura que falla, sin lista
+// parcial, y no se hacen las siguientes. También cubre RN-37.2.
 func TestProjectSprints_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []readOrderCase{
 		{name: "ítems y sprints", fail: func(e *summaryEnv) { e.itemSpy.err, e.sprintSpy.listErr = errItemsRead, errSprintsRead }, want: errItemsRead},
@@ -244,10 +246,10 @@ func TestProjectSprints_ErroresEnElOrdenDeLectura(t *testing.T) {
 	}
 }
 
-// RN-37.2 y "Restricciones" · Con tres sprints, el repositorio de ítems
-// recibe 2 lecturas (1 de metrics y 1 interna de defect.Manager.ListByProject),
+// HU-37 · RN-37.2 · Verifica que, con tres sprints, el repositorio de ítems
+// reciba 2 lecturas (1 de metrics y 1 interna de defect.Manager.ListByProject),
 // el de esfuerzos 1 por sprint y el de defectos 1: no se llama a Sprint(id)
-// por cada sprint.
+// por cada sprint ("Restricciones" de la SDD).
 func TestProjectSprints_LeeLosItemsYLosDefectosUnaSolaVez(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, sprints := e.multiSprintProject(t)
@@ -268,8 +270,8 @@ func TestProjectSprints_LeeLosItemsYLosDefectosUnaSolaVez(t *testing.T) {
 	}
 }
 
-// CA-37.5 · Consultar no modifica nada, y modificar la lista devuelta no
-// cambia la próxima consulta.
+// HU-37 · CA-37.5 · Verifica que consultar no modifique nada, y que modificar
+// la lista devuelta no cambie la próxima consulta.
 func TestProjectSprints_NoModificaNadaYDevuelveCopias(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, _ := e.multiSprintProject(t)

@@ -45,6 +45,7 @@ func expectStoredDates(t *testing.T, manager *project.Manager, id int, start, en
 	}
 }
 
+// HU-19 · CA-19.1 · Verifica que postergar las dos fechas las cambie juntas y conserve el nombre, la descripción y el estado.
 // CA-19.1: postergar las dos fechas, con el inicio nuevo posterior al fin
 // viejo, conserva el nombre, la descripción y el estado.
 func TestSetDates_PostergaLasDosFechasYConservaLosDemasDatos(t *testing.T) {
@@ -73,6 +74,7 @@ func TestSetDates_PostergaLasDosFechasYConservaLosDemasDatos(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.1 · Verifica que se puedan adelantar las dos fechas, con el fin nuevo anterior al inicio viejo.
 // CA-19.1: adelantar las dos fechas, con el fin nuevo anterior al inicio
 // viejo.
 func TestSetDates_AdelantaLasDosFechas(t *testing.T) {
@@ -90,6 +92,7 @@ func TestSetDates_AdelantaLasDosFechas(t *testing.T) {
 	expectStoredDates(t, manager, 1, start, end)
 }
 
+// HU-19 · CA-19.1 · Verifica que las fechas se modifiquen en un proyecto PLANIFICADO, EN_CURSO o FINALIZADO.
 // CA-19.1 (RN-19.8): vale en los tres estados del proyecto.
 func TestSetDates_SeModificaEnCualquierEstado(t *testing.T) {
 	for _, status := range []project.Status{project.StatusPlanned, project.StatusInProgress, project.StatusFinished} {
@@ -113,6 +116,7 @@ func TestSetDates_SeModificaEnCualquierEstado(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.1 · Verifica que se pueda repetir una de las fechas y cambiar solo la otra.
 // CA-19.1: se puede repetir una de las dos fechas y cambiar solo la otra.
 func TestSetDates_CambiaSoloUnaDeLasDosFechas(t *testing.T) {
 	casos := map[string][2]string{
@@ -128,6 +132,7 @@ func TestSetDates_CambiaSoloUnaDeLasDosFechas(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.1 · Verifica que enviar las mismas fechas sea válido y deje el proyecto igual.
 // CA-19.1 (RN-19.9): las mismas fechas son válidas y dejan el proyecto igual.
 func TestSetDates_MismasFechasEsValido(t *testing.T) {
 	manager, _ := newProjectWithDates(t, "2026-10-23", "2026-12-18")
@@ -144,6 +149,7 @@ func TestSetDates_MismasFechasEsValido(t *testing.T) {
 	expectUnchanged(t, manager, before)
 }
 
+// HU-19 · CA-19.1 · Verifica que se acepten un fin al día siguiente del inicio y un 29 de febrero.
 // CA-19.1 y CA-19.2: el fin al día siguiente del inicio y un 29 de febrero se
 // aceptan.
 func TestSetDates_AceptaElDiaSiguienteYElAnioBisiesto(t *testing.T) {
@@ -160,6 +166,7 @@ func TestSetDates_AceptaElDiaSiguienteYElAnioBisiesto(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.2 · Verifica que un fin nuevo igual o anterior al inicio nuevo devuelva ErrEndNotAfterStart sin cambiar ninguna fecha.
 // CA-19.2 (RN-19.5): un fin nuevo igual o anterior al inicio nuevo se rechaza
 // y no cambia ninguna de las dos fechas.
 func TestSetDates_FinIgualOAnteriorAlInicioDevuelveErrEndNotAfterStart(t *testing.T) {
@@ -181,6 +188,7 @@ func TestSetDates_FinIgualOAnteriorAlInicioDevuelveErrEndNotAfterStart(t *testin
 	}
 }
 
+// HU-19 · CA-19.2 · Verifica que el par nuevo se valide entre sí y no contra las fechas guardadas.
 // CA-19.2 (RN-19.5): el par nuevo no se compara con las fechas guardadas; un
 // inicio nuevo posterior al fin viejo es válido si el fin nuevo es posterior.
 func TestSetDates_NoComparaConLasFechasGuardadas(t *testing.T) {
@@ -189,6 +197,7 @@ func TestSetDates_NoComparaConLasFechasGuardadas(t *testing.T) {
 	mustSetDates(t, manager, 1, day(t, "2026-12-19"), day(t, "2026-12-20"))
 }
 
+// HU-19 · CA-19.5 · Verifica que sin fecha de inicio, con o sin fecha de fin, se devuelva ErrMissingStartDate.
 // CA-19.5 (RN-19.1): sin fecha de inicio, con o sin fecha de fin.
 func TestSetDates_FechaDeInicioAusenteDevuelveErrMissingStartDate(t *testing.T) {
 	casos := map[string]time.Time{
@@ -210,6 +219,7 @@ func TestSetDates_FechaDeInicioAusenteDevuelveErrMissingStartDate(t *testing.T) 
 	}
 }
 
+// HU-19 · CA-19.5 · Verifica que sin fecha de fin se devuelva ErrMissingEndDate.
 // CA-19.5 (RN-19.1)
 func TestSetDates_FechaDeFinAusenteDevuelveErrMissingEndDate(t *testing.T) {
 	manager, _ := newProjectWithDates(t, "2026-10-23", "2026-12-18")
@@ -223,6 +233,7 @@ func TestSetDates_FechaDeFinAusenteDevuelveErrMissingEndDate(t *testing.T) {
 	expectUnchanged(t, manager, before)
 }
 
+// HU-19 · CA-19.5 · Verifica que las fechas ausentes se informen sin consultar el repositorio, aunque el proyecto no exista.
 // CA-19.5 (orden de validación): las fechas ausentes se informan sin
 // consultar el repositorio, aunque el proyecto no exista.
 func TestSetDates_FechasAusentesSeInformanSinConsultarElRepositorio(t *testing.T) {
@@ -236,6 +247,7 @@ func TestSetDates_FechasAusentesSeInformanSinConsultarElRepositorio(t *testing.T
 	}
 }
 
+// HU-19 · CA-19.3 · Verifica que un proyecto inexistente, incluidos los IDs 0 y negativo, devuelva ErrProjectNotFound.
 // CA-19.3 (RN-19.3)
 func TestSetDates_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	for _, id := range []int{999, 0, -1} {
@@ -251,6 +263,7 @@ func TestSetDates_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.3 · Verifica que la existencia del proyecto se valide antes que la relación entre las dos fechas.
 // CA-19.3 (D5): la existencia se valida antes que la relación del par.
 func TestSetDates_ParInvalidoEnProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	manager, _ := newProjectWithDates(t, "2026-10-23", "2026-12-18")
@@ -262,6 +275,7 @@ func TestSetDates_ParInvalidoEnProyectoInexistenteDevuelveErrProjectNotFound(t *
 	}
 }
 
+// HU-19 · CA-19.4 · Verifica que un proyecto sin alguna de las dos fechas devuelva ErrDatesNotRegistered y no cambie.
 // CA-19.4 (RN-19.4): un proyecto sin alguna de las dos fechas no se modifica,
 // aunque el par sea inválido (D5).
 func TestSetDates_ProyectoSinLasDosFechasDevuelveErrDatesNotRegistered(t *testing.T) {
@@ -300,6 +314,7 @@ func TestSetDates_ProyectoSinLasDosFechasDevuelveErrDatesNotRegistered(t *testin
 	}
 }
 
+// HU-19 · CA-19.6 · Verifica que modificar el proyecto devuelto por SetDates no altere el guardado.
 // CA-19.6 (RN-19.10)
 func TestSetDates_DevuelveUnaCopia(t *testing.T) {
 	manager, _ := newProjectWithDates(t, "2026-10-23", "2026-12-18")
@@ -319,6 +334,7 @@ func TestSetDates_DevuelveUnaCopia(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.6 · Verifica que, si el repositorio falla al actualizar, se devuelva ese error y las dos fechas queden como estaban.
 // CA-19.6 (RN-19.6): si el repositorio falla al actualizar, se devuelve ese
 // error y las dos fechas quedan como estaban.
 func TestSetDates_ErrorDelRepositorioAlActualizar(t *testing.T) {
@@ -335,6 +351,7 @@ func TestSetDates_ErrorDelRepositorioAlActualizar(t *testing.T) {
 	expectUnchanged(t, manager, before)
 }
 
+// HU-19 · CA-19.6 · Verifica que, si el repositorio falla al buscar, se devuelva ese error.
 // CA-19.6: si el repositorio falla al buscar, se devuelve ese error.
 func TestSetDates_ErrorDelRepositorioAlBuscar(t *testing.T) {
 	manager := project.NewManager(failingRepository{getErr: errRepository})
@@ -346,6 +363,7 @@ func TestSetDates_ErrorDelRepositorioAlBuscar(t *testing.T) {
 	}
 }
 
+// HU-19 · CA-19.1 · Verifica que, después de SetDates, SetStartDate y SetEndDate validen contra las fechas nuevas.
 // Caso límite: después de SetDates, SetStartDate y SetEndDate siguen
 // validando contra la fecha guardada, como en HU-18 y HU-41.
 func TestSetDates_LasOperacionesDeHU18YHU41ValidanContraLasFechasNuevas(t *testing.T) {
@@ -361,6 +379,7 @@ func TestSetDates_LasOperacionesDeHU18YHU41ValidanContraLasFechasNuevas(t *testi
 	expectStoredDates(t, manager, 1, day(t, "2027-01-11"), day(t, "2027-03-19"))
 }
 
+// HU-19 · CA-19.7 · Verifica que operaciones de fechas simultáneas no produzcan carreras ni dejen el fin igual o anterior al inicio.
 // CA-19.7 (RN-19.11): SetDates, SetStartDate, SetEndDate, Update y Get
 // simultáneos no producen carreras (go test -race) y nunca dejan el fin igual
 // o anterior al inicio. Las fechas de partida (inicio 2026-10-01 y fin

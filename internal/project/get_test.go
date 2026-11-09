@@ -51,6 +51,7 @@ func (r *fixedStatusRepository) Update(p project.Project) (project.Project, erro
 	return project.Project{}, project.ErrProjectNotFound
 }
 
+// HU-03 · CA-03.1 · Verifica que consultar un proyecto existente devuelva su nombre, descripción y estado.
 // CA-03.1
 func TestGet_ProyectoExistenteDevuelveNombreDescripcionYEstado(t *testing.T) {
 	manager, _ := newManager()
@@ -77,6 +78,7 @@ func TestGet_ProyectoExistenteDevuelveNombreDescripcionYEstado(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.1 · Verifica que se obtenga el proyecto pedido aunque no sea el primero creado.
 // CA-03.1
 func TestGet_ProyectoQueNoEsElPrimero(t *testing.T) {
 	manager, _ := newManager()
@@ -97,6 +99,7 @@ func TestGet_ProyectoQueNoEsElPrimero(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.1 · Verifica que se obtenga un proyecto con descripción vacía.
 // CA-03.1
 func TestGet_ProyectoConDescripcionVacia(t *testing.T) {
 	manager, _ := newManager()
@@ -114,6 +117,7 @@ func TestGet_ProyectoConDescripcionVacia(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.1 · Verifica que se obtenga un proyecto en un estado distinto del inicial.
 // CA-03.1 (con un repositorio falso de prueba, porque HU-02 aún no cambia estados)
 func TestGet_ProyectoEnEstadoDistintoDelInicial(t *testing.T) {
 	manager := project.NewManager(&fixedStatusRepository{status: project.StatusInProgress})
@@ -134,6 +138,7 @@ func TestGet_ProyectoEnEstadoDistintoDelInicial(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.2 · Verifica que consultar un ID mayor al último asignado devuelva ErrProjectNotFound.
 // CA-03.2
 func TestGet_IDMayorAlUltimoAsignadoDevuelveErrProjectNotFound(t *testing.T) {
 	manager, _ := newManager()
@@ -148,6 +153,7 @@ func TestGet_IDMayorAlUltimoAsignadoDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.2 · Verifica que consultar sin proyectos creados devuelva ErrProjectNotFound.
 // CA-03.2
 func TestGet_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	manager, _ := newManager()
@@ -159,6 +165,7 @@ func TestGet_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.2 · Verifica que consultar los IDs 0 y negativo devuelva ErrProjectNotFound.
 // CA-03.2
 func TestGet_IDCeroYNegativoDevuelvenErrProjectNotFound(t *testing.T) {
 	cases := map[string]int{
@@ -181,6 +188,7 @@ func TestGet_IDCeroYNegativoDevuelvenErrProjectNotFound(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.3 · Verifica que modificar el proyecto devuelto no altere el guardado.
 // CA-03.3
 func TestGet_ModificarElResultadoDevueltoNoAlteraElGuardado(t *testing.T) {
 	manager, _ := newManager()
@@ -205,6 +213,7 @@ func TestGet_ModificarElResultadoDevueltoNoAlteraElGuardado(t *testing.T) {
 	}
 }
 
+// HU-03 · Error · Verifica que, si el repositorio falla al buscar, Get devuelva ese error.
 // Condición de error: si el repositorio falla al buscar, se devuelve su error.
 func TestGet_ErrorDelRepositorioSeDevuelve(t *testing.T) {
 	manager := project.NewManager(failingRepository{getErr: errRepository})
@@ -219,6 +228,7 @@ func TestGet_ErrorDelRepositorioSeDevuelve(t *testing.T) {
 	}
 }
 
+// HU-03 · CA-03.4 · Verifica que consultas simultáneas con creaciones de proyectos no produzcan carreras.
 // CA-03.4: creaciones y consultas simultáneas sin accesos concurrentes sin
 // protección. Este test se verifica corriendo con `go test -race` (lo corre el CI).
 func TestGet_CreacionesYConsultasSimultaneasSinAccesosSinProteger(t *testing.T) {

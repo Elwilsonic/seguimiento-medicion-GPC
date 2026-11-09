@@ -7,6 +7,7 @@ import "testing"
 // Cálculo de la velocidad (M3 de docs/metricas.md) sobre los sprints
 // cerrados, sin repositorios (RN-32.5 a RN-32.7).
 
+// HU-32 · CA-32.5 · Verifica que la velocidad promedie los últimos 3 sprints cerrados por ID descendente, o todos si hay menos.
 // CA-32.5 y CA-32.6 · Promedio de los Story Points completados de los últimos
 // 3 sprints cerrados, por ID descendente, o de todos si hay menos.
 func TestVelocity_UltimosTresSprintsCerrados(t *testing.T) {
@@ -34,6 +35,7 @@ func TestVelocity_UltimosTresSprintsCerrados(t *testing.T) {
 	}
 }
 
+// HU-32 · RN-32.8 · Verifica que calcular la velocidad no reordene la lista de sprints que recibe.
 // RN-32.8 y CA-32.7 · Calcular no modifica nada: velocity no reordena la
 // lista que recibe.
 func TestVelocity_NoModificaLaLista(t *testing.T) {

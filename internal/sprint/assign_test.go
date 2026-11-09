@@ -109,7 +109,9 @@ func (r failingItemRepository) Update(item backlog.Item) (backlog.Item, error) {
 	return backlog.Item{}, nil
 }
 
-// CA-11.1, RN-11.1, RN-11.2 y RN-11.4
+// HU-11 · CA-11.1 · Verifica que un ítem del proyecto se asigne a su sprint
+// ABIERTO, quede guardado con ese SprintID y se devuelva una copia.
+// También cubre RN-11.1, RN-11.2 y RN-11.4.
 func TestAssignItem_ItemDelProyectoSeAsignaAlSprintAbierto(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -133,7 +135,8 @@ func TestAssignItem_ItemDelProyectoSeAsignaAlSprintAbierto(t *testing.T) {
 	}
 }
 
-// CA-11.1
+// HU-11 · CA-11.1 · Verifica que dos ítems distintos se puedan asignar al
+// mismo sprint.
 func TestAssignItem_DosItemsDistintosAlMismoSprint(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -155,7 +158,8 @@ func TestAssignItem_DosItemsDistintosAlMismoSprint(t *testing.T) {
 	}
 }
 
-// CA-11.2 y RN-11.3
+// HU-11 · CA-11.2 · Verifica que asignar de nuevo un ítem al mismo sprint
+// devuelva ErrItemAlreadyAssigned y no modifique nada. También cubre RN-11.3.
 func TestAssignItem_ItemYaAsignadoAlMismoSprintDaErrItemAlreadyAssigned(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -179,7 +183,8 @@ func TestAssignItem_ItemYaAsignadoAlMismoSprintDaErrItemAlreadyAssigned(t *testi
 	}
 }
 
-// CA-11.2 y RN-11.3
+// HU-11 · CA-11.2 · Verifica que un ítem asignado a otro sprint devuelva
+// ErrItemAlreadyAssigned y no modifique nada. También cubre RN-11.3.
 func TestAssignItem_ItemYaAsignadoAOtroSprintDaErrItemAlreadyAssigned(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -201,7 +206,8 @@ func TestAssignItem_ItemYaAsignadoAOtroSprintDaErrItemAlreadyAssigned(t *testing
 	}
 }
 
-// CA-11.3 y RN-11.1
+// HU-11 · CA-11.3 · Verifica que asignar a un sprint CERRADO devuelva
+// ErrSprintClosed y no modifique nada. También cubre RN-11.1.
 func TestAssignItem_SprintCerradoDaErrSprintClosed(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -221,7 +227,8 @@ func TestAssignItem_SprintCerradoDaErrSprintClosed(t *testing.T) {
 	}
 }
 
-// CA-11.3 y RN-11.2
+// HU-11 · CA-11.3 · Verifica que un ítem de otro proyecto devuelva
+// ErrItemFromAnotherProject y no se asigne. También cubre RN-11.2.
 func TestAssignItem_ItemDeOtroProyectoDaErrItemFromAnotherProject(t *testing.T) {
 	s := newAssignStack()
 	projectA := s.createAssignProject(t, "Sistema de ventas")
@@ -242,7 +249,8 @@ func TestAssignItem_ItemDeOtroProyectoDaErrItemFromAnotherProject(t *testing.T) 
 	}
 }
 
-// CA-11.4 y RN-11.1
+// HU-11 · CA-11.4 · Verifica que un sprint inexistente, con ID 0 o negativo,
+// devuelva ErrSprintNotFound y no asigne nada. También cubre RN-11.1.
 func TestAssignItem_SprintInexistenteDaErrSprintNotFound(t *testing.T) {
 	cases := map[string]int{"ID grande": 999, "ID cero": 0, "ID negativo": -1}
 	for name, sprintID := range cases {
@@ -267,7 +275,8 @@ func TestAssignItem_SprintInexistenteDaErrSprintNotFound(t *testing.T) {
 	}
 }
 
-// CA-11.4
+// HU-11 · CA-11.4 · Verifica que, sin ningún sprint creado, se devuelva
+// ErrSprintNotFound.
 func TestAssignItem_SinSprintsCreadosDaErrSprintNotFound(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -278,7 +287,8 @@ func TestAssignItem_SinSprintsCreadosDaErrSprintNotFound(t *testing.T) {
 	}
 }
 
-// CA-11.4
+// HU-11 · CA-11.4 · Verifica que un ítem inexistente, con ID 0 o negativo,
+// devuelva ErrItemNotFound y no asigne nada.
 func TestAssignItem_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 	cases := map[string]int{"ID grande": 999, "ID cero": 0, "ID negativo": -1}
 	for name, itemID := range cases {
@@ -300,7 +310,8 @@ func TestAssignItem_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-11.4
+// HU-11 · CA-11.4 · Verifica que, sin ningún ítem creado, se devuelva
+// ErrItemNotFound.
 func TestAssignItem_SinItemsCreadosDaErrItemNotFound(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -311,7 +322,8 @@ func TestAssignItem_SinItemsCreadosDaErrItemNotFound(t *testing.T) {
 	}
 }
 
-// RN-11.6
+// HU-11 · RN-11.6 · Verifica que un ítem EN_CURSO o TERMINADO también se pueda
+// asignar.
 func TestAssignItem_ItemEnCursoOTerminadoSeAsigna(t *testing.T) {
 	for name, status := range map[string]backlog.Status{
 		"EN_CURSO":  backlog.StatusInProgress,
@@ -347,7 +359,8 @@ func TestAssignItem_ItemEnCursoOTerminadoSeAsigna(t *testing.T) {
 	}
 }
 
-// CA-11.5
+// HU-11 · CA-11.5 · Verifica que asignar no cambie ningún otro campo del ítem
+// ni ningún dato del sprint.
 func TestAssignItem_NoCambiaNingunOtroCampoNiElSprint(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -391,7 +404,8 @@ func TestAssignItem_NoCambiaNingunOtroCampoNiElSprint(t *testing.T) {
 	}
 }
 
-// CA-11.7
+// HU-11 · CA-11.7 · Verifica que modificar el ítem devuelto no altere el
+// guardado.
 func TestAssignItem_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -419,7 +433,9 @@ func TestAssignItem_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) {
 	}
 }
 
-// CA-11.6 y RN-11.3
+// HU-11 · CA-11.6 · Verifica que, de varias asignaciones simultáneas del mismo
+// ítem, una tenga éxito y las demás devuelvan ErrItemAlreadyAssigned.
+// También cubre RN-11.3.
 func TestAssignItem_AsignacionesSimultaneasDelMismoItemDejanUnaSola(t *testing.T) {
 	const attempts = 50
 	s := newAssignStack()
@@ -464,7 +480,8 @@ func TestAssignItem_AsignacionesSimultaneasDelMismoItemDejanUnaSola(t *testing.T
 	}
 }
 
-// CA-11.6
+// HU-11 · CA-11.6 · Verifica que 10 asignaciones simultáneas de ítems distintos
+// al mismo sprint tengan éxito todas.
 func TestAssignItem_AsignacionesSimultaneasDeItemsDistintosTodasExitosas(t *testing.T) {
 	const items = 10
 	s := newAssignStack()
@@ -498,7 +515,8 @@ func TestAssignItem_AsignacionesSimultaneasDeItemsDistintosTodasExitosas(t *test
 	}
 }
 
-// CA-11.8
+// HU-11 · CA-11.8 · Verifica que, si el repositorio de sprints falla al
+// consultar, se devuelva ese error y un ítem vacío.
 func TestAssignItem_ErrorDelRepositorioDeSprintsSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -514,7 +532,8 @@ func TestAssignItem_ErrorDelRepositorioDeSprintsSeDevuelve(t *testing.T) {
 	}
 }
 
-// CA-11.8
+// HU-11 · CA-11.8 · Verifica que, si el repositorio de ítems falla al
+// consultar, se devuelva ese error y un ítem vacío.
 func TestAssignItem_ErrorDelRepositorioDeItemsSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(failingItemRepository{getErr: errRepository}, projects)

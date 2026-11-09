@@ -87,6 +87,7 @@ func titlesOf(items []backlog.Item) []string {
 	return titles
 }
 
+// HU-49 · CA-49.1 · Verifica que el reporte del proyecto incluya todas las historias de su backlog, ordenadas por ID, con sus datos y cantidades, sin las de otro proyecto.
 // CA-49.1, RN-49.1, RN-49.3, RN-49.4 y RN-49.6 · El reporte del proyecto
 // incluye todas las historias de su backlog, en cualquier estado y con o sin
 // sprint, ordenadas por ID, con sus datos y las cantidades; no las de otro
@@ -115,6 +116,7 @@ func TestProject_IncluyeLasHistoriasDelBacklog(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.4 · Verifica que una historia sin estimar, sin horas y sin sprint figure con 0 Story Points, 0 horas y sin sprint.
 // CA-49.4 y RN-49.3 · Una historia sin estimar, sin horas y sin sprint tiene
 // 0 Story Points, 0 horas y SprintID 0.
 func TestProject_HistoriaSinEstimarSinHorasNiSprint(t *testing.T) {
@@ -136,6 +138,7 @@ func TestProject_HistoriaSinEstimarSinHorasNiSprint(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.3 · Verifica que las cantidades de historias del reporte del proyecto coincidan con las de sus métricas.
 // CA-49.3 y RN-49.5 · Las cantidades del reporte del proyecto coinciden con
 // los ítems totales y terminados de sus métricas.
 func TestProject_CantidadesDeHistoriasCoincidenConLasMetricas(t *testing.T) {
@@ -153,6 +156,7 @@ func TestProject_CantidadesDeHistoriasCoincidenConLasMetricas(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.2 · Verifica que el reporte de cada sprint incluya solo sus historias, con cantidades iguales a las de sus métricas.
 // CA-49.2, CA-49.3, RN-49.2 y RN-49.5 · El reporte de cada sprint incluye
 // solo sus historias, con sus cantidades iguales a las de sus métricas; no
 // las de otros sprints ni las sin asignar. Un sprint cerrado muestra sus
@@ -183,6 +187,7 @@ func TestSprint_IncluyeSoloLasHistoriasDelSprint(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.4 · Verifica que un proyecto sin historias tenga la lista vacía, no nil, y cantidades 0.
 // CA-49.4 · Un proyecto sin historias tiene la lista vacía (no nil) y
 // cantidades 0.
 func TestProject_SinHistorias(t *testing.T) {
@@ -195,6 +200,7 @@ func TestProject_SinHistorias(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.4 · Verifica que un sprint sin historias tenga la lista vacía, no nil, aunque el proyecto tenga historias sin sprint.
 // CA-49.4 · Un sprint sin historias asignadas tiene la lista vacía (no nil),
 // aunque el proyecto tenga historias sin sprint.
 func TestSprint_SinHistorias(t *testing.T) {
@@ -210,6 +216,7 @@ func TestSprint_SinHistorias(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.5 · Verifica que, si falla la lectura de las historias, el reporte del proyecto devuelva ese error y ningún reporte parcial.
 // CA-49.5 y RN-49.7 · Las historias se leen una sola vez y al final, después
 // de los defectos: si falla esa lectura, se devuelve su error y el valor cero
 // del reporte, sin reporte parcial.
@@ -233,6 +240,7 @@ func TestProject_FallaLaLecturaDeLasHistorias(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.5 · Verifica que, si falla la lectura de las historias, el reporte del sprint devuelva ese error y ningún reporte parcial.
 // CA-49.5 y RN-49.7 · Lo mismo en el reporte del sprint.
 func TestSprint_FallaLaLecturaDeLasHistorias(t *testing.T) {
 	e := newSprintReportEnv()
@@ -254,6 +262,7 @@ func TestSprint_FallaLaLecturaDeLasHistorias(t *testing.T) {
 	}
 }
 
+// HU-49 · RN-49.7 · Verifica que un reporte lea las historias una sola vez, después de las demás partes.
 // CA-49.5 y RN-49.7 · Un reporte sin fallas lee las historias una sola vez,
 // después de las demás partes.
 func TestReports_LeenLasHistoriasUnaSolaVez(t *testing.T) {
@@ -273,6 +282,7 @@ func TestReports_LeenLasHistoriasUnaSolaVez(t *testing.T) {
 	}
 }
 
+// HU-49 · CA-49.5 · Verifica que modificar las historias del reporte o sus criterios no cambie lo guardado ni el reporte siguiente.
 // CA-49.5, RN-49.8 y RN-49.9 · Modificar las historias del reporte (o sus
 // criterios) no cambia lo guardado ni el reporte siguiente, en el proyecto y
 // en el sprint.

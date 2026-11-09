@@ -28,6 +28,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 	return NewPostgresRepository(pool)
 }
 
+// HU-15 · CA-15.6 · Verifica que el repositorio PostgreSQL cumpla el mismo contrato que el de memoria.
 // El repositorio PostgreSQL cumple el mismo contrato que el de memoria
 // (CA-15.6).
 func TestPostgresRepository_Contrato(t *testing.T) {
@@ -37,6 +38,7 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 	})
 }
 
+// HU-15 · CA-15.6 · Verifica que Save guarde el integrante en la tabla members con todos sus campos.
 // Guarda el integrante en la tabla members con todos sus campos.
 func TestPostgresRepository_GuardaElIntegrante(t *testing.T) {
 	pool := postgrestest.Pool(t)
@@ -56,6 +58,7 @@ func TestPostgresRepository_GuardaElIntegrante(t *testing.T) {
 	}
 }
 
+// HU-15 · RN-15.11 · Verifica que la clave foránea impida guardar un integrante de un proyecto inexistente.
 // La clave foránea impide guardar un integrante de un proyecto inexistente.
 func TestPostgresRepository_RechazaUnProyectoInexistente(t *testing.T) {
 	pool := postgrestest.Pool(t)

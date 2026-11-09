@@ -13,7 +13,8 @@ import (
 
 // HU-05 · Consultar un ítem del backlog (Issue #18)
 
-// CA-05.1
+// HU-05 · CA-05.1 · Verifica que GetItem devuelva el ítem por su ID, como
+// copia y con todos sus datos.
 func TestGetItem_ItemExistenteDevuelveCopiaConTodosSusDatos(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -57,7 +58,8 @@ func TestGetItem_ItemExistenteDevuelveCopiaConTodosSusDatos(t *testing.T) {
 	}
 }
 
-// CA-05.2
+// HU-05 · CA-05.2 · Verifica que consultar un ítem inexistente, con ID 0 o
+// negativo, devuelva ErrItemNotFound.
 func TestGetItem_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	cases := map[string]int{
 		"ID inexistente": 999,
@@ -84,7 +86,8 @@ func TestGetItem_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-05.2
+// HU-05 · CA-05.2 · Verifica que, sin ningún ítem creado, GetItem devuelva
+// ErrItemNotFound.
 func TestGetItem_ConsultarSinItemsCreadosDevuelveErrItemNotFound(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	createTestProject(t, projects, "Sistema de ventas")
@@ -99,7 +102,8 @@ func TestGetItem_ConsultarSinItemsCreadosDevuelveErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-05.3
+// HU-05 · CA-05.3 · Verifica que modificar el ítem consultado o sus criterios
+// no altere el guardado.
 func TestGetItem_ModificarElItemConsultadoYSusCriteriosNoAlteraElGuardado(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -137,7 +141,9 @@ func TestGetItem_ModificarElItemConsultadoYSusCriteriosNoAlteraElGuardado(t *tes
 	}
 }
 
-// CA-05.4
+// HU-05 · CA-05.4 · Verifica que consultar mientras se crean ítems en
+// simultáneo no produzca accesos concurrentes sin protección (lo detecta
+// -race).
 func TestGetItem_ConsultasSimultaneasMientrasSeCreanItems(t *testing.T) {
 	const attempts = 50
 	manager, repo, projects, _ := newTestManager()
@@ -182,7 +188,8 @@ func TestGetItem_ConsultasSimultaneasMientrasSeCreanItems(t *testing.T) {
 	}
 }
 
-// CA-05.5
+// HU-05 · CA-05.5 · Verifica que, si el repositorio falla al buscar, se
+// devuelva ese error y un ítem vacío.
 func TestGetItem_ErrorDelRepositorioSeDevuelveConItemVacio(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
@@ -200,7 +207,8 @@ func TestGetItem_ErrorDelRepositorioSeDevuelveConItemVacio(t *testing.T) {
 	}
 }
 
-// CA-05.1, RN-05.3
+// HU-05 · CA-05.1 · Verifica que GetByID del repositorio devuelva una copia
+// del ítem con su propia lista de criterios. También cubre RN-05.3.
 func TestGetByID_ItemExistenteDevuelveCopiaConCriteriosPropios(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -229,7 +237,8 @@ func TestGetByID_ItemExistenteDevuelveCopiaConCriteriosPropios(t *testing.T) {
 	}
 }
 
-// CA-05.2
+// HU-05 · CA-05.2 · Verifica que GetByID del repositorio, con un ID
+// inexistente, 0 o negativo, devuelva ErrItemNotFound.
 func TestGetByID_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	cases := map[string]int{
 		"ID inexistente": 999,
@@ -256,7 +265,8 @@ func TestGetByID_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	}
 }
 
-// CA-05.2
+// HU-05 · CA-05.2 · Verifica que GetByID del repositorio, sin ningún ítem
+// creado, devuelva ErrItemNotFound.
 func TestGetByID_ConsultarSinItemsCreadosDevuelveErrItemNotFound(t *testing.T) {
 	_, repo, _, _ := newTestManager()
 
