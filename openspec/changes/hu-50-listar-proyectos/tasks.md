@@ -9,26 +9,26 @@ Rama: `feature/HU-50-listar-proyectos`. Cada commit y cada push necesitan la aut
 
 ## 1. Escenarios BDD (godog)
 
-- [ ] 1.1 Escribir `features/HU-50-listar-proyectos.feature` en español (`# language: es`), con un escenario por cada caso de la spec a nivel del `Manager`: normal, proyecto modificado, orden, único proyecto, sin proyectos, copia y error del repositorio, cada uno con su CA en el título. Verificar que hay al menos un caso normal, uno alternativo, uno límite y uno de error.
-- [ ] 1.2 Implementar los pasos en `internal/project/list_features_test.go`, con el runner `TestFeatures_HU50ListarProyectos` y un repositorio falso que falla al listar. Verificar con `go test ./internal/project/ -run TestFeatures_HU50` que los escenarios se ejecutan y fallan solo porque `Manager.List` todavía no existe.
+- [x] 1.1 Escribir `features/HU-50-listar-proyectos.feature` en español (`# language: es`), con un escenario por cada caso de la spec a nivel del `Manager`: normal, proyecto modificado, orden, único proyecto, sin proyectos, copia y error del repositorio, cada uno con su CA en el título. Verificar que hay al menos un caso normal, uno alternativo, uno límite y uno de error.
+- [x] 1.2 Implementar los pasos en `internal/project/list_features_test.go`, con el runner `TestFeatures_HU50ListarProyectos` y un repositorio falso que falla al listar. Verificar con `go test ./internal/project/ -run TestFeatures_HU50` que los escenarios se ejecutan y fallan solo porque `Manager.List` todavía no existe.
 
 ## 2. Tests en RED
 
-- [ ] 2.1 Escribir `internal/project/list_test.go`:
+- [x] 2.1 Escribir `internal/project/list_test.go`:
   - lista con todos los datos (CA-50.1);
   - lista vacía y no `nil` con `MemoryRepository` (CA-50.2);
   - copia: modificar la lista no cambia `Get` ni una segunda `List` (CA-50.4);
   - error del repositorio con `nil` (CA-50.5);
   - orden por nombre sin distinguir mayúsculas (CA-50.6);
   - concurrencia con `Create` (CA-50.7).
-- [ ] 2.2 Escribir `internal/httpapi/projects_list_test.go`:
+- [x] 2.2 Escribir `internal/httpapi/projects_list_test.go`:
   - 200 con el formato exacto de `GET /api/proyectos/{id}`, fechas incluidas, y en orden (CA-50.1, CA-50.5, CA-50.6);
   - 200 con el cuerpo `[]` (CA-50.2);
   - 500 con `{"error":"error interno del servidor"}` usando un repositorio que falla (CA-50.5).
-- [ ] 2.3 Escribir `internal/httpapi/projects_list_web_test.go`:
+- [x] 2.3 Escribir `internal/httpapi/projects_list_web_test.go`:
   - la sección de contexto tiene `#ver-proyectos`, la tabla con sus columnas y `#lista-proyectos` (CA-50.3);
   - el handler llama a `api("GET", "/proyectos")` dentro de `accion("msg-contexto"`, usa "Elegir", `cargarProyecto` y `" proyecto(s)."`, y no usa `innerHTML` (CA-50.3, CA-50.5).
-- [ ] 2.4 Correr `go test ./...` y verificar que fallan solo los tests de HU-50 (`m.List undefined`, ruta inexistente o textos ausentes en la interfaz), sin errores preexistentes. Mostrar la salida y proponer `git commit -m "test(HU-50): agregar tests (RED)" -m "Refs #183"`.
+- [x] 2.4 Correr `go test ./...` y verificar que fallan solo los tests de HU-50 (`m.List undefined`, ruta inexistente o textos ausentes en la interfaz), sin errores preexistentes. Mostrar la salida y proponer `git commit -m "test(HU-50): agregar tests (RED)" -m "Refs #183"`.
 
 ## 3. Código en GREEN
 
