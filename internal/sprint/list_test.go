@@ -11,6 +11,7 @@ import (
 // SprintStoryPoints (ver "Decisión sobre entidades referenciadas" de la SDD) y
 // ListByProject encuentra los sprints cerrados de la velocidad (RN-32.5).
 
+// HU-32 · CA-32.7 · Verifica que Get devuelva una copia del sprint guardado.
 // CA-32.7 · Get devuelve una copia del sprint guardado.
 func TestGet_DevuelveElSprint(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
@@ -33,6 +34,7 @@ func TestGet_DevuelveElSprint(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.7 · Verifica que Get de un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound.
 // CA-32.7 · Un sprint inexistente, incluidos los IDs 0 y negativos, da
 // ErrSprintNotFound.
 func TestGet_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
@@ -45,6 +47,7 @@ func TestGet_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.5 · Verifica que ListByProject devuelva los sprints abiertos y cerrados del proyecto, ordenados por ID y sin los de otro proyecto.
 // CA-32.5 · ListByProject devuelve los sprints del proyecto, abiertos y
 // cerrados, ordenados por ID, sin los de otros proyectos.
 func TestListByProject_DevuelveLosSprintsDelProyecto(t *testing.T) {
@@ -77,6 +80,7 @@ func TestListByProject_DevuelveLosSprintsDelProyecto(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.4 · Verifica que un proyecto sin sprints devuelva una lista vacía, no nil.
 // CA-32.4 · Un proyecto sin sprints devuelve una lista vacía, no nil.
 func TestListByProject_SinSprintsDevuelveListaVacia(t *testing.T) {
 	manager, _, projects, _ := newTestManager()

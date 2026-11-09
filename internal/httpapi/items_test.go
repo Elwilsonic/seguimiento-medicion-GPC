@@ -36,6 +36,7 @@ func newHandlerWithItem(t *testing.T) http.Handler {
 	return h
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que GET /api/items/{id} consulte el ítem de HU-05 y responda 200.
 // CA-TEC04.9 · GET /api/items/{id} expone HU-05 (consultar ítem).
 func TestConsultarItem_Devuelve200ConElItem(t *testing.T) {
 	h := newHandlerWithItem(t)
@@ -52,12 +53,14 @@ func TestConsultarItem_Devuelve200ConElItem(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que consultar un ítem inexistente responda 404.
 func TestConsultarItem_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/items/999", "")
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que PUT /api/items/{id} modifique el ítem de HU-07 y responda 200.
 // CA-TEC04.9 · PUT /api/items/{id} expone HU-07 (modificar ítem).
 func TestModificarItem_Devuelve200ConElItemModificado(t *testing.T) {
 	h := newHandlerWithItem(t)
@@ -82,6 +85,7 @@ func TestModificarItem_Devuelve200ConElItemModificado(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que modificar un ítem con datos inválidos responda 400 con el error de cada caso.
 func TestModificarItem_DatosInvalidosDevuelven400(t *testing.T) {
 	cases := map[string]struct {
 		body string
@@ -103,12 +107,14 @@ func TestModificarItem_DatosInvalidosDevuelven400(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que modificar un ítem inexistente responda 404.
 func TestModificarItem_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPut, "/api/items/999", validItem)
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que PATCH /api/items/{id}/estado cambie el estado de HU-08 y responda 200.
 // CA-TEC04.9 · PATCH /api/items/{id}/estado expone HU-08 (cambiar estado).
 func TestCambiarEstadoItem_Devuelve200ConElEstadoNuevo(t *testing.T) {
 	h := newHandlerWithItem(t)
@@ -123,6 +129,7 @@ func TestCambiarEstadoItem_Devuelve200ConElEstadoNuevo(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que un estado inválido responda 400.
 func TestCambiarEstadoItem_EstadoInvalidoDevuelve400(t *testing.T) {
 	h := newHandlerWithItem(t)
 
@@ -131,12 +138,14 @@ func TestCambiarEstadoItem_EstadoInvalidoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, backlog.ErrInvalidStatus.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que cambiar el estado de un ítem inexistente responda 404.
 func TestCambiarEstadoItem_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/items/999/estado", `{"estado":"EN_CURSO"}`)
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que una transición de estado no permitida responda 409.
 func TestCambiarEstadoItem_TransicionNoPermitidaDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 
@@ -145,6 +154,7 @@ func TestCambiarEstadoItem_TransicionNoPermitidaDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, backlog.ErrInvalidTransition.Error())
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que GET /api/proyectos/{id}/backlog?orden=prioridad devuelva el backlog ordenado por prioridad (HU-09).
 // CA-TEC04.9 · GET /api/proyectos/{id}/backlog?orden=prioridad expone HU-09
 // (ordenar por prioridad). Sin el parámetro, el listado sigue ordenado por ID
 // (TestListarBacklog_Devuelve200ConLosItemsDelProyecto).
@@ -165,6 +175,7 @@ func TestListarBacklogPorPrioridad_Devuelve200OrdenadoPorPrioridad(t *testing.T)
 	}
 }
 
+// TEC-04 · CA-TEC04.9 · Verifica que listar por prioridad el backlog de un proyecto inexistente responda 404.
 func TestListarBacklogPorPrioridad_ProyectoInexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/999/backlog?orden=prioridad", "")
 
@@ -178,6 +189,7 @@ func TestListarBacklogPorPrioridad_ProyectoInexistenteDevuelve404(t *testing.T) 
 // 500); el 413 y el texto después del JSON están en bodyEndpoints
 // (server_test.go).
 
+// HU-20 · CA-20.8 · Verifica que PATCH /api/items/{id}/story-points asigne los Story Points y responda 200 con el ítem.
 func TestAsignarStoryPoints_Devuelve200ConLosStoryPointsAsignados(t *testing.T) {
 	h := newHandlerWithItem(t)
 
@@ -199,6 +211,7 @@ func TestAsignarStoryPoints_Devuelve200ConLosStoryPointsAsignados(t *testing.T) 
 	}
 }
 
+// HU-20 · CA-20.8 · Verifica que el texto "8" se acepte como el número 8 en la API.
 // SDD de HU-20, caso límite: con json.Number, el texto "5" se acepta como 5.
 func TestAsignarStoryPoints_TextoNumericoSeAceptaComoNumero(t *testing.T) {
 	h := newHandlerWithItem(t)
@@ -213,6 +226,7 @@ func TestAsignarStoryPoints_TextoNumericoSeAceptaComoNumero(t *testing.T) {
 	}
 }
 
+// HU-20 · CA-20.3 · Verifica que un valor fuera de la escala Fibonacci responda 400 y no cambie el ítem.
 func TestAsignarStoryPoints_ValorFueraDeLaEscalaDevuelve400(t *testing.T) {
 	cases := map[string]string{
 		"cero":          `{"story_points":0}`,
@@ -236,6 +250,7 @@ func TestAsignarStoryPoints_ValorFueraDeLaEscalaDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-20 · CA-20.8 · Verifica que un cuerpo que no es JSON o un valor no numérico responda 400.
 func TestAsignarStoryPoints_JSONInvalidoDevuelve400(t *testing.T) {
 	cases := map[string]string{
 		"no es JSON":        `story_points=5`,
@@ -253,18 +268,21 @@ func TestAsignarStoryPoints_JSONInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-20 · CA-20.8 · Verifica que un {id} no numérico responda 400.
 func TestAsignarStoryPoints_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPatch, "/api/items/abc/story-points", `{"story_points":5}`)
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-20 · CA-20.4 · Verifica que asignar Story Points a un ítem inexistente responda 404.
 func TestAsignarStoryPoints_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/items/999/story-points", `{"story_points":5}`)
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
 
+// HU-20 · CA-20.5 · Verifica que asignar Story Points a un ítem TERMINADO responda 409.
 func TestAsignarStoryPoints_ItemTerminadoDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/items/1/estado", `{"estado":"EN_CURSO"}`), http.StatusOK)
@@ -290,6 +308,7 @@ func (brokenItemRepository) Update(backlog.Item) (backlog.Item, error) {
 	return backlog.Item{}, errStorage
 }
 
+// HU-20 · CA-20.8 · Verifica que una falla del repositorio responda 500 sin detalle.
 func TestAsignarStoryPoints_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(brokenItemRepository{}, projects)

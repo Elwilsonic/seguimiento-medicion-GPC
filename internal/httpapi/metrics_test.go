@@ -97,6 +97,7 @@ func terminados(n int) []string {
 	return states
 }
 
+// HU-32 · CA-32.9 · Verifica que GET /api/sprints/{id}/metricas responda 200 con los Story Points del ejemplo de TEC-03.
 // CA-32.9 · GET /api/sprints/{id}/metricas con el ejemplo de TEC-03.
 func TestMetricasSprint_Devuelve200ConLosStoryPoints(t *testing.T) {
 	h := newHandler()
@@ -114,6 +115,7 @@ func TestMetricasSprint_Devuelve200ConLosStoryPoints(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.9 · Verifica que GET /api/proyectos/{id}/metricas redondee la velocidad a un decimal (12,333… → 12.3).
 // CA-32.9 · GET /api/proyectos/{id}/metricas redondea la velocidad a un
 // decimal: (10 + 15 + 12) / 3 = 12,333… → 12.3.
 func TestMetricasProyecto_Devuelve200ConLaVelocidadRedondeada(t *testing.T) {
@@ -136,6 +138,7 @@ func TestMetricasProyecto_Devuelve200ConLaVelocidadRedondeada(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.9 · Verifica que, sin sprints cerrados, la API devuelva la velocidad en null.
 // CA-32.9 y CA-32.6 · Sin sprints cerrados, la velocidad es null.
 func TestMetricasProyecto_SinSprintsCerradosLaVelocidadEsNull(t *testing.T) {
 	h := newHandler()
@@ -152,6 +155,7 @@ func TestMetricasProyecto_SinSprintsCerradosLaVelocidadEsNull(t *testing.T) {
 	}
 }
 
+// HU-32 · CA-32.9 · Verifica que las métricas de un sprint inexistente respondan 404.
 // CA-32.9 · Un sprint inexistente devuelve 404.
 func TestMetricasSprint_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/99/metricas", "")
@@ -159,6 +163,7 @@ func TestMetricasSprint_InexistenteDevuelve404(t *testing.T) {
 	expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
 }
 
+// HU-32 · CA-32.9 · Verifica que las métricas de un proyecto inexistente respondan 404.
 // CA-32.9 · Un proyecto inexistente devuelve 404.
 func TestMetricasProyecto_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/99/metricas", "")
@@ -166,6 +171,7 @@ func TestMetricasProyecto_InexistenteDevuelve404(t *testing.T) {
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
 
+// HU-32 · CA-32.9 · Verifica que una falla del repositorio responda 500 sin mostrar el error interno.
 // CA-32.9 · Una falla del repositorio devuelve 500 sin exponer el detalle.
 func TestMetricas_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
@@ -205,6 +211,7 @@ func expectCompletionJSON(t *testing.T, got completionJSON, items, finished int,
 	}
 }
 
+// HU-34 · CA-34.6 · Verifica que las métricas del sprint incluyan el porcentaje de completadas del ejemplo de TEC-03 (2 de 4).
 // CA-34.6 · GET /api/sprints/{id}/metricas incluye M8 con el ejemplo de
 // TEC-03: 2 de 4 ítems terminados.
 func TestMetricasSprint_IncluyeElPorcentajeDeHistoriasCompletadas(t *testing.T) {
@@ -220,6 +227,7 @@ func TestMetricasSprint_IncluyeElPorcentajeDeHistoriasCompletadas(t *testing.T) 
 	expectCompletionJSON(t, got, 4, 2, 50)
 }
 
+// HU-34 · CA-34.6 · Verifica que la API redondee el porcentaje de completadas a un decimal (33,333… → 33.3).
 // CA-34.6 y RN-34.7 · GET /api/proyectos/{id}/metricas redondea M8 a un
 // decimal: 1 de 3 = 33,333… → 33.3.
 func TestMetricasProyecto_PorcentajeRedondeadoAUnDecimal(t *testing.T) {
@@ -235,6 +243,7 @@ func TestMetricasProyecto_PorcentajeRedondeadoAUnDecimal(t *testing.T) {
 	expectCompletionJSON(t, got, 3, 1, 33.3)
 }
 
+// HU-34 · CA-34.6 · Verifica que, sin ítems, la API devuelva el porcentaje en null en el sprint y en el proyecto.
 // CA-34.6 y RN-34.6 · Sin ítems, el porcentaje es null en los dos niveles.
 func TestMetricas_SinItemsElPorcentajeEsNull(t *testing.T) {
 	h := newHandler()
@@ -319,6 +328,7 @@ func expectOptionalHour(t *testing.T, name string, got *float64, want float64) {
 	}
 }
 
+// HU-33 · CA-33.5 · Verifica que las métricas del sprint incluyan las horas y la desviación del ejemplo de TEC-03.
 // CA-33.5 · GET /api/sprints/{id}/metricas incluye M4 a M7 con el ejemplo de
 // TEC-03: 20 h estimadas, 20 h reales, desviación 0 y 1 ítem sin horas.
 func TestMetricasSprint_IncluyeHorasYDesviacion(t *testing.T) {
@@ -345,6 +355,7 @@ func TestMetricasSprint_IncluyeHorasYDesviacion(t *testing.T) {
 	}
 }
 
+// HU-33 · CA-33.6 · Verifica que las métricas del proyecto sumen todo el backlog y los esfuerzos de todos los sprints.
 // CA-33.6 · GET /api/proyectos/{id}/metricas suma todo el backlog y los
 // esfuerzos de todos los sprints.
 func TestMetricasProyecto_IncluyeTodoElBacklogYLosEsfuerzos(t *testing.T) {
@@ -371,6 +382,7 @@ func TestMetricasProyecto_IncluyeTodoElBacklogYLosEsfuerzos(t *testing.T) {
 	}
 }
 
+// HU-33 · CA-33.4 · Verifica que, sin datos, la API devuelva la desviación en null en los dos endpoints.
 // CA-33.4 y CA-33.5 · Sin datos, la desviación es null en los dos endpoints.
 func TestMetricas_SinDatosLaDesviacionEsNull(t *testing.T) {
 	h := newHandler()
@@ -395,6 +407,7 @@ func TestMetricas_SinDatosLaDesviacionEsNull(t *testing.T) {
 	}
 }
 
+// HU-33 · CA-33.9 · Verifica que la API redondee las horas y la desviación a un decimal (1,25 → 1.3 y 6,25 → 6.3).
 // CA-33.9 · La API redondea M4, M5, M6 y M7 a un decimal: 21,25 h reales
 // sobre 20 h estimadas dan 1,25 h y 6,25 %, que se informan como 1.3 y 6.3.
 func TestMetricas_RedondeaHorasYDesviacionAUnDecimal(t *testing.T) {
@@ -412,6 +425,7 @@ func TestMetricas_RedondeaHorasYDesviacionAUnDecimal(t *testing.T) {
 	expectOptionalHour(t, "desviacion_porcentual", got.DesviacionPorcentual, 6.3)
 }
 
+// HU-33 · CA-33.9 · Verifica que el cero negativo de la desviación se informe como 0 en el JSON.
 // CA-33.9 · El cero negativo de M6 y M7 se normaliza a 0 en el JSON.
 func TestMetricas_NormalizaElCeroNegativo(t *testing.T) {
 	h := newHandler()
@@ -451,6 +465,7 @@ func (r failingEffortListRepository) ListBySprint(int) ([]effort.Effort, error) 
 	return nil, r.err
 }
 
+// HU-33 · CA-33.8 · Verifica que una falla del repositorio de esfuerzos responda 500 sin detalle.
 // CA-33.8 · Una falla del repositorio de esfuerzos devuelve 500 sin detalle.
 func TestMetricas_ErrorDelRepositorioDeEsfuerzosDevuelve500(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
@@ -497,6 +512,7 @@ func expectDefectsJSON(t *testing.T, rec *httptest.ResponseRecorder, detected, r
 	}
 }
 
+// HU-47 · CA-47.6 · Verifica que las métricas del sprint y del proyecto muestren 2 defectos detectados y 1 resuelto.
 // CA-47.6 · Con un defecto resuelto en el sprint 1 y otro abierto, las
 // métricas del sprint y del proyecto dan 2 detectados y 1 resuelto.
 func TestMetricas_IncluyenLosDefectosDetectadosYResueltos(t *testing.T) {
@@ -510,6 +526,7 @@ func TestMetricas_IncluyenLosDefectosDetectadosYResueltos(t *testing.T) {
 	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/proyectos/1/metricas", ""), 2, 1)
 }
 
+// HU-47 · CA-47.3 · Verifica que, sin defectos, la API devuelva los dos campos en 0, no en null.
 // CA-47.3 y CA-47.6 · Sin defectos, los dos campos valen 0 (no null).
 func TestMetricas_SinDefectosLosCamposValenCero(t *testing.T) {
 	h := newHandlerWithDefects(t)
@@ -518,6 +535,7 @@ func TestMetricas_SinDefectosLosCamposValenCero(t *testing.T) {
 	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/proyectos/1/metricas", ""), 0, 0)
 }
 
+// HU-47 · Error · Verifica que una falla al leer los defectos responda 500 sin detalle.
 // Condiciones de error de la SDD · Una falla al leer los defectos devuelve 500
 // sin exponer el detalle.
 func TestMetricas_ErrorDelRepositorioDeDefectosDevuelve500(t *testing.T) {
@@ -611,6 +629,7 @@ func expectRawJSON(t *testing.T, rec *httptest.ResponseRecorder, want string) {
 	}
 }
 
+// HU-35 · CA-35.1 · Verifica que las métricas del sprint cumplan el contrato completo con el ejemplo de TEC-03.
 // CA-35.1 y CA-35.6 · Contrato del sprint con el ejemplo de TEC-03.
 func TestConsultaMetricas_ContratoDelSprint(t *testing.T) {
 	h := newHandler()
@@ -636,6 +655,7 @@ func TestConsultaMetricas_ContratoDelSprint(t *testing.T) {
 }`)
 }
 
+// HU-35 · CA-35.1 · Verifica que las métricas del proyecto cumplan el contrato completo con el sprint de TEC-03 cerrado.
 // CA-35.1 y CA-35.6 · Contrato del proyecto con ese sprint cerrado.
 func TestConsultaMetricas_ContratoDelProyecto(t *testing.T) {
 	h := newHandler()
@@ -664,6 +684,7 @@ func TestConsultaMetricas_ContratoDelProyecto(t *testing.T) {
 }`)
 }
 
+// HU-35 · CA-35.2 · Verifica que un proyecto recién creado devuelva las cuatro métricas no disponibles en null y el resto en 0.
 // CA-35.2 y CA-35.6 · Contrato de un proyecto recién creado: las cuatro
 // métricas no disponibles en null y el resto en 0.
 func TestConsultaMetricas_ContratoDelProyectoVacio(t *testing.T) {
@@ -693,6 +714,7 @@ func TestConsultaMetricas_ContratoDelProyectoVacio(t *testing.T) {
 }`)
 }
 
+// HU-35 · CA-35.3 · Verifica que un {id} no numérico responda 400 en las dos rutas de métricas.
 // CA-35.3 · Un {id} no numérico devuelve 400 en las dos rutas.
 func TestConsultaMetricas_IDNoNumericoDevuelve400(t *testing.T) {
 	h := newHandler()
@@ -703,6 +725,7 @@ func TestConsultaMetricas_IDNoNumericoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-35 · CA-35.3 · Verifica que un sprint inexistente, 0 o negativo responda 404.
 // CA-35.3 · Un sprint inexistente, 0 o negativo devuelve 404.
 func TestConsultaMetricas_SprintInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
@@ -713,6 +736,7 @@ func TestConsultaMetricas_SprintInexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-35 · CA-35.3 · Verifica que un proyecto inexistente, 0 o negativo responda 404.
 // CA-35.3 · Un proyecto inexistente, 0 o negativo devuelve 404.
 func TestConsultaMetricas_ProyectoInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
@@ -723,6 +747,7 @@ func TestConsultaMetricas_ProyectoInexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-35 · CA-35.3 · Verifica que una falla al leer los esfuerzos o los defectos responda 500 sin detalle en las dos rutas.
 // CA-35.3 · Una falla al leer los esfuerzos o los defectos devuelve 500 sin
 // detalle, en las dos rutas. Usa los repositorios de prueba de HU-33
 // (failingEffortListRepository) y de HU-31 (brokenDefectRepository).
@@ -758,6 +783,7 @@ func (r *countingItemRepository) ListByProject(projectID int) ([]backlog.Item, e
 	return r.Repository.ListByProject(projectID)
 }
 
+// HU-35 · CA-35.4 · Verifica que, a través del handler, cada consulta lea los ítems solo 2 veces: una de metrics y una interna de defectos (límite conocido).
 // CA-35.4 · A través del handler, cada consulta lee el repositorio de ítems 2
 // veces: 1 de metrics y 1 interna de defect.Manager.ListByProject (límite
 // conocido de la SDD). El proyecto tiene dos sprints.
@@ -798,6 +824,7 @@ func TestConsultaMetricas_LeeLosItemsUnaSolaVez(t *testing.T) {
 // cerrar el primero (solo puede haber un sprint abierto).
 const secondSprint = `{"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Mostrar el dashboard"}`
 
+// HU-37 · CA-37.1 · Verifica que las métricas por sprint cumplan el contrato, con las no disponibles del sprint abierto en null.
 // CA-37.1 y CA-37.4 · Contrato con el ejemplo de TEC-03 en el sprint 1,
 // cerrado, y el sprint 2 abierto y sin ítems: las métricas no disponibles
 // del sprint 2 son null.
@@ -867,6 +894,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
 ]`)
 }
 
+// HU-37 · CA-37.3 · Verifica que las métricas de cada sprint sean iguales a las de GET /api/sprints/{id}/metricas.
 // CA-37.3 · Las métricas de cada elemento son exactamente el cuerpo de
 // GET /api/sprints/{id}/metricas, y el sprint el de la lista de sprints.
 func TestMetricasPorSprint_ValoresIgualesALaConsultaDeCadaSprint(t *testing.T) {
@@ -906,6 +934,7 @@ func TestMetricasPorSprint_ValoresIgualesALaConsultaDeCadaSprint(t *testing.T) {
 	}
 }
 
+// HU-37 · CA-37.4 · Verifica que un proyecto sin sprints responda 200 con [], no null.
 // CA-37.4 · Un proyecto sin sprints devuelve 200 y [], no null.
 func TestMetricasPorSprint_SinSprintsDevuelveListaVacia(t *testing.T) {
 	h := newHandler()
@@ -916,6 +945,7 @@ func TestMetricasPorSprint_SinSprintsDevuelveListaVacia(t *testing.T) {
 	expectRawJSON(t, rec, `[]`)
 }
 
+// HU-37 · CA-37.4 · Verifica que un {id} no numérico responda 400.
 // CA-37.4 · Un {id} no numérico devuelve 400.
 func TestMetricasPorSprint_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/metricas/sprints", "")
@@ -923,6 +953,7 @@ func TestMetricasPorSprint_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-37 · CA-37.4 · Verifica que un proyecto inexistente, 0 o negativo responda 404.
 // CA-37.4 · Un proyecto inexistente, 0 o negativo devuelve 404.
 func TestMetricasPorSprint_ProyectoInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
@@ -933,6 +964,7 @@ func TestMetricasPorSprint_ProyectoInexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-37 · CA-37.4 · Verifica que una falla al leer los esfuerzos o los defectos responda 500 sin detalle.
 // CA-37.4 · Una falla al leer los esfuerzos o los defectos devuelve 500 sin
 // detalle. Usa los repositorios de prueba de HU-33
 // (failingEffortListRepository) y de HU-31 (brokenDefectRepository).

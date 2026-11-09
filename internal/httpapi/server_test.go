@@ -131,6 +131,7 @@ func createProject(t *testing.T, h http.Handler, name string) int {
 
 const validItem = `{"titulo":"Login de usuarios","descripcion":"Acceso","prioridad":"alta","criterios":["Credenciales válidas"]}`
 
+// TEC-01 · CA-TEC01.2 · Verifica que POST /api/proyectos cree el proyecto de HU-01 y responda 201 con el proyecto creado.
 // CA-TEC01.2 · POST /proyectos expone HU-01 (crear proyecto).
 func TestCrearProyecto_Devuelve201ConElProyectoCreado(t *testing.T) {
 	h := newHandler()
@@ -146,12 +147,14 @@ func TestCrearProyecto_Devuelve201ConElProyectoCreado(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que crear un proyecto con nombre vacío responda 400 con ErrEmptyName.
 func TestCrearProyecto_NombreVacioDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos", `{"nombre":"   ","descripcion":""}`)
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrEmptyName.Error())
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que crear un proyecto con un nombre repetido responda 409.
 func TestCrearProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -161,12 +164,14 @@ func TestCrearProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, project.ErrDuplicateName.Error())
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que un cuerpo que no es JSON válido responda 400.
 func TestCrearProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos", `{"nombre":`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que GET /api/proyectos/{id} consulte el proyecto de HU-03 y responda 200.
 // CA-TEC01.2 · GET /proyectos/{id} expone HU-03 (consultar proyecto).
 func TestConsultarProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandler()
@@ -182,6 +187,7 @@ func TestConsultarProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que consultar un proyecto inexistente, 0 o negativo responda 404.
 func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
 	for _, path := range []string{"/api/proyectos/999", "/api/proyectos/0", "/api/proyectos/-1"} {
 		t.Run(path, func(t *testing.T) {
@@ -192,12 +198,14 @@ func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que un {id} no numérico responda 400.
 func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc", "")
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id no numérico.
 // CA-TEC01.2 · Las demás rutas con {id} también rechazan un id no numérico.
 func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 	casos := []struct {
@@ -271,6 +279,7 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que PUT /api/proyectos/{id} modifique el proyecto de HU-02 y responda 200.
 // CA-TEC01.2 · PUT /proyectos/{id} expone HU-02 (modificar proyecto).
 func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	h := newHandler()
@@ -294,6 +303,7 @@ func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que modificar un proyecto con un estado inválido responda 400.
 func TestModificarProyecto_EstadoInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -303,6 +313,7 @@ func TestModificarProyecto_EstadoInvalidoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, project.ErrInvalidStatus.Error())
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que modificar un proyecto con el nombre de otro responda 409.
 func TestModificarProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -313,12 +324,14 @@ func TestModificarProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, project.ErrDuplicateName.Error())
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que modificar un proyecto inexistente responda 404.
 func TestModificarProyecto_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPut, "/api/proyectos/999", `{"nombre":"Otro","descripcion":"","estado":"PLANIFICADO"}`)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que modificar un proyecto con un JSON inválido responda 400.
 func TestModificarProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -352,6 +365,7 @@ func expectProjectStartDate(t *testing.T, h http.Handler, id, want string) {
 	}
 }
 
+// HU-18 · CA-18.10 · Verifica que PATCH /api/proyectos/{id}/fecha-inicio responda 200 con el proyecto y su fecha de inicio.
 // CA-18.1 y CA-18.10
 func TestRegistrarFechaInicioProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandler()
@@ -370,6 +384,7 @@ func TestRegistrarFechaInicioProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	expectProjectStartDate(t, h, "1", "2026-10-23")
 }
 
+// HU-18 · CA-18.5 · Verifica que volver a registrar la fecha de inicio por la API reemplace la anterior.
 // CA-18.5
 func TestRegistrarFechaInicioProyecto_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	h := newHandler()
@@ -382,6 +397,7 @@ func TestRegistrarFechaInicioProyecto_VolverARegistrarReemplazaLaFecha(t *testin
 	expectProjectStartDate(t, h, "1", "2026-11-02")
 }
 
+// HU-18 · CA-18.3 · Verifica que una fecha de inicio vacía, null o ausente responda 400.
 // CA-18.3
 func TestRegistrarFechaInicioProyecto_FechaAusenteDevuelve400(t *testing.T) {
 	bodies := map[string]string{
@@ -402,6 +418,7 @@ func TestRegistrarFechaInicioProyecto_FechaAusenteDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.2 · Verifica que una fecha con otro formato o inexistente en el calendario responda 400.
 // CA-18.2
 func TestRegistrarFechaInicioProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T) {
 	for _, date := range []string{"2026-02-30", "2026-13-01", "23/10/2026", "2026-1-5", "2026-10-23T00:00:00Z", " 2026-10-23 "} {
@@ -417,6 +434,7 @@ func TestRegistrarFechaInicioProyecto_FormatoOFechaInvalidaDevuelve400(t *testin
 	}
 }
 
+// HU-18 · CA-18.10 · Verifica que un cuerpo que no es JSON o una fecha que no es texto responda 400.
 // CA-18.10: un cuerpo que no es JSON o una fecha que no es texto es JSON
 // inválido.
 func TestRegistrarFechaInicioProyecto_JSONInvalidoDevuelve400(t *testing.T) {
@@ -432,6 +450,7 @@ func TestRegistrarFechaInicioProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.4 · Verifica que registrar la fecha de inicio de un proyecto inexistente responda 404.
 // CA-18.4
 func TestRegistrarFechaInicioProyecto_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-inicio", fechaInicio("2026-10-23"))
@@ -439,6 +458,7 @@ func TestRegistrarFechaInicioProyecto_InexistenteDevuelve404(t *testing.T) {
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
 
+// HU-18 · CA-18.3 · Verifica que la fecha se valide antes que el proyecto: fecha vacía en un proyecto inexistente responde 400.
 // CA-18.3 (orden de validación): la fecha se valida antes que el proyecto.
 func TestRegistrarFechaInicioProyecto_FechaVaciaEnProyectoInexistenteDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-inicio", fechaInicio(""))
@@ -446,6 +466,7 @@ func TestRegistrarFechaInicioProyecto_FechaVaciaEnProyectoInexistenteDevuelve400
 	expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
 }
 
+// HU-18 · CA-18.8 · Verifica que una falla del repositorio responda 500 sin detalle.
 // CA-18.8 y CA-18.10: una falla del repositorio devuelve 500 sin detalle.
 func TestRegistrarFechaInicioProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
@@ -461,6 +482,7 @@ func TestRegistrarFechaInicioProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
 
+// HU-18 · CA-18.6 · Verifica que POST, GET y PUT de proyectos devuelvan fecha_inicio, o "" si no está registrada.
 // CA-18.6: POST, GET y PUT devuelven fecha_inicio; "" si no está registrada.
 func TestProyecto_RespuestasIncluyenLaFechaDeInicio(t *testing.T) {
 	h := newHandler()
@@ -485,6 +507,7 @@ func TestProyecto_RespuestasIncluyenLaFechaDeInicio(t *testing.T) {
 	}
 }
 
+// HU-18 · CA-18.6 · Verifica que PUT ignore una fecha de inicio enviada y conserve la registrada.
 // CA-18.6 (RN-18.6): PUT no recibe la fecha; si un cliente la envía, se
 // ignora y la registrada se conserva.
 func TestModificarProyecto_ConservaLaFechaDeInicio(t *testing.T) {
@@ -498,6 +521,7 @@ func TestModificarProyecto_ConservaLaFechaDeInicio(t *testing.T) {
 	expectProjectStartDate(t, h, "1", "2026-10-23")
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que POST /api/proyectos/{id}/backlog cree el ítem de HU-04 y responda 201.
 // CA-TEC01.2 · POST /proyectos/{id}/backlog expone HU-04 (crear ítem).
 func TestCrearItem_Devuelve201ConElItemCreado(t *testing.T) {
 	h := newHandler()
@@ -515,6 +539,7 @@ func TestCrearItem_Devuelve201ConElItemCreado(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que crear un ítem con datos inválidos responda 400 con el error de cada caso.
 func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 	cases := map[string]struct {
 		body string
@@ -536,12 +561,14 @@ func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que crear un ítem en un proyecto inexistente responda 404.
 func TestCrearItem_ProyectoInexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/999/backlog", validItem)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que crear un ítem con un JSON inválido responda 400.
 func TestCrearItem_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -551,6 +578,7 @@ func TestCrearItem_JSONInvalidoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que GET /api/proyectos/{id}/backlog liste los ítems de HU-06 solo de ese proyecto.
 // CA-TEC01.2 · GET /proyectos/{id}/backlog expone HU-06 (listar backlog).
 func TestListarBacklog_Devuelve200ConLosItemsDelProyecto(t *testing.T) {
 	h := newHandler()
@@ -570,6 +598,7 @@ func TestListarBacklog_Devuelve200ConLosItemsDelProyecto(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que un proyecto sin ítems responda 200 con una lista vacía.
 func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -582,6 +611,7 @@ func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que listar el backlog de un proyecto inexistente responda 404.
 func TestListarBacklog_ProyectoInexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/999/backlog", "")
 
@@ -604,6 +634,7 @@ func (brokenRepository) Update(project.Project) (project.Project, error) {
 	return project.Project{}, errStorage
 }
 
+// TEC-01 · CA-TEC01.2 · Verifica que un error inesperado responda 500 sin mostrar el detalle interno.
 // CA-TEC01.2 · Un error inesperado devuelve 500 sin exponer el detalle interno.
 func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
@@ -818,6 +849,7 @@ func validBody(description string) string {
 		`,"fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Ok"}`
 }
 
+// TEC-04 · CA-TEC04.5 · Verifica que un cuerpo de más de 1 MiB se rechace con 413 y no se procese.
 // CA-TEC04.5 · Un cuerpo de más de 1 MiB se rechaza con 413 y no se procesa.
 // El relleno son espacios dentro del JSON: el cuerpo sigue siendo válido y la
 // respuesta no repite el MiB de datos si el test falla.
@@ -836,6 +868,7 @@ func TestHandler_CuerpoMayorA1MiBDa413(t *testing.T) {
 	}
 }
 
+// TEC-04 · CA-TEC04.6 · Verifica que un cuerpo con texto después del JSON se rechace con 400 y no se procese.
 // CA-TEC04.6 · Un cuerpo con texto después del JSON se rechaza como JSON
 // inválido y no se procesa.
 func TestHandler_TextoDespuesDelJSONDa400(t *testing.T) {
