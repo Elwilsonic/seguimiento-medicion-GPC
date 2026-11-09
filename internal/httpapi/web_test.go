@@ -1199,11 +1199,12 @@ func TestInterfaz_GraficosUsanVariablesDeColor(t *testing.T) {
 	}
 }
 
-// HU-37 · CA-37.1 · Verifica la corrección de un defecto: el ancho de cada grupo
-// de barras tiene en cuenta el nombre del sprint y la nota de desviación, así
-// un texto más largo que el grupo, como "Desviación: -2.5 h (-19.2 %)", no queda
-// cortado en el borde del gráfico ni se pisa con el del sprint siguiente. El
-// dibujo se verifica en el navegador (evidencia TDD de HU-37).
+// HU-37 · CA-37.1 · Verifica que el ancho de cada grupo de barras tenga en
+// cuenta el nombre del sprint y la nota de desviación (corrección de un
+// defecto), así un texto más largo que el grupo, como "Desviación: -2.5 h
+// (-19.2 %)", no queda cortado en el borde del gráfico ni se pisa con el del
+// sprint siguiente. El dibujo se verifica en el navegador (evidencia TDD de
+// HU-37).
 func TestInterfaz_GraficoDeBarrasEnsanchaLosGruposSegunSusTextos(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 

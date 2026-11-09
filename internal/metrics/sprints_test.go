@@ -28,8 +28,8 @@ func expectProjectSprints(t *testing.T, got []SprintWithMetrics, err error, want
 	}
 }
 
-// HU-37 · CA-37.4 · Verifica, con el ejemplo de TEC-03 en un sprint cerrado y
-// un sprint abierto después, que cada sprint venga con su copia y sus métricas,
+// HU-37 · CA-37.4 · Verifica que, con el ejemplo de TEC-03 en un sprint cerrado
+// y un sprint abierto después, cada sprint venga con su copia y sus métricas,
 // en orden de ID. También cubre CA-37.1.
 func TestProjectSprints_EjemploDeTEC03ConUnSprintCerradoYOtroAbierto(t *testing.T) {
 	e := newSummaryEnv()
