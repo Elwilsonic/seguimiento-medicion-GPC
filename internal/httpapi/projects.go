@@ -1,6 +1,6 @@
 package httpapi
 
-// Handlers de proyectos (HU-01, HU-02 y HU-03), expuestos desde TEC-01,
+// Handlers de proyectos (HU-01, HU-02, HU-03 y la lista de HU-50), expuestos desde TEC-01,
 // fechas de inicio (HU-18) y de fin (HU-41) y modificación de las dos fechas
 // (HU-19).
 
@@ -73,6 +73,22 @@ func (s *server) getProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, toProjectResponse(p))
+}
+
+// HU-50. Cada proyecto va con el formato de GET /api/proyectos/{id}
+// (CA-50.1), en el orden del Manager (CA-50.6); sin proyectos responde []
+// y no null (CA-50.2), y si falla la lectura, 500 (CA-50.5).
+func (s *server) listProjects(w http.ResponseWriter, r *http.Request) {
+	projects, err := s.projects.List()
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	resp := make([]projectResponse, 0, len(projects))
+	for _, p := range projects {
+		resp = append(resp, toProjectResponse(p))
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // HU-02

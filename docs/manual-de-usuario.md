@@ -46,7 +46,7 @@ Con este comando los datos se guardan **en memoria** y se pierden al detener el 
 
 La interfaz es una sola página. Arriba está la barra **Proyecto actual / Sprint actual**, y debajo, una sección por tema: Proyectos, Integrantes, Product Backlog, Planning Poker, Métricas, Dashboard, Reportes, Sprints y Defectos.
 
-- **Proyecto actual (ID):** casi todas las secciones trabajan sobre este proyecto. Se completa solo al crear un proyecto. Para volver a uno existente, escribí su ID y tocá **Cargar proyecto**: se cargan sus datos y su backlog. La aplicación no tiene un listado de proyectos, así que conviene anotar el ID de cada uno.
+- **Proyecto actual (ID):** casi todas las secciones trabajan sobre este proyecto. Se completa solo al crear un proyecto. Para volver a uno existente, tocá **Ver proyectos**: aparece una tabla con todos los proyectos, con su ID, nombre, descripción, estado y fechas, y el mensaje "N proyecto(s).". Tocá **Elegir** en la fila del proyecto: queda como proyecto actual y se cargan sus datos y su backlog, sin escribir su número (HU-50). Los proyectos aparecen en orden alfabético por nombre, sin distinguir mayúsculas; los nombres que empiezan con acento o con ñ (por ejemplo, "Ábaco") quedan al final, después de los que empiezan con "z". Si sabés el ID, también podés escribirlo y tocar **Cargar proyecto**.
 - **Sprint actual (ID):** lo usan "Asignar al sprint", "Completar", los reportes del sprint y la consulta de defectos por sprint. Se completa solo al crear un sprint, y también se puede elegir desde la tabla de "Ver sprints del proyecto" o escribiendo su ID.
 - **Mensajes:** cada sección muestra el resultado de la última acción debajo de sus formularios. En **verde** si salió bien (por ejemplo, "Proyecto 1 creado.") y en **rojo** si la aplicación rechazó el pedido, con el motivo. En la [sección 14](#14-mensajes-de-error-comunes) están los errores más comunes y cómo resolverlos.
 - **Fechas:** los campos de fecha usan el calendario del navegador; la aplicación muestra las fechas como `AAAA-MM-DD`.
@@ -307,8 +307,8 @@ Ejemplos de cómo se ven:
 
 ## 15. Límites de la aplicación
 
-- No hay listado de proyectos: se eligen por su ID (ninguna historia lo pide).
+- La lista de proyectos no tiene filtros, búsqueda ni paginación, y su orden alfabético deja al final los nombres que empiezan con acento o con ñ (HU-50).
 - No se pueden borrar proyectos, ítems, sprints, integrantes, esfuerzos ni defectos.
-- Las tablas de integrantes, sprints, esfuerzos y defectos no se actualizan solas: se vuelve a tocar el botón de consulta.
+- Las tablas de proyectos, integrantes, sprints, esfuerzos y defectos no se actualizan solas: se vuelve a tocar el botón de consulta.
 - El nombre del integrante en Planning Poker y en el registro de esfuerzo se escribe a mano y no se valida contra los integrantes registrados (HU-15 a HU-17).
 - Con almacenamiento en memoria, los datos se pierden al detener el servidor.

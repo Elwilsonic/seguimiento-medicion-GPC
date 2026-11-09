@@ -102,6 +102,45 @@ $("form-contexto").addEventListener("submit", (e) => {
   accion("msg-contexto", cargarProyecto);
 });
 
+// HU-50 · Lista de proyectos. El botón «Elegir» de cada fila deja ese
+// proyecto como proyecto actual y lo carga como «Cargar proyecto», sin
+// escribir su número (CA-50.3). Los errores de la API se muestran en el
+// mensaje del contexto (CA-50.5).
+$("ver-proyectos").addEventListener("click", () =>
+  accion("msg-contexto", async () => {
+    const proyectos = await api("GET", "/proyectos");
+    $("lista-proyectos").replaceChildren(
+      ...proyectos.map((p) => {
+        const tr = document.createElement("tr");
+        const acciones = document.createElement("td");
+        acciones.append(
+          boton(
+            "Elegir",
+            async () => {
+              $("proyecto-actual").value = p.id;
+              await cargarProyecto();
+              mostrar("msg-contexto", "Proyecto " + p.id + " elegido: " + p.nombre + ".", false);
+            },
+            "secundario",
+            "msg-contexto",
+          ),
+        );
+        tr.append(
+          celda(p.id),
+          celda(p.nombre),
+          celda(p.descripcion),
+          celda(p.estado),
+          celda(p.fecha_inicio),
+          celda(p.fecha_fin),
+          acciones,
+        );
+        return tr;
+      }),
+    );
+    mostrar("msg-contexto", proyectos.length + " proyecto(s).", false);
+  }),
+);
+
 $("form-crear-proyecto").addEventListener("submit", (e) => {
   e.preventDefault();
   const form = e.target;

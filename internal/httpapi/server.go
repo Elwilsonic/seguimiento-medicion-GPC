@@ -68,6 +68,7 @@ func NewHandler(projects *project.Manager, items *backlog.Manager, sprints *spri
 	s.reports = report.NewManager(projects, items, sprints, s.metrics, efforts, defects)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/proyectos", s.createProject)
+	mux.HandleFunc("GET /api/proyectos", s.listProjects)
 	mux.HandleFunc("GET /api/proyectos/{id}", s.getProject)
 	mux.HandleFunc("PUT /api/proyectos/{id}", s.updateProject)
 	mux.HandleFunc("PATCH /api/proyectos/{id}/fecha-inicio", s.setProjectStartDate)
