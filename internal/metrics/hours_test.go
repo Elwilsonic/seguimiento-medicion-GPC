@@ -18,6 +18,7 @@ import (
 // metricsEnv de HU-32, que usa los Manager reales en memoria.
 
 // CA-33.1, CA-33.2 y CA-33.3 · Ejemplo de TEC-03 en un sprint.
+// HU-33 · CA-33.1 · Verifica que, con el ejemplo de TEC-03, un sprint devuelva M4, M5, M6 y M7 esperados.
 func TestSprintHours_EjemploDeTEC03(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -42,6 +43,7 @@ func TestSprintHours_EjemploDeTEC03(t *testing.T) {
 }
 
 // CA-33.7 · Un sprint sin ítems no tiene desviación.
+// HU-33 · CA-33.7 · Verifica que un sprint sin ítems devuelva M4 y M5 en 0 y la desviación no disponible.
 func TestSprintHours_SinItems(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -58,6 +60,7 @@ func TestSprintHours_SinItems(t *testing.T) {
 }
 
 // CA-33.7 · Un proyecto sin ítems no tiene desviación.
+// HU-33 · CA-33.7 · Verifica que un proyecto sin ítems devuelva M4 y M5 en 0 y la desviación no disponible.
 func TestProjectHours_SinItems(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -73,6 +76,7 @@ func TestProjectHours_SinItems(t *testing.T) {
 }
 
 // CA-33.6 · El proyecto suma todo el backlog y los esfuerzos de sus sprints.
+// HU-33 · CA-33.6 · Verifica que el proyecto sume todo el backlog en M4 y los esfuerzos de todos sus sprints en M5.
 func TestProjectHours_SumaTodoElBacklogYLosEsfuerzos(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -96,6 +100,7 @@ func TestProjectHours_SumaTodoElBacklogYLosEsfuerzos(t *testing.T) {
 }
 
 // CA-33.4 · Sin horas estimadas, la desviación no está disponible.
+// HU-33 · CA-33.4 · Verifica que, sin horas estimadas, la desviación no esté disponible y no haya error.
 func TestSprintHours_SinHorasEstimadasNoEstaDisponible(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -115,6 +120,7 @@ func TestSprintHours_SinHorasEstimadasNoEstaDisponible(t *testing.T) {
 }
 
 // CA-33.4 · Sin esfuerzos, la desviación no está disponible.
+// HU-33 · CA-33.4 · Verifica que, sin esfuerzos, la desviación no esté disponible y no haya error.
 func TestSprintHours_SinEsfuerzosNoEstaDisponible(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -133,6 +139,7 @@ func TestSprintHours_SinEsfuerzosNoEstaDisponible(t *testing.T) {
 }
 
 // CA-33.2 · Un sprint solo suma los esfuerzos registrados en ese sprint.
+// HU-33 · CA-33.2 · Verifica que M5 de un sprint sume solo los esfuerzos registrados en ese sprint.
 func TestSprintHours_SoloSumaLosEsfuerzosDelSprint(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -158,6 +165,7 @@ func TestSprintHours_SoloSumaLosEsfuerzosDelSprint(t *testing.T) {
 }
 
 // CA-33.8 · Un sprint inexistente devuelve ErrSprintNotFound.
+// HU-33 · CA-33.8 · Verifica que un sprint inexistente devuelva ErrSprintNotFound.
 func TestSprintHours_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
 	e := newMetricsEnv()
 
@@ -174,6 +182,7 @@ func TestSprintHours_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
 }
 
 // CA-33.8 · Un proyecto inexistente devuelve ErrProjectNotFound.
+// HU-33 · CA-33.8 · Verifica que un proyecto inexistente devuelva ErrProjectNotFound.
 func TestProjectHours_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	e := newMetricsEnv()
 
@@ -200,6 +209,7 @@ func (r failingEffortRepository) ListBySprint(int) ([]effort.Effort, error) {
 }
 
 // CA-33.8 · Una falla del repositorio de esfuerzos se propaga en los dos niveles.
+// HU-33 · CA-33.8 · Verifica que una falla del repositorio de esfuerzos se propague en el sprint y en el proyecto.
 func TestHours_ErrorDelRepositorioDeEsfuerzosSePropaga(t *testing.T) {
 	errRepo := errors.New("base caída")
 	e := newMetricsEnvWith(backlog.NewMemoryRepository(), sprint.NewMemoryRepository(), failingEffortRepository{Repository: effort.NewMemoryRepository(), err: errRepo})
@@ -217,6 +227,7 @@ func TestHours_ErrorDelRepositorioDeEsfuerzosSePropaga(t *testing.T) {
 
 // CA-33.8 · Con el sprint existente, una falla del repositorio de ítems se
 // propaga en SprintHours.
+// HU-33 · CA-33.8 · Verifica que una falla del repositorio de ítems se propague en SprintHours.
 func TestSprintHours_ErrorDelRepositorioDeItemsSePropaga(t *testing.T) {
 	errRepo := errors.New("falla de ítems")
 	e := newMetricsEnvWith(failingItemRepository{Repository: backlog.NewMemoryRepository(), err: errRepo}, sprint.NewMemoryRepository(), effort.NewMemoryRepository())
@@ -230,6 +241,7 @@ func TestSprintHours_ErrorDelRepositorioDeItemsSePropaga(t *testing.T) {
 
 // CA-33.8 · Con los ítems leídos, una falla del repositorio de sprints se
 // propaga en ProjectHours.
+// HU-33 · CA-33.8 · Verifica que una falla del repositorio de sprints se propague en ProjectHours.
 func TestProjectHours_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
 	errRepo := errors.New("falla de sprints")
 	e := newMetricsEnvWith(backlog.NewMemoryRepository(), failingSprintRepository{Repository: sprint.NewMemoryRepository(), err: errRepo}, effort.NewMemoryRepository())
@@ -242,6 +254,7 @@ func TestProjectHours_ErrorDelRepositorioDeSprintsSePropaga(t *testing.T) {
 }
 
 // CA-33.8 · Consultar no modifica los ítems, los sprints ni los esfuerzos.
+// HU-33 · CA-33.8 · Verifica que consultar las horas no modifique los ítems, los sprints ni los esfuerzos.
 func TestHours_NoModificaNada(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -281,6 +294,7 @@ func TestHours_NoModificaNada(t *testing.T) {
 
 // CA-33.10 · El resultado es una copia por valor: modificarlo no altera el
 // estado interno ni la próxima consulta.
+// HU-33 · CA-33.10 · Verifica que modificar el resultado no altere el estado interno ni la próxima consulta.
 func TestSprintHours_DevuelveUnaCopiaPorValor(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -304,6 +318,7 @@ func TestSprintHours_DevuelveUnaCopiaPorValor(t *testing.T) {
 }
 
 // CA-33.9 · El dominio no redondea: 0.1 + 0.2 no es 0.3 exacto.
+// HU-33 · CA-33.9 · Verifica que el dominio no redondee las horas: 0.1 + 0.2 no da 0.3 exacto.
 func TestSprintHours_ElDominioNoRedondea(t *testing.T) {
 	e := newMetricsEnv()
 	projectID := e.project(t, "Sistema de ventas")
