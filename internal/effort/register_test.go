@@ -107,6 +107,7 @@ func envForRegister(t *testing.T) (*effortEnv, backlog.Item, sprint.Sprint) {
 	return env, item, sp
 }
 
+// HU-26 · CA-26.1 · Verifica que un esfuerzo válido se guarde con el ID 1 y sus datos, y se devuelva igual al guardado.
 func TestRegister_Exitoso(t *testing.T) {
 	env, item, sp := envForRegister(t)
 
@@ -131,6 +132,7 @@ func TestRegister_Exitoso(t *testing.T) {
 	}
 }
 
+// HU-26 · RN-26.1 · Verifica que el integrante y la actividad se guarden sin los espacios de los extremos.
 func TestRegister_RecortaIntegranteYActividad(t *testing.T) {
 	env, item, sp := envForRegister(t)
 
@@ -146,6 +148,7 @@ func TestRegister_RecortaIntegranteYActividad(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.2 · Verifica que se acepten horas con decimales y se guarden sin redondear.
 func TestRegister_HorasFraccionadas(t *testing.T) {
 	env, item, sp := envForRegister(t)
 
@@ -158,6 +161,7 @@ func TestRegister_HorasFraccionadas(t *testing.T) {
 	}
 }
 
+// HU-26 · RN-26.6 · Verifica que se pueda registrar esfuerzo sobre un ítem TERMINADO.
 func TestRegister_ItemTerminado(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -168,6 +172,7 @@ func TestRegister_ItemTerminado(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.2 · Verifica que horas 0, negativas, NaN o infinitas devuelvan ErrInvalidHours y no se guarde nada.
 func TestRegister_HorasInvalidas(t *testing.T) {
 	cases := map[string]float64{
 		"cero":         0,
@@ -192,6 +197,7 @@ func TestRegister_HorasInvalidas(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.3 · Verifica que un ítem sin asignar devuelva ErrItemNotAssignedToSprint y no se guarde nada.
 func TestRegister_ItemNoAsignado(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -207,6 +213,7 @@ func TestRegister_ItemNoAsignado(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.3 · Verifica que un ítem asignado a otro sprint devuelva ErrItemNotAssignedToSprint y no se guarde nada.
 func TestRegister_ItemDeOtroSprint(t *testing.T) {
 	env := newEffortEnv(t)
 	sp1 := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -220,6 +227,7 @@ func TestRegister_ItemDeOtroSprint(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.4 · Verifica que un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound y no se guarde nada.
 func TestRegister_SprintInexistente(t *testing.T) {
 	for _, sprintID := range []int{999, 0, -1} {
 		t.Run("sprint "+itoa(sprintID), func(t *testing.T) {
@@ -237,6 +245,7 @@ func TestRegister_SprintInexistente(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.4 · Verifica que un ítem inexistente devuelva ErrItemNotFound y no se guarde nada.
 func TestRegister_ItemInexistente(t *testing.T) {
 	for _, itemID := range []int{999, 0, -1} {
 		t.Run("ítem "+itoa(itemID), func(t *testing.T) {
@@ -254,6 +263,7 @@ func TestRegister_ItemInexistente(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.5 · Verifica que registrar en un sprint CERRADO devuelva ErrSprintClosed y no se guarde nada.
 func TestRegister_SprintCerrado(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusClosed)
@@ -269,6 +279,7 @@ func TestRegister_SprintCerrado(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.6 · Verifica que integrante o actividad vacíos y fecha zero devuelvan su error y no se guarde nada.
 func TestRegister_DatosObligatorios(t *testing.T) {
 	cases := map[string]struct {
 		member, activity string
@@ -297,6 +308,7 @@ func TestRegister_DatosObligatorios(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.6 · Verifica que, con varios datos inválidos, el primer error informado sea ErrEmptyMember.
 func TestRegister_OrdenDeValidacion(t *testing.T) {
 	env, item, sp := envForRegister(t)
 
@@ -307,6 +319,7 @@ func TestRegister_OrdenDeValidacion(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.7 · Verifica que registrar un esfuerzo no modifique ningún campo del ítem.
 func TestRegister_NoModificaElItem(t *testing.T) {
 	env, item, sp := envForRegister(t)
 	before, err := env.items.GetItem(item.ID)
@@ -331,6 +344,7 @@ func TestRegister_NoModificaElItem(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.8 · Verifica que modificar el esfuerzo devuelto por Register no altere el guardado.
 func TestRegister_CopiaIndependiente(t *testing.T) {
 	env, item, sp := envForRegister(t)
 
@@ -352,6 +366,7 @@ func TestRegister_CopiaIndependiente(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.9 · Verifica que, si el repositorio falla al guardar, Register devuelva ese error y no se guarde nada.
 func TestRegister_ErrorDelRepositorio(t *testing.T) {
 	env, item, sp := envForRegister(t)
 	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items)
@@ -366,6 +381,7 @@ func TestRegister_ErrorDelRepositorio(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.10 · Verifica que varios registros simultáneos se guarden todos con IDs únicos.
 func TestRegister_Concurrente(t *testing.T) {
 	env, item, sp := envForRegister(t)
 
@@ -403,6 +419,7 @@ func TestRegister_Concurrente(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.10 · Verifica que Register y Close simultáneos no permitan guardar un esfuerzo después del cierre.
 func TestRegister_ConcurrenteConCierre(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		t.Run("intento "+itoa(i), func(t *testing.T) {

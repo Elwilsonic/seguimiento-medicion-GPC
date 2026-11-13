@@ -336,6 +336,7 @@ func contractAssertEffort(t *testing.T, op string, got, want Effort) {
 
 // Los tests de contrato de memoria caracterizan el comportamiento actual:
 // pasan sin cambios en MemoryRepository.
+// HU-26 · RN-26.10 · Verifica que el repositorio en memoria cumpla el contrato del repositorio de esfuerzos.
 func TestMemoryRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
