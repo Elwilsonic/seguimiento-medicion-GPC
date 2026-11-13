@@ -57,6 +57,7 @@ func savedItem(t *testing.T, repo *MemoryRepository, id int) Item {
 }
 
 // CA-04.1, CA-04.4
+// HU-04 · CA-04.1 · Verifica que un ítem válido se cree con sus datos, un ID, estado PENDIENTE y story points en 0.
 func TestCreate_ItemValidoQuedaConIDEstadoPendienteYStoryPointsEnCero(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -97,6 +98,7 @@ func TestCreate_ItemValidoQuedaConIDEstadoPendienteYStoryPointsEnCero(t *testing
 }
 
 // CA-04.4
+// HU-04 · CA-04.4 · Verifica que el primer ítem reciba el ID 1, en estado PENDIENTE y con story points en 0.
 func TestCreate_PrimerItemRecibeID1EstadoPendienteYStoryPointsEnCero(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -121,6 +123,7 @@ func TestCreate_PrimerItemRecibeID1EstadoPendienteYStoryPointsEnCero(t *testing.
 }
 
 // RN-04.2
+// HU-04 · RN-04.2 · Verifica que la descripción sea opcional y se guarde tal como llega.
 func TestCreate_DescripcionOpcionalSeGuardaTalComoLlega(t *testing.T) {
 	cases := map[string]string{
 		"vacía":                    "",
@@ -147,6 +150,7 @@ func TestCreate_DescripcionOpcionalSeGuardaTalComoLlega(t *testing.T) {
 }
 
 // RN-04.1
+// HU-04 · RN-04.1 · Verifica que se pueda repetir un título dentro del mismo proyecto.
 func TestCreate_TituloRepetidoEnElMismoProyectoSePermite(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -169,6 +173,7 @@ func TestCreate_TituloRepetidoEnElMismoProyectoSePermite(t *testing.T) {
 }
 
 // CA-04.2
+// HU-04 · CA-04.2 · Verifica que un título vacío o con solo espacios devuelva ErrEmptyTitle y no cree el ítem.
 func TestCreate_TituloVacioDevuelveErrEmptyTitle(t *testing.T) {
 	cases := map[string]string{
 		"vacío":              "",
@@ -193,6 +198,7 @@ func TestCreate_TituloVacioDevuelveErrEmptyTitle(t *testing.T) {
 }
 
 // CA-04.3
+// HU-04 · CA-04.3 · Verifica que la prioridad se acepte sin distinguir mayúsculas y se guarde en mayúsculas.
 func TestCreate_PrioridadSeNormalizaAMayusculas(t *testing.T) {
 	cases := map[string]Priority{
 		" alta ": PriorityHigh,
@@ -217,6 +223,7 @@ func TestCreate_PrioridadSeNormalizaAMayusculas(t *testing.T) {
 }
 
 // CA-04.3
+// HU-04 · CA-04.3 · Verifica que una prioridad vacía o distinta de ALTA, MEDIA o BAJA devuelva ErrInvalidPriority.
 func TestCreate_PrioridadInvalidaDevuelveErrInvalidPriority(t *testing.T) {
 	cases := map[string]string{
 		"vacía":         "",
@@ -241,6 +248,7 @@ func TestCreate_PrioridadInvalidaDevuelveErrInvalidPriority(t *testing.T) {
 }
 
 // CA-04.2
+// HU-04 · CA-04.2 · Verifica que sin ningún criterio de aceptación no vacío se devuelva ErrNoAcceptanceCriteria.
 func TestCreate_SinCriteriosValidosDevuelveErrNoAcceptanceCriteria(t *testing.T) {
 	cases := map[string][]string{
 		"nula":        nil,
@@ -265,6 +273,7 @@ func TestCreate_SinCriteriosValidosDevuelveErrNoAcceptanceCriteria(t *testing.T)
 }
 
 // RN-04.4
+// HU-04 · RN-04.4 · Verifica que se descarten los criterios vacíos y los demás se guarden recortados y en el orden recibido.
 func TestCreate_DescartaCriteriosVaciosYConservaElOrden(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -284,6 +293,7 @@ func TestCreate_DescartaCriteriosVaciosYConservaElOrden(t *testing.T) {
 }
 
 // CA-04.5
+// HU-04 · CA-04.5 · Verifica que crear un ítem en un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound.
 func TestCreate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	cases := map[string]int{
 		"ID inexistente": 999,
@@ -308,6 +318,7 @@ func TestCreate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 }
 
 // RN-04.5
+// HU-04 · RN-04.5 · Verifica que se puedan agregar ítems a un proyecto FINALIZADO.
 func TestCreate_ProyectoFinalizadoAceptaItems(t *testing.T) {
 	manager, repo, _, projectRepo := newTestManager()
 
@@ -330,6 +341,7 @@ func TestCreate_ProyectoFinalizadoAceptaItems(t *testing.T) {
 }
 
 // CA-04.4, RN-04.6
+// HU-04 · CA-04.4 · Verifica que los IDs de los ítems sean correlativos y globales entre proyectos.
 func TestCreate_IDsCorrelativosYGlobalesEntreProyectos(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	firstProject := createTestProject(t, projects, "Sistema de ventas")
@@ -357,6 +369,7 @@ func TestCreate_IDsCorrelativosYGlobalesEntreProyectos(t *testing.T) {
 }
 
 // CA-04.2
+// HU-04 · CA-04.2 · Verifica que, con varios datos inválidos, se informe el primer error según el orden de validación.
 func TestCreate_InformaElPrimerErrorSegunElOrdenDeValidacion(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -388,6 +401,7 @@ func TestCreate_InformaElPrimerErrorSegunElOrdenDeValidacion(t *testing.T) {
 }
 
 // CA-04.6
+// HU-04 · CA-04.6 · Verifica que modificar el ítem devuelto o sus criterios no altere el ítem guardado.
 func TestCreate_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -415,6 +429,7 @@ func TestCreate_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) {
 }
 
 // CA-04.6
+// HU-04 · CA-04.6 · Verifica que modificar la lista de criterios recibida no altere el ítem guardado.
 func TestCreate_ModificarLaListaDeCriteriosRecibidaNoAlteraElGuardado(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -436,6 +451,7 @@ func TestCreate_ModificarLaListaDeCriteriosRecibidaNoAlteraElGuardado(t *testing
 }
 
 // CA-04.7
+// HU-04 · CA-04.7 · Verifica que varias creaciones simultáneas reciban IDs distintos.
 func TestCreate_CreacionesSimultaneasRecibenIDsDistintos(t *testing.T) {
 	const attempts = 50
 	manager, repo, projects, _ := newTestManager()
@@ -499,6 +515,7 @@ func (r failingRepository) Update(item Item) (Item, error) {
 var errRepository = errors.New("falla del repositorio")
 
 // CA-04.8
+// HU-04 · CA-04.8 · Verifica que, si el repositorio falla al guardar, Create devuelva ese error y ningún ítem.
 func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
