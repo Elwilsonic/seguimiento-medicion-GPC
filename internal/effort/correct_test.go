@@ -161,7 +161,7 @@ func TestCorrectHours_EsfuerzoInexistente(t *testing.T) {
 // RN-28.6 · Primero las horas, después la existencia y por último el sprint:
 // horas inválidas con un esfuerzo inexistente o de un sprint cerrado
 // devuelven ErrInvalidHours, y un esfuerzo inexistente no llega al sprint.
-// HU-28 · RN-28.6 · Verifica el orden de los errores: primero las horas, después la existencia y por último el sprint.
+// HU-28 · RN-28.6 · Verifica que los errores salgan en orden: primero las horas, después la existencia y por último el sprint.
 func TestCorrectHours_OrdenDeLosErrores(t *testing.T) {
 	env, saved, sp := envForCorrect(t)
 	closeSprint(t, env, sp)
@@ -242,7 +242,7 @@ func TestCorrectHours_ReflejaLasHorasRealesDelSprint(t *testing.T) {
 }
 
 // RN-28.3 · Una falla del repositorio al buscar el esfuerzo se propaga.
-// HU-28 · RN-28.3 · Verifica que, si el repositorio falla al buscar el esfuerzo, CorrectHours devuelva ese error.
+// HU-28 · Error · Verifica que, si el repositorio falla al buscar el esfuerzo, CorrectHours devuelva ese error.
 func TestCorrectHours_ErrorDelRepositorio(t *testing.T) {
 	env := newEffortEnv(t)
 	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items)

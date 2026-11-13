@@ -397,7 +397,7 @@ func TestSprint_SprintInexistenteNoLeeNadaMas(t *testing.T) {
 // devuelve el error de la lectura que falla, sin reporte parcial y sin las
 // lecturas siguientes. Las lecturas de esfuerzos y defectos del reporte son
 // las que siguen a las de metrics.Manager.Sprint.
-// HU-39 · CA-39.3 · Verifica que se devuelva el error de la lectura que falla, sin reporte parcial ni lecturas siguientes.
+// HU-39 · RN-39.3 · Verifica que se devuelva el error de la lectura que falla, sin reporte parcial ni lecturas siguientes.
 func TestSprint_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []struct {
 		name             string

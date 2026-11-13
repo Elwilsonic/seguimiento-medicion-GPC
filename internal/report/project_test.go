@@ -652,7 +652,7 @@ func reads(n int) func(int) int { return func(int) int { return n } }
 // defectos: se devuelve el error de la lectura que falla, sin reporte parcial
 // y sin las lecturas siguientes. Las lecturas de sprints, esfuerzos y
 // defectos del reporte son las que siguen a las de metrics.Manager.Project.
-// HU-38 · CA-38.3 · Verifica que se devuelva el error de la lectura que falla, sin reporte parcial ni lecturas siguientes.
+// HU-38 · RN-38.3 · Verifica que se devuelva el error de la lectura que falla, sin reporte parcial ni lecturas siguientes.
 func TestProject_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []reportReadCase{
 		{name: "proyecto", fail: func(e *reportEnv, _ int) { e.projectSpy.failAt = 1 }, want: errProjectRead,
