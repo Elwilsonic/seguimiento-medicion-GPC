@@ -126,6 +126,7 @@ func sprintDefectCounts(defects []defect.Defect, sprintID int) metrics.Defects {
 // CA-39.1 · El reporte del sprint del ejemplo de TEC-03 tiene los datos del
 // sprint, M1, M2 y M4 a M10, los tres esfuerzos con su total, el defecto y
 // los dos integrantes.
+// HU-39 · CA-39.1 · Verifica que el reporte del sprint del ejemplo de TEC-03 tenga sus datos, sus métricas, los esfuerzos, el defecto y los integrantes.
 func TestSprint_EjemploDeTEC03(t *testing.T) {
 	e := newSprintReportEnv()
 	s := e.tec03Sprint(t)
@@ -161,6 +162,7 @@ func TestSprint_EjemploDeTEC03(t *testing.T) {
 
 // CA-39.2 y RN-39.7 · El reporte se genera para un sprint abierto y, con los
 // mismos datos, es el mismo después de cerrarlo, salvo el estado del sprint.
+// HU-39 · CA-39.2 · Verifica que el reporte se genere para un sprint abierto y, después de cerrarlo, solo cambie el estado.
 func TestSprint_SprintAbiertoYCerrado(t *testing.T) {
 	e := newSprintReportEnv()
 	projectID := e.project(t, "Sistema de ventas", "")
@@ -188,6 +190,7 @@ func TestSprint_SprintAbiertoYCerrado(t *testing.T) {
 // CA-39.5 y RN-39.9 · Con los mismos datos, el sprint, las métricas y los
 // esfuerzos son iguales a sus operaciones de origen, el total de horas es M5
 // y los defectos detectados en el sprint son los de ListBySprint (HU-31).
+// HU-39 · CA-39.5 · Verifica que el sprint, las métricas y los esfuerzos sean iguales a sus operaciones de origen y el total sea M5.
 func TestSprint_CadaParteEsIgualASuOperacionDeOrigen(t *testing.T) {
 	e := newSprintReportEnv()
 	_, sprints := e.multiSprintProject(t)
@@ -228,6 +231,7 @@ func TestSprint_CadaParteEsIgualASuOperacionDeOrigen(t *testing.T) {
 // proyecto de varios sprints, el defecto 2 se detecta en el sprint 1 y se
 // resuelve en el 2, el 1 queda ABIERTO en el 1, el 3 EN_CORRECCION en el 2 y
 // el 4 es de otro proyecto.
+// HU-39 · CA-39.5 · Verifica que los defectos del reporte sean los detectados o resueltos en el sprint y sus conteos sean M9 y M10.
 func TestSprint_DefectosDetectadosOResueltosEnElSprint(t *testing.T) {
 	e := newSprintReportEnv()
 	_, sprints := e.multiSprintProject(t)
@@ -246,6 +250,7 @@ func TestSprint_DefectosDetectadosOResueltosEnElSprint(t *testing.T) {
 
 // RN-39.5 · Un defecto detectado y resuelto en el mismo sprint aparece una
 // sola vez y cuenta en M9 y en M10.
+// HU-39 · RN-39.5 · Verifica que un defecto detectado y resuelto en el mismo sprint aparezca una sola vez.
 func TestSprint_DefectoDetectadoYResueltoEnElSprintApareceUnaVez(t *testing.T) {
 	e := newSprintReportEnv()
 	s := e.tec03Sprint(t)
@@ -262,6 +267,7 @@ func TestSprint_DefectoDetectadoYResueltoEnElSprintApareceUnaVez(t *testing.T) {
 
 // CA-39.5 y RN-39.4 · Con horas con decimales, el total es la suma exacta,
 // sin redondear, y es el mismo float64 que M5.
+// HU-39 · CA-39.5 · Verifica que el total de horas sea la suma exacta, sin redondear, y el mismo float64 que M5.
 func TestSprint_TotalDeHorasExactoEIgualAHorasReales(t *testing.T) {
 	e := newSprintReportEnv()
 	projectID := e.project(t, "Sistema de ventas", "")
@@ -287,6 +293,7 @@ func TestSprint_TotalDeHorasExactoEIgualAHorasReales(t *testing.T) {
 // CA-39.6 y RN-39.6 · Solo aparecen los esfuerzos y los integrantes del
 // sprint, cada integrante una sola vez, en el orden de su primer esfuerzo;
 // no aparecen los de otros sprints ni los de otro proyecto.
+// HU-39 · CA-39.6 · Verifica que solo aparezcan los esfuerzos e integrantes del sprint, cada integrante una sola vez.
 func TestSprint_IntegrantesYEsfuerzosSoloDelSprint(t *testing.T) {
 	e := newSprintReportEnv()
 	_, sprints := e.multiSprintProject(t)
@@ -328,6 +335,7 @@ func expectEmptySprintParts(t *testing.T, got SprintReport) {
 
 // CA-39.4 y RN-39.8 · Un sprint recién creado genera el reporte con sus
 // datos, las listas vacías y las métricas no disponibles.
+// HU-39 · CA-39.4 · Verifica que un sprint sin datos genere el reporte con las listas vacías y las métricas no disponibles, sin error.
 func TestSprint_SprintSinDatos(t *testing.T) {
 	e := newSprintReportEnv()
 	projectID := e.project(t, "Sistema de ventas", "")
@@ -346,6 +354,7 @@ func TestSprint_SprintSinDatos(t *testing.T) {
 
 // CA-39.4 · Un sprint con ítems y sin esfuerzos tiene las métricas de sus
 // ítems y las listas vacías.
+// HU-39 · CA-39.4 · Verifica que un sprint con ítems y sin esfuerzos tenga las métricas de sus ítems y las listas vacías.
 func TestSprint_SprintConItemsYSinEsfuerzos(t *testing.T) {
 	e := newSprintReportEnv()
 	projectID := e.project(t, "Sistema de ventas", "")
@@ -362,6 +371,7 @@ func TestSprint_SprintConItemsYSinEsfuerzos(t *testing.T) {
 
 // CA-39.3 y RN-39.3 · Un sprint inexistente (incluidos 0 y negativos)
 // devuelve ErrSprintNotFound sin leer nada más que el sprint.
+// HU-39 · CA-39.3 · Verifica que un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound sin leer nada más.
 func TestSprint_SprintInexistenteNoLeeNadaMas(t *testing.T) {
 	for _, id := range []int{99, 0, -1} {
 		e := newSprintReportEnv()
@@ -387,6 +397,7 @@ func TestSprint_SprintInexistenteNoLeeNadaMas(t *testing.T) {
 // devuelve el error de la lectura que falla, sin reporte parcial y sin las
 // lecturas siguientes. Las lecturas de esfuerzos y defectos del reporte son
 // las que siguen a las de metrics.Manager.Sprint.
+// HU-39 · CA-39.3 · Verifica que se devuelva el error de la lectura que falla, sin reporte parcial ni lecturas siguientes.
 func TestSprint_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []struct {
 		name             string
@@ -423,6 +434,7 @@ func TestSprint_ErroresEnElOrdenDeLectura(t *testing.T) {
 // CA-39.7, RN-39.11 y RN-39.12 · Generar el reporte dos veces sin cambios da
 // lo mismo, modificar el reporte devuelto no cambia el siguiente y no se
 // modifica nada de lo guardado.
+// HU-39 · CA-39.7 · Verifica que generar el reporte no modifique nada y que modificar el devuelto no cambie el siguiente.
 func TestSprint_NoModificaNadaYDevuelveCopias(t *testing.T) {
 	e := newSprintReportEnv()
 	projectID, sprints := e.multiSprintProject(t)
