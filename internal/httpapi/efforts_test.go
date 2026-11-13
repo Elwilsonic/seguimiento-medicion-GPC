@@ -43,6 +43,7 @@ func newHandlerWithEffort(t *testing.T) http.Handler {
 	return h
 }
 
+// HU-26 · CA-26.11 · Verifica que POST /api/sprints/{id}/items/{itemId}/esfuerzos responda 201 con el esfuerzo registrado.
 func TestRegistrarEsfuerzo_Devuelve201ConElEsfuerzo(t *testing.T) {
 	h := newHandlerWithEffort(t)
 
@@ -58,6 +59,7 @@ func TestRegistrarEsfuerzo_Devuelve201ConElEsfuerzo(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.11 · Verifica que la API acepte las horas como texto numérico ("2.5") y las guarde como 2.5.
 func TestRegistrarEsfuerzo_AceptaHorasComoTextoNumerico(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	body := `{"integrante":"García Santiago","fecha":"2026-10-24","actividad":"Implementar","horas":"2.5"}`
@@ -72,6 +74,7 @@ func TestRegistrarEsfuerzo_AceptaHorasComoTextoNumerico(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.11 · Verifica que integrante, actividad, fecha u horas inválidos respondan 400 con el mensaje de su error.
 func TestRegistrarEsfuerzo_DatosInvalidosDevuelven400(t *testing.T) {
 	cases := map[string]struct {
 		body string
@@ -121,6 +124,7 @@ func TestRegistrarEsfuerzo_DatosInvalidosDevuelven400(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.11 · Verifica que un cuerpo que no es JSON válido responda 400 con el error de JSON.
 func TestRegistrarEsfuerzo_CuerpoInvalidoDevuelve400(t *testing.T) {
 	cases := map[string]string{
 		"JSON inválido":          `{"integrante":`,
@@ -138,6 +142,7 @@ func TestRegistrarEsfuerzo_CuerpoInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.11 · Verifica que unas horas que no son un número respondan 400.
 func TestRegistrarEsfuerzo_HorasNoNumericasDevuelven400(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	body := `{"integrante":"García Santiago","fecha":"2026-10-24","actividad":"Implementar","horas":"muchas"}`
@@ -147,6 +152,7 @@ func TestRegistrarEsfuerzo_HorasNoNumericasDevuelven400(t *testing.T) {
 	expectStatus(t, rec, http.StatusBadRequest)
 }
 
+// HU-26 · CA-26.11 · Verifica que un {id} o {itemId} no numérico responda 400.
 func TestRegistrarEsfuerzo_IDNoNumericoDevuelve400(t *testing.T) {
 	cases := map[string]string{
 		"sprint": "/api/sprints/abc/items/1/esfuerzos",
@@ -163,6 +169,7 @@ func TestRegistrarEsfuerzo_IDNoNumericoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.4 · Verifica que un sprint o un ítem inexistente responda 404.
 func TestRegistrarEsfuerzo_InexistenteDevuelve404(t *testing.T) {
 	cases := map[string]struct {
 		path string
@@ -182,6 +189,7 @@ func TestRegistrarEsfuerzo_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.5 · Verifica que registrar en un sprint CERRADO responda 409.
 func TestRegistrarEsfuerzo_SprintCerradoDevuelve409(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
@@ -191,6 +199,7 @@ func TestRegistrarEsfuerzo_SprintCerradoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, sprint.ErrSprintClosed.Error())
 }
 
+// HU-26 · CA-26.3 · Verifica que registrar sobre un ítem no asignado al sprint responda 409.
 func TestRegistrarEsfuerzo_ItemSinSprintDevuelve409(t *testing.T) {
 	h := newHandlerWithSprint(t)
 
@@ -199,6 +208,7 @@ func TestRegistrarEsfuerzo_ItemSinSprintDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, sprint.ErrItemNotAssignedToSprint.Error())
 }
 
+// HU-26 · CA-26.11 · Verifica que un cuerpo de más de 1 MiB responda 413.
 func TestRegistrarEsfuerzo_CuerpoMayorA1MiBDa413(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	body := "{" + strings.Repeat(" ", 1<<20) + validEffort[1:]
@@ -217,6 +227,7 @@ func TestRegistrarEsfuerzo_CuerpoMayorA1MiBDa413(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.11 · Verifica que una falla del repositorio responda 500 sin exponer el detalle.
 func TestRegistrarEsfuerzo_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)

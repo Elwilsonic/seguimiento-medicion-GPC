@@ -71,6 +71,7 @@ func sprintReportTEC03(t *testing.T, h http.Handler) {
 }
 
 // CA-39.1 y CA-39.8 · Contrato del reporte con el ejemplo 1 de la SDD.
+// HU-39 · CA-39.1 · Verifica que la API devuelva el reporte del sprint del ejemplo 1 de la SDD con su contrato JSON.
 func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
 	h := newHandler()
 	sprintReportTEC03(t, h)
@@ -145,6 +146,7 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
 // CA-39.2, CA-39.4 y CA-39.8 · Contrato del reporte con el ejemplo 2 de la
 // SDD: un sprint recién creado, abierto, con las listas vacías ([], no null)
 // y las tres métricas no disponibles en null.
+// HU-39 · CA-39.2 · Verifica que un sprint abierto y vacío devuelva las listas vacías ([], no null) y las métricas no disponibles en null.
 func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Software Metrics")
@@ -216,6 +218,7 @@ func reportParts(t *testing.T, h http.Handler, path string) map[string]json.RawM
 // GET /api/sprints/{id}/esfuerzos y GET /api/sprints/{id}/defectos (en el
 // ejemplo 1 el único defecto se detectó en el sprint), y "sprint" es igual al
 // campo sprint de GET /api/proyectos/{id}/metricas/sprints (HU-37).
+// HU-39 · CA-39.5 · Verifica que cada parte del reporte sea igual a la respuesta de su endpoint con los mismos datos.
 func TestReporteSprint_CadaParteEsIgualASuEndpoint(t *testing.T) {
 	h := newHandler()
 	sprintReportTEC03(t, h)
@@ -253,6 +256,7 @@ func TestReporteSprint_CadaParteEsIgualASuEndpoint(t *testing.T) {
 // CA-39.5 y RN-39.5 · Ejemplo 3 de la SDD: un defecto detectado en el sprint
 // 1 y resuelto en el 2 aparece en el reporte del sprint 2, que lo cuenta en
 // M10, aunque GET /api/sprints/2/defectos no lo lista.
+// HU-39 · CA-39.5 · Verifica que un defecto detectado en otro sprint y resuelto en este aparezca en el reporte y cuente en M10.
 func TestReporteSprint_DefectoResueltoEnElSprintYDetectadoEnOtro(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Software Metrics")
@@ -290,6 +294,7 @@ func TestReporteSprint_DefectoResueltoEnElSprintYDetectadoEnOtro(t *testing.T) {
 
 // RN-39.10 · La API redondea el total de horas a un decimal, como HU-27: 0.1
 // y 0.2 horas suman 0.3.
+// HU-39 · RN-39.10 · Verifica que la API redondee el total de horas a un decimal: 0.1 y 0.2 suman 0.3.
 func TestReporteSprint_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -310,6 +315,7 @@ func TestReporteSprint_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 }
 
 // CA-39.3 y CA-39.8 · Un sprint inexistente, 0 o negativo devuelve 404.
+// HU-39 · CA-39.3 · Verifica que el reporte de un sprint inexistente, 0 o negativo responda 404.
 func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
 	for _, id := range []string{"99", "0", "-1"} {
@@ -320,6 +326,7 @@ func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 }
 
 // CA-39.8 · Un {id} no numérico devuelve 400.
+// HU-39 · CA-39.8 · Verifica que un {id} no numérico responda 400.
 func TestReporteSprint_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/abc/reporte", "")
 
@@ -327,6 +334,7 @@ func TestReporteSprint_IDNoNumericoDevuelve400(t *testing.T) {
 }
 
 // CA-39.8 · Una falla del repositorio devuelve 500 sin exponer el detalle.
+// HU-39 · CA-39.8 · Verifica que una falla del repositorio responda 500 sin exponer el detalle.
 func TestReporteSprint_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -347,6 +355,7 @@ func TestReporteSprint_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 // historias asignadas al sprint, cada una igual a GET /api/items/{id}, y las
 // cantidades coinciden con las métricas del sprint; la historia sin sprint no
 // aparece.
+// HU-49 · CA-49.2 · Verifica que el reporte del sprint tenga solo sus historias, cada una igual a GET /api/items/{id}.
 func TestReporteSprint_CadaHistoriaEsIgualASuConsultaEnElBacklog(t *testing.T) {
 	h := newHandler()
 	sprintReportTEC03(t, h)
@@ -361,6 +370,7 @@ func TestReporteSprint_CadaHistoriaEsIgualASuConsultaEnElBacklog(t *testing.T) {
 
 // CA-49.5 · Si falla la lectura de las historias del reporte del sprint, la
 // API responde 500 sin detalle.
+// HU-49 · CA-49.5 · Verifica que, si falla la lectura de las historias del reporte del sprint, la API responda 500 sin detalle.
 func TestReporteSprint_FallaLaLecturaDeLasHistoriasDevuelve500(t *testing.T) {
 	h, repo := newHandlerWithFailingStories()
 	sprintReportTEC03(t, h)

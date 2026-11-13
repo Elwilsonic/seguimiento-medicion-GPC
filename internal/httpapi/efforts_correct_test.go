@@ -32,6 +32,7 @@ func newHandlerWithRegisteredEffort(t *testing.T) http.Handler {
 	return h
 }
 
+// HU-28 · CA-28.7 · Verifica que la corrección desde la API responda 200 con el esfuerzo corregido.
 func TestCorregirEsfuerzo_Devuelve200ConElEsfuerzoCorregido(t *testing.T) {
 	h := newHandlerWithRegisteredEffort(t)
 
@@ -49,6 +50,7 @@ func TestCorregirEsfuerzo_Devuelve200ConElEsfuerzoCorregido(t *testing.T) {
 
 // CA-28.2 · Horas 0, negativas, ausentes o null devuelven 400 con el error de
 // HU-26.
+// HU-28 · CA-28.2 · Verifica que horas 0, negativas, ausentes o null respondan 400 con el error de HU-26.
 func TestCorregirEsfuerzo_HorasInvalidasDevuelve400(t *testing.T) {
 	for _, body := range []string{`{"horas":0}`, `{"horas":-1}`, `{}`, `{"horas":null}`} {
 		h := newHandlerWithRegisteredEffort(t)
@@ -59,6 +61,7 @@ func TestCorregirEsfuerzo_HorasInvalidasDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-28 · CA-28.7 · Verifica que un cuerpo que no es JSON válido responda 400.
 func TestCorregirEsfuerzo_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandlerWithRegisteredEffort(t)
 
@@ -67,6 +70,7 @@ func TestCorregirEsfuerzo_JSONInvalidoDevuelve400(t *testing.T) {
 	expectStatus(t, rec, http.StatusBadRequest)
 }
 
+// HU-28 · CA-28.7 · Verifica que un {id} no numérico responda 400.
 func TestCorregirEsfuerzo_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/esfuerzos/abc/horas", `{"horas":10}`)
 
@@ -74,6 +78,7 @@ func TestCorregirEsfuerzo_IDNoNumericoDevuelve400(t *testing.T) {
 }
 
 // CA-28.4 · Un esfuerzo inexistente, 0 o negativo devuelve 404.
+// HU-28 · CA-28.4 · Verifica que corregir un esfuerzo inexistente, 0 o negativo responda 404.
 func TestCorregirEsfuerzo_InexistenteDevuelve404(t *testing.T) {
 	h := newHandlerWithRegisteredEffort(t)
 	for _, id := range []string{"99", "0", "-1"} {
@@ -84,6 +89,7 @@ func TestCorregirEsfuerzo_InexistenteDevuelve404(t *testing.T) {
 }
 
 // CA-28.3 · Un esfuerzo de un sprint cerrado devuelve 409 y no cambia.
+// HU-28 · CA-28.3 · Verifica que corregir un esfuerzo de un sprint cerrado responda 409 y no lo cambie.
 func TestCorregirEsfuerzo_SprintCerradoDevuelve409(t *testing.T) {
 	h := newHandlerWithRegisteredEffort(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
@@ -100,6 +106,7 @@ func TestCorregirEsfuerzo_SprintCerradoDevuelve409(t *testing.T) {
 
 // CA-28.5 · Después de corregir, la consulta de esfuerzos (HU-27) y las
 // métricas del sprint (HU-35) muestran las horas corregidas.
+// HU-28 · CA-28.5 · Verifica que la consulta de esfuerzos y las métricas del sprint muestren las horas corregidas.
 func TestCorregirEsfuerzo_LasMetricasYLaConsultaReflejanLaCorreccion(t *testing.T) {
 	h := newHandlerWithRegisteredEffort(t)
 
@@ -118,6 +125,7 @@ func TestCorregirEsfuerzo_LasMetricasYLaConsultaReflejanLaCorreccion(t *testing.
 }
 
 // CA-28.7 · Una falla del repositorio devuelve 500 sin exponer el detalle.
+// HU-28 · CA-28.7 · Verifica que una falla del repositorio responda 500 sin exponer el detalle.
 func TestCorregirEsfuerzo_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)

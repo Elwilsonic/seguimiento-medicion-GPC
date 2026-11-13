@@ -25,6 +25,7 @@ type effortListJSON struct {
 	TotalHoras float64      `json:"total_horas"`
 }
 
+// HU-27 · CA-27.10 · Verifica que GET /api/sprints/{id}/esfuerzos responda 200 con los esfuerzos y el total.
 func TestListarEsfuerzosPorSprint_Devuelve200ConLosEsfuerzosYElTotal(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	expectStatus(t, do(t, h, http.MethodPost, effortsPath, validEffort), http.StatusCreated)
@@ -50,6 +51,7 @@ func TestListarEsfuerzosPorSprint_Devuelve200ConLosEsfuerzosYElTotal(t *testing.
 	}
 }
 
+// HU-27 · CA-27.10 · Verifica que GET /api/items/{id}/esfuerzos responda 200 con los esfuerzos y el total.
 func TestListarEsfuerzosPorItem_Devuelve200ConLosEsfuerzosYElTotal(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	expectStatus(t, do(t, h, http.MethodPost, effortsPath, validEffort), http.StatusCreated)
@@ -67,6 +69,7 @@ func TestListarEsfuerzosPorItem_Devuelve200ConLosEsfuerzosYElTotal(t *testing.T)
 	}
 }
 
+// HU-27 · CA-27.3 · Verifica que sin registros la API responda una lista vacía y total 0.
 func TestListarEsfuerzos_SinRegistrosDevuelveListaVaciaYTotalCero(t *testing.T) {
 	h := newHandlerWithSprint(t)
 
@@ -90,6 +93,7 @@ func TestListarEsfuerzos_SinRegistrosDevuelveListaVaciaYTotalCero(t *testing.T) 
 	}
 }
 
+// HU-27 · CA-27.4 · Verifica que consultar un sprint o una historia inexistente responda 404.
 func TestListarEsfuerzos_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
 
@@ -109,6 +113,7 @@ func TestListarEsfuerzos_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.10 · Verifica que una falla del repositorio responda 500 sin exponer el detalle.
 func TestListarEsfuerzos_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	h := newHandlerWithBrokenEffortLists(t)
 
@@ -121,6 +126,7 @@ func TestListarEsfuerzos_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) 
 	}
 }
 
+// HU-27 · CA-27.2 · Verifica que la API muestre el total con un decimal y las horas de cada registro sin redondear.
 func TestListarEsfuerzos_RedondeaElTotalAUnDecimal(t *testing.T) {
 	cases := []struct {
 		name    string

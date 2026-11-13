@@ -80,6 +80,7 @@ func reportTEC03(t *testing.T, h http.Handler) {
 }
 
 // CA-38.1 y CA-38.7 · Contrato del reporte con el ejemplo 1 de la SDD.
+// HU-38 · CA-38.1 · Verifica que la API devuelva el reporte del proyecto del ejemplo 1 de la SDD con su contrato JSON.
 func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
 	h := newHandler()
 	reportTEC03(t, h)
@@ -179,6 +180,7 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
 // CA-38.2 y CA-38.7 · Contrato del reporte con el ejemplo 2 de la SDD: un
 // proyecto recién creado, con las listas vacías ([], no null) y las cuatro
 // métricas no disponibles en null.
+// HU-38 · CA-38.2 · Verifica que un proyecto vacío devuelva las listas vacías ([], no null) y las métricas no disponibles en null.
 func TestReporteProyecto_ContratoDelProyectoVacio(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Software Metrics")
@@ -248,6 +250,7 @@ func compactJSON(t *testing.T, raw []byte) string {
 // GET /api/proyectos/{id}, GET /api/proyectos/{id}/metricas,
 // GET /api/sprints/{id}/esfuerzos (el proyecto tiene un solo sprint) y
 // GET /api/proyectos/{id}/defectos.
+// HU-38 · CA-38.4 · Verifica que cada parte del reporte sea igual a la respuesta de su endpoint con los mismos datos.
 func TestReporteProyecto_CadaParteEsIgualASuEndpoint(t *testing.T) {
 	h := newHandler()
 	reportTEC03(t, h)
@@ -278,6 +281,7 @@ func TestReporteProyecto_CadaParteEsIgualASuEndpoint(t *testing.T) {
 
 // RN-38.9 · La API redondea el total de horas a un decimal, como HU-27: 0.1
 // y 0.2 horas suman 0.3.
+// HU-38 · RN-38.9 · Verifica que la API redondee el total de horas a un decimal: 0.1 y 0.2 suman 0.3.
 func TestReporteProyecto_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
@@ -298,6 +302,7 @@ func TestReporteProyecto_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 }
 
 // CA-38.3 y CA-38.7 · Un proyecto inexistente, 0 o negativo devuelve 404.
+// HU-38 · CA-38.3 · Verifica que el reporte de un proyecto inexistente, 0 o negativo responda 404.
 func TestReporteProyecto_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
 	for _, id := range []string{"99", "0", "-1"} {
@@ -308,6 +313,7 @@ func TestReporteProyecto_InexistenteDevuelve404(t *testing.T) {
 }
 
 // CA-38.7 · Un {id} no numérico devuelve 400.
+// HU-38 · CA-38.7 · Verifica que un {id} no numérico responda 400.
 func TestReporteProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/reporte", "")
 
@@ -315,6 +321,7 @@ func TestReporteProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 }
 
 // CA-38.7 · Una falla del repositorio devuelve 500 sin exponer el detalle.
+// HU-38 · CA-38.7 · Verifica que una falla del repositorio responda 500 sin exponer el detalle.
 func TestReporteProyecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(brokenItemRepository{}, projects)
@@ -385,6 +392,7 @@ func expectStoriesMatchSources(t *testing.T, h http.Handler, parts map[string]js
 // CA-49.1, CA-49.3 y RN-49.10 · Cada historia del reporte del proyecto es
 // igual a GET /api/items/{id}, incluida la que no está en ningún sprint, y
 // las cantidades coinciden con las métricas.
+// HU-49 · CA-49.1 · Verifica que cada historia del reporte del proyecto sea igual a GET /api/items/{id} y las cantidades coincidan con las métricas.
 func TestReporteProyecto_CadaHistoriaEsIgualASuConsultaEnElBacklog(t *testing.T) {
 	h := newHandler()
 	reportTEC03(t, h)
@@ -442,6 +450,7 @@ func failStoriesRead(t *testing.T, h http.Handler, repo *failingStoriesItemRepos
 // CA-49.5 · Si falla la lectura de las historias del reporte del proyecto, la
 // API responde 500 sin detalle, también al exportar el PDF (sin PDF a
 // medias).
+// HU-49 · CA-49.5 · Verifica que, si falla la lectura de las historias, el reporte y el PDF respondan 500 sin detalle.
 func TestReporteProyecto_FallaLaLecturaDeLasHistoriasDevuelve500(t *testing.T) {
 	h, repo := newHandlerWithFailingStories()
 	reportTEC03(t, h)
