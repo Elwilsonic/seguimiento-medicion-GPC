@@ -78,6 +78,7 @@ func (r *recordingItemRepository) Update(item backlog.Item) (backlog.Item, error
 }
 
 // CA-13.1 y RN-13.4
+// HU-13 · CA-13.1 · Verifica que cerrar un sprint ABIERTO lo deje CERRADO sin cambiar sus otros datos.
 func TestClose_SprintAbiertoQuedaCerrado(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -114,6 +115,7 @@ func TestClose_SprintAbiertoQuedaCerrado(t *testing.T) {
 }
 
 // CA-13.1
+// HU-13 · CA-13.1 · Verifica que un sprint sin ítems también se pueda cerrar.
 func TestClose_SprintSinItemsQuedaCerrado(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -129,6 +131,7 @@ func TestClose_SprintSinItemsQuedaCerrado(t *testing.T) {
 }
 
 // CA-13.1
+// HU-13 · CA-13.1 · Verifica que, después del cierre, se pueda crear otro sprint en el mismo proyecto.
 func TestClose_DespuesDelCierreSePuedeCrearOtroSprint(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -151,6 +154,7 @@ func TestClose_DespuesDelCierreSePuedeCrearOtroSprint(t *testing.T) {
 }
 
 // CA-13.2 y RN-13.6
+// HU-13 · CA-13.2 · Verifica que un sprint CERRADO rechace AssignItem y CompleteItem con ErrSprintClosed.
 func TestClose_SprintCerradoNoAdmiteAsignarNiCompletar(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -179,6 +183,7 @@ func TestClose_SprintCerradoNoAdmiteAsignarNiCompletar(t *testing.T) {
 }
 
 // CA-13.3 y RN-13.3
+// HU-13 · CA-13.3 · Verifica que cerrar un sprint ya CERRADO devuelva ErrSprintClosed sin modificar nada.
 func TestClose_SprintYaCerradoDaErrSprintClosed(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -198,6 +203,7 @@ func TestClose_SprintYaCerradoDaErrSprintClosed(t *testing.T) {
 }
 
 // CA-13.4 y RN-13.1
+// HU-13 · CA-13.4 · Verifica que cerrar un SprintID inexistente, 0 o negativo devuelva ErrSprintNotFound.
 func TestClose_IDInexistenteDaErrSprintNotFound(t *testing.T) {
 	cases := map[string]int{"ID grande": 999, "ID cero": 0, "ID negativo": -1}
 	for name, sprintID := range cases {
@@ -219,6 +225,7 @@ func TestClose_IDInexistenteDaErrSprintNotFound(t *testing.T) {
 }
 
 // CA-13.5 y RN-13.8
+// HU-13 · CA-13.5 · Verifica que, si el repositorio falla al consultar, Close devuelva ese error.
 func TestClose_ErrorDelRepositorioAlConsultarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -235,6 +242,7 @@ func TestClose_ErrorDelRepositorioAlConsultarSeDevuelve(t *testing.T) {
 }
 
 // CA-13.5 y RN-13.8
+// HU-13 · CA-13.5 · Verifica que, si el repositorio falla al actualizar, Close devuelva ese error y el sprint no quede cerrado.
 func TestClose_ErrorDelRepositorioAlActualizarSeDevuelve(t *testing.T) {
 	repo := &failingUpdateSprintRepository{Repository: NewMemoryRepository(), updateErr: errRepository}
 	projects := project.NewManager(project.NewMemoryRepository())
@@ -268,6 +276,7 @@ func TestClose_ErrorDelRepositorioAlActualizarSeDevuelve(t *testing.T) {
 }
 
 // CA-13.6 y RN-13.7
+// HU-13 · CA-13.6 · Verifica que modificar el sprint devuelto por Close no altere el guardado.
 func TestClose_ModificarElSprintDevueltoNoAlteraElGuardado(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -299,6 +308,7 @@ func TestClose_ModificarElSprintDevueltoNoAlteraElGuardado(t *testing.T) {
 }
 
 // CA-13.7 y RN-13.10
+// HU-13 · CA-13.7 · Verifica que se pueda cerrar un sprint con ítems PENDIENTE o EN_CURSO sin modificarlos.
 func TestClose_SprintConItemsPendientesYEnCursoSeCierraSinModificarlos(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -324,6 +334,7 @@ func TestClose_SprintConItemsPendientesYEnCursoSeCierraSinModificarlos(t *testin
 }
 
 // CA-13.7 y RN-13.10
+// HU-13 · CA-13.7 · Verifica que los ítems no terminados de un sprint cerrado no se puedan reasignar (ErrItemAlreadyAssigned).
 func TestClose_ItemsNoTerminadosNoSePuedenReasignar(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -356,6 +367,7 @@ func TestClose_ItemsNoTerminadosNoSePuedenReasignar(t *testing.T) {
 }
 
 // CA-13.8
+// HU-13 · CA-13.8 · Verifica que varios cierres simultáneos dejen un solo cierre exitoso y el resto con ErrSprintClosed.
 func TestClose_CierresSimultaneosDejanUnSoloCierreExitoso(t *testing.T) {
 	const attempts = 20
 	s := newAssignStack()
@@ -395,6 +407,7 @@ func TestClose_CierresSimultaneosDejanUnSoloCierreExitoso(t *testing.T) {
 }
 
 // CA-13.8 y RN-13.9
+// HU-13 · CA-13.8 · Verifica que, con Close en paralelo con AssignItem y CompleteItem, ninguna escritura de backlog ocurra después del cierre.
 func TestClose_EnParaleloConAssignItemYCompleteItem(t *testing.T) {
 	const itemCount = 10
 	log := &closeEventLog{}
