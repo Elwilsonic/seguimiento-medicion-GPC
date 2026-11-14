@@ -1,6 +1,6 @@
 # language: es
 # HU-50 · Listar los proyectos (Issue #183), vinculada a HU-03 (#16)
-# Especificación (OpenSpec): openspec/changes/hu-50-listar-proyectos/specs/proyectos/spec.md
+# Especificación (OpenSpec): openspec/specs/proyectos/spec.md
 # CA-50.3 (interfaz), la ruta GET /api/proyectos (CA-50.5) y la concurrencia
 # (CA-50.7) se cubren con tests de Go, no con escenarios.
 

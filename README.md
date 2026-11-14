@@ -411,11 +411,11 @@ Las tareas técnicas no llevan SDD ni BDD formales (decisión 5 del acta de Plan
 
 ### Sprint 5 — Proyecto heredado (07/11 al 15/11) · [Planning](docs/actas/sprint-5/planning.md)
 
-Desde este sprint, los cambios se especifican con OpenSpec (TEC-10): la columna SDD lleva a la propuesta del cambio en `openspec/changes/`, que al archivarse pasa a `openspec/changes/archive/` y suma sus requisitos a `openspec/specs/`.
+Desde este sprint, los cambios se especifican con OpenSpec (TEC-10): la columna SDD lleva a la propuesta del cambio en `openspec/changes/` mientras está en curso; al archivarse, el cambio pasa a `openspec/changes/archive/` y sus requisitos a `openspec/specs/`, y la columna lleva a los dos.
 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
-| HU-50 | [#183](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/183) | Listar los proyectos | [Propuesta (OpenSpec)](openspec/changes/hu-50-listar-proyectos/proposal.md) | [BDD](features/HU-50-listar-proyectos.feature) | [Evidencia](docs/evidencias/HU-50-tdd.md) | [#188](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/188) |
+| HU-50 | [#183](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/183) | Listar los proyectos | [Spec (OpenSpec)](openspec/specs/proyectos/spec.md) · [Cambio archivado](openspec/changes/archive/2026-11-12-hu-50-listar-proyectos/) | [BDD](features/HU-50-listar-proyectos.feature) | [Evidencia](docs/evidencias/HU-50-tdd.md) | [#188](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/188) |
 
 ## Estructura del repositorio
 
