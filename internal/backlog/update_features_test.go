@@ -16,6 +16,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-07 · BDD · Verifica que se cumplan los escenarios de features/HU-07-modificar-item.feature.
 // Ejecuta los escenarios BDD de features/HU-07-modificar-item.feature con godog.
 func TestFeatures_HU07ModificarItem(t *testing.T) {
 	suite := godog.TestSuite{

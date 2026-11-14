@@ -13,6 +13,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-25 · BDD · Verifica que se cumplan los escenarios de features/HU-25-registrar-estimacion-acordada.feature.
 // HU-25 · Registrar la estimación acordada (Issue #43). Los pasos llaman al
 // Manager de poker (y al de backlog para preparar y consultar el ítem), no al
 // handler HTTP; la API se prueba en internal/httpapi.

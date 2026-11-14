@@ -17,6 +17,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-33 · BDD · Verifica que se cumplan los escenarios de features/HU-33-horas-desviacion.feature.
 // Ejecuta los escenarios BDD de features/HU-33-horas-desviacion.feature con
 // godog.
 func TestFeatures_HU33CalcularHorasDesviacion(t *testing.T) {

@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-23 · BDD · Verifica que se cumplan los escenarios de features/HU-23-revelar-estimaciones.feature.
 // HU-23 · Revelar las estimaciones (Issue #41). Los pasos llaman al Manager,
 // no al handler HTTP; la API se prueba en internal/httpapi.
 func TestFeatures_HU23RevelarEstimaciones(t *testing.T) {

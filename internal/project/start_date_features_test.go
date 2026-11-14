@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-18 · BDD · Verifica que se cumplan los escenarios de features/HU-18-fecha-inicio-proyecto.feature.
 // Ejecuta los escenarios BDD de features/HU-18-fecha-inicio-proyecto.feature con godog.
 func TestFeatures_HU18FechaInicioProyecto(t *testing.T) {
 	suite := godog.TestSuite{

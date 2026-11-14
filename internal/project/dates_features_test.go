@@ -13,6 +13,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-19 · BDD · Verifica que se cumplan los escenarios de features/HU-19-modificar-fechas-proyecto.feature.
 // Ejecuta los escenarios BDD de features/HU-19-modificar-fechas-proyecto.feature con godog.
 func TestFeatures_HU19ModificarFechasProyecto(t *testing.T) {
 	suite := godog.TestSuite{

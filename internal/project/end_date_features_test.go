@@ -13,6 +13,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-41 · BDD · Verifica que se cumplan los escenarios de features/HU-41-fecha-fin-proyecto.feature.
 // Ejecuta los escenarios BDD de features/HU-41-fecha-fin-proyecto.feature con godog.
 func TestFeatures_HU41FechaFinProyecto(t *testing.T) {
 	suite := godog.TestSuite{

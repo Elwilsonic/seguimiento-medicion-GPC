@@ -15,6 +15,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-47 · BDD · Verifica que se cumplan los escenarios de features/HU-47-defectos-detectados-resueltos.feature.
 // Ejecuta los escenarios BDD de
 // features/HU-47-defectos-detectados-resueltos.feature con godog.
 func TestFeatures_HU47DefectosDetectadosResueltos(t *testing.T) {
