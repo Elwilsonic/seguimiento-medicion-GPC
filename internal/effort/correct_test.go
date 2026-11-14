@@ -49,6 +49,7 @@ func closeSprint(t *testing.T, env *effortEnv, sp sprint.Sprint) {
 }
 
 // CA-28.1 y RN-28.1 · Se corrigen las horas y se conservan los demás campos.
+// HU-28 · CA-28.1 · Verifica que se corrijan las horas y se conserven los demás campos del esfuerzo.
 func TestCorrectHours_Exitoso(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 	want := saved
@@ -68,6 +69,7 @@ func TestCorrectHours_Exitoso(t *testing.T) {
 }
 
 // CA-28.1 y RN-28.2 · Las horas con decimales se guardan sin redondear.
+// HU-28 · CA-28.1 · Verifica que las horas corregidas con decimales se guarden sin redondear.
 func TestCorrectHours_HorasFraccionadas(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 
@@ -81,6 +83,7 @@ func TestCorrectHours_HorasFraccionadas(t *testing.T) {
 
 // RN-28.7 · Corregir con las mismas horas es válido y devuelve el esfuerzo
 // igual.
+// HU-28 · RN-28.7 · Verifica que corregir con las mismas horas sea válido y devuelva el esfuerzo igual.
 func TestCorrectHours_MismasHoras(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 
@@ -96,6 +99,7 @@ func TestCorrectHours_MismasHoras(t *testing.T) {
 
 // CA-28.2 y RN-28.2 · Las horas inválidas devuelven ErrInvalidHours, como al
 // registrar, y no cambian nada.
+// HU-28 · CA-28.2 · Verifica que las horas inválidas devuelvan ErrInvalidHours, como al registrar, sin cambiar nada.
 func TestCorrectHours_HorasInvalidas(t *testing.T) {
 	for _, hours := range []float64{0, -3, math.NaN(), math.Inf(1), math.Inf(-1)} {
 		env, saved, _ := envForCorrect(t)
@@ -115,6 +119,7 @@ func TestCorrectHours_HorasInvalidas(t *testing.T) {
 }
 
 // CA-28.3 y RN-28.4 · Un esfuerzo de un sprint cerrado no se corrige.
+// HU-28 · CA-28.3 · Verifica que no se corrija un esfuerzo de un sprint CERRADO.
 func TestCorrectHours_SprintCerrado(t *testing.T) {
 	env, saved, sp := envForCorrect(t)
 	closeSprint(t, env, sp)
@@ -134,6 +139,7 @@ func TestCorrectHours_SprintCerrado(t *testing.T) {
 
 // CA-28.4 y RN-28.3 · Un esfuerzo inexistente (incluidos 0 y negativos)
 // devuelve ErrEffortNotFound.
+// HU-28 · CA-28.4 · Verifica que corregir un esfuerzo inexistente, 0 o negativo devuelva ErrEffortNotFound.
 func TestCorrectHours_EsfuerzoInexistente(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 
@@ -155,6 +161,7 @@ func TestCorrectHours_EsfuerzoInexistente(t *testing.T) {
 // RN-28.6 · Primero las horas, después la existencia y por último el sprint:
 // horas inválidas con un esfuerzo inexistente o de un sprint cerrado
 // devuelven ErrInvalidHours, y un esfuerzo inexistente no llega al sprint.
+// HU-28 · RN-28.6 · Verifica que los errores salgan en orden: primero las horas, después la existencia y por último el sprint.
 func TestCorrectHours_OrdenDeLosErrores(t *testing.T) {
 	env, saved, sp := envForCorrect(t)
 	closeSprint(t, env, sp)
@@ -172,6 +179,7 @@ func TestCorrectHours_OrdenDeLosErrores(t *testing.T) {
 
 // RN-28.8 · Si la historia se reasignó a otro sprint, el esfuerzo se corrige
 // igual y conserva su sprint.
+// HU-28 · RN-28.8 · Verifica que el esfuerzo se corrija aunque su historia se haya reasignado, y conserve su sprint.
 func TestCorrectHours_HistoriaReasignada(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 	other := env.addSprint(t, "Sprint 2", sprint.StatusOpen)
@@ -195,6 +203,7 @@ func TestCorrectHours_HistoriaReasignada(t *testing.T) {
 }
 
 // RN-28.9 · Modificar el esfuerzo devuelto no cambia lo guardado.
+// HU-28 · RN-28.9 · Verifica que modificar el esfuerzo devuelto no altere el guardado.
 func TestCorrectHours_CopiaIndependiente(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 
@@ -212,6 +221,7 @@ func TestCorrectHours_CopiaIndependiente(t *testing.T) {
 
 // CA-28.5 y RN-28.10 · Las horas reales del sprint (M5, HU-27) reflejan la
 // corrección.
+// HU-28 · CA-28.5 · Verifica que las horas reales del sprint reflejen la corrección.
 func TestCorrectHours_ReflejaLasHorasRealesDelSprint(t *testing.T) {
 	env, saved, sp := envForCorrect(t)
 	if _, err := env.manager.Register(sp.ID, saved.ItemID, "Luis", testEffortDate, "Pruebas", 5); err != nil {
@@ -232,6 +242,7 @@ func TestCorrectHours_ReflejaLasHorasRealesDelSprint(t *testing.T) {
 }
 
 // RN-28.3 · Una falla del repositorio al buscar el esfuerzo se propaga.
+// HU-28 · Error · Verifica que, si el repositorio falla al buscar el esfuerzo, CorrectHours devuelva ese error.
 func TestCorrectHours_ErrorDelRepositorio(t *testing.T) {
 	env := newEffortEnv(t)
 	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items)
@@ -269,6 +280,7 @@ func (r *secondReadFailingRepository) Update(e Effort) (Effort, error) {
 // RN-28.5 · Si falla la segunda lectura, la que se hace con el mutex del
 // sprint tomado, se devuelve ese error sin llamar a Update. Agregado después
 // del GREEN (ver la evidencia).
+// HU-28 · RN-28.5 · Verifica que, si falla la segunda lectura con el mutex del sprint tomado, se devuelva ese error sin llamar a Update.
 func TestCorrectHours_ErrorEnLaSegundaLecturaSePropaga(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 	repo := &secondReadFailingRepository{MemoryRepository: env.memory}

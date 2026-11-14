@@ -19,6 +19,7 @@ func newWithOpenEnv(t *testing.T) (*Manager, *MemoryRepository, int) {
 	return manager, repo, projectID
 }
 
+// HU-26 · RN-26.11 · Verifica que WithOpenSprint ejecute la función cuando el sprint está ABIERTO.
 func TestWithOpenSprint_SprintAbiertoEjecutaLaFuncion(t *testing.T) {
 	manager, repo, projectID := newWithOpenEnv(t)
 	saved, err := repo.Save(Sprint{
@@ -50,6 +51,7 @@ func TestWithOpenSprint_SprintAbiertoEjecutaLaFuncion(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.5 · Verifica que WithOpenSprint devuelva ErrSprintClosed con un sprint CERRADO sin ejecutar la función.
 func TestWithOpenSprint_SprintCerradoDevuelveErrSprintClosed(t *testing.T) {
 	manager, repo, projectID := newWithOpenEnv(t)
 	saved, err := repo.Save(Sprint{
@@ -78,6 +80,7 @@ func TestWithOpenSprint_SprintCerradoDevuelveErrSprintClosed(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.4 · Verifica que WithOpenSprint devuelva ErrSprintNotFound con un sprint inexistente sin ejecutar la función.
 func TestWithOpenSprint_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T) {
 	manager, _, _ := newWithOpenEnv(t)
 
@@ -95,6 +98,7 @@ func TestWithOpenSprint_SprintInexistenteDevuelveErrSprintNotFound(t *testing.T)
 	}
 }
 
+// HU-26 · RN-26.11 · Verifica que WithOpenSprint devuelva el error de la función que ejecuta.
 func TestWithOpenSprint_PropagaElErrorDeLaFuncion(t *testing.T) {
 	manager, repo, projectID := newWithOpenEnv(t)
 	saved, err := repo.Save(Sprint{
@@ -117,6 +121,7 @@ func TestWithOpenSprint_PropagaElErrorDeLaFuncion(t *testing.T) {
 	}
 }
 
+// HU-26 · CA-26.10 · Verifica que WithOpenSprint y Close simultáneos se serialicen con el mutex del sprint.
 func TestWithOpenSprint_SerializaConClose(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		manager, repo, projectID := newWithOpenEnv(t)

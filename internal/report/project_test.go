@@ -358,6 +358,7 @@ func generate(t *testing.T, e *reportEnv, projectID int) ProjectReport {
 
 // CA-38.1 · El reporte del ejemplo de TEC-03 tiene los datos del proyecto, M1
 // a M10, los tres esfuerzos con su total, el defecto y los dos integrantes.
+// HU-38 · CA-38.1 · Verifica que el reporte del ejemplo de TEC-03 tenga los datos del proyecto, M1 a M10, los esfuerzos, el defecto y los integrantes.
 func TestProject_EjemploDeTEC03(t *testing.T) {
 	e := newReportEnv()
 	projectID := e.tec03Project(t)
@@ -393,6 +394,7 @@ func TestProject_EjemploDeTEC03(t *testing.T) {
 
 // CA-38.4 y RN-38.8 · Cada parte es igual a su operación de origen con los
 // mismos datos, y el total de horas es igual a M5.
+// HU-38 · CA-38.4 · Verifica que cada parte del reporte sea igual a su operación de origen y el total de horas sea M5.
 func TestProject_CadaParteEsIgualASuOperacionDeOrigen(t *testing.T) {
 	e := newReportEnv()
 	projectID, _ := e.multiSprintProject(t)
@@ -427,6 +429,7 @@ func TestProject_CadaParteEsIgualASuOperacionDeOrigen(t *testing.T) {
 
 // CA-38.4 y RN-38.4 · Con horas con decimales, el total es la suma exacta,
 // sin redondear, y es el mismo float64 que M5.
+// HU-38 · CA-38.4 · Verifica que el total de horas sea la suma exacta, sin redondear, y el mismo float64 que M5.
 func TestProject_TotalDeHorasExactoEIgualAHorasReales(t *testing.T) {
 	e := newReportEnv()
 	projectID := e.project(t, "Sistema de ventas", "")
@@ -455,6 +458,7 @@ func TestProject_TotalDeHorasExactoEIgualAHorasReales(t *testing.T) {
 
 // RN-38.4 · Los esfuerzos se ordenan por ID de sprint y, dentro de cada
 // sprint, por ID de esfuerzo, aunque los IDs no sigan el orden de los sprints.
+// HU-38 · RN-38.4 · Verifica que los esfuerzos se ordenen por ID de sprint y, dentro de cada sprint, por ID de esfuerzo.
 func TestProject_EsfuerzosOrdenadosPorSprintYPorID(t *testing.T) {
 	e := newReportEnv()
 	projectID, sprints := e.multiSprintProject(t)
@@ -477,6 +481,7 @@ func TestProject_EsfuerzosOrdenadosPorSprintYPorID(t *testing.T) {
 
 // CA-38.5 y RN-38.6 · Cada integrante aparece una sola vez, en el orden de su
 // primer esfuerzo; "Ana" y "ana" son dos integrantes (límite conocido).
+// HU-38 · CA-38.5 · Verifica que cada integrante aparezca una sola vez, en el orden de su primer esfuerzo.
 func TestProject_IntegrantesSinRepetirEnOrdenDePrimeraAparicion(t *testing.T) {
 	e := newReportEnv()
 	projectID, _ := e.multiSprintProject(t)
@@ -490,6 +495,7 @@ func TestProject_IntegrantesSinRepetirEnOrdenDePrimeraAparicion(t *testing.T) {
 
 // CA-38.1 y RN-38.5 · Los defectos del proyecto aparecen en los tres estados,
 // ordenados por ID.
+// HU-38 · CA-38.1 · Verifica que el reporte incluya los defectos del proyecto en los tres estados, ordenados por ID.
 func TestProject_DefectosEnLosTresEstadosOrdenadosPorID(t *testing.T) {
 	e := newReportEnv()
 	projectID, _ := e.multiSprintProject(t)
@@ -508,6 +514,7 @@ func TestProject_DefectosEnLosTresEstadosOrdenadosPorID(t *testing.T) {
 
 // CA-38.5 · Los esfuerzos, los defectos y los integrantes de otro proyecto no
 // aparecen, en ninguno de los dos reportes.
+// HU-38 · CA-38.5 · Verifica que no aparezcan esfuerzos, defectos ni integrantes de otro proyecto.
 func TestProject_NoIncluyeDatosDeOtroProyecto(t *testing.T) {
 	e := newReportEnv()
 	projectID, _ := e.multiSprintProject(t)
@@ -552,6 +559,7 @@ func expectEmptyParts(t *testing.T, got ProjectReport) {
 // CA-38.2 y RN-38.7 · Un proyecto recién creado, sin fecha de inicio, genera
 // el reporte con sus datos, las listas vacías y las cuatro métricas no
 // disponibles.
+// HU-38 · CA-38.2 · Verifica que un proyecto sin datos genere el reporte con las listas vacías y las métricas no disponibles, sin error.
 func TestProject_ProyectoSinDatos(t *testing.T) {
 	e := newReportEnv()
 	projectID := e.project(t, "Proyecto sin datos", "Recién creado")
@@ -570,6 +578,7 @@ func TestProject_ProyectoSinDatos(t *testing.T) {
 
 // CA-38.2 · Un proyecto con ítems y sin sprints tiene las métricas de sus
 // ítems y las listas vacías.
+// HU-38 · CA-38.2 · Verifica que un proyecto con ítems y sin sprints tenga las métricas de sus ítems y las listas vacías.
 func TestProject_ProyectoConItemsYSinSprints(t *testing.T) {
 	e := newReportEnv()
 	projectID := e.project(t, "Sistema de ventas", "")
@@ -586,6 +595,7 @@ func TestProject_ProyectoConItemsYSinSprints(t *testing.T) {
 
 // CA-38.2 · Con sprints sin esfuerzos, los esfuerzos y los integrantes están
 // vacíos y el total es 0.
+// HU-38 · CA-38.2 · Verifica que, con sprints sin esfuerzos, los esfuerzos y los integrantes estén vacíos y el total sea 0.
 func TestProject_SprintsSinEsfuerzos(t *testing.T) {
 	e := newReportEnv()
 	projectID := e.project(t, "Sistema de ventas", "")
@@ -604,6 +614,7 @@ func TestProject_SprintsSinEsfuerzos(t *testing.T) {
 
 // CA-38.3 y RN-38.3 · Un proyecto inexistente (incluidos 0 y negativos)
 // devuelve ErrProjectNotFound sin leer nada más que el proyecto.
+// HU-38 · CA-38.3 · Verifica que un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound sin leer nada más.
 func TestProject_ProyectoInexistenteNoLeeNadaMas(t *testing.T) {
 	for _, id := range []int{99, 0, -1} {
 		e := newReportEnv()
@@ -641,6 +652,7 @@ func reads(n int) func(int) int { return func(int) int { return n } }
 // defectos: se devuelve el error de la lectura que falla, sin reporte parcial
 // y sin las lecturas siguientes. Las lecturas de sprints, esfuerzos y
 // defectos del reporte son las que siguen a las de metrics.Manager.Project.
+// HU-38 · RN-38.3 · Verifica que se devuelva el error de la lectura que falla, sin reporte parcial ni lecturas siguientes.
 func TestProject_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []reportReadCase{
 		{name: "proyecto", fail: func(e *reportEnv, _ int) { e.projectSpy.failAt = 1 }, want: errProjectRead,
@@ -679,6 +691,7 @@ func TestProject_ErroresEnElOrdenDeLectura(t *testing.T) {
 // CA-38.6 y RN-38.11 · Generar el reporte dos veces sin cambios da lo mismo,
 // modificar el reporte devuelto no cambia el siguiente y no se modifica nada
 // de lo guardado.
+// HU-38 · CA-38.6 · Verifica que generar el reporte no modifique nada y que modificar el devuelto no cambie el siguiente.
 func TestProject_NoModificaNadaYDevuelveCopias(t *testing.T) {
 	e := newReportEnv()
 	projectID, sprints := e.multiSprintProject(t)

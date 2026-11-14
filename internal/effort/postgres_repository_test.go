@@ -84,6 +84,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 }
 
 // El repositorio PostgreSQL cumple el mismo contrato que el de memoria.
+// HU-26 · RN-26.10 · Verifica que el repositorio PostgreSQL cumpla el mismo contrato que el de memoria.
 func TestPostgresRepository_Contrato(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	runRepositoryContract(t, func(t *testing.T) Repository {
@@ -92,6 +93,7 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 }
 
 // Guarda el esfuerzo en la tabla efforts con todos sus campos.
+// HU-26 · RN-26.10 · Verifica que el esfuerzo se guarde en la tabla efforts con todos sus campos.
 func TestPostgresRepository_GuardaElEsfuerzo(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	repo := newPostgresTestRepository(t, pool)
@@ -109,6 +111,7 @@ func TestPostgresRepository_GuardaElEsfuerzo(t *testing.T) {
 }
 
 // La fecha se guarda y se devuelve normalizada a UTC, como en los sprints.
+// HU-26 · RN-26.10 · Verifica que PostgreSQL devuelva la fecha del esfuerzo normalizada a UTC.
 func TestPostgresRepository_NormalizaLaFechaAUTC(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	repo := newPostgresTestRepository(t, pool)
@@ -128,6 +131,7 @@ func TestPostgresRepository_NormalizaLaFechaAUTC(t *testing.T) {
 }
 
 // Un ítem inexistente falla por la clave foránea (23503).
+// HU-26 · RN-26.10 · Verifica que guardar un esfuerzo de un ítem inexistente falle por la clave foránea.
 func TestPostgresRepository_SaveDeItemInexistenteFalla(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 	effort := contractEffort("García Santiago", "Implementar", 2)
@@ -142,6 +146,7 @@ func TestPostgresRepository_SaveDeItemInexistenteFalla(t *testing.T) {
 }
 
 // Un sprint inexistente falla por la clave foránea (23503).
+// HU-26 · RN-26.10 · Verifica que guardar un esfuerzo de un sprint inexistente falle por la clave foránea.
 func TestPostgresRepository_SaveDeSprintInexistenteFalla(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 	effort := contractEffort("García Santiago", "Implementar", 2)
@@ -156,6 +161,7 @@ func TestPostgresRepository_SaveDeSprintInexistenteFalla(t *testing.T) {
 }
 
 // ListByItem devuelve solo los esfuerzos de la historia, ordenados por ID.
+// HU-27 · CA-27.1 · Verifica que ListByItem de PostgreSQL devuelva solo los esfuerzos de la historia, ordenados por ID.
 func TestPostgresRepository_ListaPorItem(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 	first := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))
@@ -173,6 +179,7 @@ func TestPostgresRepository_ListaPorItem(t *testing.T) {
 }
 
 // ListBySprint devuelve solo los esfuerzos del sprint, ordenados por ID.
+// HU-27 · CA-27.1 · Verifica que ListBySprint de PostgreSQL devuelva solo los esfuerzos del sprint, ordenados por ID.
 func TestPostgresRepository_ListaPorSprint(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 	first := contractSave(t, repo, contractEffort("García Santiago", "Implementar", 2.5))

@@ -28,6 +28,7 @@ func saveListEffort(t *testing.T, env *effortEnv, itemID, sprintID int, member, 
 	return saved
 }
 
+// HU-27 · CA-27.1 · Verifica que ListBySprint devuelva los esfuerzos del sprint ordenados por ID, con su total de horas.
 func TestListBySprint_DevuelveLosEsfuerzosConElTotal(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -54,6 +55,7 @@ func TestListBySprint_DevuelveLosEsfuerzosConElTotal(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.1 · Verifica que ListByItem devuelva los esfuerzos de la historia ordenados por ID, con su total de horas.
 func TestListByItem_DevuelveLosEsfuerzosConElTotal(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -77,6 +79,7 @@ func TestListByItem_DevuelveLosEsfuerzosConElTotal(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.3 · Verifica que un sprint sin esfuerzos devuelva una lista vacía, no nil, y total 0.
 func TestListBySprint_SinEsfuerzosDevuelveListaVacia(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -97,6 +100,7 @@ func TestListBySprint_SinEsfuerzosDevuelveListaVacia(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.3 · Verifica que una historia sin esfuerzos devuelva una lista vacía, no nil, y total 0.
 func TestListByItem_SinEsfuerzosDevuelveListaVacia(t *testing.T) {
 	env := newEffortEnv(t)
 	item := env.addItem(t, "Login de usuarios", backlog.StatusInProgress, 0)
@@ -117,6 +121,7 @@ func TestListByItem_SinEsfuerzosDevuelveListaVacia(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.5 · Verifica que ListBySprint no incluya esfuerzos de otro sprint.
 func TestListBySprint_AislaLosEsfuerzosDeOtroSprint(t *testing.T) {
 	env := newEffortEnv(t)
 	sp1 := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -138,6 +143,7 @@ func TestListBySprint_AislaLosEsfuerzosDeOtroSprint(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.5 · Verifica que ListByItem no incluya esfuerzos de otra historia.
 func TestListByItem_AislaLosEsfuerzosDeOtraHistoria(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -159,6 +165,7 @@ func TestListByItem_AislaLosEsfuerzosDeOtraHistoria(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.6 · Verifica que se puedan consultar los esfuerzos de un sprint CERRADO.
 func TestListBySprint_SprintCerradoSePuedeConsultar(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusClosed)
@@ -175,6 +182,7 @@ func TestListBySprint_SprintCerradoSePuedeConsultar(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.4 · Verifica que consultar un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound.
 func TestListBySprint_SprintInexistente(t *testing.T) {
 	for _, id := range []int{999, 0, -1} {
 		t.Run("sprint "+itoa(id), func(t *testing.T) {
@@ -192,6 +200,7 @@ func TestListBySprint_SprintInexistente(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.4 · Verifica que consultar una historia inexistente, 0 o negativa devuelva ErrItemNotFound.
 func TestListByItem_ItemInexistente(t *testing.T) {
 	for _, id := range []int{999, 0, -1} {
 		t.Run("ítem "+itoa(id), func(t *testing.T) {
@@ -209,6 +218,7 @@ func TestListByItem_ItemInexistente(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.9 · Verifica que, si el repositorio falla al listar, ListBySprint devuelva ese error.
 func TestListBySprint_ErrorDelRepositorio(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
@@ -224,6 +234,7 @@ func TestListBySprint_ErrorDelRepositorio(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.9 · Verifica que, si el repositorio falla al listar, ListByItem devuelva ese error.
 func TestListByItem_ErrorDelRepositorio(t *testing.T) {
 	env := newEffortEnv(t)
 	item := env.addItem(t, "Login de usuarios", backlog.StatusInProgress, 0)
@@ -239,6 +250,7 @@ func TestListByItem_ErrorDelRepositorio(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.2 · Verifica que el dominio devuelva el total de horas exacto, sin redondear.
 func TestListByItem_TotalExacto(t *testing.T) {
 	env := newEffortEnv(t)
 	item := env.addItem(t, "Login de usuarios", backlog.StatusInProgress, 0)
@@ -255,6 +267,7 @@ func TestListByItem_TotalExacto(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.7 · Verifica que modificar un esfuerzo de la lista devuelta no altere los guardados.
 func TestListByItem_CopiasIndependientes(t *testing.T) {
 	env := newEffortEnv(t)
 	item := env.addItem(t, "Login de usuarios", backlog.StatusInProgress, 0)
@@ -277,6 +290,7 @@ func TestListByItem_CopiasIndependientes(t *testing.T) {
 	}
 }
 
+// HU-27 · CA-27.8 · Verifica que listar en paralelo con Register no produzca condiciones de carrera ni pierda registros.
 func TestListByItem_ConcurrenteConRegister(t *testing.T) {
 	env, item, sp := envForRegister(t)
 

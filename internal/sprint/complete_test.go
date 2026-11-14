@@ -77,6 +77,7 @@ func (r *failingListItemRepository) ListByProject(projectID int) ([]backlog.Item
 }
 
 // CA-12.1 y RN-12.1
+// HU-12 · CA-12.1 · Verifica que completar un ítem EN_CURSO asignado al sprint abierto lo deje TERMINADO sin cambiar sus otros campos.
 func TestCompleteItem_ItemEnCursoAsignadoQuedaTerminado(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -121,6 +122,7 @@ func TestCompleteItem_ItemEnCursoAsignadoQuedaTerminado(t *testing.T) {
 }
 
 // CA-12.4 y RN-12.2
+// HU-12 · CA-12.4 · Verifica que completar un ítem ya TERMINADO sea un no-op sin error y sin llamar a Update.
 func TestCompleteItem_ItemYaTerminadoEsNoOpSinUpdate(t *testing.T) {
 	projectRepo := project.NewMemoryRepository()
 	projects := project.NewManager(projectRepo)
@@ -168,6 +170,7 @@ func TestCompleteItem_ItemYaTerminadoEsNoOpSinUpdate(t *testing.T) {
 }
 
 // CA-12.6 y RN-12.2
+// HU-12 · CA-12.6 · Verifica que completar un ítem PENDIENTE devuelva ErrInvalidTransition y el ítem siga PENDIENTE.
 func TestCompleteItem_ItemPendienteDaErrInvalidTransition(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -189,6 +192,7 @@ func TestCompleteItem_ItemPendienteDaErrInvalidTransition(t *testing.T) {
 }
 
 // CA-12.2 y RN-12.3
+// HU-12 · CA-12.2 · Verifica que completar un ítem sin asignar devuelva ErrItemNotAssignedToSprint sin modificarlo.
 func TestCompleteItem_ItemSinAsignarDaErrItemNotAssignedToSprint(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -209,6 +213,7 @@ func TestCompleteItem_ItemSinAsignarDaErrItemNotAssignedToSprint(t *testing.T) {
 }
 
 // CA-12.2 y RN-12.3
+// HU-12 · CA-12.2 · Verifica que completar un ítem asignado a otro sprint devuelva ErrItemNotAssignedToSprint sin modificarlo.
 func TestCompleteItem_ItemAsignadoAOtroSprintDaErrItemNotAssignedToSprint(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -232,6 +237,7 @@ func TestCompleteItem_ItemAsignadoAOtroSprintDaErrItemNotAssignedToSprint(t *tes
 }
 
 // CA-12.5 y RN-12.4
+// HU-12 · CA-12.5 · Verifica que completar un ítem en un sprint CERRADO devuelva ErrSprintClosed sin modificar nada.
 func TestCompleteItem_SprintCerradoDaErrSprintClosed(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -253,6 +259,7 @@ func TestCompleteItem_SprintCerradoDaErrSprintClosed(t *testing.T) {
 }
 
 // CA-12.5
+// HU-12 · CA-12.5 · Verifica que completar un ítem en un sprint inexistente devuelva ErrSprintNotFound.
 func TestCompleteItem_SprintInexistenteDaErrSprintNotFound(t *testing.T) {
 	cases := map[string]int{"ID grande": 999, "ID cero": 0, "ID negativo": -1}
 	for name, sprintID := range cases {
@@ -278,6 +285,7 @@ func TestCompleteItem_SprintInexistenteDaErrSprintNotFound(t *testing.T) {
 }
 
 // CA-12.5
+// HU-12 · CA-12.5 · Verifica que completar un ítem inexistente devuelva ErrItemNotFound.
 func TestCompleteItem_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 	cases := map[string]int{"ID grande": 999, "ID cero": 0, "ID negativo": -1}
 	for name, itemID := range cases {
@@ -299,6 +307,7 @@ func TestCompleteItem_ItemInexistenteDaErrItemNotFound(t *testing.T) {
 }
 
 // CA-12.8
+// HU-12 · CA-12.8 · Verifica que, si el repositorio de sprints falla al consultar, CompleteItem devuelva ese error.
 func TestCompleteItem_ErrorDelRepositorioDeSprintsSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -315,6 +324,7 @@ func TestCompleteItem_ErrorDelRepositorioDeSprintsSeDevuelve(t *testing.T) {
 }
 
 // CA-12.8
+// HU-12 · CA-12.8 · Verifica que, si el repositorio de ítems falla al consultar, CompleteItem devuelva ese error.
 func TestCompleteItem_ErrorDelRepositorioDeItemsSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(failingItemRepository{getErr: errRepository}, projects)
@@ -335,6 +345,7 @@ func TestCompleteItem_ErrorDelRepositorioDeItemsSeDevuelve(t *testing.T) {
 }
 
 // CA-12.8
+// HU-12 · CA-12.8 · Verifica que, si el repositorio falla al actualizar, CompleteItem devuelva ese error y el ítem no cambie.
 func TestCompleteItem_ErrorDelRepositorioAlActualizarSeDevuelve(t *testing.T) {
 	projectRepo := project.NewMemoryRepository()
 	projects := project.NewManager(projectRepo)
@@ -382,6 +393,7 @@ func TestCompleteItem_ErrorDelRepositorioAlActualizarSeDevuelve(t *testing.T) {
 }
 
 // CA-12.7 y RN-12.8
+// HU-12 · CA-12.7 · Verifica que modificar el ítem devuelto por CompleteItem o sus criterios no altere el guardado.
 func TestCompleteItem_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -415,6 +427,7 @@ func TestCompleteItem_ModificarElItemDevueltoNoAlteraElGuardado(t *testing.T) {
 }
 
 // CA-12.9
+// HU-12 · CA-12.9 · Verifica que varias marcaciones simultáneas del mismo ítem lo dejen TERMINADO con una sola escritura.
 func TestCompleteItem_MarcacionesSimultaneasDejanUnSoloUpdate(t *testing.T) {
 	const attempts = 50
 	projectRepo := project.NewMemoryRepository()
@@ -478,6 +491,7 @@ func TestCompleteItem_MarcacionesSimultaneasDejanUnSoloUpdate(t *testing.T) {
 }
 
 // CA-12.3 y RN-12.6
+// HU-12 · CA-12.3 · Verifica que ListCompletedItems devuelva solo los ítems TERMINADO del sprint, ordenados por ID.
 func TestListCompletedItems_SoloDevuelveTerminadosDelSprintOrdenados(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -517,6 +531,7 @@ func TestListCompletedItems_SoloDevuelveTerminadosDelSprintOrdenados(t *testing.
 }
 
 // CA-12.3
+// HU-12 · CA-12.3 · Verifica que un sprint sin completados devuelva una lista vacía y no nil.
 func TestListCompletedItems_SprintSinCompletadosDevuelveListaVaciaNoNil(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -538,6 +553,7 @@ func TestListCompletedItems_SprintSinCompletadosDevuelveListaVaciaNoNil(t *testi
 }
 
 // CA-12.3 y RN-12.4
+// HU-12 · CA-12.3 · Verifica que los completados de un sprint CERRADO se puedan consultar.
 func TestListCompletedItems_SprintCerradoSePuedeConsultar(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -556,6 +572,7 @@ func TestListCompletedItems_SprintCerradoSePuedeConsultar(t *testing.T) {
 }
 
 // CA-12.5
+// HU-12 · CA-12.5 · Verifica que consultar los completados de un sprint inexistente devuelva ErrSprintNotFound.
 func TestListCompletedItems_SprintInexistenteDaErrSprintNotFound(t *testing.T) {
 	cases := map[string]int{"ID grande": 999, "ID cero": 0, "ID negativo": -1}
 	for name, sprintID := range cases {
@@ -575,6 +592,7 @@ func TestListCompletedItems_SprintInexistenteDaErrSprintNotFound(t *testing.T) {
 }
 
 // CA-12.8
+// HU-12 · CA-12.8 · Verifica que, si el repositorio falla al consultar, ListCompletedItems devuelva ese error.
 func TestListCompletedItems_ErrorDelRepositorioSeDevuelve(t *testing.T) {
 	projectRepo := project.NewMemoryRepository()
 	projects := project.NewManager(projectRepo)
@@ -603,6 +621,7 @@ func TestListCompletedItems_ErrorDelRepositorioSeDevuelve(t *testing.T) {
 }
 
 // CA-12.7 y RN-12.8
+// HU-12 · CA-12.7 · Verifica que modificar la lista devuelta por ListCompletedItems no altere los ítems guardados.
 func TestListCompletedItems_ModificarLaListaDevueltaNoAlteraElGuardado(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
@@ -631,6 +650,7 @@ func TestListCompletedItems_ModificarLaListaDevueltaNoAlteraElGuardado(t *testin
 }
 
 // RN-12.6
+// HU-12 · RN-12.6 · Verifica que un ítem completado y después reabierto deje de aparecer entre los completados.
 func TestListCompletedItems_ItemReabiertoNoAparece(t *testing.T) {
 	s := newAssignStack()
 	projectID := s.createAssignProject(t, "Sistema de ventas")
