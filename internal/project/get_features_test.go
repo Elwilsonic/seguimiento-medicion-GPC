@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-03 · BDD · Verifica que se cumplan los escenarios de features/HU-03-consultar-proyecto.feature.
 // Ejecuta los escenarios BDD de features/HU-03-consultar-proyecto.feature con godog.
 func TestFeatures_HU03ConsultarProyecto(t *testing.T) {
 	suite := godog.TestSuite{

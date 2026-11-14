@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-17 · BDD · Verifica que se cumplan los escenarios de features/HU-17-consultar-integrantes.feature.
 // Ejecuta los escenarios BDD de features/HU-17-consultar-integrantes.feature
 // con godog.
 func TestFeatures_HU17ConsultarIntegrantes(t *testing.T) {

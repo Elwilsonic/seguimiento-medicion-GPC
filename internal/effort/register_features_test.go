@@ -18,6 +18,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-26 · BDD · Verifica que se cumplan los escenarios de features/HU-26-registrar-esfuerzo.feature.
 // Ejecuta los escenarios BDD de features/HU-26-registrar-esfuerzo.feature con
 // godog. Los pasos viven en el paquete effort porque la historia es de E7 y
 // orquesta los paquetes effort, sprint y backlog (ver SDD).

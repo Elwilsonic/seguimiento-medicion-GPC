@@ -15,6 +15,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-06 · BDD · Verifica que se cumplan los escenarios de features/HU-06-listar-backlog.feature.
 // Ejecuta los escenarios BDD de features/HU-06-listar-backlog.feature con godog.
 func TestFeatures_HU06ListarBacklog(t *testing.T) {
 	suite := godog.TestSuite{

@@ -13,6 +13,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-22 · BDD · Verifica que se cumplan los escenarios de features/HU-22-votar-oculto.feature.
 func TestFeatures_HU22VotarOculto(t *testing.T) {
 	suite := godog.TestSuite{
 		ScenarioInitializer: initializeVoteScenario,

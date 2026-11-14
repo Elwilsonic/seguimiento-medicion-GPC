@@ -13,6 +13,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-08 · BDD · Verifica que se cumplan los escenarios de features/HU-08-cambiar-estado-item.feature.
 // Ejecuta los escenarios BDD de features/HU-08-cambiar-estado-item.feature con godog.
 func TestFeatures_HU08CambiarEstado(t *testing.T) {
 	suite := godog.TestSuite{

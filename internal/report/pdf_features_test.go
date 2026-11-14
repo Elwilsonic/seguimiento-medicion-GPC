@@ -17,6 +17,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-40 · BDD · Verifica que se cumplan los escenarios de features/HU-40-exportar-reporte-pdf.feature.
 // Ejecuta los escenarios BDD de features/HU-40-exportar-reporte-pdf.feature
 // con godog.
 func TestFeatures_HU40ExportarReportePDF(t *testing.T) {

@@ -15,6 +15,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-49 · BDD · Verifica que se cumplan los escenarios de features/HU-49-historias-en-reporte.feature.
 // Ejecuta los escenarios BDD de features/HU-49-historias-en-reporte.feature
 // con godog.
 func TestFeatures_HU49HistoriasEnReporte(t *testing.T) {
