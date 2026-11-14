@@ -12,6 +12,7 @@ import (
 // HU-02 · Modificar datos del proyecto (Issue #15)
 
 // CA-02.1
+// HU-02 · CA-02.1 · Verifica que Update cambie el nombre, la descripción y el estado de un proyecto en una sola operación.
 func TestUpdate_NombreDescripcionYEstadoSeActualizan(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Sistema de ventas", "Gestión de ventas"); err != nil {
@@ -38,6 +39,7 @@ func TestUpdate_NombreDescripcionYEstadoSeActualizan(t *testing.T) {
 }
 
 // CA-02.1
+// HU-02 · CA-02.1 · Verifica que, reenviando el nombre y la descripción actuales, Update cambie solo el estado.
 func TestUpdate_CambiarSoloElEstadoMantieneNombreYDescripcion(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Proyecto A", "Original"); err != nil {
@@ -61,6 +63,7 @@ func TestUpdate_CambiarSoloElEstadoMantieneNombreYDescripcion(t *testing.T) {
 }
 
 // CA-02.2 (no hay transiciones prohibidas)
+// HU-02 · CA-02.2 · Verifica que se pueda pasar a cualquier estado válido, sin transiciones prohibidas.
 func TestUpdate_TodosLosEstadosSonAlcanzables(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Proyecto A", ""); err != nil {
@@ -80,6 +83,7 @@ func TestUpdate_TodosLosEstadosSonAlcanzables(t *testing.T) {
 }
 
 // CA-02.2
+// HU-02 · CA-02.2 · Verifica que el estado se acepte sin distinguir mayúsculas ni contar espacios en los extremos y se guarde normalizado.
 func TestUpdate_EstadoSeAceptaSinMayusculasNiEspaciosEnLosExtremos(t *testing.T) {
 	cases := map[string]project.Status{
 		"en_curso":       project.StatusInProgress,
@@ -107,6 +111,7 @@ func TestUpdate_EstadoSeAceptaSinMayusculasNiEspaciosEnLosExtremos(t *testing.T)
 }
 
 // CA-02.1, RN-02.2
+// HU-02 · RN-02.2 · Verifica que el nombre nuevo se guarde sin los espacios del principio y del final.
 func TestUpdate_NombreNuevoSeGuardaSinEspaciosEnLosExtremos(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Proyecto A", ""); err != nil {
@@ -131,6 +136,7 @@ func TestUpdate_NombreNuevoSeGuardaSinEspaciosEnLosExtremos(t *testing.T) {
 }
 
 // CA-02.3
+// HU-02 · CA-02.3 · Verifica que un nombre vacío o con solo espacios devuelva ErrEmptyName y el proyecto no cambie.
 func TestUpdate_NombreVacioOSoloEspaciosDevuelveErrEmptyNameYNoCambia(t *testing.T) {
 	cases := map[string]string{
 		"vacío":              "",
@@ -161,6 +167,7 @@ func TestUpdate_NombreVacioOSoloEspaciosDevuelveErrEmptyNameYNoCambia(t *testing
 }
 
 // CA-02.2, CA-02.3
+// HU-02 · CA-02.3 · Verifica que un estado inválido devuelva ErrInvalidStatus y el proyecto no cambie.
 func TestUpdate_EstadoInvalidoDevuelveErrInvalidStatusYNoCambia(t *testing.T) {
 	cases := map[string]string{
 		"estado que no existe": "PAUSADO",
@@ -190,6 +197,7 @@ func TestUpdate_EstadoInvalidoDevuelveErrInvalidStatusYNoCambia(t *testing.T) {
 }
 
 // CA-02.5
+// HU-02 · CA-02.5 · Verifica que el nombre de otro proyecto devuelva ErrDuplicateName y ningún proyecto cambie.
 func TestUpdate_NombreRepetidoConOtroProyectoDevuelveErrDuplicateNameYNoCambia(t *testing.T) {
 	cases := map[string]string{
 		"mismo nombre":             "Proyecto A",
@@ -227,6 +235,7 @@ func TestUpdate_NombreRepetidoConOtroProyectoDevuelveErrDuplicateNameYNoCambia(t
 }
 
 // CA-02.5 (el propio proyecto se excluye del control de duplicados)
+// HU-02 · CA-02.5 · Verifica que dejar el nombre del propio proyecto, aun cambiando sus mayúsculas, sea válido.
 func TestUpdate_MismoNombreDelPropioProyectoEsValido(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Proyecto A", ""); err != nil {
@@ -244,6 +253,7 @@ func TestUpdate_MismoNombreDelPropioProyectoEsValido(t *testing.T) {
 }
 
 // CA-02.4
+// HU-02 · CA-02.4 · Verifica que modificar un proyecto inexistente, 0, negativo o sin proyectos creados devuelva ErrProjectNotFound.
 func TestUpdate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	cases := map[string]int{
 		"id mayor al último": 999,
@@ -276,6 +286,7 @@ func TestUpdate_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 }
 
 // RN-02.5
+// HU-02 · RN-02.5 · Verifica que una descripción nueva vacía se guarde.
 func TestUpdate_DescripcionNuevaVaciaSeGuarda(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Proyecto A", "Original"); err != nil {
@@ -300,6 +311,7 @@ func TestUpdate_DescripcionNuevaVaciaSeGuarda(t *testing.T) {
 }
 
 // CA-02.6
+// HU-02 · CA-02.6 · Verifica que Update devuelva una copia y que modificarla no altere el proyecto guardado.
 func TestUpdate_ModificarElResultadoDevueltoNoAlteraElGuardado(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Proyecto A", "Original"); err != nil {
@@ -327,6 +339,7 @@ func TestUpdate_ModificarElResultadoDevueltoNoAlteraElGuardado(t *testing.T) {
 // devuelve su error. Con getErr en nil, el GetByID del repositorio falso
 // devuelve un proyecto vacío sin error, para poder llegar a los puntos de
 // falla posteriores (listar y actualizar).
+// HU-02 · CA-02.8 · Verifica que, si el repositorio falla al buscar, listar o actualizar, Update devuelva ese error y el proyecto no cambie.
 func TestUpdate_ErrorDelRepositorioSeDevuelveYElProyectoNoCambia(t *testing.T) {
 	cases := map[string]failingRepository{
 		"al buscar":     {getErr: errRepository},
@@ -351,6 +364,7 @@ func TestUpdate_ErrorDelRepositorioSeDevuelveYElProyectoNoCambia(t *testing.T) {
 
 // CA-02.7: modificaciones y creaciones simultáneas sin accesos concurrentes
 // sin protección. Este test se verifica corriendo con `go test -race` (lo corre el CI).
+// HU-02 · CA-02.7 · Verifica que modificaciones y creaciones simultáneas no produzcan accesos concurrentes sin protección.
 func TestUpdate_CreacionesYModificacionesSimultaneasSinAccesosSinProteger(t *testing.T) {
 	const existing = 10
 	const creates = 50
@@ -406,6 +420,7 @@ func TestUpdate_CreacionesYModificacionesSimultaneasSinAccesosSinProteger(t *tes
 // existe ese ID devuelve ErrProjectNotFound. La rama no es alcanzable a
 // través del Manager (el GetByID previo ya encontró el proyecto), así que se
 // prueba el repositorio directamente.
+// HU-02 · CA-02.4 · Verifica que el Update del repositorio en memoria devuelva ErrProjectNotFound para un ID que no existe.
 func TestMemoryRepository_UpdateProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	repo := project.NewMemoryRepository()
 
@@ -419,6 +434,7 @@ func TestMemoryRepository_UpdateProyectoInexistenteDevuelveErrProjectNotFound(t 
 // HU-18, CA-18.6 (RN-18.6): modificar el proyecto con HU-02 conserva la fecha
 // de inicio registrada, porque Update solo reemplaza nombre, descripción y
 // estado.
+// HU-18 · CA-18.6 · Verifica que modificar el proyecto con HU-02 conserve la fecha de inicio registrada.
 func TestUpdate_ConservaLaFechaDeInicioRegistrada(t *testing.T) {
 	manager, _ := newManager()
 	if _, err := manager.Create("Proyecto A", ""); err != nil {

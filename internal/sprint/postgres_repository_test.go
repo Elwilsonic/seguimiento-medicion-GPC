@@ -33,6 +33,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 
 // CA-TEC05.3 · El repositorio PostgreSQL cumple el mismo contrato que el de
 // memoria.
+// TEC-05 · CA-TEC05.3 · Verifica que el repositorio PostgreSQL de sprints cumpla el mismo contrato que el de memoria.
 func TestPostgresRepository_Contrato(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	runRepositoryContract(t, func(t *testing.T) Repository {
@@ -47,6 +48,7 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 // pgx devuelve timestamptz en time.Local. El test fija time.Local en -03:00
 // (y lo restaura al terminar), así un repositorio que no normalice a UTC
 // falla también en una máquina o un CI configurados en UTC.
+// TEC-05 · CA-TEC05.3 · Verifica que PostgreSQL devuelva las fechas del sprint en UTC y con precisión de microsegundos, al guardar y al leer.
 func TestPostgresRepository_FechasEnUTCConMicrosegundos(t *testing.T) {
 	zone := time.FixedZone("UTC-3", -3*60*60)
 	previousLocal := time.Local
@@ -76,6 +78,7 @@ func TestPostgresRepository_FechasEnUTCConMicrosegundos(t *testing.T) {
 // Solo PostgreSQL: guardar un sprint de un proyecto inexistente falla por la
 // clave foránea (23503, foreign_key_violation). La memoria no lo valida; lo
 // valida el Manager (HU-10).
+// TEC-05 · CA-TEC05.3 · Verifica que guardar en PostgreSQL un sprint de un proyecto inexistente falle por la clave foránea.
 func TestPostgresRepository_SaveConProyectoInexistenteFalla(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 
@@ -90,6 +93,7 @@ func TestPostgresRepository_SaveConProyectoInexistenteFalla(t *testing.T) {
 // HU-13: Update persiste el estado, conserva las fechas en UTC con precisión
 // de microsegundos y devuelve una copia (CA-13.1 y RN-13.4). Necesita la base
 // levantada; sin TEST_DATABASE_URL se omite.
+// HU-13 · CA-13.1 · Verifica que el Update de PostgreSQL persista el estado del sprint, conserve sus fechas en UTC y devuelva una copia.
 func TestPostgresRepository_UpdatePersisteElEstadoYDevuelveFechasUTC(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 	saved := contractSave(t, repo, contractSprint(contractProjectA, "Sprint 1", StatusOpen))

@@ -33,6 +33,7 @@ type pokerVoteJSON struct {
 	Puntos     int    `json:"puntos"`
 }
 
+// HU-21 · CA-21.7 · Verifica que POST /api/items/{id}/poker-sessions responda 201 con la sesión ABIERTA, en la ronda 1, sin votos y con las cartas.
 func TestAbrirSesionPoker_Devuelve201ConLaSesionAbierta(t *testing.T) {
 	h := newHandlerWithItem(t)
 
@@ -61,18 +62,21 @@ func TestAbrirSesionPoker_Devuelve201ConLaSesionAbierta(t *testing.T) {
 	}
 }
 
+// HU-21 · CA-21.7 · Verifica que un {id} de ítem no numérico responda 400.
 func TestAbrirSesionPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/items/abc/poker-sessions", "")
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-21 · CA-21.7 · Verifica que abrir una sesión para un ítem inexistente responda 404 con ErrItemNotFound.
 func TestAbrirSesionPoker_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/items/999/poker-sessions", "")
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
 
+// HU-21 · CA-21.7 · Verifica que abrir una sesión para un ítem TERMINADO responda 409 con ErrItemFinished.
 func TestAbrirSesionPoker_ItemTerminadoDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/items/1/estado", `{"estado":"EN_CURSO"}`), http.StatusOK)
@@ -83,6 +87,7 @@ func TestAbrirSesionPoker_ItemTerminadoDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, poker.ErrItemFinished.Error())
 }
 
+// HU-21 · CA-21.7 · Verifica que abrir una segunda sesión para un ítem con una sesión ABIERTA responda 409 con ErrSessionAlreadyOpen.
 func TestAbrirSesionPoker_SesionAbiertaDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/poker-sessions", ""), http.StatusCreated)
@@ -92,6 +97,7 @@ func TestAbrirSesionPoker_SesionAbiertaDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, poker.ErrSessionAlreadyOpen.Error())
 }
 
+// HU-21 · CA-21.7 · Verifica que un método distinto de POST en /api/items/{id}/poker-sessions responda 405.
 func TestAbrirSesionPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
 	rec := httptest.NewRecorder()
 	newHandlerWithItem(t).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/items/1/poker-sessions", nil))
@@ -117,6 +123,7 @@ func (brokenPokerRepository) Update(poker.Session) (poker.Session, error) {
 	return poker.Session{}, errStorage
 }
 
+// HU-21 · CA-21.7 · Verifica que una falla del repositorio al abrir la sesión responda 500 sin exponer el detalle.
 func TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -132,6 +139,7 @@ func TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T)
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
 
+// HU-22 · CA-22.7 · Verifica que la API responda 200 sin votos tanto para un voto nuevo como para un reemplazo.
 func TestVotarPoker_VotoNuevoYReemplazoDevuelven200SinVotos(t *testing.T) {
 	h := newHandlerWithItem(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/poker-sessions", ""), http.StatusCreated)
@@ -153,6 +161,7 @@ func TestVotarPoker_VotoNuevoYReemplazoDevuelven200SinVotos(t *testing.T) {
 	}
 }
 
+// HU-22 · CA-22.4 · Verifica que un votante vacío o una carta fuera de la escala respondan 400 y que votar en una sesión inexistente responda 404.
 func TestVotarPoker_ErroresDevuelvenCodigoCorrespondiente(t *testing.T) {
 	h := newHandlerWithItem(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/poker-sessions", ""), http.StatusCreated)
@@ -167,6 +176,7 @@ func TestVotarPoker_ErroresDevuelvenCodigoCorrespondiente(t *testing.T) {
 	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
 }
 
+// HU-22 · CA-22.5 · Verifica que votar en una sesión que no está ABIERTA responda 409 con ErrSessionNotOpen.
 func TestVotarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -210,6 +220,7 @@ func (r *failingVoteHTTPRepository) Update(session poker.Session) (poker.Session
 	return r.MemoryRepository.Update(session)
 }
 
+// HU-22 · CA-22.5 · Verifica que, si falla el guardado del voto, la API responda 500 sin exponer el detalle.
 func TestVotarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -252,6 +263,7 @@ func openSessionWithVotes(t *testing.T, h http.Handler, votes ...string) {
 	}
 }
 
+// HU-23 · CA-23.8 · Verifica que POST /api/poker-sessions/{id}/reveal responda 200 con la sesión REVELADA y todos sus votos.
 func TestRevelarPoker_Devuelve200ConTodosLosVotos(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`, `{"integrante":"Bruno","puntos":8}`)
@@ -273,18 +285,21 @@ func TestRevelarPoker_Devuelve200ConTodosLosVotos(t *testing.T) {
 	}
 }
 
+// HU-23 · CA-23.8 · Verifica que un {id} de sesión no numérico responda 400.
 func TestRevelarPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/reveal", "")
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-23 · CA-23.8 · Verifica que revelar una sesión inexistente responda 404 con ErrSessionNotFound.
 func TestRevelarPoker_InexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/999/reveal", "")
 
 	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
 }
 
+// HU-23 · CA-23.8 · Verifica que revelar una sesión ya REVELADA responda 409 con ErrSessionNotOpen.
 func TestRevelarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
@@ -295,6 +310,7 @@ func TestRevelarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, poker.ErrSessionNotOpen.Error())
 }
 
+// HU-23 · CA-23.8 · Verifica que revelar una sesión sin votos responda 409 con ErrNoVotes.
 func TestRevelarPoker_SinVotosDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h)
@@ -304,6 +320,7 @@ func TestRevelarPoker_SinVotosDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, poker.ErrNoVotes.Error())
 }
 
+// HU-23 · CA-23.8 · Verifica que, si falla el guardado, la API responda 500 sin detalle y la sesión siga ABIERTA con su voto.
 func TestRevelarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -342,6 +359,7 @@ func TestRevelarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	}
 }
 
+// HU-23 · CA-23.8 · Verifica que GET, PUT y DELETE en /api/poker-sessions/{id}/reveal respondan 405.
 func TestRevelarPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
@@ -356,6 +374,7 @@ func TestRevelarPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
 	}
 }
 
+// HU-23 · CA-23.8 · Verifica que revelar ignore el cuerpo del pedido y responda 200 con la sesión REVELADA.
 func TestRevelarPoker_IgnoraElCuerpo(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
@@ -396,6 +415,7 @@ func expectItemStoryPoints(t *testing.T, h http.Handler, want int) {
 	}
 }
 
+// HU-25 · CA-25.9 · Verifica que POST /api/poker-sessions/{id}/estimate responda 200 con la sesión CERRADA y deje los Story Points en el ítem.
 func TestRegistrarEstimacionPoker_Devuelve200ConSesionCerradaYStoryPointsEnElItem(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
@@ -418,12 +438,14 @@ func TestRegistrarEstimacionPoker_Devuelve200ConSesionCerradaYStoryPointsEnElIte
 	expectItemStoryPoints(t, h, 13)
 }
 
+// HU-25 · CA-25.9 · Verifica que un {id} de sesión no numérico responda 400.
 func TestRegistrarEstimacionPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/estimate", `{"puntos":5}`)
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-25 · CA-25.9 · Verifica que un cuerpo que no es JSON válido o con puntos no enteros responda 400 y no estime el ítem.
 func TestRegistrarEstimacionPoker_JSONInvalidoDevuelve400(t *testing.T) {
 	for _, body := range []string{`no es JSON`, `{"puntos":"5"}`, `{"puntos":5.5}`} {
 		t.Run(body, func(t *testing.T) {
@@ -438,6 +460,7 @@ func TestRegistrarEstimacionPoker_JSONInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
+// HU-25 · CA-25.9 · Verifica que unos puntos fuera de la escala, 0 o ausentes respondan 400 con ErrInvalidCard y no estimen el ítem.
 func TestRegistrarEstimacionPoker_CartaFueraDeLaEscalaDevuelve400(t *testing.T) {
 	for _, body := range []string{`{"puntos":4}`, `{"puntos":0}`, `{}`} {
 		t.Run(body, func(t *testing.T) {
@@ -452,6 +475,7 @@ func TestRegistrarEstimacionPoker_CartaFueraDeLaEscalaDevuelve400(t *testing.T) 
 	}
 }
 
+// HU-25 · CA-25.9 · Verifica que registrar la estimación de una sesión inexistente responda 404 con ErrSessionNotFound.
 func TestRegistrarEstimacionPoker_SesionInexistenteDevuelve404(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/999/estimate", `{"puntos":5}`)
 
@@ -469,6 +493,7 @@ func newEstimateHandler(pokerRepo poker.Repository) http.Handler {
 	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 }
 
+// HU-25 · CA-25.9 · Verifica que, si el ítem de la sesión no existe, la API responda 404 y la sesión siga REVELADA.
 func TestRegistrarEstimacionPoker_ItemInexistenteDevuelve404(t *testing.T) {
 	pokerRepo := poker.NewMemoryRepository()
 	// La sesión se guarda directamente en el repositorio, apuntando a un ítem
@@ -491,6 +516,7 @@ func TestRegistrarEstimacionPoker_ItemInexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-25 · CA-25.9 · Verifica que registrar la estimación de una sesión ABIERTA o CERRADA responda 409 y no cambie el ítem.
 func TestRegistrarEstimacionPoker_SesionNoReveladaDevuelve409(t *testing.T) {
 	t.Run("ABIERTA", func(t *testing.T) {
 		h := newHandlerWithItem(t)
@@ -513,6 +539,7 @@ func TestRegistrarEstimacionPoker_SesionNoReveladaDevuelve409(t *testing.T) {
 	})
 }
 
+// HU-25 · CA-25.9 · Verifica que, si el ítem de la sesión está TERMINADO, la API responda 409 con ErrItemFinished y no lo estime.
 func TestRegistrarEstimacionPoker_ItemTerminadoDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
@@ -528,6 +555,7 @@ func TestRegistrarEstimacionPoker_ItemTerminadoDevuelve409(t *testing.T) {
 
 // CA-25.6 · Si falla el guardado de la sesión, la API responde 500 sin
 // detalle, el ítem queda estimado y la sesión sigue REVELADA (RN-25.7).
+// HU-25 · CA-25.6 · Verifica que, si falla el guardado de la sesión, la API responda 500 sin detalle, el ítem quede estimado y la sesión siga REVELADA.
 func TestRegistrarEstimacionPoker_ErrorAlGuardarLaSesionDevuelve500SinDetalle(t *testing.T) {
 	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
 	h := newEstimateHandler(pokerRepo)
@@ -549,6 +577,7 @@ func TestRegistrarEstimacionPoker_ErrorAlGuardarLaSesionDevuelve500SinDetalle(t 
 	}
 }
 
+// HU-25 · CA-25.9 · Verifica que GET, PUT y DELETE en /api/poker-sessions/{id}/estimate respondan 405.
 func TestRegistrarEstimacionPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
@@ -593,6 +622,7 @@ func expectVoteGroupJSON(t *testing.T, what string, got pokerVoteGroupJSON, poin
 	}
 }
 
+// HU-24 · CA-24.12 · Verifica que la respuesta de revelar incluya la comparación con diferencias y el voto menor y el mayor con sus integrantes.
 func TestRevelarPoker_IncluyeComparacionConDiferencias(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`, `{"integrante":"Bruno","puntos":8}`)
@@ -615,6 +645,7 @@ func TestRevelarPoker_IncluyeComparacionConDiferencias(t *testing.T) {
 	expectVoteGroupJSON(t, "mayor", got.Comparacion.Mayor, 8, "Bruno")
 }
 
+// HU-24 · CA-24.12 · Verifica que, con todos los votos iguales, la comparación de la respuesta de revelar indique que no hay diferencias.
 func TestRevelarPoker_IncluyeComparacionSinDiferencias(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`, `{"integrante":"Bruno","puntos":5}`)
@@ -646,6 +677,7 @@ func expectNoComparison(t *testing.T, what string, rec *httptest.ResponseRecorde
 
 // Abrir, votar, repetir la ronda y registrar la estimación no incluyen
 // comparacion: su JSON no cambia.
+// HU-24 · CA-24.12 · Verifica que abrir, votar, repetir la ronda y registrar la estimación no incluyan el campo comparacion.
 func TestVotarPoker_RespuestaSinComparacion(t *testing.T) {
 	h := newHandlerWithItem(t)
 
@@ -669,6 +701,7 @@ func TestVotarPoker_RespuestaSinComparacion(t *testing.T) {
 	expectNoComparison(t, "registrar estimación", rec)
 }
 
+// HU-24 · CA-24.12 · Verifica que POST /api/poker-sessions/{id}/rounds responda 200 con la sesión ABIERTA en la ronda 2, sin votos y aceptando votos de nuevo.
 func TestRepetirRondaPoker_Devuelve200ConRondaSiguienteYSinVotos(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
@@ -691,12 +724,14 @@ func TestRepetirRondaPoker_Devuelve200ConRondaSiguienteYSinVotos(t *testing.T) {
 	expectStatus(t, do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":13}`), http.StatusOK)
 }
 
+// HU-24 · CA-24.12 · Verifica que un {id} de sesión no numérico responda 400.
 func TestRepetirRondaPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/rounds", "")
 
 	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
 }
 
+// HU-24 · CA-24.12 · Verifica que repetir la ronda de una sesión inexistente, 0 o negativa responda 404 con ErrSessionNotFound.
 func TestRepetirRondaPoker_InexistenteDevuelve404(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
@@ -708,6 +743,7 @@ func TestRepetirRondaPoker_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
+// HU-24 · CA-24.12 · Verifica que repetir la ronda de una sesión ABIERTA o CERRADA responda 409 con ErrSessionNotRevealed.
 func TestRepetirRondaPoker_SesionNoReveladaDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	openSessionWithVotes(t, h, `{"integrante":"Ana","puntos":5}`)
@@ -723,6 +759,7 @@ func TestRepetirRondaPoker_SesionNoReveladaDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, poker.ErrSessionNotRevealed.Error())
 }
 
+// HU-24 · CA-24.12 · Verifica que repetir la ronda con otra sesión abierta para el mismo ítem responda 409 con ErrSessionAlreadyOpen.
 func TestRepetirRondaPoker_OtraSesionAbiertaDevuelve409(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
@@ -733,6 +770,7 @@ func TestRepetirRondaPoker_OtraSesionAbiertaDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, poker.ErrSessionAlreadyOpen.Error())
 }
 
+// HU-24 · CA-24.12 · Verifica que, si falla el guardado, la API responda 500 sin detalle y la sesión siga REVELADA en la ronda 1 con sus votos.
 func TestRepetirRondaPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
 	h := newEstimateHandler(pokerRepo)
@@ -753,6 +791,7 @@ func TestRepetirRondaPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T
 	}
 }
 
+// HU-24 · CA-24.12 · Verifica que GET, PUT y DELETE en /api/poker-sessions/{id}/rounds respondan 405.
 func TestRepetirRondaPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
@@ -767,6 +806,7 @@ func TestRepetirRondaPoker_MetodoNoPermitidoDevuelve405(t *testing.T) {
 	}
 }
 
+// HU-24 · CA-24.12 · Verifica que repetir la ronda ignore el cuerpo del pedido y responda 200 con la sesión ABIERTA en la ronda 2.
 func TestRepetirRondaPoker_IgnoraElCuerpo(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)

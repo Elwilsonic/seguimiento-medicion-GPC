@@ -16,6 +16,7 @@ func expectGroup(t *testing.T, what string, got VoteGroup, points int, voters ..
 }
 
 // CA-24.1 · Con votos distintos se informa la diferencia, el menor y el mayor.
+// HU-24 · CA-24.1 · Verifica que, con votos distintos, se informe que hay diferencias y el voto menor y el mayor con quiénes los emitieron.
 func TestCompareVotes_VotosDistintosInformaDiferenciaMenorYMayor(t *testing.T) {
 	got := CompareVotes([]Vote{{Voter: "Ana", Points: 3}, {Voter: "Bruno", Points: 8}, {Voter: "Carla", Points: 8}})
 
@@ -28,6 +29,7 @@ func TestCompareVotes_VotosDistintosInformaDiferenciaMenorYMayor(t *testing.T) {
 
 // CA-24.1 · Con todos los votos iguales no hay diferencia y el menor y el
 // mayor son iguales, con todos los integrantes.
+// HU-24 · CA-24.1 · Verifica que, con todos los votos iguales, no haya diferencias y el menor y el mayor tengan a todos los integrantes.
 func TestCompareVotes_TodosIgualesNoInformaDiferencia(t *testing.T) {
 	got := CompareVotes([]Vote{{Voter: "Ana", Points: 5}, {Voter: "Bruno", Points: 5}})
 
@@ -39,6 +41,7 @@ func TestCompareVotes_TodosIgualesNoInformaDiferencia(t *testing.T) {
 }
 
 // CA-24.1 · Un único voto no tiene diferencias.
+// HU-24 · CA-24.1 · Verifica que un único voto no informe diferencias.
 func TestCompareVotes_UnSoloVotoNoInformaDiferencia(t *testing.T) {
 	got := CompareVotes([]Vote{{Voter: "Ana", Points: 13}})
 
@@ -51,6 +54,7 @@ func TestCompareVotes_UnSoloVotoNoInformaDiferencia(t *testing.T) {
 
 // CA-24.1 · Se informan todos los integrantes de cada extremo, en el orden de
 // los votos.
+// HU-24 · CA-24.1 · Verifica que se informen todos los integrantes de cada extremo, en el orden de los votos.
 func TestCompareVotes_VariosIntegrantesConElMismoExtremo(t *testing.T) {
 	got := CompareVotes([]Vote{
 		{Voter: "Carla", Points: 2},
@@ -69,6 +73,7 @@ func TestCompareVotes_VariosIntegrantesConElMismoExtremo(t *testing.T) {
 
 // CA-24.1 · Sin votos no hay diferencia; los puntos son 0 y las listas de
 // integrantes están vacías, no nil.
+// HU-24 · CA-24.1 · Verifica que, sin votos, no haya diferencias, los puntos sean 0 y las listas de integrantes estén vacías, no nil.
 func TestCompareVotes_SinVotosDevuelveComparacionVacia(t *testing.T) {
 	for _, votes := range [][]Vote{nil, {}} {
 		got := CompareVotes(votes)
@@ -84,6 +89,7 @@ func TestCompareVotes_SinVotosDevuelveComparacionVacia(t *testing.T) {
 
 // CA-24.6 · Las listas devueltas son nuevas: modificarlas no altera los votos
 // ni el otro extremo.
+// HU-24 · CA-24.6 · Verifica que modificar las listas devueltas no altere los votos ni el otro extremo.
 func TestCompareVotes_DevuelveListasNuevas(t *testing.T) {
 	votes := []Vote{{Voter: "Ana", Points: 5}, {Voter: "Bruno", Points: 5}}
 

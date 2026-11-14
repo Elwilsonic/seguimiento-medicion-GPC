@@ -127,6 +127,7 @@ func contractGet(t *testing.T, repo Repository, id int) Member {
 }
 
 // El repositorio en memoria cumple el contrato de GetByID y Update (CA-16.6).
+// HU-16 · CA-16.6 · Verifica que el repositorio en memoria cumpla el contrato de GetByID y Update.
 func TestMemoryRepository_ContratoUpdate(t *testing.T) {
 	runRepositoryUpdateContract(t, func(t *testing.T) Repository {
 		return NewMemoryRepository()
@@ -135,6 +136,7 @@ func TestMemoryRepository_ContratoUpdate(t *testing.T) {
 
 // El repositorio PostgreSQL cumple el mismo contrato que el de memoria
 // (CA-16.6). Necesita TEST_DATABASE_URL; sin ella se omite.
+// HU-16 · CA-16.6 · Verifica que el repositorio PostgreSQL cumpla el mismo contrato de GetByID y Update que el de memoria.
 func TestPostgresRepository_ContratoUpdate(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	runRepositoryUpdateContract(t, func(t *testing.T) Repository {

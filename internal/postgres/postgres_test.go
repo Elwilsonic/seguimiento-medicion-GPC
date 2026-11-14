@@ -13,6 +13,7 @@ const testPassword = "s3cr3t-no-mostrar"
 
 // CA-TEC05.4 · Si la base no responde, Open devuelve un error (no necesita
 // base: el puerto 1 de 127.0.0.1 rechaza la conexión).
+// TEC-05 · CA-TEC05.4 · Verifica que, si la base no responde, Open devuelva un error.
 func TestOpen_BaseNoDisponibleDaError(t *testing.T) {
 	url := "postgres://gpc:" + testPassword + "@127.0.0.1:1/x_test?sslmode=disable&connect_timeout=2"
 
@@ -27,6 +28,7 @@ func TestOpen_BaseNoDisponibleDaError(t *testing.T) {
 }
 
 // CA-TEC05.8 · Una URL mal formada da error y el error no muestra la contraseña.
+// TEC-05 · CA-TEC05.8 · Verifica que una URL mal formada dé error y el error no muestre la contraseña.
 func TestOpen_URLInvalidaDaErrorSinMostrarLaContrasena(t *testing.T) {
 	url := "postgres://gpc:" + testPassword + "@localhost:puerto/x_test"
 

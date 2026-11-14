@@ -37,6 +37,7 @@ func assertIDs(t *testing.T, got []Item, want []int) {
 }
 
 // CA-09.1 y RN-09.1
+// HU-09 · CA-09.1 · Verifica que el backlog se liste primero con los ítems ALTA, después MEDIA y después BAJA, con todos sus datos.
 func TestListItemsByPriority_OrdenaAltaMediaBajaConTodosSusDatos(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -72,6 +73,7 @@ func TestListItemsByPriority_OrdenaAltaMediaBajaConTodosSusDatos(t *testing.T) {
 // CA-09.2 y RN-09.2. Son 24 ítems (más de 12) para que un ordenamiento no
 // estable se note: hasta 12 elementos slices.SortFunc usa inserción, que no
 // cambia el orden de los iguales.
+// HU-09 · CA-09.2 · Verifica que, con 24 ítems, los de la misma prioridad conserven el orden por ID ascendente.
 func TestListItemsByPriority_MismaPrioridadConservaElOrdenPorID(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -95,6 +97,7 @@ func TestListItemsByPriority_MismaPrioridadConservaElOrdenPorID(t *testing.T) {
 }
 
 // CA-09.2: si todos tienen la misma prioridad, el orden es el de ListItems.
+// HU-09 · CA-09.2 · Verifica que, si todos los ítems tienen la misma prioridad, queden por ID ascendente.
 func TestListItemsByPriority_TodosConLaMismaPrioridadQuedanPorID(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -109,6 +112,7 @@ func TestListItemsByPriority_TodosConLaMismaPrioridadQuedanPorID(t *testing.T) {
 }
 
 // Caso límite de la SDD: un solo ítem.
+// HU-09 · CA-09.4 · Verifica que, con un solo ítem, el listado por prioridad devuelva ese ítem (caso límite de la SDD).
 func TestListItemsByPriority_UnSoloItem(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -123,6 +127,7 @@ func TestListItemsByPriority_UnSoloItem(t *testing.T) {
 }
 
 // CA-09.3 y RN-09.7
+// HU-09 · CA-09.3 · Verifica que un proyecto sin ítems devuelva una lista vacía, no nil, sin error.
 func TestListItemsByPriority_ProyectoSinItemsDevuelveListaVaciaNoNil(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -141,6 +146,7 @@ func TestListItemsByPriority_ProyectoSinItemsDevuelveListaVaciaNoNil(t *testing.
 }
 
 // CA-09.4 y RN-09.4: ítems en distintos estados, sin los de otro proyecto.
+// HU-09 · CA-09.4 · Verifica que el listado por prioridad tenga los mismos ítems que ListItems, en cualquier estado y sin los de otro proyecto.
 func TestListItemsByPriority_DevuelveLosMismosItemsQueListItems(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	first := createTestProject(t, projects, "Sistema de ventas")
@@ -178,6 +184,7 @@ func TestListItemsByPriority_DevuelveLosMismosItemsQueListItems(t *testing.T) {
 }
 
 // CA-09.4 y RN-09.4 (RN-06.1)
+// HU-09 · CA-09.4 · Verifica que se listen por prioridad los ítems de un proyecto FINALIZADO.
 func TestListItemsByPriority_ProyectoFinalizadoListaSusItems(t *testing.T) {
 	manager, _, _, projectRepo := newTestManager()
 
@@ -196,6 +203,7 @@ func TestListItemsByPriority_ProyectoFinalizadoListaSusItems(t *testing.T) {
 }
 
 // CA-09.5 y RN-09.5
+// HU-09 · CA-09.5 · Verifica que, después de listar por prioridad, ListItems siga devolviendo los ítems por ID ascendente.
 func TestListItemsByPriority_NoCambiaElOrdenDeListItems(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -214,6 +222,7 @@ func TestListItemsByPriority_NoCambiaElOrdenDeListItems(t *testing.T) {
 
 // CA-09.6 y RN-09.3: los ítems con prioridad desconocida se guardan directo en
 // el repositorio, porque Create y Update no la aceptan.
+// HU-09 · CA-09.6 · Verifica que los ítems con prioridad desconocida vayan al final, después de los BAJA, ordenados por ID.
 func TestListItemsByPriority_PrioridadDesconocidaVaAlFinalPorID(t *testing.T) {
 	manager, repo, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")
@@ -239,6 +248,7 @@ func TestListItemsByPriority_PrioridadDesconocidaVaAlFinalPorID(t *testing.T) {
 }
 
 // CA-09.7 y RN-09.6
+// HU-09 · CA-09.7 · Verifica que listar un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound y ninguna lista.
 func TestListItemsByPriority_ProyectoInexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	cases := map[string]int{
 		"ID inexistente": 999,
@@ -263,6 +273,7 @@ func TestListItemsByPriority_ProyectoInexistenteDevuelveErrProjectNotFound(t *te
 }
 
 // CA-09.7
+// HU-09 · CA-09.7 · Verifica que, sin proyectos creados, listar por prioridad devuelva ErrProjectNotFound y ninguna lista.
 func TestListItemsByPriority_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T) {
 	manager, _, _, _ := newTestManager()
 
@@ -277,6 +288,7 @@ func TestListItemsByPriority_SinProyectosCreadosDevuelveErrProjectNotFound(t *te
 }
 
 // CA-09.8
+// HU-09 · CA-09.8 · Verifica que, si el repositorio falla al listar, se devuelva ese error y ninguna lista.
 func TestListItemsByPriority_ErrorDelRepositorioAlListarSeDevuelve(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	if _, err := projects.Create("Sistema de ventas", ""); err != nil {
@@ -295,6 +307,7 @@ func TestListItemsByPriority_ErrorDelRepositorioAlListarSeDevuelve(t *testing.T)
 }
 
 // CA-09.9: corre con go test -race en el CI.
+// HU-09 · CA-09.9 · Verifica que listar por prioridad mientras se crean ítems en simultáneo no falle y mantenga el orden.
 func TestListItemsByPriority_ListadosSimultaneosConCreaciones(t *testing.T) {
 	const attempts = 50
 	manager, _, projects, _ := newTestManager()
@@ -345,6 +358,7 @@ func TestListItemsByPriority_ListadosSimultaneosConCreaciones(t *testing.T) {
 }
 
 // CA-09.10 y RN-09.8
+// HU-09 · CA-09.10 · Verifica que modificar la lista devuelta, un ítem o sus criterios no altere los ítems guardados ni el próximo listado.
 func TestListItemsByPriority_ModificarLaListaDevueltaNoAlteraLosItemsGuardados(t *testing.T) {
 	manager, _, projects, _ := newTestManager()
 	projectID := createTestProject(t, projects, "Sistema de ventas")

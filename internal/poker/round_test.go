@@ -41,6 +41,7 @@ func expectStoredRound(t *testing.T, repo Repository, sessionID int, status Stat
 
 // CA-24.2 y CA-24.3 · Repetir la ronda deja la sesión ABIERTA, en la ronda
 // siguiente y sin votos.
+// HU-24 · CA-24.2 · Verifica que repetir la ronda deje la sesión ABIERTA, en la ronda siguiente y con la lista de votos vacía.
 func TestRepeatRound_SesionReveladaVuelveAAbiertaConRondaSiguienteYSinVotos(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -61,6 +62,7 @@ func TestRepeatRound_SesionReveladaVuelveAAbiertaConRondaSiguienteYSinVotos(t *t
 }
 
 // CA-24.3 y CA-24.6 · La sesión sigue siendo la misma y el ítem no cambia.
+// HU-24 · CA-24.3 · Verifica que repetir la ronda conserve el ID y el ítem de la sesión, sin crear otra ni cambiar el ítem.
 func TestRepeatRound_ConservaIDEItemYNoModificaStoryPoints(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia estimada", backlog.StatusInProgress, 3)
@@ -87,6 +89,7 @@ func TestRepeatRound_ConservaIDEItemYNoModificaStoryPoints(t *testing.T) {
 }
 
 // CA-24.4 · Se puede repetir la ronda aunque no haya diferencias.
+// HU-24 · CA-24.4 · Verifica que se pueda repetir la ronda aunque todos los votos coincidan.
 func TestRepeatRound_SinDiferenciasTambienSePuedeRepetir(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -104,6 +107,7 @@ func TestRepeatRound_SinDiferenciasTambienSePuedeRepetir(t *testing.T) {
 
 // CA-24.5 · En las rondas nuevas se vota, se revela y se registra la
 // estimación como en la primera.
+// HU-24 · CA-24.5 · Verifica que en las rondas nuevas se vote, se revele y se registre la estimación como en la primera.
 func TestRepeatRound_NuevaRondaPermiteVotarRevelarYEstimar(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -139,6 +143,7 @@ func TestRepeatRound_NuevaRondaPermiteVotarRevelarYEstimar(t *testing.T) {
 }
 
 // CA-24.7 · Repetir una sesión inexistente devuelve ErrSessionNotFound.
+// HU-24 · CA-24.7 · Verifica que repetir la ronda de una sesión inexistente, 0 o negativa devuelva ErrSessionNotFound.
 func TestRepeatRound_SesionInexistenteDevuelveErrSessionNotFound(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -153,6 +158,7 @@ func TestRepeatRound_SesionInexistenteDevuelveErrSessionNotFound(t *testing.T) {
 }
 
 // CA-24.7 · Una sesión ABIERTA no se puede repetir y no cambia.
+// HU-24 · CA-24.7 · Verifica que repetir la ronda de una sesión ABIERTA devuelva ErrSessionNotRevealed y no la cambie.
 func TestRepeatRound_SesionAbiertaDevuelveErrSessionNotRevealed(t *testing.T) {
 	env, session := openTestSession(t)
 	voteAll(t, env.manager, session.ID, Vote{Voter: "Ana", Points: 5})
@@ -166,6 +172,7 @@ func TestRepeatRound_SesionAbiertaDevuelveErrSessionNotRevealed(t *testing.T) {
 }
 
 // CA-24.7 · Una sesión CERRADA no se puede repetir y no cambia.
+// HU-24 · CA-24.7 · Verifica que repetir la ronda de una sesión CERRADA devuelva ErrSessionNotRevealed y no la cambie.
 func TestRepeatRound_SesionCerradaDevuelveErrSessionNotRevealed(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 0)
@@ -184,6 +191,7 @@ func TestRepeatRound_SesionCerradaDevuelveErrSessionNotRevealed(t *testing.T) {
 
 // CA-24.8 · Si se abrió otra sesión para el ítem mientras esta estaba
 // REVELADA, no se repite la ronda (RN-24.7).
+// HU-24 · CA-24.8 · Verifica que, con otra sesión abierta para el ítem, repetir la ronda devuelva ErrSessionAlreadyOpen y la sesión siga REVELADA.
 func TestRepeatRound_OtraSesionAbiertaDelItemDevuelveErrSessionAlreadyOpen(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -253,6 +261,7 @@ func revealFailingRoundSession(t *testing.T) (*failingRoundRepository, *Manager,
 }
 
 // CA-24.9 · Si falla la lectura, se propaga el error.
+// HU-24 · CA-24.9 · Verifica que, si falla la lectura de la sesión, RepeatRound devuelva ese error.
 func TestRepeatRound_ErrorAlLeerPropagaError(t *testing.T) {
 	repo, manager, session := revealFailingRoundSession(t)
 	repo.failGet = true
@@ -266,6 +275,7 @@ func TestRepeatRound_ErrorAlLeerPropagaError(t *testing.T) {
 
 // CA-24.9 · Si falla la búsqueda de otra sesión abierta, se propaga el error
 // y la sesión sigue REVELADA.
+// HU-24 · CA-24.9 · Verifica que, si falla la búsqueda de otra sesión abierta, RepeatRound devuelva ese error y la sesión siga REVELADA.
 func TestRepeatRound_ErrorAlBuscarSesionAbiertaPropagaError(t *testing.T) {
 	repo, manager, session := revealFailingRoundSession(t)
 	repo.failOpenByItem = true
@@ -280,6 +290,7 @@ func TestRepeatRound_ErrorAlBuscarSesionAbiertaPropagaError(t *testing.T) {
 
 // CA-24.9 · Si falla el guardado, se propaga el error y la sesión sigue
 // REVELADA con su ronda y sus votos.
+// HU-24 · CA-24.9 · Verifica que, si falla el guardado, RepeatRound devuelva ese error y la sesión siga REVELADA con su ronda y sus votos.
 func TestRepeatRound_ErrorAlGuardarPropagaErrorYSesionNoCambia(t *testing.T) {
 	repo, manager, session := revealFailingRoundSession(t)
 	repo.failUpdate = true
@@ -293,6 +304,7 @@ func TestRepeatRound_ErrorAlGuardarPropagaErrorYSesionNoCambia(t *testing.T) {
 }
 
 // CA-24.6 · Modificar la sesión devuelta no altera la guardada.
+// HU-24 · CA-24.6 · Verifica que modificar la sesión devuelta por RepeatRound no altere la sesión guardada.
 func TestRepeatRound_DevuelveCopia(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -311,6 +323,7 @@ func TestRepeatRound_DevuelveCopia(t *testing.T) {
 
 // CA-24.10 · Repeticiones simultáneas de la misma sesión aumentan la ronda
 // una sola vez. Se corre con -race.
+// HU-24 · CA-24.10 · Verifica que repeticiones simultáneas de la misma sesión aumenten la ronda una sola vez.
 func TestRepeatRound_ConcurrenteAumentaLaRondaUnaSolaVez(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -348,6 +361,7 @@ func TestRepeatRound_ConcurrenteAumentaLaRondaUnaSolaVez(t *testing.T) {
 
 // CA-24.10 · Votos simultáneos con la repetición: cada voto se rechaza con
 // ErrSessionNotOpen o queda en la ronda nueva. Se corre con -race.
+// HU-24 · CA-24.10 · Verifica que, con votos simultáneos a la repetición, cada voto se rechace o quede en la ronda nueva.
 func TestRepeatRound_ConcurrenteConVotosNoMezclaRondas(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
@@ -419,6 +433,7 @@ func TestRepeatRound_ConcurrenteConVotosNoMezclaRondas(t *testing.T) {
 
 // CA-24.10 · Repetir la ronda y abrir otra sesión para el mismo ítem al mismo
 // tiempo nunca deja dos sesiones ABIERTA. Se corre con -race.
+// HU-24 · CA-24.10 · Verifica que repetir la ronda y abrir otra sesión del mismo ítem al mismo tiempo nunca deje dos sesiones ABIERTA.
 func TestRepeatRound_ConcurrenteConAperturaDejaUnaSolaSesionAbierta(t *testing.T) {
 	for range 20 {
 		env := newTestEnv(t)

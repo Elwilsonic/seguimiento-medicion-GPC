@@ -254,6 +254,7 @@ func separateProject(t *testing.T, e *metricsEnv, projectID int) ProjectMetrics 
 
 // CA-35.1 · Ejemplo de TEC-03 en un sprint: M1, M2 y M4 a M10 en una sola
 // consulta.
+// HU-35 · CA-35.1 · Verifica que, con el ejemplo de TEC-03, una sola consulta del sprint devuelva M1, M2 y M4 a M10.
 func TestSprint_EjemploDeTEC03(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -272,6 +273,7 @@ func TestSprint_EjemploDeTEC03(t *testing.T) {
 
 // CA-35.1 · El mismo proyecto con ese sprint cerrado: M1 a M10, con la
 // velocidad.
+// HU-35 · CA-35.1 · Verifica que, con el sprint del ejemplo de TEC-03 cerrado, una sola consulta del proyecto devuelva M1 a M10 con la velocidad.
 func TestProject_EjemploDeTEC03ConElSprintCerrado(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -292,6 +294,7 @@ func TestProject_EjemploDeTEC03ConElSprintCerrado(t *testing.T) {
 }
 
 // CA-35.5 · Cada parte de Sprint es igual a su operación separada.
+// HU-35 · CA-35.5 · Verifica que cada parte de Sprint sea igual a lo que calcula su operación separada de HU-32, HU-33, HU-34 y HU-47.
 func TestSprint_EsIgualALasOperacionesSeparadas(t *testing.T) {
 	e := newSummaryEnv()
 	_, sprints := e.multiSprintProject(t)
@@ -306,6 +309,7 @@ func TestSprint_EsIgualALasOperacionesSeparadas(t *testing.T) {
 }
 
 // CA-35.5 · Cada parte de Project es igual a su operación separada.
+// HU-35 · CA-35.5 · Verifica que cada parte de Project sea igual a lo que calcula su operación separada de HU-32, HU-33, HU-34 y HU-47.
 func TestProject_EsIgualALasOperacionesSeparadas(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, _ := e.multiSprintProject(t)
@@ -318,6 +322,7 @@ func TestProject_EsIgualALasOperacionesSeparadas(t *testing.T) {
 
 // CA-35.2 · Un proyecto recién creado tiene las cuatro métricas no
 // disponibles y las demás en 0, sin error.
+// HU-35 · CA-35.2 · Verifica que un proyecto recién creado tenga las cuatro métricas no disponibles y las demás en 0, sin error.
 func TestProject_RecienCreadoLasCuatroNoDisponibles(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -332,6 +337,7 @@ func TestProject_RecienCreadoLasCuatroNoDisponibles(t *testing.T) {
 
 // CA-35.2 · Un sprint sin ítems, esfuerzos ni defectos tiene el porcentaje y
 // la desviación no disponibles.
+// HU-35 · CA-35.2 · Verifica que un sprint sin ítems, esfuerzos ni defectos tenga el porcentaje y la desviación no disponibles.
 func TestSprint_SinItemsPorcentajeYDesviacionNoDisponibles(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -347,6 +353,7 @@ func TestSprint_SinItemsPorcentajeYDesviacionNoDisponibles(t *testing.T) {
 
 // CA-35.2 · Un proyecto con ítems y sin sprints cerrados solo tiene la
 // velocidad no disponible.
+// HU-35 · CA-35.2 · Verifica que un proyecto con ítems y sin sprints cerrados solo tenga la velocidad no disponible.
 func TestProject_SinSprintsCerradosSoloLaVelocidadNoDisponible(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -366,6 +373,7 @@ func TestProject_SinSprintsCerradosSoloLaVelocidadNoDisponible(t *testing.T) {
 
 // CA-35.2 · Ítems estimados sin esfuerzos: solo la desviación no está
 // disponible (M5 = 0).
+// HU-35 · CA-35.2 · Verifica que, con ítems estimados y sin esfuerzos, solo la desviación no esté disponible.
 func TestSprint_SinEsfuerzosSoloLaDesviacionNoDisponible(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -384,6 +392,7 @@ func TestSprint_SinEsfuerzosSoloLaDesviacionNoDisponible(t *testing.T) {
 
 // CA-35.2 · Esfuerzos sin horas estimadas: solo la desviación no está
 // disponible (M4 = 0).
+// HU-35 · CA-35.2 · Verifica que, con esfuerzos y sin horas estimadas, solo la desviación no esté disponible.
 func TestSprint_SinHorasEstimadasSoloLaDesviacionNoDisponible(t *testing.T) {
 	e := newSummaryEnv()
 	projectID := e.project(t, "Sistema de ventas")
@@ -401,6 +410,7 @@ func TestSprint_SinHorasEstimadasSoloLaDesviacionNoDisponible(t *testing.T) {
 }
 
 // CA-35.3 · Un sprint inexistente, 0 o negativo devuelve ErrSprintNotFound.
+// HU-35 · CA-35.3 · Verifica que consultar un sprint inexistente, 0 o negativo devuelva ErrSprintNotFound y el valor cero.
 func TestSprint_InexistenteDevuelveErrSprintNotFound(t *testing.T) {
 	e := newSummaryEnv()
 	for _, id := range []int{99, 0, -1} {
@@ -417,6 +427,7 @@ func TestSprint_InexistenteDevuelveErrSprintNotFound(t *testing.T) {
 
 // CA-35.3 · Un proyecto inexistente, 0 o negativo devuelve
 // ErrProjectNotFound.
+// HU-35 · CA-35.3 · Verifica que consultar un proyecto inexistente, 0 o negativo devuelva ErrProjectNotFound y el valor cero.
 func TestProject_InexistenteDevuelveErrProjectNotFound(t *testing.T) {
 	e := newSummaryEnv()
 	for _, id := range []int{99, 0, -1} {
@@ -463,6 +474,7 @@ func checkReads(t *testing.T, e *summaryEnv, c readOrderCase) {
 // CA-35.3 y RN-35.4 · En el sprint se lee sprint → ítems → esfuerzos →
 // defectos: se devuelve el error de la primera lectura que falla y no se
 // hacen las siguientes.
+// HU-35 · CA-35.3 · Verifica que, en el sprint, se devuelva el error de la primera lectura que falla y no se hagan las siguientes.
 func TestSprint_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []readOrderCase{
 		{name: "sprint e ítems", fail: func(e *summaryEnv) { e.sprintSpy.getErr, e.itemSpy.err = errSprintRead, errItemsRead }, want: errSprintRead},
@@ -492,6 +504,7 @@ func TestSprint_ErroresEnElOrdenDeLectura(t *testing.T) {
 // CA-35.3 y RN-35.4 · En el proyecto se lee ítems → sprints → esfuerzos →
 // defectos: se devuelve el error de la primera lectura que falla y no se
 // hacen las siguientes.
+// HU-35 · CA-35.3 · Verifica que, en el proyecto, se devuelva el error de la primera lectura que falla y no se hagan las siguientes.
 func TestProject_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []readOrderCase{
 		{name: "ítems y sprints", fail: func(e *summaryEnv) { e.itemSpy.err, e.sprintSpy.listErr = errItemsRead, errSprintsRead }, want: errItemsRead},
@@ -520,6 +533,7 @@ func TestProject_ErroresEnElOrdenDeLectura(t *testing.T) {
 // CA-35.4 · Sprint lee los ítems una sola vez: el repositorio de ítems
 // recibe 2 lecturas, 1 de metrics y 1 interna de defect.Manager.ListByProject
 // (límite conocido de la SDD).
+// HU-35 · CA-35.4 · Verifica que la consulta del sprint lea los ítems del backlog una sola vez desde metrics.
 func TestSprint_LeeLosItemsUnaSolaVez(t *testing.T) {
 	e := newSummaryEnv()
 	_, sprints := e.multiSprintProject(t)
@@ -536,6 +550,7 @@ func TestSprint_LeeLosItemsUnaSolaVez(t *testing.T) {
 
 // CA-35.4 · Project lee los ítems una sola vez, con un proyecto de tres
 // sprints: 2 lecturas del repositorio (1 de metrics y 1 interna de defect).
+// HU-35 · CA-35.4 · Verifica que la consulta de un proyecto con tres sprints lea los ítems del backlog una sola vez desde metrics.
 func TestProject_LeeLosItemsUnaSolaVez(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, _ := e.multiSprintProject(t)
@@ -552,6 +567,7 @@ func TestProject_LeeLosItemsUnaSolaVez(t *testing.T) {
 
 // CA-35.7 · Consultar no modifica nada, y modificar el resultado no cambia la
 // próxima consulta.
+// HU-35 · CA-35.7 · Verifica que consultar no modifique nada y que cambiar el resultado no altere la próxima consulta.
 func TestSummary_NoModificaNadaYDevuelveCopias(t *testing.T) {
 	e := newSummaryEnv()
 	projectID, sprints := e.multiSprintProject(t)

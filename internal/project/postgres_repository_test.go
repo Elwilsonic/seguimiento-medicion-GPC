@@ -27,6 +27,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 
 // CA-TEC05.3 · El repositorio PostgreSQL cumple el mismo contrato que el de
 // memoria.
+// TEC-05 · CA-TEC05.3 · Verifica que el repositorio PostgreSQL de proyectos cumpla el mismo contrato que el de memoria.
 func TestPostgresRepository_Contrato(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	runRepositoryContract(t, func(t *testing.T) Repository {
@@ -38,6 +39,7 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 // confunde con ErrProjectNotFound: el proyecto puede existir aunque la base
 // no responda. Se usa un pool propio, no el de Pool(t), que tiene tomado el
 // lock hasta que termina el test.
+// TEC-05 · CA-TEC05.3 · Verifica que un error de la base se devuelva como error y no como ErrProjectNotFound.
 func TestPostgresRepository_ErrorDeLaBaseNoEsNotFound(t *testing.T) {
 	postgrestest.Pool(t)
 	closed, err := postgres.Open(context.Background(), os.Getenv(postgrestest.EnvVar))
@@ -59,6 +61,7 @@ func TestPostgresRepository_ErrorDeLaBaseNoEsNotFound(t *testing.T) {
 
 // HU-18, CA-18.9: un proyecto sin fecha de inicio se guarda como NULL y se lee
 // sin fecha. Necesita la base levantada; sin TEST_DATABASE_URL se omite.
+// HU-18 · CA-18.9 · Verifica que un proyecto sin fecha de inicio se guarde como NULL en PostgreSQL y se lea sin fecha.
 func TestPostgresRepository_SinFechaDeInicioSeGuardaComoNULL(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	repo := newPostgresTestRepository(t, pool)
@@ -85,6 +88,7 @@ func TestPostgresRepository_SinFechaDeInicioSeGuardaComoNULL(t *testing.T) {
 // HU-18, CA-18.9: la fecha de inicio se lee en UTC, el mismo instante y el
 // mismo día, aunque la zona de la máquina sea UTC-3 (patrón de TEC-05).
 // Necesita la base levantada; sin TEST_DATABASE_URL se omite.
+// HU-18 · CA-18.9 · Verifica que la fecha de inicio se lea de PostgreSQL en UTC, el mismo día, aunque la máquina esté en UTC-3.
 func TestPostgresRepository_FechaDeInicioEnUTC(t *testing.T) {
 	zone := time.FixedZone("UTC-3", -3*60*60)
 	previousLocal := time.Local
@@ -120,6 +124,7 @@ func TestPostgresRepository_FechaDeInicioEnUTC(t *testing.T) {
 
 // CA-41.12: el repositorio PostgreSQL conserva la fecha de fin con el mismo
 // contrato que el de memoria.
+// HU-41 · CA-41.12 · Verifica que el repositorio PostgreSQL conserve la fecha de fin con el mismo contrato que el de memoria.
 func TestPostgresRepository_ContratoFechaDeFin(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	runRepositoryEndDateContract(t, func(t *testing.T) Repository {
@@ -129,6 +134,7 @@ func TestPostgresRepository_ContratoFechaDeFin(t *testing.T) {
 
 // CA-41.12: un proyecto sin fecha de fin se guarda como NULL y se lee sin
 // fecha.
+// HU-41 · CA-41.12 · Verifica que un proyecto sin fecha de fin se guarde como NULL en PostgreSQL y se lea sin fecha.
 func TestPostgresRepository_SinFechaDeFinSeGuardaComoNULL(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	repo := newPostgresTestRepository(t, pool)
@@ -154,6 +160,7 @@ func TestPostgresRepository_SinFechaDeFinSeGuardaComoNULL(t *testing.T) {
 
 // CA-41.12: la fecha de fin se lee en UTC, el mismo instante y el mismo día,
 // aunque la zona de la máquina sea UTC-3 (patrón de TEC-05 y HU-18).
+// HU-41 · CA-41.12 · Verifica que la fecha de fin se lea de PostgreSQL en UTC, el mismo día, aunque la máquina esté en UTC-3.
 func TestPostgresRepository_FechaDeFinEnUTC(t *testing.T) {
 	zone := time.FixedZone("UTC-3", -3*60*60)
 	previousLocal := time.Local

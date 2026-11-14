@@ -53,6 +53,7 @@ func newHandlerWithMembers(t *testing.T) http.Handler {
 }
 
 // CA-16.1 y CA-16.7 · Responde 200 con el integrante modificado.
+// HU-16 · CA-16.1 · Verifica que PUT /api/integrantes/{id} responda 200 con el integrante modificado.
 func TestModificarIntegrante_Devuelve200ConElIntegrante(t *testing.T) {
 	h := newHandlerWithMembers(t)
 
@@ -64,6 +65,7 @@ func TestModificarIntegrante_Devuelve200ConElIntegrante(t *testing.T) {
 
 // CA-16.2 y CA-16.7 · Los datos inválidos devuelven 400 con el mensaje del
 // error.
+// HU-16 · CA-16.2 · Verifica que un nombre vacío, un rol vacío o un rol inválido respondan 400 con el mensaje de su error.
 func TestModificarIntegrante_DatosInvalidosDevuelven400(t *testing.T) {
 	casos := []struct {
 		nombre, body string
@@ -88,6 +90,7 @@ func TestModificarIntegrante_DatosInvalidosDevuelven400(t *testing.T) {
 }
 
 // CA-16.7 · Un cuerpo que no es JSON o un campo que no es texto devuelven 400.
+// HU-16 · CA-16.7 · Verifica que un cuerpo que no es JSON o un campo que no es texto respondan 400.
 func TestModificarIntegrante_CuerpoInvalidoDevuelve400(t *testing.T) {
 	for _, body := range []string{`no es JSON`, `{"nombre":5,"rol":"PRODUCT_BUILDER"}`} {
 		t.Run(body, func(t *testing.T) {
@@ -101,6 +104,7 @@ func TestModificarIntegrante_CuerpoInvalidoDevuelve400(t *testing.T) {
 }
 
 // CA-16.3 y CA-16.7 · Un integrante inexistente, 0 o negativo devuelve 404.
+// HU-16 · CA-16.3 · Verifica que modificar un integrante inexistente, 0 o negativo responda 404.
 func TestModificarIntegrante_InexistenteDevuelve404(t *testing.T) {
 	for _, path := range []string{"/api/integrantes/999", "/api/integrantes/0", "/api/integrantes/-1"} {
 		t.Run(path, func(t *testing.T) {
@@ -114,6 +118,7 @@ func TestModificarIntegrante_InexistenteDevuelve404(t *testing.T) {
 }
 
 // CA-16.4 y CA-16.7 · El nombre de otro integrante del proyecto devuelve 409.
+// HU-16 · CA-16.4 · Verifica que el nombre de otro integrante del proyecto responda 409 con ErrDuplicateMember.
 func TestModificarIntegrante_NombreDeOtroIntegranteDevuelve409(t *testing.T) {
 	h := newHandlerWithMembers(t)
 
@@ -123,6 +128,7 @@ func TestModificarIntegrante_NombreDeOtroIntegranteDevuelve409(t *testing.T) {
 }
 
 // CA-16.4 · Cambiar solo las mayúsculas del propio nombre responde 200.
+// HU-16 · CA-16.4 · Verifica que cambiar solo las mayúsculas del propio nombre responda 200.
 func TestModificarIntegrante_PropioNombreConOtrasMayusculasDevuelve200(t *testing.T) {
 	h := newHandlerWithMembers(t)
 
@@ -134,6 +140,7 @@ func TestModificarIntegrante_PropioNombreConOtrasMayusculasDevuelve200(t *testin
 
 // CA-16.7 · Los demás métodos devuelven 405. GET necesita su ruta porque, sin
 // ella, lo atendería la interfaz web con un 404.
+// HU-16 · CA-16.7 · Verifica que los métodos distintos de PUT en /api/integrantes/{id} respondan 405.
 func TestModificarIntegrante_MetodoNoPermitidoDevuelve405(t *testing.T) {
 	h := newHandlerWithMembers(t)
 
@@ -150,6 +157,7 @@ func TestModificarIntegrante_MetodoNoPermitidoDevuelve405(t *testing.T) {
 }
 
 // CA-16.7 · El 405 de GET anuncia PUT.
+// HU-16 · CA-16.7 · Verifica que el 405 de GET en /api/integrantes/{id} anuncie PUT en el encabezado Allow.
 func TestModificarIntegrante_GETAnunciaPUTEnAllow(t *testing.T) {
 	rec := httptest.NewRecorder()
 	newHandlerWithMembers(t).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/integrantes/1", nil))
@@ -160,6 +168,7 @@ func TestModificarIntegrante_GETAnunciaPUTEnAllow(t *testing.T) {
 }
 
 // CA-16.5 y CA-16.7 · Una falla del almacenamiento devuelve 500 sin detalle.
+// HU-16 · CA-16.5 · Verifica que una falla del almacenamiento al modificar responda 500 sin exponer el detalle.
 func TestModificarIntegrante_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
@@ -177,6 +186,7 @@ func TestModificarIntegrante_ErrorDelRepositorioDevuelve500SinDetalle(t *testing
 
 // RN-16.8 · Cambiar el nombre de un integrante no cambia sus esfuerzos: el
 // integrante de un esfuerzo es un texto libre.
+// HU-16 · RN-16.8 · Verifica que cambiar el nombre de un integrante no cambie el integrante de sus esfuerzos registrados.
 func TestModificarIntegrante_NoCambiaLosEsfuerzosRegistrados(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	expectStatus(t, do(t, h, http.MethodPost, effortsPath, validEffort), http.StatusCreated)
@@ -195,6 +205,7 @@ func TestModificarIntegrante_NoCambiaLosEsfuerzosRegistrados(t *testing.T) {
 
 // CA-16.7 · La sección "Integrantes" tiene el formulario "Modificar
 // integrante" con los tres roles.
+// HU-16 · CA-16.7 · Verifica que la sección "Integrantes" tenga el formulario "Modificar integrante" con los tres roles.
 func TestInterfaz_SeccionIntegrantesConElFormularioDeModificar(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 
@@ -229,6 +240,7 @@ func TestInterfaz_SeccionIntegrantesConElFormularioDeModificar(t *testing.T) {
 
 // CA-16.7 · El formulario llama a PUT /integrantes/{id} y muestra el resultado
 // en msg-integrantes.
+// HU-16 · CA-16.7 · Verifica que el formulario llame a PUT /integrantes/{id} y muestre el resultado en msg-integrantes.
 func TestInterfaz_ModificarIntegranteLlamaALaAPI(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 

@@ -326,6 +326,7 @@ func contractAssertItem(t *testing.T, op string, got, want Item) {
 
 // Los tests de contrato de memoria caracterizan el comportamiento actual:
 // pasan sin cambios en MemoryRepository.
+// TEC-05 · CA-TEC05.3 · Verifica que el repositorio de ítems en memoria cumpla el contrato común de Repository.
 func TestMemoryRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }

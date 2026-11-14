@@ -35,6 +35,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 
 // CA-TEC05.3 · El repositorio PostgreSQL cumple el mismo contrato que el de
 // memoria.
+// TEC-05 · CA-TEC05.3 · Verifica que el repositorio PostgreSQL de ítems cumpla el mismo contrato que el de memoria.
 func TestPostgresRepository_Contrato(t *testing.T) {
 	pool := postgrestest.Pool(t)
 	runRepositoryContract(t, func(t *testing.T) Repository {
@@ -45,6 +46,7 @@ func TestPostgresRepository_Contrato(t *testing.T) {
 // Solo PostgreSQL: guardar un ítem de un proyecto inexistente falla por la
 // clave foránea (23503, foreign_key_violation). La memoria no lo valida; lo
 // valida el Manager (HU-04).
+// TEC-05 · CA-TEC05.3 · Verifica que guardar en PostgreSQL un ítem de un proyecto inexistente falle por la clave foránea.
 func TestPostgresRepository_SaveConProyectoInexistenteFalla(t *testing.T) {
 	repo := newPostgresTestRepository(t, postgrestest.Pool(t))
 
@@ -60,6 +62,7 @@ func TestPostgresRepository_SaveConProyectoInexistenteFalla(t *testing.T) {
 // confunde con ErrItemNotFound: el ítem puede existir aunque la base no
 // responda. Se usa un pool propio, no el de Pool(t), que tiene tomado el lock
 // hasta que termina el test.
+// TEC-05 · CA-TEC05.3 · Verifica que un error de la base se devuelva como error y no como ErrItemNotFound.
 func TestPostgresRepository_ErrorDeLaBaseNoEsNotFound(t *testing.T) {
 	postgrestest.Pool(t)
 	closed, err := postgres.Open(context.Background(), os.Getenv(postgrestest.EnvVar))
