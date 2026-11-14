@@ -471,10 +471,10 @@ func checkReads(t *testing.T, e *summaryEnv, c readOrderCase) {
 	}
 }
 
-// CA-35.3 y RN-35.4 · En el sprint se lee sprint → ítems → esfuerzos →
+// RN-35.4 · En el sprint se lee sprint → ítems → esfuerzos →
 // defectos: se devuelve el error de la primera lectura que falla y no se
 // hacen las siguientes.
-// HU-35 · CA-35.3 · Verifica que, en el sprint, se devuelva el error de la primera lectura que falla y no se hagan las siguientes.
+// HU-35 · RN-35.4 · Verifica que, en el sprint, se devuelva el error de la primera lectura que falla y no se hagan las siguientes.
 func TestSprint_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []readOrderCase{
 		{name: "sprint e ítems", fail: func(e *summaryEnv) { e.sprintSpy.getErr, e.itemSpy.err = errSprintRead, errItemsRead }, want: errSprintRead},
@@ -501,10 +501,10 @@ func TestSprint_ErroresEnElOrdenDeLectura(t *testing.T) {
 	}
 }
 
-// CA-35.3 y RN-35.4 · En el proyecto se lee ítems → sprints → esfuerzos →
+// RN-35.4 · En el proyecto se lee ítems → sprints → esfuerzos →
 // defectos: se devuelve el error de la primera lectura que falla y no se
 // hacen las siguientes.
-// HU-35 · CA-35.3 · Verifica que, en el proyecto, se devuelva el error de la primera lectura que falla y no se hagan las siguientes.
+// HU-35 · RN-35.4 · Verifica que, en el proyecto, se devuelva el error de la primera lectura que falla y no se hagan las siguientes.
 func TestProject_ErroresEnElOrdenDeLectura(t *testing.T) {
 	cases := []readOrderCase{
 		{name: "ítems y sprints", fail: func(e *summaryEnv) { e.itemSpy.err, e.sprintSpy.listErr = errItemsRead, errSprintsRead }, want: errItemsRead},

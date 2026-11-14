@@ -260,9 +260,9 @@ func revealFailingSession(t *testing.T) (*failingRevealRepository, *Manager, *ba
 	return repo, manager, manager.items, session
 }
 
-// CA-25.4 · Si falla la lectura de la sesión, se propaga el error y el ítem
+// Error · Si falla la lectura de la sesión, se propaga el error y el ítem
 // no cambia.
-// HU-25 · CA-25.4 · Verifica que, si falla la lectura de la sesión, Estimate devuelva ese error y el ítem no cambie.
+// HU-25 · Error · Verifica que, si falla la lectura de la sesión, Estimate devuelva ese error y el ítem no cambie.
 func TestEstimate_ErrorAlLeerPropagaError(t *testing.T) {
 	repo, manager, items, session := revealFailingSession(t)
 	repo.failGet = true

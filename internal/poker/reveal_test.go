@@ -187,8 +187,8 @@ func openFailingSession(t *testing.T) (*failingRevealRepository, *Manager, Sessi
 	return repo, manager, session
 }
 
-// CA-23.5 · Si falla la lectura, se propaga el error.
-// HU-23 · CA-23.5 · Verifica que, si falla la lectura de la sesión, Reveal devuelva ese error.
+// Error · Si falla la lectura, se propaga el error.
+// HU-23 · Error · Verifica que, si falla la lectura de la sesión, Reveal devuelva ese error.
 func TestReveal_ErrorAlLeerPropagaError(t *testing.T) {
 	repo, manager, session := openFailingSession(t)
 	repo.failGet = true

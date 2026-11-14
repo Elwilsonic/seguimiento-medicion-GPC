@@ -260,8 +260,8 @@ func revealFailingRoundSession(t *testing.T) (*failingRoundRepository, *Manager,
 	return repo, manager, session
 }
 
-// CA-24.9 · Si falla la lectura, se propaga el error.
-// HU-24 · CA-24.9 · Verifica que, si falla la lectura de la sesión, RepeatRound devuelva ese error.
+// Error · Si falla la lectura, se propaga el error.
+// HU-24 · Error · Verifica que, si falla la lectura de la sesión, RepeatRound devuelva ese error.
 func TestRepeatRound_ErrorAlLeerPropagaError(t *testing.T) {
 	repo, manager, session := revealFailingRoundSession(t)
 	repo.failGet = true
@@ -273,9 +273,9 @@ func TestRepeatRound_ErrorAlLeerPropagaError(t *testing.T) {
 	}
 }
 
-// CA-24.9 · Si falla la búsqueda de otra sesión abierta, se propaga el error
+// Error · Si falla la búsqueda de otra sesión abierta, se propaga el error
 // y la sesión sigue REVELADA.
-// HU-24 · CA-24.9 · Verifica que, si falla la búsqueda de otra sesión abierta, RepeatRound devuelva ese error y la sesión siga REVELADA.
+// HU-24 · Error · Verifica que, si falla la búsqueda de otra sesión abierta, RepeatRound devuelva ese error y la sesión siga REVELADA.
 func TestRepeatRound_ErrorAlBuscarSesionAbiertaPropagaError(t *testing.T) {
 	repo, manager, session := revealFailingRoundSession(t)
 	repo.failOpenByItem = true
