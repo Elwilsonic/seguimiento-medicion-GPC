@@ -6,7 +6,9 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 
 - [x] 0.1 El Agile Enabler aprueba explícitamente la propuesta completa (proposal, specs, design y tasks), incluidas la alternativa B (D1), la traducción al ID interno 0 (D4), el pendiente R1 y los criterios CA-51.1 a CA-51.7 ajustados. Verificar que la aprobación quedó en el chat o en el Issue #193 antes de seguir.
 - [ ] 0.2 Actualizar los criterios del Issue #193 con los CA-51.1 a CA-51.7 definitivos, solo con el permiso del Agile Enabler. Verificar que el body del Issue los muestra.
-- [ ] 0.3 Correr `git switch main`, `git pull` y `git switch feature/HU-51-uuid`, y después `git merge main` (con autorización), para trabajar sobre los tests ya comentados por TEC-11 (R5). Verificar con `go test ./...` que la rama arranca en verde.
+- [x] 0.3 Correr `git switch main`, `git pull` y `git switch feature/HU-51-uuid`, y después `git merge main` (con autorización), para trabajar sobre los tests ya comentados por TEC-11 (R5). Verificar con `go test ./...` que la rama arranca en verde.
+
+**Prioridad del Agile Enabler:** si no llega todo para la Review del 15/11, primero que funcione la API de proyectos con UUID (CA-51.1 a CA-51.4).
 
 ## 1. Escenarios BDD (godog)
 
@@ -107,6 +109,6 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 
 - El merge lo hace el equipo con "Create a merge commit" (nunca squash ni rebase), con la aprobación del revisor y la CI en verde.
 - Después del merge, avisar al equipo que recree su base local con `docker compose down -v` y `docker compose up -d`, y revisar que el script de carga de datos de la demo no use `/api/proyectos/1` (Open Question de `design.md`).
-- Correr `/opsx:archive` solo cuando el PR está integrado en `main` y todas las tareas de este archivo están tildadas. Proponer `git commit -m "docs(HU-51): archivar el cambio en OpenSpec" -m "Refs #193"`. Los requisitos pasan a `openspec/specs/proyectos/spec.md`; si HU-50 ya se archivó, se suman a los suyos.
+- Correr `/opsx:archive` solo cuando el PR está integrado en `main` y todas las tareas de este archivo están tildadas. Proponer `git commit -m "docs(HU-51): archivar el cambio en OpenSpec" -m "Refs #193"`. Los requisitos se suman a los de HU-50 en `openspec/specs/proyectos/spec.md`.
 - Actualizar los links de la fila de HU-51 en el README y en la Trazabilidad del Issue #193 a los definitivos (`openspec/specs/proyectos/spec.md` y la carpeta del archivo), y verificar que abren en `main`.
 - Parte pendiente de HU-51 (ítems, sprints, integrantes, defectos, esfuerzos y Planning Poker): no hay Sprint siguiente. Queda escrita en `proposal.md` y se menciona en la Review del 15/11.

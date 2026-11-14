@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #193 · Épica E1 · Gestión de proyectos, con alcance pendiente en E2 a E8 · Vinculada a HU-01 (#14), HU-03 (#16) y HU-50 (#183)
 >
-> Aprobada por: Peñalbé Hernán (Agile Enabler), 14/11/2026, por WhatsApp. Incluye la alternativa B (D1), D4, el pendiente R1 y los criterios CA-51.1 a CA-51.7.
+> Aprobada por: Peñalbé Hernán (Agile Enabler), 14/11/2026, con dos arreglos que se aplicaron (links de HU-50 archivada y capability proyectos como modificada). Incluye la alternativa B (D1), D4, el pendiente R1 y los criterios CA-51.1 a CA-51.7.
 
 > [!WARNING]
 > **Pendiente documentado, aceptado por el Agile Enabler el 14/11/2026 (riesgo R1 de `design.md`).** Este cambio cubre **solo los proyectos**. Los ítems del backlog, los sprints, los integrantes, los defectos, los registros de esfuerzo y las sesiones de Planning Poker **siguen con IDs enteros correlativos**. Mientras esa parte no se haga:
@@ -10,7 +10,7 @@
 > - quien recorra `/api/items/1`, `/api/items/2`… (o `/api/sprints/N/…`) puede leer el `proyecto_id` (UUID) de cada ítem o sprint y llegar con él al proyecto;
 > - los IDs globales de ítems, sprints y las demás entidades dejan deducir cuántos hay.
 >
-> El Agile Enabler lo aceptó como pendiente documentado: no hay Sprint siguiente, y se informa en la Review del 15/11. Ver "Fuera de alcance y PENDIENTE".
+> Aceptado por el Agile Enabler como pendiente documentado, que se informa en la Review del 15/11: no hay Sprint siguiente. Ver "Fuera de alcance y PENDIENTE".
 
 ## Historia de usuario
 
@@ -35,18 +35,20 @@ Hoy cada proyecto se identifica con un entero correlativo (RN-01.5 de HU-01: 1, 
 
 ### New Capabilities
 
-- `proyectos`: gestión de proyectos (épica E1). Si HU-50 se archiva antes, este cambio le **agrega** requisitos a esa misma capability y su `## Purpose` se ignora. Los requisitos de HU-50 no cambian: la lista conserva su formato y su orden por nombre.
+Ninguna.
 
 ### Modified Capabilities
 
-Ninguna. Los requisitos que cambian de comportamiento (RN-01.5, "ID numérico correlativo", y el "ID entero" de las entradas de HU-02, HU-03, HU-18, HU-19 y HU-41) están en las SDD de `docs/especificaciones/`, no en `openspec/specs/`. Por eso van como requisitos `ADDED` que dicen explícitamente qué reemplazan. Las SDD no se rehacen.
+- `proyectos` (`openspec/specs/proyectos/spec.md`, creada por HU-50): HU-51 le **agrega** requisitos (`ADDED`). Los requisitos de HU-50 no cambian: la lista conserva su formato y su orden por nombre.
+
+  Los requisitos que cambian de comportamiento (RN-01.5, "ID numérico correlativo", y el "ID entero" de las entradas de HU-02, HU-03, HU-18, HU-19 y HU-41) están en las SDD de `docs/especificaciones/`, no en `openspec/specs/`. Por eso van como requisitos `ADDED` que dicen explícitamente qué reemplazan, y no como `MODIFIED` (D9 de `design.md`). Las SDD no se rehacen.
 
 ## Vínculos y SDD leídas
 
 - **HU-01** (`HU-01-crear-proyecto.md`): RN-01.5 y CA-01.1 ("ID numérico correlativo que empieza en 1") siguen valiendo para la clave **interna**. Lo que se ve hacia afuera pasa a ser el UUID. Se mantiene el mutex de CA-01.7 para la creación.
 - **HU-02** y **HU-03** (`HU-02-modificar-proyecto.md`, `HU-03-consultar-proyecto.md`): `ErrProjectNotFound` (RN-02.6, RN-03.2) sigue siendo el error de proyecto inexistente, 404 en la API. Las consultas siguen devolviendo copias por valor (RN-03.3).
 - **HU-18, HU-41 y HU-19**: el orden de errores del handler (ID de la ruta → JSON → formato de fecha → Manager, donde las validaciones de contenido van antes que la existencia) se conserva. Por ejemplo, una fecha vacía sobre un proyecto inexistente sigue respondiendo 400 (D4).
-- **HU-50** (`openspec/changes/hu-50-listar-proyectos/`): el orden alfabético por nombre (D2 de HU-50) no depende del ID y no cambia. `GET /api/proyectos` conserva su formato, con el `id` como UUID.
+- **HU-50** (`openspec/specs/proyectos/spec.md`): el orden alfabético por nombre (D2 de HU-50) no depende del ID y no cambia. `GET /api/proyectos` conserva su formato, con el `id` como UUID.
 
 ## Comparación con el acta de Planning
 

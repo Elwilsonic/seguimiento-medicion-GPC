@@ -1,9 +1,5 @@
 # Spec Delta
 
-## Purpose
-
-Gestión de proyectos (épica E1): crear, consultar, modificar y listar los proyectos, con sus fechas, para que el equipo pueda elegir y seguir cada uno.
-
 ## ADDED Requirements
 
 ### Requirement: Identificador público UUID al crear un proyecto

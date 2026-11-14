@@ -49,7 +49,7 @@ Se compararon dos alternativas:
 | ¿Cumple "que no se pueda adivinar"? | Sí: no existe ningún entero del proyecto | **Sí, hacia afuera:** el entero existe solo en la base y en la memoria del proceso, y ninguna ruta lo acepta ni lo devuelve. Hay una diferencia con el texto del Issue ("UUID en el dominio y la base"), que se ajusta en los criterios CA-51.1, CA-51.3 y CA-51.5 |
 | Parte pendiente (otras entidades) | Mismo trabajo para cada entidad | Mismo patrón para cada entidad, entidad por entidad, sin cambiar firmas |
 
-**Decisión: B**, aprobada por el Agile Enabler el 14/11/2026. Cumple el pedido del profesor en todo lo que se ve desde afuera, con un tercio de los archivos de producción y un cuarto de los tests, y deja los dominios E2 a E8 sin tocar. Eso importa con el plazo del 15/11 y con los PR de TEC-11 abiertos sobre esos mismos tests.
+**Decisión: B**, aprobada por el Agile Enabler el 14/11/2026 por el plazo. Cumple el pedido del profesor en todo lo que se ve desde afuera, con un tercio de los archivos de producción y un cuarto de los tests, y deja los dominios E2 a E8 sin tocar. Eso importa con el plazo del 15/11 y con los PR de TEC-11 abiertos sobre esos mismos tests.
 
 *Alternativa descartada: A.* Es la solución "más pura", pero cambia 62 archivos de producción, 81 de tests y 4 `.feature` en un día, y el riesgo de no llegar es alto. Si no se llega, HU-51 queda sin integrar. Con B, la parte obligatoria queda completa, y A sigue siendo posible más adelante.
 
@@ -205,6 +205,10 @@ En GREEN se vuelven a correr estos comandos: si un cambio agrega un trato especi
   - ninguna salida con el entero (CA-51.3, CA-51.4).
 - `internal/httpapi/projects_uuid_web_test.go`: `#proyecto-actual` es `type="text"` (CA-51.6).
 - **Los 22 archivos existentes se adaptan sin perder lo que verifican:** crean el proyecto y usan su UUID en la ruta, y comparan `proyecto_id` con ese UUID. Cada test nuevo lleva `// HU-51 · CA-51.N · Verifica que …`. Los adaptados conservan su comentario de TEC-11.
+
+### D9. Requisitos como ADDED y no como MODIFIED
+
+Los requisitos se agregan como `ADDED` y no como `MODIFIED` por el plazo: el comportamiento anterior de proyectos está en las SDD de `docs/especificaciones/` (HU-01, HU-02, HU-03, HU-18, HU-19 y HU-41), y migrarlo a `openspec/specs` era el paso siguiente.
 
 ### Qué implementa cada requisito
 
