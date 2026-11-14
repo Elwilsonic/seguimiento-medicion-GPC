@@ -2,15 +2,15 @@
 
 > Issue del repositorio: #193 · Épica E1 · Gestión de proyectos, con alcance pendiente en E2 a E8 · Vinculada a HU-01 (#14), HU-03 (#16) y HU-50 (#183)
 >
-> Estado: alternativa B (D1 de `design.md`) aprobada por Peñalbé Hernán (Agile Enabler). Falta la aprobación final de la propuesta completa.
+> Estado: propuesta pendiente de aprobación del Agile Enabler (Peñalbé Hernán). El equipo recomienda la alternativa B (D1 de design.md).
 
 > [!WARNING]
-> **Pendiente aceptado (riesgo R1 de `design.md`).** Este cambio cubre **solo los proyectos**. Los ítems del backlog, los sprints, los integrantes, los defectos, los registros de esfuerzo y las sesiones de Planning Poker **siguen con IDs enteros correlativos**. Mientras esa parte no se haga:
+> **Pendiente propuesto, sujeto a aprobación (riesgo R1 de `design.md`).** Este cambio cubre **solo los proyectos**. Los ítems del backlog, los sprints, los integrantes, los defectos, los registros de esfuerzo y las sesiones de Planning Poker **siguen con IDs enteros correlativos**. Mientras esa parte no se haga:
 >
 > - quien recorra `/api/items/1`, `/api/items/2`… (o `/api/sprints/N/…`) puede leer el `proyecto_id` (UUID) de cada ítem o sprint y llegar con él al proyecto;
 > - los IDs globales de ítems, sprints y las demás entidades dejan deducir cuántos hay.
 >
-> El Agile Enabler lo aceptó como pendiente documentado: no hay Sprint siguiente, y se informa en la Review del 15/11. Ver "Fuera de alcance y PENDIENTE".
+> Se propone como pendiente documentado, para que lo acepte el Agile Enabler: no hay Sprint siguiente, y se informa en la Review del 15/11. Ver "Fuera de alcance y PENDIENTE".
 
 ## Historia de usuario
 

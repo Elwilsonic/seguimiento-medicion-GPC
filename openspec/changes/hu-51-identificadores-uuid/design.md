@@ -49,7 +49,7 @@ Se compararon dos alternativas:
 | ¿Cumple "que no se pueda adivinar"? | Sí: no existe ningún entero del proyecto | **Sí, hacia afuera:** el entero existe solo en la base y en la memoria del proceso, y ninguna ruta lo acepta ni lo devuelve. Hay una diferencia con el texto del Issue ("UUID en el dominio y la base"), que se ajusta en los criterios CA-51.1, CA-51.3 y CA-51.5 |
 | Parte pendiente (otras entidades) | Mismo trabajo para cada entidad | Mismo patrón para cada entidad, entidad por entidad, sin cambiar firmas |
 
-**Decisión: B.** Cumple el pedido del profesor en todo lo que se ve desde afuera, con un tercio de los archivos de producción y un cuarto de los tests, y deja los dominios E2 a E8 sin tocar. Eso importa con el plazo del 15/11 y con los PR de TEC-11 abiertos sobre esos mismos tests.
+**Decisión propuesta: B**, pendiente de aprobación del Agile Enabler. Cumple el pedido del profesor en todo lo que se ve desde afuera, con un tercio de los archivos de producción y un cuarto de los tests, y deja los dominios E2 a E8 sin tocar. Eso importa con el plazo del 15/11 y con los PR de TEC-11 abiertos sobre esos mismos tests.
 
 *Alternativa descartada: A.* Es la solución "más pura", pero cambia 62 archivos de producción, 81 de tests y 4 `.feature` en un día, y el riesgo de no llegar es alto. Si no se llega, HU-51 queda sin integrar. Con B, la parte obligatoria queda completa, y A sigue siendo posible más adelante.
 

@@ -4,7 +4,7 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 
 ## 0. Aprobación y preparación
 
-- [ ] 0.1 El Agile Enabler aprueba explícitamente esta propuesta (proposal, specs, design y tasks), con los criterios CA-51.1 a CA-51.7 ajustados. La alternativa B (D1), D4 y el pendiente R1 ya están aprobados. Verificar que la aprobación quedó en el chat o en el Issue #193 antes de seguir.
+- [ ] 0.1 El Agile Enabler aprueba explícitamente la propuesta completa (proposal, specs, design y tasks), incluidas la alternativa B (D1), la traducción al ID interno 0 (D4), el pendiente R1 y los criterios CA-51.1 a CA-51.7 ajustados. Verificar que la aprobación quedó en el chat o en el Issue #193 antes de seguir.
 - [ ] 0.2 Actualizar los criterios del Issue #193 con los CA-51.1 a CA-51.7 definitivos, solo con el permiso del Agile Enabler. Verificar que el body del Issue los muestra.
 - [ ] 0.3 Correr `git switch main`, `git pull` y `git switch feature/HU-51-uuid`, y después `git merge main` (con autorización), para trabajar sobre los tests ya comentados por TEC-11 (R5). Verificar con `go test ./...` que la rama arranca en verde.
 
