@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-09 · BDD · Verifica que se cumplan los escenarios de features/HU-09-priorizar-backlog.feature.
 // Ejecuta los escenarios BDD de features/HU-09-priorizar-backlog.feature con godog.
 func TestFeatures_HU09PriorizarBacklog(t *testing.T) {
 	suite := godog.TestSuite{

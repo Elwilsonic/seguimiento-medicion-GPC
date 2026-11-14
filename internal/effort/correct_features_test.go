@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-28 · BDD · Verifica que se cumplan los escenarios de features/HU-28-corregir-esfuerzo.feature.
 // Ejecuta los escenarios BDD de features/HU-28-corregir-esfuerzo.feature con
 // godog.
 func TestFeatures_HU28CorregirEsfuerzo(t *testing.T) {

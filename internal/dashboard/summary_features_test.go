@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-36 · BDD · Verifica que se cumplan los escenarios de features/HU-36-resumen-proyecto.feature.
 // Ejecuta los escenarios BDD de features/HU-36-resumen-proyecto.feature con
 // godog.
 func TestFeatures_HU36ResumenProyecto(t *testing.T) {

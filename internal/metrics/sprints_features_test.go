@@ -18,6 +18,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-37 · BDD · Verifica que se cumplan los escenarios de features/HU-37-graficos-dashboard.feature.
 // Ejecuta los escenarios BDD de features/HU-37-graficos-dashboard.feature con
 // godog.
 func TestFeatures_HU37GraficosDashboard(t *testing.T) {

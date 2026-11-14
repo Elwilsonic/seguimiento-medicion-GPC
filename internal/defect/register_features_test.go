@@ -17,6 +17,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-29 · BDD · Verifica que se cumplan los escenarios de features/HU-29-registrar-defecto.feature.
 // Ejecuta los escenarios BDD de features/HU-29-registrar-defecto.feature con
 // godog. Los pasos viven en el paquete defect porque la historia orquesta
 // defect, sprint y backlog.

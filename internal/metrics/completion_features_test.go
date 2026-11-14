@@ -16,6 +16,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-34 · BDD · Verifica que se cumplan los escenarios de features/HU-34-porcentaje-completadas.feature.
 // Ejecuta los escenarios BDD de features/HU-34-porcentaje-completadas.feature
 // con godog.
 func TestFeatures_HU34PorcentajeCompletadas(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-02 · BDD · Verifica que se cumplan los escenarios de features/HU-02-modificar-proyecto.feature.
 // Ejecuta los escenarios BDD de features/HU-02-modificar-proyecto.feature con godog.
 func TestFeatures_HU02ModificarProyecto(t *testing.T) {
 	suite := godog.TestSuite{

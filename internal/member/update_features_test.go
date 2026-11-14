@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-16 · BDD · Verifica que se cumplan los escenarios de features/HU-16-modificar-integrante.feature.
 // Ejecuta los escenarios BDD de features/HU-16-modificar-integrante.feature
 // con godog.
 func TestFeatures_HU16ModificarIntegrante(t *testing.T) {
