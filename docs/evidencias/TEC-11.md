@@ -213,8 +213,8 @@ ok  	seguimiento-medicion-gpc/internal/trazabilidad
 
 | Fase | Commit |
 |---|---|
-| Test de los links (RED) | (propuesto) |
-| Links en las 44 evidencias y columna "Código" en 4 (GREEN) | (propuesto) |
+| Test de los links (RED) | `3373ce4` |
+| Links en las 44 evidencias y columna "Código" en 4 (GREEN) | `04be497` |
 
 ## Commits del Pull Request de cierre (#192)
 
