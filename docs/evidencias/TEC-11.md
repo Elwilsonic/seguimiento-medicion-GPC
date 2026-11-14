@@ -159,7 +159,7 @@ ok  	seguimiento-medicion-gpc/internal/trazabilidad
 
 | Fase | Commit |
 |---|---|
-| Test de control (RED) | (propuesto) |
-| Runners de godog con `BDD` y esta evidencia (GREEN) | (propuesto) |
+| Test de control (RED) | `a265916` |
+| Runners de godog con `BDD` y esta evidencia (GREEN) | `abd5c75` |
 
 El commit de cierre, con la regla en `AGENTS.md`, la Definition of Done, el mapa, el README y el registro de IA, lleva `Closes #179` y no se lista acá porque un commit no puede contener su propio hash.

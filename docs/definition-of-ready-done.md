@@ -20,6 +20,7 @@ Las SDD se pueden escribir en paralelo, aunque la dependencia no esté en `main`
 - La fila de la historia está completada en la tabla "Historias por sprint" del README.
 - Los tests pasan (`go test ./...`, también con `-race` en el CI), el código está formateado (`gofmt`) y `go vet ./...` no informa problemas.
 - No queda código nuevo sin un test que lo pida: se revisa `go tool cover -func` antes del commit GREEN.
+- Cada test lleva arriba la línea `// HU-XX · CA-XX.N · Verifica que …` (o `RN-XX.N`, `Error` o `BDD`; `TEC-XX · CA-TECXX.N` en una tarea técnica), y el test de control `internal/trazabilidad` pasa (TEC-11).
 - Las cifras de la evidencia salen de la salida de comandos, pegada en la evidencia.
 - La funcionalidad se puede usar desde la interfaz (TEC-04) cuando corresponde.
 - La rama está integrada a `main` por Pull Request, con "Create a merge commit" y la aprobación de un integrante distinto del responsable, que verifica el RED y el GREEN.
