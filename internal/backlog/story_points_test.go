@@ -54,6 +54,7 @@ func assertAllButPointsUnchanged(t *testing.T, got, want Item) {
 }
 
 // CA-20.1
+// HU-20 · CA-20.1 · Verifica que un ítem sin estimar quede con los Story Points asignados y el resto de sus datos sin cambios.
 func TestAssignStoryPoints_ItemSinEstimarQuedaConElValorYConservaElResto(t *testing.T) {
 	manager, repo := newPointsManager()
 	created := seedPointsItem(t, repo, StatusPending, 0)
@@ -75,6 +76,7 @@ func TestAssignStoryPoints_ItemSinEstimarQuedaConElValorYConservaElResto(t *test
 }
 
 // CA-20.1 (reestimar reemplaza el valor anterior)
+// HU-20 · CA-20.1 · Verifica que reestimar un ítem reemplace los Story Points anteriores por el valor nuevo.
 func TestAssignStoryPoints_ReestimarReemplazaElValorAnterior(t *testing.T) {
 	manager, repo := newPointsManager()
 	created := seedPointsItem(t, repo, StatusPending, 3)
@@ -90,6 +92,7 @@ func TestAssignStoryPoints_ReestimarReemplazaElValorAnterior(t *testing.T) {
 }
 
 // CA-20.1 (el mismo valor es válido)
+// HU-20 · CA-20.1 · Verifica que asignar el mismo valor que el ítem ya tiene sea válido.
 func TestAssignStoryPoints_MismoValorEsValido(t *testing.T) {
 	manager, repo := newPointsManager()
 	created := seedPointsItem(t, repo, StatusPending, 5)
@@ -108,6 +111,7 @@ func TestAssignStoryPoints_MismoValorEsValido(t *testing.T) {
 }
 
 // CA-20.2
+// HU-20 · CA-20.2 · Verifica que cada valor de la escala Fibonacci (1, 2, 3, 5, 8, 13 y 21) se pueda asignar.
 func TestAssignStoryPoints_AceptaCadaValorDeLaEscala(t *testing.T) {
 	for _, points := range []int{1, 2, 3, 5, 8, 13, 21} {
 		manager, repo := newPointsManager()
@@ -126,6 +130,7 @@ func TestAssignStoryPoints_AceptaCadaValorDeLaEscala(t *testing.T) {
 }
 
 // CA-20.2 (definición única de la escala)
+// HU-20 · CA-20.2 · Verifica que StoryPointScale devuelva la escala Fibonacci en orden ascendente.
 func TestStoryPointScale_DevuelveLaEscalaFibonacciEnOrden(t *testing.T) {
 	want := []int{1, 2, 3, 5, 8, 13, 21}
 
@@ -137,6 +142,7 @@ func TestStoryPointScale_DevuelveLaEscalaFibonacciEnOrden(t *testing.T) {
 }
 
 // CA-20.2 (la escala no se puede modificar desde afuera)
+// HU-20 · CA-20.2 · Verifica que StoryPointScale devuelva una lista nueva y que modificarla no cambie la escala ni la validación.
 func TestStoryPointScale_DevuelveUnaListaNuevaEnCadaLlamada(t *testing.T) {
 	first := StoryPointScale()
 	if len(first) == 0 {
@@ -161,6 +167,7 @@ func TestStoryPointScale_DevuelveUnaListaNuevaEnCadaLlamada(t *testing.T) {
 }
 
 // CA-20.3
+// HU-20 · CA-20.3 · Verifica que un valor fuera de la escala devuelva ErrInvalidStoryPoints y el ítem no cambie.
 func TestAssignStoryPoints_RechazaValoresFueraDeLaEscala(t *testing.T) {
 	for _, points := range []int{0, -1, -5, 4, 6, 7, 22, 34, math.MaxInt, math.MinInt} {
 		manager, repo := newPointsManager()
@@ -181,6 +188,7 @@ func TestAssignStoryPoints_RechazaValoresFueraDeLaEscala(t *testing.T) {
 }
 
 // CA-20.3 (la escala se valida antes que la existencia y el estado del ítem)
+// HU-20 · CA-20.3 · Verifica que un valor fuera de la escala se informe antes que la existencia y el estado del ítem.
 func TestAssignStoryPoints_ValorFueraDeLaEscalaSeInformaPrimero(t *testing.T) {
 	manager, repo := newPointsManager()
 	finished := seedPointsItem(t, repo, StatusFinished, 3)
@@ -194,6 +202,7 @@ func TestAssignStoryPoints_ValorFueraDeLaEscalaSeInformaPrimero(t *testing.T) {
 }
 
 // CA-20.4
+// HU-20 · CA-20.4 · Verifica que asignar Story Points a un ítem inexistente devuelva ErrItemNotFound sin modificar otros ítems.
 func TestAssignStoryPoints_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) {
 	for _, id := range []int{999, 0, -1} {
 		manager, repo := newPointsManager()
@@ -211,6 +220,7 @@ func TestAssignStoryPoints_ItemInexistenteDevuelveErrItemNotFound(t *testing.T) 
 }
 
 // CA-20.4 (sin ítems creados)
+// HU-20 · CA-20.4 · Verifica que, sin ítems creados, asignar Story Points devuelva ErrItemNotFound.
 func TestAssignStoryPoints_SinItemsCreadosDevuelveErrItemNotFound(t *testing.T) {
 	manager, _ := newPointsManager()
 
@@ -222,6 +232,7 @@ func TestAssignStoryPoints_SinItemsCreadosDevuelveErrItemNotFound(t *testing.T) 
 }
 
 // CA-20.5
+// HU-20 · CA-20.5 · Verifica que asignar Story Points a un ítem TERMINADO devuelva ErrItemFinished y el ítem no cambie.
 func TestAssignStoryPoints_ItemTerminadoDevuelveErrItemFinished(t *testing.T) {
 	for _, before := range []int{0, 3} {
 		manager, repo := newPointsManager()
@@ -242,6 +253,7 @@ func TestAssignStoryPoints_ItemTerminadoDevuelveErrItemFinished(t *testing.T) {
 }
 
 // CA-20.5 (límite conocido: un ítem reabierto con HU-08 vuelve a ser estimable)
+// HU-20 · CA-20.5 · Verifica que un ítem reabierto con HU-08 vuelva a ser estimable.
 func TestAssignStoryPoints_ItemReabiertoVuelveASerEstimable(t *testing.T) {
 	manager, repo := newPointsManager()
 	created := seedPointsItem(t, repo, StatusFinished, 3)
@@ -260,6 +272,7 @@ func TestAssignStoryPoints_ItemReabiertoVuelveASerEstimable(t *testing.T) {
 }
 
 // CA-20.5 (los ítems no terminados se estiman aunque estén asignados a un sprint)
+// HU-20 · CA-20.5 · Verifica que un ítem no terminado se pueda estimar aunque esté asignado a un sprint.
 func TestAssignStoryPoints_ItemNoTerminadoAsignadoAUnSprint(t *testing.T) {
 	for _, status := range []Status{StatusPending, StatusInProgress} {
 		manager, repo := newPointsManager()
@@ -279,6 +292,7 @@ func TestAssignStoryPoints_ItemNoTerminadoAsignadoAUnSprint(t *testing.T) {
 }
 
 // CA-20.6 (el Update de HU-07 conserva los story points asignados por HU-20)
+// HU-20 · CA-20.6 · Verifica que modificar un ítem con el Update de HU-07 conserve los Story Points asignados.
 func TestManagerUpdate_ConservaLosStoryPointsAsignadosConAssignStoryPoints(t *testing.T) {
 	manager, repo := newPointsManager()
 	created := seedPointsItem(t, repo, StatusPending, 0)
@@ -300,6 +314,7 @@ func TestManagerUpdate_ConservaLosStoryPointsAsignadosConAssignStoryPoints(t *te
 }
 
 // CA-20.7 (copia por valor)
+// HU-20 · CA-20.7 · Verifica que AssignStoryPoints devuelva una copia y que modificarla no altere el ítem guardado.
 func TestAssignStoryPoints_ElResultadoEsUnaCopia(t *testing.T) {
 	manager, repo := newPointsManager()
 	created := seedPointsItem(t, repo, StatusPending, 0)
@@ -322,6 +337,7 @@ func TestAssignStoryPoints_ElResultadoEsUnaCopia(t *testing.T) {
 }
 
 // CA-20.7 (error del repositorio al buscar)
+// HU-20 · CA-20.7 · Verifica que, si el repositorio falla al buscar el ítem, AssignStoryPoints devuelva ese error.
 func TestAssignStoryPoints_ErrorDelRepositorioAlBuscarSeDevuelve(t *testing.T) {
 	manager := NewManager(failingRepository{getErr: errRepository}, project.NewManager(project.NewMemoryRepository()))
 
@@ -336,6 +352,7 @@ func TestAssignStoryPoints_ErrorDelRepositorioAlBuscarSeDevuelve(t *testing.T) {
 }
 
 // CA-20.7 (error del repositorio al actualizar)
+// HU-20 · CA-20.7 · Verifica que, si el repositorio falla al actualizar, AssignStoryPoints devuelva ese error y el ítem no cambie.
 func TestAssignStoryPoints_ErrorDelRepositorioAlActualizarSeDevuelveYNoCambiaElItem(t *testing.T) {
 	repo := NewMemoryRepository()
 	created := seedPointsItem(t, repo, StatusPending, 3)
@@ -363,6 +380,7 @@ func TestAssignStoryPoints_ErrorDelRepositorioAlActualizarSeDevuelveYNoCambiaElI
 //     guardaron con éxito.
 //
 // En el CI corre con go test -race.
+// HU-20 · CA-20.7 · Verifica que asignaciones simultáneas con Update y ChangeStatus terminen bien o con ErrItemFinished y dejen puntos de una asignación exitosa.
 func TestAssignStoryPoints_SimultaneasConUpdateYChangeStatus(t *testing.T) {
 	const attempts = 50
 	manager, repo := newPointsManager()

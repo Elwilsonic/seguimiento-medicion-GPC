@@ -205,6 +205,7 @@ func contractSave(t *testing.T, repo Repository, p Project) Project {
 
 // Los tests de contrato de memoria caracterizan el comportamiento actual:
 // pasan sin cambios en MemoryRepository.
+// TEC-05 · CA-TEC05.3 · Verifica que el repositorio de proyectos en memoria cumpla el contrato común de Repository.
 func TestMemoryRepository_Contrato(t *testing.T) {
 	runRepositoryContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }
@@ -272,6 +273,7 @@ var contractEndDate = time.Date(2026, 12, 18, 0, 0, 0, 0, time.UTC)
 
 // El contrato de memoria caracteriza el comportamiento actual: el repositorio
 // en memoria guarda el struct completo, así que pasa sin cambios.
+// HU-41 · CA-41.12 · Verifica que el repositorio en memoria conserve la fecha de fin, sin registrar o registrada.
 func TestMemoryRepository_ContratoFechaDeFin(t *testing.T) {
 	runRepositoryEndDateContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }

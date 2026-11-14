@@ -23,6 +23,7 @@ func voteAll(t *testing.T, manager *Manager, sessionID int, votes ...Vote) {
 }
 
 // CA-23.1 · Revelar devuelve todos los votos y deja la sesión REVELADA.
+// HU-23 · CA-23.1 · Verifica que revelar devuelva todos los votos (integrante y puntos) y deje la sesión REVELADA.
 func TestReveal_SesionConVotosDevuelveTodosLosVotosYEstadoRevelada(t *testing.T) {
 	env, session := openTestSession(t)
 	want := []Vote{{Voter: "Ana", Points: 5}, {Voter: "Bruno", Points: 8}}
@@ -49,6 +50,7 @@ func TestReveal_SesionConVotosDevuelveTodosLosVotosYEstadoRevelada(t *testing.T)
 }
 
 // CA-23.1 · Con un solo voto ya se puede revelar.
+// HU-23 · CA-23.1 · Verifica que una sesión con un solo voto ya se pueda revelar.
 func TestReveal_SesionConUnSoloVoto(t *testing.T) {
 	env, session := openTestSession(t)
 	voteAll(t, env.manager, session.ID, Vote{Voter: "Ana", Points: 3})
@@ -64,6 +66,7 @@ func TestReveal_SesionConUnSoloVoto(t *testing.T) {
 }
 
 // CA-23.2 · Una sesión sin votos no se puede revelar y sigue ABIERTA.
+// HU-23 · CA-23.2 · Verifica que revelar una sesión sin votos devuelva ErrNoVotes y la sesión siga ABIERTA.
 func TestReveal_SesionSinVotosDevuelveErrNoVotes(t *testing.T) {
 	env, session := openTestSession(t)
 
@@ -82,6 +85,7 @@ func TestReveal_SesionSinVotosDevuelveErrNoVotes(t *testing.T) {
 }
 
 // CA-23.3 · Después de revelar no se puede votar y los votos no cambian.
+// HU-23 · CA-23.3 · Verifica que, después de revelar, votar devuelva ErrSessionNotOpen y los votos no cambien.
 func TestVote_DespuesDeRevelarDevuelveErrSessionNotOpen(t *testing.T) {
 	env, session := openTestSession(t)
 	voteAll(t, env.manager, session.ID, Vote{Voter: "Ana", Points: 5})
@@ -104,6 +108,7 @@ func TestVote_DespuesDeRevelarDevuelveErrSessionNotOpen(t *testing.T) {
 }
 
 // CA-23.4 · Revelar una sesión inexistente devuelve ErrSessionNotFound.
+// HU-23 · CA-23.4 · Verifica que revelar una sesión inexistente, 0 o negativa devuelva ErrSessionNotFound.
 func TestReveal_SesionInexistenteDevuelveErrSessionNotFound(t *testing.T) {
 	env, session := openTestSession(t)
 	voteAll(t, env.manager, session.ID, Vote{Voter: "Ana", Points: 5})
@@ -123,6 +128,7 @@ func TestReveal_SesionInexistenteDevuelveErrSessionNotFound(t *testing.T) {
 }
 
 // CA-23.4 · La segunda revelación no es idempotente: ErrSessionNotOpen.
+// HU-23 · CA-23.4 · Verifica que revelar una sesión ya REVELADA devuelva ErrSessionNotOpen y no la modifique.
 func TestReveal_SesionYaReveladaDevuelveErrSessionNotOpen(t *testing.T) {
 	env, session := openTestSession(t)
 	voteAll(t, env.manager, session.ID, Vote{Voter: "Ana", Points: 5})
@@ -181,7 +187,8 @@ func openFailingSession(t *testing.T) (*failingRevealRepository, *Manager, Sessi
 	return repo, manager, session
 }
 
-// CA-23.5 · Si falla la lectura, se propaga el error.
+// Error · Si falla la lectura, se propaga el error.
+// HU-23 · Error · Verifica que, si falla la lectura de la sesión, Reveal devuelva ese error.
 func TestReveal_ErrorAlLeerPropagaError(t *testing.T) {
 	repo, manager, session := openFailingSession(t)
 	repo.failGet = true
@@ -195,6 +202,7 @@ func TestReveal_ErrorAlLeerPropagaError(t *testing.T) {
 
 // CA-23.5 · Si falla el guardado, se propaga el error y la sesión sigue
 // ABIERTA con sus votos.
+// HU-23 · CA-23.5 · Verifica que, si falla el guardado, Reveal devuelva ese error y la sesión siga ABIERTA con sus votos.
 func TestReveal_ErrorAlGuardarPropagaErrorYSesionNoCambia(t *testing.T) {
 	repo, manager, session := openFailingSession(t)
 	repo.failUpdate = true
@@ -217,6 +225,7 @@ func TestReveal_ErrorAlGuardarPropagaErrorYSesionNoCambia(t *testing.T) {
 }
 
 // CA-23.6 · Revelar conserva la ronda, el ítem y el orden de guardado.
+// HU-23 · CA-23.6 · Verifica que revelar conserve la ronda, el ítem y el orden en que se guardaron los votos.
 func TestReveal_ConservaRondaItemYOrdenDeLosVotos(t *testing.T) {
 	env, session := openTestSession(t)
 	want := []Vote{{Voter: "Carla", Points: 13}, {Voter: "Ana", Points: 2}, {Voter: "Bruno", Points: 21}}
@@ -243,6 +252,7 @@ func TestReveal_ConservaRondaItemYOrdenDeLosVotos(t *testing.T) {
 }
 
 // CA-23.6 · Revelar no modifica el ítem ni sus Story Points.
+// HU-23 · CA-23.6 · Verifica que revelar no modifique el ítem ni sus Story Points.
 func TestReveal_NoModificaElItemNiSusStoryPoints(t *testing.T) {
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia estimada", backlog.StatusInProgress, 3)
@@ -266,6 +276,7 @@ func TestReveal_NoModificaElItemNiSusStoryPoints(t *testing.T) {
 }
 
 // CA-23.6 · Modificar la sesión devuelta no altera la guardada.
+// HU-23 · CA-23.6 · Verifica que modificar la sesión devuelta por Reveal no altere la sesión guardada.
 func TestReveal_DevuelveCopiaDeLosVotos(t *testing.T) {
 	env, session := openTestSession(t)
 	voteAll(t, env.manager, session.ID, Vote{Voter: "Ana", Points: 5})
@@ -291,6 +302,7 @@ func TestReveal_DevuelveCopiaDeLosVotos(t *testing.T) {
 
 // CA-23.7 · Votos y revelación simultáneos: cada voto queda guardado antes
 // de revelar o se rechaza con ErrSessionNotOpen. Se corre con -race.
+// HU-23 · CA-23.7 · Verifica que, con votos simultáneos a la revelación, cada voto aceptado aparezca entre los revelados o se rechace.
 func TestReveal_ConcurrenteConVotosNoPierdeVotosAceptados(t *testing.T) {
 	env, session := openTestSession(t)
 	// El voto previo evita que la revelación falle por ErrNoVotes.

@@ -20,6 +20,7 @@ import (
 )
 
 // CA-TEC01.1 · El puerto se configura con la variable de entorno PORT.
+// TEC-01 · CA-TEC01.1 · Verifica que el servidor escuche en el puerto de la variable de entorno PORT.
 func TestAddress_UsaLaVariablePORT(t *testing.T) {
 	getenv := func(key string) string {
 		if key == "PORT" {
@@ -33,6 +34,7 @@ func TestAddress_UsaLaVariablePORT(t *testing.T) {
 	}
 }
 
+// TEC-01 · CA-TEC01.1 · Verifica que, sin la variable PORT, el servidor escuche en el puerto 8080.
 func TestAddress_SinPORTUsa8080(t *testing.T) {
 	getenv := func(string) string { return "" }
 
@@ -57,6 +59,7 @@ const (
 )
 
 // CA-TEC05.4 · Sin STORAGE, la aplicación usa memoria (el valor por defecto).
+// TEC-05 · CA-TEC05.4 · Verifica que, sin la variable STORAGE, la aplicación use memoria.
 func TestStorageConfig_SinSTORAGEUsaMemoria(t *testing.T) {
 	cfg, err := storageConfig(fakeEnv(nil))
 	if err != nil {
@@ -68,6 +71,7 @@ func TestStorageConfig_SinSTORAGEUsaMemoria(t *testing.T) {
 }
 
 // CA-TEC05.4 · STORAGE=memory usa memoria, aunque haya DATABASE_URL.
+// TEC-05 · CA-TEC05.4 · Verifica que STORAGE=memory use memoria aunque haya DATABASE_URL.
 func TestStorageConfig_MemoryUsaMemoria(t *testing.T) {
 	cfg, err := storageConfig(fakeEnv(map[string]string{
 		"STORAGE":      "memory",
@@ -82,6 +86,7 @@ func TestStorageConfig_MemoryUsaMemoria(t *testing.T) {
 }
 
 // CA-TEC05.4 · STORAGE=postgres usa PostgreSQL con la URL de DATABASE_URL.
+// TEC-05 · CA-TEC05.4 · Verifica que STORAGE=postgres use PostgreSQL con la URL de DATABASE_URL.
 func TestStorageConfig_PostgresConDATABASE_URL(t *testing.T) {
 	cfg, err := storageConfig(fakeEnv(map[string]string{
 		"STORAGE":      "postgres",
@@ -99,6 +104,7 @@ func TestStorageConfig_PostgresConDATABASE_URL(t *testing.T) {
 }
 
 // CA-TEC05.4 · STORAGE=postgres sin DATABASE_URL es un error de configuración.
+// TEC-05 · CA-TEC05.4 · Verifica que STORAGE=postgres sin DATABASE_URL sea un error de configuración.
 func TestStorageConfig_PostgresSinDATABASE_URLDaError(t *testing.T) {
 	_, err := storageConfig(fakeEnv(map[string]string{"STORAGE": "postgres"}))
 	if !errors.Is(err, errMissingDatabaseURL) {
@@ -108,6 +114,7 @@ func TestStorageConfig_PostgresSinDATABASE_URLDaError(t *testing.T) {
 
 // CA-TEC05.4 · Un valor de STORAGE que no es memory ni postgres es un error.
 // Los valores se comparan tal cual, sin pasar a minúsculas ni recortar.
+// TEC-05 · CA-TEC05.4 · Verifica que un valor de STORAGE distinto de memory y postgres sea un error.
 func TestStorageConfig_ValorDesconocidoDaError(t *testing.T) {
 	// " memory" (con un espacio adelante) es el único caso que detecta un
 	// strings.TrimSpace sobre STORAGE: no lo quites sin agregar otro igual.
@@ -123,6 +130,7 @@ func TestStorageConfig_ValorDesconocidoDaError(t *testing.T) {
 
 // CA-TEC05.8 · Los errores de configuración no muestran la contraseña de
 // DATABASE_URL.
+// TEC-05 · CA-TEC05.8 · Verifica que los errores de configuración no muestren la contraseña de DATABASE_URL.
 func TestStorageConfig_ErroresNoMuestranLaContrasena(t *testing.T) {
 	cases := map[string]map[string]string{
 		"valor desconocido": {"STORAGE": "mysql", "DATABASE_URL": testDatabaseURL},
@@ -142,6 +150,7 @@ func TestStorageConfig_ErroresNoMuestranLaContrasena(t *testing.T) {
 }
 
 // CA-TEC05.4 y CA-TEC05.6 · Con memoria no hace falta ninguna base.
+// TEC-05 · CA-TEC05.4 · Verifica que, con memoria, los repositorios se creen sin necesitar ninguna base.
 func TestNewRepositories_MemoriaNoNecesitaBase(t *testing.T) {
 	repos, closeRepos, err := newRepositories(context.Background(), storage{kind: storageMemory})
 	if err != nil {
@@ -175,6 +184,7 @@ func TestNewRepositories_MemoriaNoNecesitaBase(t *testing.T) {
 // HU-21 · Abrir una sesión de Planning Poker (Issue #39): con
 // STORAGE=postgres, las sesiones se guardan en el repositorio PostgreSQL, no
 // en memoria. Necesita TEST_DATABASE_URL; sin ella se omite (CA-TEC05.7).
+// HU-21 · CA-21.8 · Verifica que, con STORAGE=postgres, las sesiones de Planning Poker se guarden en PostgreSQL y no en memoria.
 func TestNewRepositories_PostgresUsaElRepositorioDePoker(t *testing.T) {
 	postgrestest.Pool(t)
 	cfg := storage{kind: storagePostgres, databaseURL: os.Getenv(postgrestest.EnvVar)}
@@ -193,6 +203,7 @@ func TestNewRepositories_PostgresUsaElRepositorioDePoker(t *testing.T) {
 // HU-26 · Registrar esfuerzo (Issue #44): con STORAGE=postgres, los esfuerzos
 // se guardan en el repositorio PostgreSQL, no en memoria. Necesita
 // TEST_DATABASE_URL; sin ella se omite (CA-TEC05.7).
+// HU-26 · RN-26.10 · Verifica que, con STORAGE=postgres, los esfuerzos se guarden en PostgreSQL y no en memoria.
 func TestNewRepositories_PostgresUsaElRepositorioDeEsfuerzos(t *testing.T) {
 	postgrestest.Pool(t)
 	cfg := storage{kind: storagePostgres, databaseURL: os.Getenv(postgrestest.EnvVar)}
@@ -211,6 +222,7 @@ func TestNewRepositories_PostgresUsaElRepositorioDeEsfuerzos(t *testing.T) {
 // HU-29 · Registrar defecto (Issue #47): con STORAGE=postgres, los defectos
 // se guardan en el repositorio PostgreSQL, no en memoria. Necesita
 // TEST_DATABASE_URL; sin ella se omite (CA-TEC05.7).
+// HU-29 · RN-29.10 · Verifica que, con STORAGE=postgres, los defectos se guarden en PostgreSQL y no en memoria.
 func TestNewRepositories_PostgresUsaElRepositorioDeDefectos(t *testing.T) {
 	postgrestest.Pool(t)
 	cfg := storage{kind: storagePostgres, databaseURL: os.Getenv(postgrestest.EnvVar)}
@@ -232,6 +244,7 @@ func TestNewRepositories_PostgresUsaElRepositorioDeDefectos(t *testing.T) {
 // CA-TEC05.4 y CA-TEC05.8 · Con STORAGE=postgres y una base que no responde,
 // newRepositories devuelve un error que no muestra la contraseña (no
 // necesita base: el puerto 1 de 127.0.0.1 rechaza la conexión).
+// TEC-05 · CA-TEC05.4 · Verifica que, con STORAGE=postgres y una base que no responde, se devuelva un error sin la contraseña.
 func TestNewRepositories_PostgresBaseNoDisponibleDaError(t *testing.T) {
 	cfg := storage{
 		kind:        storagePostgres,
@@ -249,6 +262,7 @@ func TestNewRepositories_PostgresBaseNoDisponibleDaError(t *testing.T) {
 
 // CA-TEC05.8 · Con una DATABASE_URL mal formada, el error no muestra la
 // contraseña.
+// TEC-05 · CA-TEC05.8 · Verifica que, con una DATABASE_URL mal formada, el error no muestre la contraseña.
 func TestNewRepositories_PostgresURLInvalidaNoMuestraLaContrasena(t *testing.T) {
 	cfg := storage{
 		kind:        storagePostgres,
@@ -267,6 +281,7 @@ func TestNewRepositories_PostgresURLInvalidaNoMuestraLaContrasena(t *testing.T) 
 // CA-TEC05.5 · Con STORAGE=postgres, lo que se guarda sigue ahí después de
 // cerrar y volver a abrir la aplicación. Necesita TEST_DATABASE_URL; sin ella
 // se omite (CA-TEC05.7).
+// TEC-05 · CA-TEC05.5 · Verifica que, con STORAGE=postgres, los datos guardados sigan después de cerrar y volver a abrir la aplicación.
 func TestNewRepositories_PostgresConservaLosDatosAlReabrir(t *testing.T) {
 	postgrestest.Pool(t) // saltea o rechaza según TEST_DATABASE_URL y vacía la base
 	ctx := context.Background()
@@ -313,6 +328,7 @@ func TestNewRepositories_PostgresConservaLosDatosAlReabrir(t *testing.T) {
 
 // CA-TEC04.7 · El servidor tiene timeouts de lectura de encabezados (5 s),
 // lectura (10 s), escritura (10 s) e inactividad (60 s).
+// TEC-04 · CA-TEC04.7 · Verifica que el servidor tenga timeouts de encabezados (5 s), lectura (10 s), escritura (10 s) e inactividad (60 s).
 func TestNewServer_Timeouts(t *testing.T) {
 	handler := http.NewServeMux()
 

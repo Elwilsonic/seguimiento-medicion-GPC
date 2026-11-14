@@ -56,6 +56,7 @@ func (e *memberEnv) expectStored(t *testing.T, projectID int, want ...Member) {
 }
 
 // CA-16.1 · Se cambian el nombre y el rol en una sola operación.
+// HU-16 · CA-16.1 · Verifica que Update cambie el nombre y el rol de un integrante en una sola operación.
 func TestUpdate_CambiaElNombreYElRol(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -70,6 +71,7 @@ func TestUpdate_CambiaElNombreYElRol(t *testing.T) {
 }
 
 // CA-16.1 · Se cambia solo el nombre reenviando el rol actual.
+// HU-16 · CA-16.1 · Verifica que, reenviando el rol actual, Update cambie solo el nombre.
 func TestUpdate_CambiaSoloElNombre(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -82,6 +84,7 @@ func TestUpdate_CambiaSoloElNombre(t *testing.T) {
 }
 
 // CA-16.1 · Se cambia solo el rol reenviando el nombre actual.
+// HU-16 · CA-16.1 · Verifica que, reenviando el nombre actual, Update cambie solo el rol.
 func TestUpdate_CambiaSoloElRol(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -94,6 +97,7 @@ func TestUpdate_CambiaSoloElRol(t *testing.T) {
 }
 
 // RN-16.6 · Reenviar el mismo nombre y el mismo rol es válido.
+// HU-16 · RN-16.6 · Verifica que reenviar el mismo nombre y el mismo rol no sea un error y devuelva el integrante como está.
 func TestUpdate_SinCambiosEsValido(t *testing.T) {
 	e := newMemberEnv(t)
 	saved := e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -108,6 +112,7 @@ func TestUpdate_SinCambiosEsValido(t *testing.T) {
 
 // CA-16.4 y RN-16.4 · Cambiar solo las mayúsculas del propio nombre es válido:
 // el integrante no se compara consigo mismo.
+// HU-16 · CA-16.4 · Verifica que cambiar solo las mayúsculas del propio nombre sea válido.
 func TestUpdate_CambiarLasMayusculasDelPropioNombreEsValido(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -121,6 +126,7 @@ func TestUpdate_CambiarLasMayusculasDelPropioNombreEsValido(t *testing.T) {
 
 // CA-16.1 · El nombre se guarda sin espacios en los extremos y el rol
 // normalizado.
+// HU-16 · CA-16.1 · Verifica que el nombre se guarde sin espacios en los extremos y el rol normalizado.
 func TestUpdate_NormalizaElNombreYElRol(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -136,6 +142,7 @@ func TestUpdate_NormalizaElNombreYElRol(t *testing.T) {
 
 // CA-16.2 · Un nombre vacío, un rol vacío o un rol inválido se rechazan y el
 // integrante queda como estaba.
+// HU-16 · CA-16.2 · Verifica que un nombre vacío, un rol vacío o un rol inválido se rechacen y el integrante quede como estaba.
 func TestUpdate_RechazaNombreORolInvalidos(t *testing.T) {
 	casos := []struct {
 		nombre, name, role string
@@ -165,6 +172,7 @@ func TestUpdate_RechazaNombreORolInvalidos(t *testing.T) {
 }
 
 // RN-16.7 · Los datos se validan antes de buscar al integrante.
+// HU-16 · RN-16.7 · Verifica que, con el nombre vacío y un ID inexistente, se informe ErrEmptyName antes de buscar al integrante.
 func TestUpdate_NombreVacioEnIntegranteInexistenteDevuelveErrEmptyName(t *testing.T) {
 	e := newMemberEnv(t)
 
@@ -177,6 +185,7 @@ func TestUpdate_NombreVacioEnIntegranteInexistenteDevuelveErrEmptyName(t *testin
 
 // CA-16.4 · El nombre de otro integrante del proyecto se rechaza, sin
 // distinguir mayúsculas y con cualquier rol.
+// HU-16 · CA-16.4 · Verifica que el nombre de otro integrante del proyecto se rechace con ErrDuplicateMember, sin distinguir mayúsculas y con cualquier rol.
 func TestUpdate_RechazaElNombreDeOtroIntegranteDelProyecto(t *testing.T) {
 	casos := []struct {
 		nombre, name, role string
@@ -203,6 +212,7 @@ func TestUpdate_RechazaElNombreDeOtroIntegranteDelProyecto(t *testing.T) {
 }
 
 // CA-16.4 · El nombre de un integrante de otro proyecto se acepta.
+// HU-16 · CA-16.4 · Verifica que se acepte el nombre de un integrante de otro proyecto.
 func TestUpdate_AceptaElNombreDeUnIntegranteDeOtroProyecto(t *testing.T) {
 	e := newMemberEnv(t)
 	ana := e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -216,6 +226,7 @@ func TestUpdate_AceptaElNombreDeUnIntegranteDeOtroProyecto(t *testing.T) {
 }
 
 // CA-16.3 · Un ID inexistente, 0 o negativo devuelve ErrMemberNotFound.
+// HU-16 · CA-16.3 · Verifica que modificar un ID inexistente, 0 o negativo devuelva ErrMemberNotFound.
 func TestUpdate_IntegranteInexistenteDevuelveErrMemberNotFound(t *testing.T) {
 	for _, id := range []int{99, 0, -1} {
 		t.Run(fmt.Sprintf("ID %d", id), func(t *testing.T) {
@@ -233,6 +244,7 @@ func TestUpdate_IntegranteInexistenteDevuelveErrMemberNotFound(t *testing.T) {
 }
 
 // CA-16.3 · Sin integrantes registrados, también es ErrMemberNotFound.
+// HU-16 · CA-16.3 · Verifica que, sin integrantes registrados, modificar uno devuelva ErrMemberNotFound.
 func TestUpdate_SinIntegrantesDevuelveErrMemberNotFound(t *testing.T) {
 	e := newMemberEnv(t)
 
@@ -244,6 +256,7 @@ func TestUpdate_SinIntegrantesDevuelveErrMemberNotFound(t *testing.T) {
 }
 
 // RN-16.9 · Se modifica un integrante de un proyecto FINALIZADO.
+// HU-16 · RN-16.9 · Verifica que se pueda modificar un integrante de un proyecto FINALIZADO.
 func TestUpdate_AceptaUnProyectoFinalizado(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -259,6 +272,7 @@ func TestUpdate_AceptaUnProyectoFinalizado(t *testing.T) {
 }
 
 // RN-16.5 · El integrante conserva su ID y su proyecto.
+// HU-16 · CA-16.1 · Verifica que el integrante modificado conserve su ID y su proyecto.
 func TestUpdate_ConservaElIDYElProyecto(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -273,6 +287,7 @@ func TestUpdate_ConservaElIDYElProyecto(t *testing.T) {
 }
 
 // CA-16.5 · Update devuelve una copia.
+// HU-16 · CA-16.5 · Verifica que Update devuelva una copia y que modificarla no altere lo guardado.
 func TestUpdate_DevuelveUnaCopia(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -286,6 +301,7 @@ func TestUpdate_DevuelveUnaCopia(t *testing.T) {
 }
 
 // CA-16.5 · Una falla del repositorio al buscar se devuelve tal cual.
+// HU-16 · CA-16.5 · Verifica que, si el repositorio falla al buscar el integrante, Update devuelva ese error.
 func TestUpdate_ErrorAlBuscarSePropaga(t *testing.T) {
 	e := newMemberEnv(t)
 	saved := e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -300,6 +316,7 @@ func TestUpdate_ErrorAlBuscarSePropaga(t *testing.T) {
 }
 
 // CA-16.5 · Una falla del repositorio al listar se devuelve tal cual.
+// HU-16 · CA-16.5 · Verifica que, si el repositorio falla al leer los integrantes del proyecto, Update devuelva ese error.
 func TestUpdate_ErrorAlLeerLosIntegrantesSePropaga(t *testing.T) {
 	e := newMemberEnv(t)
 	saved := e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -314,6 +331,7 @@ func TestUpdate_ErrorAlLeerLosIntegrantesSePropaga(t *testing.T) {
 }
 
 // CA-16.5 · Una falla del repositorio al actualizar se devuelve tal cual.
+// HU-16 · CA-16.5 · Verifica que, si el repositorio falla al actualizar, Update devuelva ese error.
 func TestUpdate_ErrorAlActualizarSePropaga(t *testing.T) {
 	e := newMemberEnv(t)
 	saved := e.register(t, 1, "Ana", "PRODUCT_BUILDER")
@@ -329,6 +347,7 @@ func TestUpdate_ErrorAlActualizarSePropaga(t *testing.T) {
 
 // CA-16.5 y RN-16.10 · Varias modificaciones simultáneas al mismo nombre no
 // dejan un duplicado. Corre con go test -race en el CI.
+// HU-16 · CA-16.5 · Verifica que varias modificaciones simultáneas al mismo nombre dejen una sola correcta y ningún duplicado.
 func TestUpdate_ModificacionesSimultaneasNoDejanDuplicados(t *testing.T) {
 	e := newMemberEnv(t)
 	const n = 20
@@ -362,6 +381,7 @@ func TestUpdate_ModificacionesSimultaneasNoDejanDuplicados(t *testing.T) {
 
 // RN-16.10 · Una modificación y un registro simultáneos del mismo nombre no
 // dejan un duplicado: los dos usan el mismo mutex.
+// HU-16 · RN-16.10 · Verifica que una modificación y un registro simultáneos del mismo nombre no dejen un duplicado.
 func TestUpdate_ModificacionYRegistroSimultaneosNoDejanDuplicados(t *testing.T) {
 	e := newMemberEnv(t)
 	e.register(t, 1, "Ana", "PRODUCT_BUILDER")

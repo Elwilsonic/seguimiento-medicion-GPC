@@ -57,6 +57,7 @@ func expectItemPoints(t *testing.T, items *backlog.Manager, itemID, want int) {
 }
 
 // CA-25.1 y CA-25.3 · Registrar asigna los puntos al ítem y cierra la sesión.
+// HU-25 · CA-25.1 · Verifica que registrar la estimación de una sesión revelada asigne los puntos al ítem y cierre la sesión.
 func TestEstimate_SesionReveladaAsignaLosPuntosYCierraLaSesion(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 0)
@@ -77,6 +78,7 @@ func TestEstimate_SesionReveladaAsignaLosPuntosYCierraLaSesion(t *testing.T) {
 }
 
 // CA-25.2 · El valor acordado no tiene que coincidir con los votos.
+// HU-25 · CA-25.2 · Verifica que se acepte un valor de la escala aunque ningún integrante lo haya votado.
 func TestEstimate_ValorQueNadieVotoSeAcepta(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 0)
@@ -90,6 +92,7 @@ func TestEstimate_ValorQueNadieVotoSeAcepta(t *testing.T) {
 }
 
 // CA-25.2 · Cada valor de la escala se puede registrar.
+// HU-25 · CA-25.2 · Verifica que cada valor de la escala (1, 2, 3, 5, 8, 13 y 21) se pueda registrar.
 func TestEstimate_AceptaCadaValorDeLaEscala(t *testing.T) {
 	for _, points := range Cards() {
 		t.Run(strconv.Itoa(points), func(t *testing.T) {
@@ -106,6 +109,7 @@ func TestEstimate_AceptaCadaValorDeLaEscala(t *testing.T) {
 }
 
 // CA-25.2 · Una carta fuera de la escala da ErrInvalidCard y no cambia nada.
+// HU-25 · CA-25.2 · Verifica que una carta fuera de la escala devuelva ErrInvalidCard y no cambie la sesión ni el ítem.
 func TestEstimate_CartaFueraDeLaEscalaDevuelveErrInvalidCard(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 0)
@@ -121,6 +125,7 @@ func TestEstimate_CartaFueraDeLaEscalaDevuelveErrInvalidCard(t *testing.T) {
 }
 
 // CA-25.2 · Los puntos se validan antes que la existencia de la sesión.
+// HU-25 · CA-25.2 · Verifica que una carta inválida se informe con ErrInvalidCard antes de buscar una sesión inexistente.
 func TestEstimate_CartaInvalidaSeInformaAntesQueLaSesionInexistente(t *testing.T) {
 	env := newTestEnv(t)
 
@@ -132,6 +137,7 @@ func TestEstimate_CartaInvalidaSeInformaAntesQueLaSesionInexistente(t *testing.T
 }
 
 // CA-25.1 · El valor acordado reemplaza los story points anteriores.
+// HU-25 · CA-25.1 · Verifica que el valor acordado reemplace los Story Points que el ítem ya tenía.
 func TestEstimate_ReemplazaLosStoryPointsAnterioresDelItem(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 3)
@@ -144,6 +150,7 @@ func TestEstimate_ReemplazaLosStoryPointsAnterioresDelItem(t *testing.T) {
 }
 
 // CA-25.4 · Una sesión inexistente da ErrSessionNotFound.
+// HU-25 · CA-25.4 · Verifica que registrar la estimación de una sesión inexistente, 0 o negativa devuelva ErrSessionNotFound.
 func TestEstimate_SesionInexistenteDevuelveErrSessionNotFound(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 0)
@@ -159,6 +166,7 @@ func TestEstimate_SesionInexistenteDevuelveErrSessionNotFound(t *testing.T) {
 }
 
 // CA-25.4 · Una sesión ABIERTA no se puede estimar y el ítem no cambia.
+// HU-25 · CA-25.4 · Verifica que una sesión ABIERTA devuelva ErrSessionNotRevealed y el ítem no cambie.
 func TestEstimate_SesionAbiertaDevuelveErrSessionNotRevealed(t *testing.T) {
 	env, session := openTestSession(t)
 	voteAll(t, env.manager, session.ID, revealedVotes...)
@@ -173,6 +181,7 @@ func TestEstimate_SesionAbiertaDevuelveErrSessionNotRevealed(t *testing.T) {
 }
 
 // CA-25.4 · Una sesión CERRADA no se vuelve a estimar: no es idempotente.
+// HU-25 · CA-25.4 · Verifica que una sesión CERRADA no se vuelva a estimar y devuelva ErrSessionNotRevealed.
 func TestEstimate_SesionCerradaDevuelveErrSessionNotRevealed(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 0)
@@ -191,6 +200,7 @@ func TestEstimate_SesionCerradaDevuelveErrSessionNotRevealed(t *testing.T) {
 
 // CA-25.5 · Un ítem inexistente propaga backlog.ErrItemNotFound y la sesión
 // sigue REVELADA.
+// HU-25 · CA-25.5 · Verifica que, si el ítem de la sesión no existe, se devuelva backlog.ErrItemNotFound y la sesión siga REVELADA.
 func TestEstimate_ItemInexistenteDevuelveErrItemNotFoundYSesionSigueRevelada(t *testing.T) {
 	env := newTestEnv(t)
 	session, err := env.repo.Save(Session{ItemID: 999, Status: StatusRevealed, Round: 1, Votes: revealedVotes})
@@ -208,6 +218,7 @@ func TestEstimate_ItemInexistenteDevuelveErrItemNotFoundYSesionSigueRevelada(t *
 
 // CA-25.5 · Un ítem TERMINADO propaga backlog.ErrItemFinished y la sesión
 // sigue REVELADA. Si el ítem se reabre (HU-08), la sesión se puede cerrar.
+// HU-25 · CA-25.5 · Verifica que, si el ítem está TERMINADO, se devuelva backlog.ErrItemFinished, la sesión siga REVELADA y se cierre al reabrir el ítem.
 func TestEstimate_ItemTerminadoDevuelveErrItemFinishedYSesionSigueRevelada(t *testing.T) {
 	env := newTestEnv(t)
 	item, session := revealTestSession(t, env, 0)
@@ -249,8 +260,9 @@ func revealFailingSession(t *testing.T) (*failingRevealRepository, *Manager, *ba
 	return repo, manager, manager.items, session
 }
 
-// CA-25.4 · Si falla la lectura de la sesión, se propaga el error y el ítem
+// Error · Si falla la lectura de la sesión, se propaga el error y el ítem
 // no cambia.
+// HU-25 · Error · Verifica que, si falla la lectura de la sesión, Estimate devuelva ese error y el ítem no cambie.
 func TestEstimate_ErrorAlLeerPropagaError(t *testing.T) {
 	repo, manager, items, session := revealFailingSession(t)
 	repo.failGet = true
@@ -278,6 +290,7 @@ func (r *failingItemRepository) Update(item backlog.Item) (backlog.Item, error) 
 
 // CA-25.5 · Si falla la asignación en el backlog, se propaga el error y la
 // sesión sigue REVELADA.
+// HU-25 · CA-25.5 · Verifica que, si falla la asignación en el backlog, Estimate devuelva ese error y la sesión siga REVELADA.
 func TestEstimate_ErrorDelBacklogAlAsignarPropagaErrorYSesionSigueRevelada(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	p, err := projects.Create("Proyecto de prueba", "Proyecto para HU-25")
@@ -313,6 +326,7 @@ func TestEstimate_ErrorDelBacklogAlAsignarPropagaErrorYSesionSigueRevelada(t *te
 
 // CA-25.6 · Si falla el guardado de la sesión, el ítem queda estimado y la
 // sesión sigue REVELADA; repetir el registro la cierra (RN-25.7).
+// HU-25 · CA-25.6 · Verifica que, si falla el guardado de la sesión, el ítem quede estimado, la sesión siga REVELADA y repetir el registro la cierre.
 func TestEstimate_ErrorAlGuardarLaSesionDejaElItemEstimadoYLaSesionRevelada(t *testing.T) {
 	repo, manager, items, session := revealFailingSession(t)
 	repo.failUpdate = true
@@ -334,6 +348,7 @@ func TestEstimate_ErrorAlGuardarLaSesionDejaElItemEstimadoYLaSesionRevelada(t *t
 }
 
 // CA-25.3 · Registrar conserva la ronda, el ítem y el orden de los votos.
+// HU-25 · CA-25.3 · Verifica que registrar la estimación conserve la ronda, el ítem y el orden de los votos de la sesión.
 func TestEstimate_ConservaRondaYOrdenDeLosVotos(t *testing.T) {
 	env, session := openTestSession(t)
 	want := []Vote{{Voter: "Carla", Points: 13}, {Voter: "Ana", Points: 2}, {Voter: "Bruno", Points: 21}}
@@ -360,6 +375,7 @@ func TestEstimate_ConservaRondaYOrdenDeLosVotos(t *testing.T) {
 }
 
 // CA-25.7 · Modificar la sesión devuelta no altera la guardada.
+// HU-25 · CA-25.7 · Verifica que modificar los votos de la sesión devuelta no altere la sesión guardada.
 func TestEstimate_DevuelveCopiaDeLosVotos(t *testing.T) {
 	env := newTestEnv(t)
 	_, session := revealTestSession(t, env, 0)
@@ -384,6 +400,7 @@ func TestEstimate_DevuelveCopiaDeLosVotos(t *testing.T) {
 }
 
 // CA-25.3 · Una sesión CERRADA no acepta votos ni se vuelve a revelar.
+// HU-25 · CA-25.3 · Verifica que una sesión CERRADA no acepte votos ni se vuelva a revelar (ErrSessionNotOpen).
 func TestVoteYReveal_SesionCerradaDevuelvenErrSessionNotOpen(t *testing.T) {
 	env := newTestEnv(t)
 	_, session := revealTestSession(t, env, 0)
@@ -402,6 +419,7 @@ func TestVoteYReveal_SesionCerradaDevuelvenErrSessionNotOpen(t *testing.T) {
 
 // CA-25.8 · Dos registros simultáneos sobre la misma sesión: solo uno se
 // aplica y el ítem queda con sus puntos. Se corre con -race.
+// HU-25 · CA-25.8 · Verifica que, de dos registros simultáneos sobre la misma sesión, solo uno se aplique y el ítem quede con sus puntos.
 func TestEstimate_SimultaneosSobreLaMismaSesionSoloUnoSeAplica(t *testing.T) {
 	const attempts = 20
 	for i := 0; i < attempts; i++ {

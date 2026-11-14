@@ -32,6 +32,7 @@ func (f *fakeOpen) open(context.Context, string) (*pgxpool.Pool, error) {
 
 // CA-TEC05.7 · Se acepta una base cuyo nombre termina en _test, tanto en
 // formato URL como key=value.
+// TEC-05 · CA-TEC05.7 · Verifica que se acepte una base de pruebas cuyo nombre termina en _test, en formato URL y key=value.
 func TestCheckDatabaseName_AceptaSufijoTest(t *testing.T) {
 	for _, url := range []string{
 		"postgres://gpc:gpc_dev@localhost:5433/gpc_test?sslmode=disable",
@@ -45,6 +46,7 @@ func TestCheckDatabaseName_AceptaSufijoTest(t *testing.T) {
 
 // CA-TEC05.7 · Una base que no termina en _test (por ejemplo, la de
 // desarrollo) se rechaza.
+// TEC-05 · CA-TEC05.7 · Verifica que se rechace una base cuyo nombre no termina en _test.
 func TestCheckDatabaseName_RechazaBaseSinSufijo(t *testing.T) {
 	err := checkDatabaseName("postgres://gpc:gpc_dev@localhost:5433/gpc?sslmode=disable")
 	if !errors.Is(err, errNotTestDatabase) {
@@ -53,6 +55,7 @@ func TestCheckDatabaseName_RechazaBaseSinSufijo(t *testing.T) {
 }
 
 // CA-TEC05.7 · El sufijo tiene que estar al final del nombre.
+// TEC-05 · CA-TEC05.7 · Verifica que se rechace una base que tiene _test en el nombre pero no al final.
 func TestCheckDatabaseName_RechazaSufijoQueNoEstaAlFinal(t *testing.T) {
 	err := checkDatabaseName("postgres://gpc:gpc_dev@localhost:5433/gpc_test_viejo?sslmode=disable")
 	if !errors.Is(err, errNotTestDatabase) {
@@ -62,6 +65,7 @@ func TestCheckDatabaseName_RechazaSufijoQueNoEstaAlFinal(t *testing.T) {
 
 // CA-TEC05.7 · Una URL sin base (y sin PGDATABASE) se rechaza: PostgreSQL
 // usaría una base con el nombre del usuario.
+// TEC-05 · CA-TEC05.7 · Verifica que se rechace una URL sin nombre de base.
 func TestCheckDatabaseName_RechazaURLSinBase(t *testing.T) {
 	t.Setenv("PGDATABASE", "")
 
@@ -72,6 +76,7 @@ func TestCheckDatabaseName_RechazaURLSinBase(t *testing.T) {
 }
 
 // CA-TEC05.7 · Una URL mal formada se rechaza.
+// TEC-05 · CA-TEC05.7 · Verifica que se rechace una URL mal formada.
 func TestCheckDatabaseName_RechazaURLInvalida(t *testing.T) {
 	err := checkDatabaseName("postgres://gpc:gpc_dev@localhost:puerto/gpc_test")
 	if !errors.Is(err, errInvalidURL) {
@@ -80,6 +85,7 @@ func TestCheckDatabaseName_RechazaURLInvalida(t *testing.T) {
 }
 
 // CA-TEC05.8 · Los errores de checkDatabaseName no muestran la contraseña.
+// TEC-05 · CA-TEC05.8 · Verifica que los errores de checkDatabaseName no muestren la contraseña.
 func TestCheckDatabaseName_ErroresNoMuestranLaContrasena(t *testing.T) {
 	for _, url := range []string{
 		"postgres://gpc:" + testPassword + "@localhost:5433/gpc",
@@ -97,6 +103,7 @@ func TestCheckDatabaseName_ErroresNoMuestranLaContrasena(t *testing.T) {
 
 // CA-TEC05.7 · Sin TEST_DATABASE_URL (como en el CI) se saltea, sin intentar
 // conectarse.
+// TEC-05 · CA-TEC05.7 · Verifica que, sin TEST_DATABASE_URL, las pruebas de integración se salteen sin intentar conectarse.
 func TestDecide_SinURLSaltea(t *testing.T) {
 	open := &fakeOpen{}
 
@@ -111,6 +118,7 @@ func TestDecide_SinURLSaltea(t *testing.T) {
 
 // CA-TEC05.7 · Una base sin _test se rechaza antes de intentar conectarse,
 // así nunca se vacía una base que no es de pruebas.
+// TEC-05 · CA-TEC05.7 · Verifica que una base sin el sufijo _test se rechace antes de intentar conectarse.
 func TestDecide_BaseSinSufijoTestRechazaSinConectarse(t *testing.T) {
 	open := &fakeOpen{}
 
@@ -124,6 +132,7 @@ func TestDecide_BaseSinSufijoTestRechazaSinConectarse(t *testing.T) {
 }
 
 // CA-TEC05.7 · Una URL mal formada se rechaza antes de intentar conectarse.
+// TEC-05 · CA-TEC05.7 · Verifica que una URL mal formada se rechace antes de intentar conectarse.
 func TestDecide_URLInvalidaRechazaSinConectarse(t *testing.T) {
 	open := &fakeOpen{}
 
@@ -137,6 +146,7 @@ func TestDecide_URLInvalidaRechazaSinConectarse(t *testing.T) {
 }
 
 // CA-TEC05.7 · Si la base de pruebas no responde, se saltea.
+// TEC-05 · CA-TEC05.7 · Verifica que, si la base de pruebas no responde, las pruebas de integración se salteen.
 func TestDecide_BaseNoDisponibleSaltea(t *testing.T) {
 	open := &fakeOpen{err: errors.New("la base no responde")}
 
@@ -150,6 +160,7 @@ func TestDecide_BaseNoDisponibleSaltea(t *testing.T) {
 }
 
 // CA-TEC05.7 · Con una base de pruebas disponible, se usa el pool abierto.
+// TEC-05 · CA-TEC05.7 · Verifica que, con una base de pruebas disponible, se use el pool abierto.
 func TestDecide_BaseDisponibleDevuelveElPool(t *testing.T) {
 	pool := &pgxpool.Pool{}
 	open := &fakeOpen{pool: pool}
@@ -165,6 +176,7 @@ func TestDecide_BaseDisponibleDevuelveElPool(t *testing.T) {
 
 // CA-TEC05.8 · Los motivos de saltear o rechazar no muestran la contraseña.
 // La base que no responde usa la conexión real (127.0.0.1:1 la rechaza).
+// TEC-05 · CA-TEC05.8 · Verifica que los motivos para saltear o rechazar no muestren la contraseña.
 func TestDecide_MotivosNoMuestranLaContrasena(t *testing.T) {
 	cases := map[string]string{
 		"base sin _test":       "postgres://gpc:" + testPassword + "@localhost:5433/gpc",
