@@ -177,7 +177,15 @@ Cómo se armaron:
 `internal/trazabilidad/enlaces_test.go` verifica que:
 
 - cada test nombrado en una tabla de trazabilidad tenga su link (`TestEnlaces_CadaTestDeLasTablasTieneSuLink`);
-- cada link abra un archivo que existe y, si lleva línea, que esa línea declare lo que el link nombra (`TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra`). Si alguien mueve un test o una función, el error dice en qué línea está ahora, para corregir el link.
+- cada link abra un archivo que existe y, si lleva línea, que esa línea declare lo que el link nombra (`TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra`). Un campo de un struct no cuenta como declaración.
+
+**Cuando un cambio mueve líneas** (por ejemplo, HU-51 en los tests de proyectos), el error dice en qué línea está ahora el test y qué comando corregirlo:
+
+```
+go test ./internal/trazabilidad/ -run TestEnlaces -args -update
+```
+
+Ese comando corrige el número de línea de cada link corrido y agrega el link a los tests nuevos de nombre único; los links que siguen bien no se tocan. Si un nombre se repite en varios paquetes, el link se agrega a mano. `TestEnlaces_ActualizarCorrigeLineasYAgregaLinks` lo verifica. Se probó moviendo dos líneas en `internal/project/get_test.go` y `get.go`: el test marcó 12 links corridos, `-update` corrigió solo los de HU-03 y el test volvió a pasar (la observación de García Santiago en la revisión del #194).
 
 ### RED
 

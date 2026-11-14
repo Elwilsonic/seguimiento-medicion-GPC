@@ -108,6 +108,8 @@ Al escribir la trazabilidad en la evidencia, contá los escenarios BDD y los tes
 
 La tabla de commits de la evidencia incluye los commits de RED, GREEN y refactor. Se escribe primero con "(propuesto)" en cada fila; apenas yo autorice y ejecutes cada commit, volvé a este archivo y reemplazá "(propuesto)" por el hash real de ese commit. No lo dejes pendiente para después. El commit de cierre (el que lleva `Closes #N`) no se lista en la tabla, porque un commit no puede contener su propio hash; queda registrado en el Pull Request y en el Issue.
 
+En la tabla de trazabilidad de la evidencia, cada test y cada función llevan su link con la línea (TEC-11, CA-TEC11.7), y el test `internal/trazabilidad` lo verifica. Si un cambio mueve líneas de tests o funciones que ya están enlazados en otras evidencias, o si la evidencia nueva nombra tests sin link, corré `go test ./internal/trazabilidad/ -run TestEnlaces -args -update`: corrige las líneas corridas y agrega el link a los tests de nombre único. Revisá el diff de `docs/evidencias/` y commitealo junto con el cambio.
+
 Guardá (o actualizá) el resultado de cobertura general en: `docs/reportes/cobertura.md`
 
 Proponé el commit de la evidencia y la cobertura, ejecutalo solo si lo autorizo:

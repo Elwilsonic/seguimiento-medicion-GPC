@@ -58,15 +58,14 @@ var (
 )
 
 // declares dice si la línea declara el nombre: una función o un método de Go,
-// un tipo, una variable o una constante (también dentro de un bloque), o una
-// función de JavaScript.
+// un tipo, una variable o una constante (también dentro de un bloque, con su
+// "="), o una función de JavaScript. Un campo de un struct no cuenta.
 func declares(line, name string) bool {
 	n := regexp.QuoteMeta(name)
 	return regexp.MustCompile(
 		`^func (\([^)]*\) )?` + n + `[\[(]` +
 			`|^(type|var|const) ` + n + `\b` +
-			`|^\t` + n + `\b.*=` +
-			`|^\t` + n + ` [A-Za-z*\[]` +
+			`|^\t` + n + `\b[^:]*=` +
 			`|^(async )?function ` + n + `\(`).MatchString(line)
 }
 
@@ -75,7 +74,7 @@ func TestEnlaces_CadaTestDeLasTablasTieneSuLink(t *testing.T) {
 	root, _ := repoTests(t)
 	for _, row := range traceabilityRows(t, root) {
 		for _, m := range bareTestPattern.FindAllStringSubmatch(row.text, -1) {
-			t.Errorf("%s: %s no tiene link a su test", row.pos, m[2])
+			t.Errorf("%s: %s no tiene link a su test (%s; si el nombre se repite en varios paquetes, el link se agrega a mano)", row.pos, m[2], updateHint)
 		}
 	}
 }
@@ -100,11 +99,7 @@ func TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra(t *testing.T) {
 			}
 			n, _ := strconv.Atoi(lineStr)
 			lines := strings.Split(string(b), "\n")
-			// "Manager.Project" o "Project()" nombran a Project.
-			name := strings.TrimSuffix(text, "()")
-			if i := strings.LastIndex(name, "."); i >= 0 {
-				name = name[i+1:]
-			}
+			name := declaredName(text)
 			if n < 1 || n > len(lines) || !declares(lines[n-1], name) {
 				where := "no se encontró en el archivo"
 				for i, l := range lines {
@@ -113,7 +108,7 @@ func TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra(t *testing.T) {
 						break
 					}
 				}
-				t.Errorf("%s: el link de %s apunta a %s#L%d, pero ahí no se declara %s (%s)", row.pos, text, target, n, name, where)
+				t.Errorf("%s: el link de %s apunta a %s#L%d, pero ahí no se declara %s (%s; %s)", row.pos, text, target, n, name, where, updateHint)
 			}
 		}
 	}
@@ -138,6 +133,7 @@ func TestEnlaces_ReconoceLasDeclaraciones(t *testing.T) {
 		{"function filaHistoriaReporte(h) {", "filaHistoriaReporte", true},
 		{"async function cargarProyecto() {", "cargarProyecto", true},
 		{"\tp, err := manager.Project(1)", "Project", false},
+		{"\tProject project.Project", "Project", false},
 		{"func TestGet_ProyectoQueNoEsElPrimeroBis(t *testing.T) {", "TestGet_ProyectoQueNoEsElPrimero", false},
 	}
 	for _, c := range cases {
