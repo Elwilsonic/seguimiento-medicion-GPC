@@ -70,6 +70,7 @@ Escribí los tests unitarios en Go (paquete "testing" estándar, sin librerías 
 
 - Cubrir cada escenario BDD del paso 3.
 - Usar nombres descriptivos: `TestNombreFuncion_CasoQueSePrueba`
+- Llevar arriba una línea con su historia, lo que prueba y qué verifica (TEC-11): `// HU-XX · CA-XX.N · Verifica que …`. Si no prueba un criterio, `RN-XX.N` (una regla de negocio) o `Error` (una condición de error sin número), en ese orden; el runner de godog lleva `BDD`, y los tests de una tarea técnica, `// TEC-XX · CA-TECXX.N · Verifica que …`. El test de control `internal/trazabilidad` lo verifica en `go test ./...` y en la CI (formatos y reglas en `docs/evidencias/TEC-11-tests-por-historia.md`).
 
 Después de escribirlos, corré `go test ./...` y mostrame la salida. Confirmá que los tests FALLAN (fase RED) porque el código todavía no existe. Verificá que el fallo corresponda específicamente a la funcionalidad nueva (por ejemplo, "función no declarada" o la aserción del test) y no a errores preexistentes del repositorio no relacionados con esta historia. Si el fallo es por otra causa, avisame antes de continuar.
 
@@ -139,7 +140,7 @@ Desde TEC-10 (Issue #177), cada historia o tarea nueva se especifica con OpenSpe
   - `tasks.md`: los pasos.
 
   Cada requisito cita su historia y su criterio (HU-XX, CA-XX.N). Se compara con el acta de Planning como en el paso 2, y **se frena hasta la aprobación explícita del Agile Enabler**.
-- **Pasos 3 a 7:** iguales: escenarios BDD con godog en `features/HU-XX-*.feature`, RED, GREEN, refactor y evidencia. `/opsx:apply` sigue `tasks.md`, y los commits siguen necesitando autorización. Cada test lleva un comentario con su historia, su criterio y qué verifica.
+- **Pasos 3 a 7:** iguales: escenarios BDD con godog en `features/HU-XX-*.feature`, RED, GREEN, refactor y evidencia. `/opsx:apply` sigue `tasks.md`, y los commits siguen necesitando autorización. Cada test lleva un comentario con su historia, su criterio y qué verifica (paso 4); para un cambio con OpenSpec, el test de control busca el criterio en la especificación de `openspec/`.
   - La evidencia TDD incluye la tabla criterio → test → código, que dice qué función y qué archivo implementan cada criterio. Así se llega desde la historia hasta el código sin buscar a mano.
 - **Paso 8:** igual. Además, con el Pull Request integrado en `main`, `/opsx:archive` archiva el cambio y suma sus requisitos a `openspec/specs/`. Eso va en un commit propio (`docs(HU-XX): archivar el cambio en OpenSpec`), con autorización.
 - **Trazabilidad en el Issue:** al archivar, OpenSpec mueve la carpeta del cambio a `openspec/changes/archive/AAAA-MM-DD-nombre-del-cambio/`, así que los links se escriben en dos momentos:

@@ -416,6 +416,7 @@ Desde este sprint, los cambios se especifican con OpenSpec (TEC-10): la columna 
 | ID | Issue | Historia o tarea | SDD | BDD | Evidencia TDD | Pull Request |
 |---|---|---|---|---|---|---|
 | HU-50 | [#183](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/183) | Listar los proyectos | [Propuesta (OpenSpec)](openspec/changes/hu-50-listar-proyectos/proposal.md) | [BDD](features/HU-50-listar-proyectos.feature) | [Evidencia](docs/evidencias/HU-50-tdd.md) | [#188](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/188) |
+| TEC-11 | [#179](https://github.com/Elwilsonic/seguimiento-medicion-GPC/issues/179) | Comentar cada test con su historia, su criterio y qué verifica | — | — | [Evidencia](docs/evidencias/TEC-11.md) · [Mapa](docs/evidencias/TEC-11-tests-por-historia.md) | [#184](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/184), [#185](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/185), [#186](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/186), [#187](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/187), [#190](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/190) y [#191](https://github.com/Elwilsonic/seguimiento-medicion-GPC/pull/191) |
 
 ## Estructura del repositorio
 
@@ -426,7 +427,7 @@ Las carpetas se van creando a medida que aparece su contenido.
 | `AGENTS.md` | Instrucciones del flujo de trabajo (SDD → BDD → TDD) |
 | `.github/` | Workflows de CI y de despliegue en Azure (TEC-09), plantillas de Issue (historia, tarea técnica, ceremonia y defecto) y plantilla de Pull Request |
 | `cmd/` | Punto de entrada ejecutable de la aplicación |
-| `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests; `internal/httpapi` expone la API, `internal/web` tiene la interfaz web (TEC-04), `internal/postgres` abre la conexión a PostgreSQL e `internal/postgrestest` prepara la base de las pruebas de integración |
+| `internal/` | Código fuente en Go (un paquete por funcionalidad) y sus tests; `internal/httpapi` expone la API, `internal/web` tiene la interfaz web (TEC-04), `internal/postgres` abre la conexión a PostgreSQL, `internal/postgrestest` prepara la base de las pruebas de integración e `internal/trazabilidad` tiene el test de control que exige que cada test diga su historia y qué verifica (TEC-11) |
 | `docker-compose.yml` | Base de datos PostgreSQL en Docker (TEC-05) |
 | `Dockerfile` y `.dockerignore` | Imagen del servidor para el despliegue en Azure (TEC-09) |
 | `openspec/` | Especificaciones con OpenSpec (TEC-10): `config.yaml` (contexto y reglas), `specs/` (cómo funciona hoy cada área) y `changes/` (cambios en curso y archivados) |

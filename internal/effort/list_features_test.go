@@ -17,6 +17,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-27 · BDD · Verifica que se cumplan los escenarios de features/HU-27-consultar-esfuerzos.feature.
 // Ejecuta los escenarios BDD de features/HU-27-consultar-esfuerzos.feature
 // con godog. Los pasos viven en el paquete effort porque la historia es de E7.
 func TestFeatures_HU27ConsultarEsfuerzos(t *testing.T) {

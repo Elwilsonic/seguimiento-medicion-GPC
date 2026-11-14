@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-10 · BDD · Verifica que se cumplan los escenarios de features/HU-10-crear-sprint.feature.
 // Ejecuta los escenarios BDD de features/HU-10-crear-sprint.feature con godog.
 func TestFeatures_HU10CrearSprint(t *testing.T) {
 	suite := godog.TestSuite{

@@ -41,13 +41,18 @@ Reglas:
 
 ## El test de control (PR de cierre)
 
+> Ya está implementado en `internal/trazabilidad/comentarios_test.go`; la evidencia es [`TEC-11.md`](TEC-11.md). Durante el trabajo se acordaron dos cambios a lo que dice esta sección: la etiqueta `BDD` para los runners de godog y que la especificación de una historia nueva puede estar en `openspec/` (ver abajo).
+
 Cuando estén integrados los cinco Pull Request, el de cierre (`Closes #179`) agrega un test que corre con `go test ./...` y en la CI, y falla si:
 
-- un test no tiene arriba la línea `HU-XX · CA-XX.N · …`, `HU-XX · RN-XX.N · …`, `HU-XX · Error · …` o `TEC-XX · CA-TECXX.N · …`;
-- la `HU-XX` no tiene su SDD en `docs/especificaciones/HU-XX-*.md`;
+- un test no tiene arriba la línea `HU-XX · CA-XX.N · …`, `HU-XX · RN-XX.N · …`, `HU-XX · Error · …`, `HU-XX · BDD · …` o `TEC-XX · CA-TECXX.N · …`;
+- la `HU-XX` no tiene su SDD en `docs/especificaciones/HU-XX-*.md` ni, si se especificó con OpenSpec (TEC-10), una especificación en `openspec/` que la nombre;
+- un test con `BDD` es de una historia sin `features/HU-XX-*.feature`;
 - el `CA-XX.N` o la `RN-XX.N` no aparece en esa SDD (por ejemplo, porque se escribió mal o no existe);
 - el número del criterio o la regla no es de esa historia (por ejemplo, `HU-03 · CA-05.1`);
 - la `TEC-XX` no tiene su evidencia en `docs/evidencias/TEC-XX-*.md`, o el `CA-TECXX.N` no aparece en ella.
+
+Los runners de godog (`TestFeatures_*`) no prueban un criterio sino todos los escenarios del `.feature` de su historia, así que llevan `// HU-XX · BDD · Verifica que se cumplan los escenarios de features/HU-XX-….feature.` Los 43 que no la tenían se comentaron en el Pull Request de cierre.
 
 En los tests con `Error` el control solo puede verificar que la historia tenga su SDD, porque la condición no tiene número. Esos tests se revisan en el Pull Request de cada uno.
 

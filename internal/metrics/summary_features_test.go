@@ -19,6 +19,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-35 · BDD · Verifica que se cumplan los escenarios de features/HU-35-consulta-metricas.feature.
 // Ejecuta los escenarios BDD de features/HU-35-consulta-metricas.feature con
 // godog.
 func TestFeatures_HU35ConsultarMetricas(t *testing.T) {

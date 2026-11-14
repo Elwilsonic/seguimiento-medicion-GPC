@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-21 · BDD · Verifica que se cumplan los escenarios de features/HU-21-abrir-sesion-planning-poker.feature.
 // Ejecuta los escenarios BDD de features/HU-21-abrir-sesion-planning-poker.feature
 // con godog.
 func TestFeatures_HU21AbrirSesionPlanningPoker(t *testing.T) {

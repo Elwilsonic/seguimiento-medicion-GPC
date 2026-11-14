@@ -15,6 +15,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-24 · BDD · Verifica que se cumplan los escenarios de features/HU-24-repetir-ronda.feature.
 // HU-24 · Detectar diferencias y repetir ronda (Issue #42). Los pasos llaman
 // al Manager y a CompareVotes, no al handler HTTP; la API se prueba en
 // internal/httpapi.

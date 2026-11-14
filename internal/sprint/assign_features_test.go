@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-11 · BDD · Verifica que se cumplan los escenarios de features/HU-11-asignar-item-sprint.feature.
 // Ejecuta los escenarios BDD de features/HU-11-asignar-item-sprint.feature
 // con godog. Los pasos viven en el paquete sprint porque la historia es de E3
 // y orquesta los paquetes sprint y backlog (ver SDD).

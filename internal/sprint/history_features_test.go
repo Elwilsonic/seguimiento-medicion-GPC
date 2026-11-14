@@ -14,6 +14,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-14 · BDD · Verifica que se cumplan los escenarios de features/HU-14-sprints-anteriores.feature.
 // Ejecuta los escenarios BDD de features/HU-14-sprints-anteriores.feature con
 // godog. Los pasos viven en el paquete sprint porque History es una operación
 // del Manager de sprints (ver SDD).

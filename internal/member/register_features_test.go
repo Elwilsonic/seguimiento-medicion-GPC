@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-15 · BDD · Verifica que se cumplan los escenarios de features/HU-15-registrar-integrante.feature.
 // Ejecuta los escenarios BDD de features/HU-15-registrar-integrante.feature
 // con godog.
 func TestFeatures_HU15RegistrarIntegrante(t *testing.T) {

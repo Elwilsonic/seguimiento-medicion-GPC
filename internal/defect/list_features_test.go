@@ -18,6 +18,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-31 · BDD · Verifica que se cumplan los escenarios de features/HU-31-consultar-defectos.feature.
 // Ejecuta los escenarios BDD de features/HU-31-consultar-defectos.feature con
 // godog. Los defectos de partida se guardan con Save del repositorio en
 // memoria, porque registrarlos es HU-29 y cambiar su estado es HU-30.

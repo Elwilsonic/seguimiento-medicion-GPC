@@ -16,6 +16,7 @@ import (
 	"seguimiento-medicion-gpc/internal/sprint"
 )
 
+// HU-32 · BDD · Verifica que se cumplan los escenarios de features/HU-32-sp-velocidad.feature.
 // Ejecuta los escenarios BDD de features/HU-32-sp-velocidad.feature con
 // godog.
 func TestFeatures_HU32CalcularStoryPoints(t *testing.T) {

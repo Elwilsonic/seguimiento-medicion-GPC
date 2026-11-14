@@ -15,6 +15,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-20 · BDD · Verifica que se cumplan los escenarios de features/HU-20-asignar-story-points.feature.
 // Ejecuta los escenarios BDD de features/HU-20-asignar-story-points.feature con godog.
 func TestFeatures_HU20AsignarStoryPoints(t *testing.T) {
 	suite := godog.TestSuite{

@@ -12,6 +12,7 @@ import (
 	"seguimiento-medicion-gpc/internal/project"
 )
 
+// HU-01 · BDD · Verifica que se cumplan los escenarios de features/HU-01-crear-proyecto.feature.
 // Ejecuta los escenarios BDD de features/HU-01-crear-proyecto.feature con godog.
 func TestFeatures_HU01CrearProyecto(t *testing.T) {
 	suite := godog.TestSuite{
