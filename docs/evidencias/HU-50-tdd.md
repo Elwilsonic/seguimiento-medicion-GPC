@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #183 · Vinculada a HU-03 (#16) · Primer cambio especificado con OpenSpec (TEC-10, #177)
 
-- **Especificación (OpenSpec):** [`openspec/changes/hu-50-listar-proyectos/`](../../openspec/changes/hu-50-listar-proyectos/): [propuesta](../../openspec/changes/hu-50-listar-proyectos/proposal.md), [spec de `proyectos`](../../openspec/changes/hu-50-listar-proyectos/specs/proyectos/spec.md), [diseño](../../openspec/changes/hu-50-listar-proyectos/design.md) y [tareas](../../openspec/changes/hu-50-listar-proyectos/tasks.md). Al archivarse pasa a `openspec/changes/archive/` y sus requisitos, a `openspec/specs/proyectos/spec.md`.
+- **Especificación (OpenSpec):** la spec de la capability `proyectos`, [`openspec/specs/proyectos/spec.md`](../../openspec/specs/proyectos/spec.md), con los 7 requisitos de HU-50. El cambio está archivado en [`openspec/changes/archive/2026-11-12-hu-50-listar-proyectos/`](../../openspec/changes/archive/2026-11-12-hu-50-listar-proyectos/): [propuesta](../../openspec/changes/archive/2026-11-12-hu-50-listar-proyectos/proposal.md), [spec delta](../../openspec/changes/archive/2026-11-12-hu-50-listar-proyectos/specs/proyectos/spec.md), [diseño](../../openspec/changes/archive/2026-11-12-hu-50-listar-proyectos/design.md) y [tareas](../../openspec/changes/archive/2026-11-12-hu-50-listar-proyectos/tasks.md). Se archivó con `/opsx:archive` el 12/11/2026, con el PR #188 integrado en `main`.
 - **Aprobación:** Peñalbé Hernán (Agile Enabler) aprobó la propuesta el 08/11/2026. Antes pidió tres cosas, y se cumplieron:
   - que el orden por nombre lo aplique el `Manager` en Go, y no un `ORDER BY` en SQL (D2 y CA-50.6);
   - que la limitación de los acentos y la ñ quede escrita (riesgos del `design.md` y README);
