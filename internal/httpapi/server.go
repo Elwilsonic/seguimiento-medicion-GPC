@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"uuid"
 
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/dashboard"
@@ -30,8 +31,11 @@ var (
 	errInvalidJSON  = errors.New("el cuerpo del pedido no es un JSON válido")
 	errBodyTooLarge = errors.New("el cuerpo del pedido supera el tamaño máximo de 1 MiB")
 	errInvalidID    = errors.New("el id debe ser un número entero")
-	errInvalidDate  = errors.New("las fechas deben tener el formato AAAA-MM-DD")
-	errInternal     = errors.New("error interno del servidor")
+	// errInvalidProjectID: el {id} de una ruta de proyecto no es un UUID en
+	// forma canónica (HU-51, D2).
+	errInvalidProjectID = errors.New("el id del proyecto debe ser un UUID")
+	errInvalidDate      = errors.New("las fechas deben tener el formato AAAA-MM-DD")
+	errInternal         = errors.New("error interno del servidor")
 )
 
 type errorResponse struct {
@@ -148,6 +152,13 @@ func bodyError(err error) error {
 // pathID lee el {id} de la ruta.
 func pathID(r *http.Request) (int, error) {
 	return pathInt(r, "id")
+}
+
+// parseProjectID lee el {id} de una ruta de proyecto como UUID en forma
+// canónica (HU-51, D2).
+// HU-51 (RED): stub sin lógica.
+func parseProjectID(s string) (uuid.UUID, error) {
+	return uuid.UUID{}, nil
 }
 
 // pathInt lee el parámetro name de la ruta como número entero.

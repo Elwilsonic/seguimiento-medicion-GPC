@@ -68,7 +68,8 @@ func expectUnchanged(t *testing.T, manager *project.Manager, before project.Proj
 // CA-41.1
 func TestSetEndDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	manager, _ := newManager()
-	if _, err := manager.Create("Sistema de ventas", "Gestión de ventas"); err != nil {
+	created, err := manager.Create("Sistema de ventas", "Gestión de ventas")
+	if err != nil {
 		t.Fatalf("Create() devolvió un error inesperado: %v", err)
 	}
 	if _, err := manager.Update(1, "Sistema de ventas", "Gestión de ventas", "EN_CURSO"); err != nil {
@@ -83,7 +84,9 @@ func TestSetEndDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SetEndDate() devolvió un error inesperado: %v", err)
 	}
-	want := project.Project{ID: 1, Name: "Sistema de ventas", Description: "Gestión de ventas", Status: project.StatusInProgress, StartDate: start, EndDate: end}
+	// HU-51: el PublicID lo asigna Create al azar; se compara con el del
+	// proyecto creado, así que también se verifica que se conserva.
+	want := project.Project{ID: 1, PublicID: created.PublicID, Name: "Sistema de ventas", Description: "Gestión de ventas", Status: project.StatusInProgress, StartDate: start, EndDate: end}
 	if p != want {
 		t.Errorf("proyecto devuelto = %+v, se esperaba %+v", p, want)
 	}

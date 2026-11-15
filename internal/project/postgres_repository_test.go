@@ -189,3 +189,38 @@ func TestPostgresRepository_FechaDeFinEnUTC(t *testing.T) {
 		}
 	}
 }
+
+// HU-51 · Identificadores UUID, parte de proyectos (Issue #193). Estos tests
+// necesitan TEST_DATABASE_URL y la base con la columna public_id; sin la
+// variable se omiten.
+
+// HU-51 · CA-51.5 · Verifica que el repositorio PostgreSQL guarde y busque los proyectos por su identificador público, con el mismo contrato que el de memoria.
+func TestPostgresRepository_ContratoUUID(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	runRepositoryPublicIDContract(t, func(t *testing.T) Repository {
+		return newPostgresTestRepository(t, pool)
+	})
+}
+
+// HU-51 · CA-51.5 · Verifica que PostgreSQL rechace guardar un proyecto con un identificador público que ya usa otro, sin crear el proyecto.
+func TestPostgresRepository_RechazaUUIDRepetido(t *testing.T) {
+	pool := postgrestest.Pool(t)
+	repo := newPostgresTestRepository(t, pool)
+	contractSave(t, repo, Project{PublicID: contractPublicID1, Name: "Alfa", Status: StatusPlanned})
+
+	_, err := repo.Save(Project{PublicID: contractPublicID1, Name: "Beta", Status: StatusPlanned})
+
+	if err == nil {
+		t.Error("Save con un PublicID repetido no devolvió error")
+	}
+	if errors.Is(err, ErrProjectNotFound) {
+		t.Errorf("err = %v, no se esperaba ErrProjectNotFound", err)
+	}
+	projects, err := repo.List()
+	if err != nil {
+		t.Fatalf("List devolvió un error inesperado: %v", err)
+	}
+	if len(projects) != 1 {
+		t.Errorf("hay %d proyectos guardados, se esperaba 1", len(projects))
+	}
+}

@@ -31,7 +31,7 @@ func newHandlerWithStartDate(t *testing.T) http.Handler {
 	t.Helper()
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23")), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-10-23")), http.StatusOK)
 	return h
 }
 
@@ -61,30 +61,30 @@ func expectHasFechaFin(t *testing.T, op string, body map[string]any, want string
 // CA-41.1 y CA-41.13
 func TestRegistrarFechaFinProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandlerWithStartDate(t)
-	do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}`)
+	do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}`)
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18"))
+	rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18"))
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
 	decode(t, rec, &p)
-	want := projectJSON{ID: 1, Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "EN_CURSO", FechaInicio: "2026-10-23", FechaFin: "2026-12-18"}
+	want := projectJSON{ID: ref(t, h, 1), Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "EN_CURSO", FechaInicio: "2026-10-23", FechaFin: "2026-12-18"}
 	if p != want {
 		t.Errorf("proyecto = %+v, se esperaba %+v", p, want)
 	}
-	expectProjectEndDate(t, h, "1", "2026-12-18")
+	expectProjectEndDate(t, h, projectID(t, h, 1), "2026-12-18")
 }
 
 // HU-41 · CA-41.7 · Verifica que volver a registrar la fecha de fin por la API reemplace la anterior.
 // CA-41.7
 func TestRegistrarFechaFinProyecto_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	h := newHandlerWithStartDate(t)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2027-01-29"))
+	rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2027-01-29"))
 
 	expectStatus(t, rec, http.StatusOK)
-	expectProjectEndDate(t, h, "1", "2027-01-29")
+	expectProjectEndDate(t, h, projectID(t, h, 1), "2027-01-29")
 }
 
 // HU-41 · CA-41.4 · Verifica que una fecha de fin vacía, null o ausente dé 400.
@@ -99,10 +99,10 @@ func TestRegistrarFechaFinProyecto_FechaAusenteDevuelve400(t *testing.T) {
 		t.Run(caseName, func(t *testing.T) {
 			h := newHandlerWithStartDate(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", body)
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", body)
 
 			expectError(t, rec, http.StatusBadRequest, project.ErrMissingEndDate.Error())
-			expectProjectEndDate(t, h, "1", "")
+			expectProjectEndDate(t, h, projectID(t, h, 1), "")
 		})
 	}
 }
@@ -114,10 +114,10 @@ func TestRegistrarFechaFinProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T
 		t.Run(date, func(t *testing.T) {
 			h := newHandlerWithStartDate(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin(date))
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin(date))
 
 			expectError(t, rec, http.StatusBadRequest, "las fechas deben tener el formato AAAA-MM-DD")
-			expectProjectEndDate(t, h, "1", "")
+			expectProjectEndDate(t, h, projectID(t, h, 1), "")
 		})
 	}
 }
@@ -130,17 +130,19 @@ func TestRegistrarFechaFinProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 		t.Run(body, func(t *testing.T) {
 			h := newHandlerWithStartDate(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", body)
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", body)
 
 			expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 		})
 	}
 }
 
-// HU-41 · CA-41.5 · Verifica que registrar la fecha de fin de un proyecto inexistente dé 404.
+// HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
+// esa forma y responden 400 (projects_uuid_test.go).
+// HU-41 · CA-41.5 · Verifica que registrar la fecha de fin de un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) dé 404.
 // CA-41.5
 func TestRegistrarFechaFinProyecto_InexistenteDevuelve404(t *testing.T) {
-	for _, id := range []string{"999", "0", "-1"} {
+	for _, id := range []string{missingProjectID, nilProjectID} {
 		t.Run(id, func(t *testing.T) {
 			rec := do(t, newHandlerWithStartDate(t), http.MethodPatch, "/api/proyectos/"+id+"/fecha-fin", fechaFin("2026-12-18"))
 
@@ -152,7 +154,7 @@ func TestRegistrarFechaFinProyecto_InexistenteDevuelve404(t *testing.T) {
 // HU-41 · CA-41.4 · Verifica que la fecha vacía se valide antes que la existencia del proyecto y dé 400.
 // CA-41.4 (orden de validación): la fecha se valida antes que el proyecto.
 func TestRegistrarFechaFinProyecto_FechaVaciaEnProyectoInexistenteDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-fin", fechaFin(""))
+	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/"+missingProjectID+"/fecha-fin", fechaFin(""))
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrMissingEndDate.Error())
 }
@@ -163,10 +165,10 @@ func TestRegistrarFechaFinProyecto_SinFechaDeInicioDevuelve409(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18"))
+	rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18"))
 
 	expectError(t, rec, http.StatusConflict, project.ErrStartDateNotRegistered.Error())
-	expectProjectEndDate(t, h, "1", "")
+	expectProjectEndDate(t, h, projectID(t, h, 1), "")
 }
 
 // HU-41 · CA-41.2 · Verifica que una fecha de fin el mismo día o anterior al inicio dé 409.
@@ -176,10 +178,10 @@ func TestRegistrarFechaFinProyecto_FechaNoPosteriorAlInicioDevuelve409(t *testin
 		t.Run(date, func(t *testing.T) {
 			h := newHandlerWithStartDate(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin(date))
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin(date))
 
 			expectError(t, rec, http.StatusConflict, project.ErrEndNotAfterStart.Error())
-			expectProjectEndDate(t, h, "1", "")
+			expectProjectEndDate(t, h, projectID(t, h, 1), "")
 		})
 	}
 }
@@ -195,7 +197,9 @@ func TestRegistrarFechaFinProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18"))
+	// HU-51: el repositorio roto no tiene proyectos; cualquier UUID con la
+	// forma correcta llega al repositorio, que falla.
+	rec := do(t, h, http.MethodPatch, "/api/proyectos/"+missingProjectID+"/fecha-fin", fechaFin("2026-12-18"))
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
@@ -207,20 +211,20 @@ func TestRegistrarFechaInicioProyecto_ConFechaDeFinValidaElOrden(t *testing.T) {
 	for _, date := range []string{"2026-12-18", "2026-12-19"} {
 		t.Run(date, func(t *testing.T) {
 			h := newHandlerWithStartDate(t)
-			expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio(date))
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio(date))
 
 			expectError(t, rec, http.StatusConflict, project.ErrStartNotBeforeEnd.Error())
-			expectProjectStartDate(t, h, "1", "2026-10-23")
+			expectProjectStartDate(t, h, projectID(t, h, 1), "2026-10-23")
 		})
 	}
 
 	t.Run("anterior", func(t *testing.T) {
 		h := newHandlerWithStartDate(t)
-		expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
 
-		rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-12-17"))
+		rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-12-17"))
 
 		expectStatus(t, rec, http.StatusOK)
 		var p projectJSON
@@ -243,27 +247,27 @@ func TestProyecto_RespuestasIncluyenLaFechaDeFin(t *testing.T) {
 	decode(t, rec, &body)
 	expectHasFechaFin(t, "POST", body, "")
 
-	rec = do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+	rec = do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-10-23"))
 	expectStatus(t, rec, http.StatusOK)
 	body = nil
 	decode(t, rec, &body)
 	expectHasFechaFin(t, "PATCH fecha-inicio sin fecha de fin", body, "")
 
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
 
-	rec = do(t, h, http.MethodGet, "/api/proyectos/1", "")
+	rec = do(t, h, http.MethodGet, projectPath(t, h, 1), "")
 	expectStatus(t, rec, http.StatusOK)
 	body = nil
 	decode(t, rec, &body)
 	expectHasFechaFin(t, "GET", body, "2026-12-18")
 
-	rec = do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO"}`)
+	rec = do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO"}`)
 	expectStatus(t, rec, http.StatusOK)
 	body = nil
 	decode(t, rec, &body)
 	expectHasFechaFin(t, "PUT", body, "2026-12-18")
 
-	rec = do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-11-02"))
+	rec = do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-11-02"))
 	expectStatus(t, rec, http.StatusOK)
 	body = nil
 	decode(t, rec, &body)
@@ -275,12 +279,12 @@ func TestProyecto_RespuestasIncluyenLaFechaDeFin(t *testing.T) {
 // se ignora y la registrada se conserva.
 func TestModificarProyecto_ConservaLaFechaDeFin(t *testing.T) {
 	h := newHandlerWithStartDate(t)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
 
-	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO","fecha_fin":"2030-01-01"}`)
+	rec := do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO","fecha_fin":"2030-01-01"}`)
 
 	expectStatus(t, rec, http.StatusOK)
-	expectProjectEndDate(t, h, "1", "2026-12-18")
+	expectProjectEndDate(t, h, projectID(t, h, 1), "2026-12-18")
 }
 
 // HU-41 · CA-41.9 · Verifica que el reporte del proyecto incluya la fecha de fin.
@@ -288,9 +292,9 @@ func TestModificarProyecto_ConservaLaFechaDeFin(t *testing.T) {
 // proyecto.
 func TestReporteProyecto_IncluyeLaFechaDeFin(t *testing.T) {
 	h := newHandlerWithStartDate(t)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var body struct {

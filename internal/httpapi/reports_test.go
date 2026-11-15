@@ -39,11 +39,11 @@ type reportEffortSpec struct {
 func reportTEC03(t *testing.T, h http.Handler) {
 	t.Helper()
 	createProject(t, h, "Software Metrics")
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", `{"fecha_inicio":"2026-10-05"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPut, "/api/proyectos/1",
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", `{"fecha_inicio":"2026-10-05"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPut, projectPath(t, h, 1),
 		`{"nombre":"Software Metrics","descripcion":"Estimación y seguimiento de proyectos","estado":"EN_CURSO"}`), http.StatusOK)
 	var sp sprintJSON
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint)
 	expectStatus(t, rec, http.StatusCreated)
 	decode(t, rec, &sp)
 	specs := []struct {
@@ -85,7 +85,7 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
 	h := newHandler()
 	reportTEC03(t, h)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte", "")
 
 	expectRawJSON(t, rec, `{
   "proyecto": {
@@ -97,7 +97,7 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
     "fecha_fin": ""
   },
   "metricas": {
-    "proyecto_id": 1,
+    "proyecto_id":`+jsonProjectID(t, h, 1)+`,
     "sp_planificados": 10,
     "sp_completados": 8,
     "items_sin_estimar": 1,
@@ -116,10 +116,10 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
   },
   "historias": {
     "historias": [
-      {"id": 1, "proyecto_id": 1, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": 1},
-      {"id": 2, "proyecto_id": 1, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": 1},
-      {"id": 3, "proyecto_id": 1, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": 1},
-      {"id": 4, "proyecto_id": 1, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": 1}
+      {"id": 1, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": 1},
+      {"id": 2, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": 1},
+      {"id": 3, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": 1},
+      {"id": 4, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": 1}
     ],
     "cantidad": 4,
     "completadas": 2
@@ -186,7 +186,7 @@ func TestReporteProyecto_ContratoDelProyectoVacio(t *testing.T) {
 	createProject(t, h, "Software Metrics")
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Proyecto sin datos","descripcion":"Recién creado"}`), http.StatusCreated)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/2/reporte", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 2)+"/reporte", "")
 
 	expectRawJSON(t, rec, `{
   "proyecto": {
@@ -198,7 +198,7 @@ func TestReporteProyecto_ContratoDelProyectoVacio(t *testing.T) {
     "fecha_fin": ""
   },
   "metricas": {
-    "proyecto_id": 2,
+    "proyecto_id":`+jsonProjectID(t, h, 2)+`,
     "sp_planificados": 0,
     "sp_completados": 0,
     "items_sin_estimar": 0,
@@ -255,16 +255,16 @@ func TestReporteProyecto_CadaParteEsIgualASuEndpoint(t *testing.T) {
 	h := newHandler()
 	reportTEC03(t, h)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var parts map[string]json.RawMessage
 	decode(t, rec, &parts)
 	for part, path := range map[string]string{
-		"proyecto":  "/api/proyectos/1",
-		"metricas":  "/api/proyectos/1/metricas",
+		"proyecto":  "{proyecto}",
+		"metricas":  "{proyecto}/metricas",
 		"esfuerzos": "/api/sprints/1/esfuerzos",
-		"defectos":  "/api/proyectos/1/defectos",
+		"defectos":  "{proyecto}/defectos",
 	} {
 		source := do(t, h, http.MethodGet, path, "")
 		expectStatus(t, source, http.StatusOK)
@@ -285,7 +285,7 @@ func TestReporteProyecto_CadaParteEsIgualASuEndpoint(t *testing.T) {
 func TestReporteProyecto_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	it := createHoursItem(t, h, "A", 1)
 	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%d", it.ID), ""), http.StatusOK)
 	for _, hours := range []string{"0.1", "0.2"} {
@@ -293,7 +293,7 @@ func TestReporteProyecto_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%d/esfuerzos", it.ID), body), http.StatusCreated)
 	}
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	if !strings.Contains(rec.Body.String(), `"total_horas":0.3`) {
@@ -302,10 +302,12 @@ func TestReporteProyecto_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 }
 
 // CA-38.3 y CA-38.7 · Un proyecto inexistente, 0 o negativo devuelve 404.
-// HU-38 · CA-38.3 · Verifica que el reporte de un proyecto inexistente, 0 o negativo responda 404.
+// HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
+// esa forma y responden 400 (projects_uuid_test.go).
+// HU-38 · CA-38.3 · Verifica que el reporte de un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
 func TestReporteProyecto_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingProjectID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/proyectos/"+id+"/reporte", "")
 
 		expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
@@ -313,11 +315,11 @@ func TestReporteProyecto_InexistenteDevuelve404(t *testing.T) {
 }
 
 // CA-38.7 · Un {id} no numérico devuelve 400.
-// HU-38 · CA-38.7 · Verifica que un {id} no numérico responda 400.
+// HU-38 · CA-38.7 · Verifica que un {id} de proyecto que no es un UUID responda 400 (HU-51).
 func TestReporteProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/reporte", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
 // CA-38.7 · Una falla del repositorio devuelve 500 sin exponer el detalle.
@@ -332,7 +334,7 @@ func TestReporteProyecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) 
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte", "")
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
@@ -398,7 +400,7 @@ func TestReporteProyecto_CadaHistoriaEsIgualASuConsultaEnElBacklog(t *testing.T)
 	reportTEC03(t, h)
 	createHoursItem(t, h, "E", 0)
 
-	parts := reportParts(t, h, "/api/proyectos/1/reporte")
+	parts := reportParts(t, h, projectPath(t, h, 1)+"/reporte")
 
 	if ids := expectStoriesMatchSources(t, h, parts); fmt.Sprint(ids) != "[1 2 3 4 5]" {
 		t.Errorf("historias = %v, se esperaba [1 2 3 4 5]", ids)
@@ -455,8 +457,8 @@ func TestReporteProyecto_FallaLaLecturaDeLasHistoriasDevuelve500(t *testing.T) {
 	h, repo := newHandlerWithFailingStories()
 	reportTEC03(t, h)
 
-	for _, path := range []string{"/api/proyectos/1/reporte", "/api/proyectos/1/reporte/pdf"} {
-		failStoriesRead(t, h, repo, "/api/proyectos/1/metricas", "/api/proyectos/1/defectos")
+	for _, path := range []string{"{proyecto}/reporte", "{proyecto}/reporte/pdf"} {
+		failStoriesRead(t, h, repo, "{proyecto}/metricas", "{proyecto}/defectos")
 
 		rec := do(t, h, http.MethodGet, path, "")
 

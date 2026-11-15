@@ -132,7 +132,7 @@ func TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, poker.NewManager(brokenPokerRepository{}, items), defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem), http.StatusCreated)
 
 	rec := do(t, h, http.MethodPost, "/api/items/1/poker-sessions", "")
 
@@ -560,7 +560,7 @@ func TestRegistrarEstimacionPoker_ErrorAlGuardarLaSesionDevuelve500SinDetalle(t 
 	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
 	h := newEstimateHandler(pokerRepo)
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem), http.StatusCreated)
 	revealSessionWithVotes(t, h)
 	pokerRepo.failUpdate = true
 
@@ -775,7 +775,7 @@ func TestRepetirRondaPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T
 	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
 	h := newEstimateHandler(pokerRepo)
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem), http.StatusCreated)
 	revealSessionWithVotes(t, h)
 	pokerRepo.failUpdate = true
 

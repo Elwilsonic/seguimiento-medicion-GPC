@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"uuid"
 
 	"seguimiento-medicion-gpc/internal/project"
 )
@@ -198,6 +199,11 @@ func (r failingRepository) List() ([]project.Project, error) {
 }
 
 func (r failingRepository) GetByID(id int) (project.Project, error) {
+	return project.Project{}, r.getErr
+}
+
+// GetByPublicID cumple la operación que HU-51 suma a Repository.
+func (r failingRepository) GetByPublicID(id uuid.UUID) (project.Project, error) {
 	return project.Project{}, r.getErr
 }
 

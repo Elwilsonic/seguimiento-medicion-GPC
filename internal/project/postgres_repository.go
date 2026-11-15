@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"uuid"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -66,6 +67,13 @@ func (r *PostgresRepository) GetByID(id int) (Project, error) {
 		return Project{}, fmt.Errorf("buscar el proyecto: %w", err)
 	}
 	return p, nil
+}
+
+// GetByPublicID devuelve el proyecto con ese identificador público, o
+// ErrProjectNotFound si no existe (HU-51).
+// HU-51 (RED): stub sin lógica.
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Project, error) {
+	return Project{}, ErrProjectNotFound
 }
 
 // Update reemplaza el proyecto con ese ID y lo devuelve tal como quedó

@@ -12,7 +12,7 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 
 ## 1. Escenarios BDD (godog)
 
-- [ ] 1.1 Escribir `features/HU-51-identificadores-uuid.feature` en español (`# language: es`), a nivel de la API, con un escenario por cada caso de la spec, cada uno con su CA en el título:
+- [x] 1.1 Escribir `features/HU-51-identificadores-uuid.feature` en español (`# language: es`), a nivel de la API, con un escenario por cada caso de la spec, cada uno con su CA en el título:
   - crear con UUID v4;
   - el primer proyecto no es el 1;
   - consultar por UUID;
@@ -27,26 +27,26 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
   - las demás entidades conservan su ID entero.
 
   Verificar que hay al menos un caso normal, uno alternativo, uno límite y uno de error.
-- [ ] 1.2 Implementar los pasos en `internal/httpapi/uuid_features_test.go`, con el runner `TestFeatures_HU51IdentificadoresUUID`, sobre `NewHandler` con repositorios en memoria y `httptest`. Verificar con `go test ./internal/httpapi/ -run TestFeatures_HU51` que los escenarios se ejecutan y fallan solo por el comportamiento nuevo (por ejemplo, `id` numérico o 404 en lugar de 400).
+- [x] 1.2 Implementar los pasos en `internal/httpapi/uuid_features_test.go`, con el runner `TestFeatures_HU51IdentificadoresUUID`, sobre `NewHandler` con repositorios en memoria y `httptest`. Verificar con `go test ./internal/httpapi/ -run TestFeatures_HU51` que los escenarios se ejecutan y fallan solo por el comportamiento nuevo (por ejemplo, `id` numérico o 404 en lugar de 400).
 
 ## 2. Tests en RED
 
-- [ ] 2.1 Escribir `internal/project/public_id_test.go`:
+- [x] 2.1 Escribir `internal/project/public_id_test.go`:
   - `Create` asigna un UUID v4 canónico (CA-51.1);
   - 1000 proyectos con UUID distintos y no correlativos (CA-51.2);
   - `GetByPublicID` con proyecto existente, inexistente y nulo, y que devuelve una copia (CA-51.3, CA-51.4);
   - 50 creaciones simultáneas con UUID distintos (CA-51.7);
   - `Update`, `SetStartDate`, `SetEndDate` y `SetDates` conservan el `PublicID`.
-- [ ] 2.2 Sumar a `internal/project/repository_contract_test.go` "guardar y buscar por UUID" e "UUID inexistente → `ErrProjectNotFound`", para memoria y PostgreSQL (CA-51.5). Sumar a `postgres_repository_test.go` el rechazo de un `public_id` repetido (CA-51.5). Adaptar los 2 repositorios falsos de `create_test.go` y `get_test.go` a la operación nueva de `Repository`.
-- [ ] 2.3 Escribir `internal/httpapi/projects_uuid_test.go`:
+- [x] 2.2 Sumar a `internal/project/repository_contract_test.go` "guardar y buscar por UUID" e "UUID inexistente → `ErrProjectNotFound`", para memoria y PostgreSQL (CA-51.5). Sumar a `postgres_repository_test.go` el rechazo de un `public_id` repetido (CA-51.5). Adaptar los 2 repositorios falsos de `create_test.go` y `get_test.go` a la operación nueva de `Repository`.
+- [x] 2.3 Escribir `internal/httpapi/projects_uuid_test.go`:
   - `parseProjectID`: canónico, mayúsculas, número, llaves, `urn:uuid:`, sin guiones, vacío y dígito no hexadecimal (CA-51.4);
   - 400 y 404 en cada una de las 17 rutas de proyecto (CA-51.3, CA-51.4);
   - orden de errores: ID inválido con cuerpo inválido → 400 de ID, y UUID inexistente con fecha vacía → 400 de fecha (CA-51.4);
   - `GET /api/items/abc` conserva "el id debe ser un número entero";
   - cada respuesta que identifica un proyecto (`id`, `proyecto_id` y `Content-Disposition` del PDF) lleva un UUID y no un número (CA-51.3).
-- [ ] 2.4 Escribir `internal/httpapi/projects_uuid_web_test.go`: `#proyecto-actual` es `type="text"`, sin `min`, y `app.js` no convierte el ID del proyecto a número (CA-51.6).
-- [ ] 2.5 Adaptar los 20 tests de `internal/httpapi` que usan `/api/proyectos/1` o `"proyecto_id":1`, sin perder lo que verifican: crear el proyecto, usar su `id` en la ruta y comparar `proyecto_id` con ese UUID. La lista sale de `git ls-files '*_test.go' | xargs grep -lE '/api/proyectos/[0-9]|/api/proyectos/%d|"proyecto_id"|proyecto_id\\":|"/api/proyectos/" *\+|proyecto-actual'`. Verificar que no queda ninguna ruta con un ID entero de proyecto: el `grep` con `/api/proyectos/[0-9]` no devuelve nada.
-- [ ] 2.6 Correr `go test ./...` y verificar que fallan solo los tests de HU-51 (`PublicID` o `GetByPublicID` no declarados, o aserciones de UUID), sin errores preexistentes. Mostrar la salida y proponer `git commit -m "test(HU-51): agregar tests (RED)" -m "Refs #193"`.
+- [x] 2.4 Escribir `internal/httpapi/projects_uuid_web_test.go`: `#proyecto-actual` es `type="text"`, sin `min`, y `app.js` no convierte el ID del proyecto a número (CA-51.6).
+- [x] 2.5 Adaptar los 20 tests de `internal/httpapi` que usan `/api/proyectos/1` o `"proyecto_id":1`, sin perder lo que verifican: crear el proyecto, usar su `id` en la ruta y comparar `proyecto_id` con ese UUID. La lista sale de `git ls-files '*_test.go' | xargs grep -lE '/api/proyectos/[0-9]|/api/proyectos/%d|"proyecto_id"|proyecto_id\\":|"/api/proyectos/" *\+|proyecto-actual'`. Verificar que no queda ninguna ruta con un ID entero de proyecto: el `grep` con `/api/proyectos/[0-9]` no devuelve nada.
+- [x] 2.6 Correr `go test ./...` y verificar que fallan solo los tests de HU-51 (`PublicID` o `GetByPublicID` no declarados, o aserciones de UUID), sin errores preexistentes. Mostrar la salida y proponer `git commit -m "test(HU-51): agregar tests (RED)" -m "Refs #193"`.
 
 ## 3. Código en GREEN
 

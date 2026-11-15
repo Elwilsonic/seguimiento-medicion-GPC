@@ -3,6 +3,7 @@ package member
 import (
 	"context"
 	"testing"
+	"uuid"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -20,8 +21,10 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 	t.Helper()
 	postgrestest.Reset(t, pool)
 	projects := project.NewPostgresRepository(pool)
+	// HU-51: cada proyecto lleva su identificador público, que en PostgreSQL
+	// es único (CA-51.5); Save lo recibe del Manager, que acá no se usa.
 	for _, name := range []string{"Proyecto A", "Proyecto B"} {
-		if _, err := projects.Save(project.Project{Name: name, Status: project.StatusPlanned}); err != nil {
+		if _, err := projects.Save(project.Project{PublicID: uuid.NewV4(), Name: name, Status: project.StatusPlanned}); err != nil {
 			t.Fatalf("crear el proyecto de prueba %q: %v", name, err)
 		}
 	}

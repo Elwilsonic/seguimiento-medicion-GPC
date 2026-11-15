@@ -20,9 +20,11 @@ import (
 // CA-TEC04.1 y CA-TEC04.2 (uso desde el navegador y errores entendibles) se
 // verifican con el recorrido en el navegador de la evidencia TDD.
 
-// get hace un GET al handler sin exigir una respuesta JSON.
+// get hace un GET al handler sin exigir una respuesta JSON. En la ruta
+// reemplaza "{proyecto}" y "{proyecto2}" con withProject (HU-51).
 func get(t *testing.T, h http.Handler, path string) *httptest.ResponseRecorder {
 	t.Helper()
+	path = withProject(t, h, path)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 	return rec

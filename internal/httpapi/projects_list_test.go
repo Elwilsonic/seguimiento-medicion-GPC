@@ -44,9 +44,9 @@ func TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID(t *te
 	h := newHandler()
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas","descripcion":"Ventas online"}`), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Inventario","descripcion":""}`), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPut, "/api/proyectos/2", `{"nombre":"Inventario","descripcion":"","estado":"EN_CURSO"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/2/fecha-inicio", `{"fecha_inicio":"2026-03-01"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/2/fecha-fin", `{"fecha_fin":"2026-06-30"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPut, projectPath(t, h, 2), `{"nombre":"Inventario","descripcion":"","estado":"EN_CURSO"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 2)+"/fecha-inicio", `{"fecha_inicio":"2026-03-01"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 2)+"/fecha-fin", `{"fecha_fin":"2026-06-30"}`), http.StatusOK)
 
 	rec := do(t, h, http.MethodGet, "/api/proyectos", "")
 
@@ -60,7 +60,7 @@ func TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID(t *te
 	// Cada elemento es idéntico a la respuesta de GET /api/proyectos/{id}.
 	var list []json.RawMessage
 	decode(t, rec, &list)
-	for i, path := range []string{"/api/proyectos/2", "/api/proyectos/1"} {
+	for i, path := range []string{"{proyecto2}", "{proyecto}"} {
 		one := do(t, h, http.MethodGet, path, "")
 		expectStatus(t, one, http.StatusOK)
 		if i < len(list) && string(list[i]) != strings.TrimSpace(one.Body.String()) {

@@ -1,5 +1,7 @@
 package project
 
+import "uuid"
+
 // Repository es el almacenamiento de proyectos. La lógica de negocio accede
 // a los datos solo a través de esta interfaz.
 type Repository interface {
@@ -10,6 +12,9 @@ type Repository interface {
 	// GetByID devuelve una copia del proyecto con ese ID, o ErrProjectNotFound
 	// si no existe (HU-03).
 	GetByID(id int) (Project, error)
+	// GetByPublicID devuelve una copia del proyecto con ese identificador
+	// público, o ErrProjectNotFound si no existe (HU-51).
+	GetByPublicID(id uuid.UUID) (Project, error)
 	// Update reemplaza el proyecto guardado con ese ID y devuelve una copia, o
 	// ErrProjectNotFound si no existe (HU-02).
 	Update(p Project) (Project, error)

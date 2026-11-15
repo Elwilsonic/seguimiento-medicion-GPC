@@ -53,10 +53,10 @@ func newHandlerWithProject(t *testing.T) http.Handler {
 func TestRegistrarIntegrante_Devuelve201ConElIntegrante(t *testing.T) {
 	h := newHandlerWithProject(t)
 
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"  Ana Pérez ","rol":"product_builder"}`)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", `{"nombre":"  Ana Pérez ","rol":"product_builder"}`)
 
 	expectStatus(t, rec, http.StatusCreated)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
+	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
 }
 
 // HU-15 · CA-15.2 · Verifica que un nombre o rol vacío o inválido, o un JSON inválido, responda 400 con su mensaje.
@@ -73,39 +73,41 @@ func TestRegistrarIntegrante_DatosInvalidosDevuelven400(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			h := newHandlerWithProject(t)
 
-			rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", c.body)
+			rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", c.body)
 
 			expectError(t, rec, http.StatusBadRequest, c.msg)
 		})
 	}
 }
 
-// HU-15 · CA-15.4 · Verifica que un proyecto inexistente, 0 o negativo responda 404.
+// HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
+// esa forma y responden 400 (projects_uuid_test.go).
+// HU-15 · CA-15.4 · Verifica que un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
 // CA-15.4 · Un proyecto inexistente, 0 o negativo devuelve 404.
 func TestRegistrarIntegrante_ProyectoInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingProjectID, nilProjectID} {
 		rec := do(t, h, http.MethodPost, "/api/proyectos/"+id+"/integrantes", validMember)
 
 		expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 	}
 }
 
-// HU-15 · CA-15.7 · Verifica que un {id} no numérico responda 400.
+// HU-15 · CA-15.7 · Verifica que un {id} de proyecto que no es un UUID responda 400 (HU-51).
 // CA-15.7 · Un {id} no numérico devuelve 400.
 func TestRegistrarIntegrante_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/abc/integrantes", validMember)
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
 // HU-15 · CA-15.3 · Verifica que registrar el mismo nombre en el proyecto responda 409.
 // CA-15.3 · El mismo nombre en el proyecto devuelve 409.
 func TestRegistrarIntegrante_DuplicadoDevuelve409(t *testing.T) {
 	h := newHandlerWithProject(t)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", validMember), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", validMember), http.StatusCreated)
 
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"ana pérez","rol":"AGILE_ENABLER"}`)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", `{"nombre":"ana pérez","rol":"AGILE_ENABLER"}`)
 
 	expectError(t, rec, http.StatusConflict, member.ErrDuplicateMember.Error())
 }
@@ -131,7 +133,7 @@ func TestRegistrarIntegrante_ErrorDelRepositorioDevuelve500SinDetalle(t *testing
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, members)
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", validMember)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", validMember)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
