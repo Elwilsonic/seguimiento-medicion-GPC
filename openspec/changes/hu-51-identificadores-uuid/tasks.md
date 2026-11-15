@@ -67,7 +67,7 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
   - `Content-Disposition` con el UUID en `report_pdf.go`.
 
   Verificar con `grep -n "ProyectoID +int" internal/httpapi/*.go` (sin resultados) y con los tests de salida de 2.3.
-- [ ] 3.5 Interfaz: `#proyecto-actual` con `type="text"`, sin `min`, con `placeholder="UUID del proyecto"`, `autocomplete="off"` y `spellcheck="false"`, y el comentario de la sección con HU-51 (`internal/web/index.html`). Verificar que pasan los tests de 2.4 y probar a mano con `go run ./cmd/server`:
+- [x] 3.5 Interfaz: `#proyecto-actual` con `type="text"`, sin `min`, con `placeholder="UUID del proyecto"`, `autocomplete="off"` y `spellcheck="false"`, y el comentario de la sección con HU-51 (`internal/web/index.html`). Verificar que pasan los tests de 2.4 y probar a mano con `go run ./cmd/server`:
   - crear un proyecto;
   - «Ver proyectos» y «Elegir»;
   - escribir "1" (error);
@@ -105,7 +105,7 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 
 ## 6. Pull Request y trazabilidad
 
-- [ ] 6.1 Con los commits autorizados y pusheados, abrir el Pull Request de `feature/HU-51-uuid` hacia `main`, con `Closes #193` en la descripción si no queda nada por cambiar, y pedir la revisión de otro integrante. Verificar que la CI está en verde. La CI aplica `01-schema.sql` sobre una base nueva, así que prueba `public_id`.
+- [x] 6.1 Con los commits autorizados y pusheados, abrir el Pull Request de `feature/HU-51-uuid` hacia `main`, con `Closes #193` en la descripción si no queda nada por cambiar, y pedir la revisión de otro integrante. Verificar que la CI está en verde. La CI aplica `01-schema.sql` sobre una base nueva, así que prueba `public_id`.
 - [ ] 6.2 Agregar al Issue #193 la sección "## Trazabilidad" con los links (a `blob/main`) a la propuesta (`openspec/changes/hu-51-identificadores-uuid/proposal.md`), al BDD y a la evidencia. Verificar que los tres archivos existen en la rama.
 
 ## Workflow follow-up

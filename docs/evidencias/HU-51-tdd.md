@@ -256,7 +256,16 @@ $ curl -s -D - -o /dev/null localhost:8080/api/proyectos/ea55e487-23e7-4811-867b
 Content-Disposition: attachment; filename="reporte-proyecto-ea55e487-23e7-4811-867b-432800ee5d9c.pdf"
 ```
 
-La prueba de «Ver proyectos» y «Elegir» en el navegador (tarea 3.5) queda pendiente: la hace Sosa Ricardo con el servidor de la rama.
+### Uso desde el navegador (tarea 3.5)
+
+Sosa Ricardo lo probó el 14/11/2026 en el navegador, con el servidor de la rama (`PORT=8080 go run ./cmd/server`, datos en memoria, sobre `1584a65`):
+
+| Acción | Resultado |
+|---|---|
+| Mirar el campo «Proyecto actual» | Es un campo de texto, ya no numérico (CA-51.6) |
+| Escribir "1" y tocar «Cargar proyecto» | Aparece "el id del proyecto debe ser un UUID" y no se carga ningún proyecto (CA-51.4 y CA-51.6) |
+| «Ver proyectos» y «Elegir» en una fila | «Proyecto actual» queda con el UUID del proyecto (CA-51.6, HU-50) |
+| Crear un ítem del backlog en ese proyecto | El ítem se crea en el proyecto elegido (CA-51.3) |
 
 ## Refactor
 
@@ -305,8 +314,11 @@ Las funciones nuevas o cambiadas:
 | Tests (desviación 2) | 20f2bf1 | `test(HU-51): usar el id del proyecto en los JSON esperados de la lista y del reporte` |
 | GREEN | 1584a65 | `feat(HU-51): identificar los proyectos con un UUID público (GREEN)` |
 | Refactor | — | No hubo (ver "Refactor") |
-| Evidencia y cobertura | (propuesto) | `docs(HU-51): agregar evidencia TDD y cobertura` |
+| Evidencia y cobertura | b4413de | `docs(HU-51): agregar evidencia TDD y cobertura` |
+| Merge de `main` (control de links de TEC-11, PR #194) | b26d781 | `chore(HU-51): traer main con el control de links de TEC-11` |
+| Links de las evidencias (`-update`) | a6db665 | `docs(HU-51): actualizar los links de las evidencias a las líneas de HU-51` |
+| Cierre | este commit | `docs(HU-51): cerrar historia` |
 
-El commit de cierre no se lista, porque un commit no puede contener su propio hash: queda registrado en el Pull Request y en el Issue #193.
+El commit de cierre figura como "este commit", porque un commit no puede contener su propio hash: queda registrado en el Pull Request #195 y en el Issue #193. Los demás hashes se completaron a medida que se hizo cada commit.
 
 HU-51: Historia → SDD (OpenSpec) → Criterios de Aceptación → BDD → Tests → Código Go
