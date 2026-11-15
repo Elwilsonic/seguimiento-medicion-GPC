@@ -37,8 +37,8 @@ func TestListarIntegrantes_Devuelve200ConLosIntegrantesOrdenados(t *testing.T) {
 	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/integrantes", "")
 
 	expectRawJSON(t, rec, `[
-		{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"AGILE_ENABLER"},
-		{"id":3,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Juan Gómez","rol":"PRODUCT_BUILDER"}
+		{"id":`+jsonMemberID(t, h, 1)+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"AGILE_ENABLER"},
+		{"id":`+jsonMemberID(t, h, 3)+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Juan Gómez","rol":"PRODUCT_BUILDER"}
 	]`)
 }
 

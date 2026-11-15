@@ -95,9 +95,17 @@ func (s *uuidScenario) projectWithItem(name string) error {
 	if err != nil {
 		return err
 	}
-	if rec := s.serve(http.MethodPost, path, validItem); rec.Code != http.StatusCreated {
+	rec := s.serve(http.MethodPost, path, validItem)
+	if rec.Code != http.StatusCreated {
 		return fmt.Errorf("crear el ítem: código %d; cuerpo: %s", rec.Code, rec.Body.String())
 	}
+	// HU-52: el ítem se pide por el id que devolvió la API ({ítem}), que
+	// pasa a ser su UUID.
+	raw, err := jsonField(rec, "id")
+	if err != nil {
+		return err
+	}
+	s.ids["ítem"] = strings.Trim(string(raw), `"`)
 	return nil
 }
 

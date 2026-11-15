@@ -48,8 +48,8 @@ func TestConsultarItem_Devuelve200ConElItem(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
-		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.HorasEstimadas != 0 || it.SprintID != "0" ||
+	if it.ID != itemRef(t, h, 1) || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
+		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.HorasEstimadas != 0 || it.SprintID != "" ||
 		len(it.Criterios) != 1 || it.Criterios[0] != "Credenciales válidas" {
 		t.Errorf("ítem = %+v", it)
 	}
@@ -57,7 +57,7 @@ func TestConsultarItem_Devuelve200ConElItem(t *testing.T) {
 
 // TEC-04 · CA-TEC04.9 · Verifica que consultar un ítem inexistente responda 404.
 func TestConsultarItem_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/api/items/999", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/items/"+missingItemID, "")
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
@@ -73,7 +73,7 @@ func TestModificarItem_Devuelve200ConElItemModificado(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.Titulo != "Login con Google" || it.Descripcion != "OAuth" || it.Prioridad != "MEDIA" ||
+	if it.ID != itemRef(t, h, 1) || it.Titulo != "Login con Google" || it.Descripcion != "OAuth" || it.Prioridad != "MEDIA" ||
 		it.HorasEstimadas != 6.5 || len(it.Criterios) != 1 || it.Criterios[0] != "Redirige a Google" {
 		t.Errorf("ítem = %+v", it)
 	}
@@ -111,7 +111,7 @@ func TestModificarItem_DatosInvalidosDevuelven400(t *testing.T) {
 
 // TEC-04 · CA-TEC04.9 · Verifica que modificar un ítem inexistente responda 404.
 func TestModificarItem_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPut, "/api/items/999", validItem)
+	rec := do(t, newHandler(), http.MethodPut, "/api/items/"+missingItemID, validItem)
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
@@ -126,7 +126,7 @@ func TestCambiarEstadoItem_Devuelve200ConElEstadoNuevo(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.Estado != "EN_CURSO" {
+	if it.ID != itemRef(t, h, 1) || it.Estado != "EN_CURSO" {
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 EN_CURSO", it)
 	}
 }
@@ -142,7 +142,7 @@ func TestCambiarEstadoItem_EstadoInvalidoDevuelve400(t *testing.T) {
 
 // TEC-04 · CA-TEC04.9 · Verifica que cambiar el estado de un ítem inexistente responda 404.
 func TestCambiarEstadoItem_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPatch, "/api/items/999/estado", `{"estado":"EN_CURSO"}`)
+	rec := do(t, newHandler(), http.MethodPatch, "/api/items/"+missingItemID+"/estado", `{"estado":"EN_CURSO"}`)
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
@@ -172,7 +172,7 @@ func TestListarBacklogPorPrioridad_Devuelve200OrdenadoPorPrioridad(t *testing.T)
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
 	decode(t, rec, &items)
-	if len(items) != 3 || items[0].ID != "3" || items[1].ID != "2" || items[2].ID != "1" {
+	if len(items) != 3 || items[0].ID != itemRef(t, h, 3) || items[1].ID != itemRef(t, h, 2) || items[2].ID != itemRef(t, h, 1) {
 		t.Errorf("ítems = %+v, se esperaban los ítems 3 (ALTA), 2 (MEDIA) y 1 (BAJA)", items)
 	}
 }
@@ -200,7 +200,7 @@ func TestAsignarStoryPoints_Devuelve200ConLosStoryPointsAsignados(t *testing.T) 
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.StoryPoints != 5 || it.Titulo != "Login de usuarios" || it.Estado != "PENDIENTE" {
+	if it.ID != itemRef(t, h, 1) || it.StoryPoints != 5 || it.Titulo != "Login de usuarios" || it.Estado != "PENDIENTE" {
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 con 5 story points", it)
 	}
 
@@ -274,12 +274,12 @@ func TestAsignarStoryPoints_JSONInvalidoDevuelve400(t *testing.T) {
 func TestAsignarStoryPoints_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPatch, "/api/items/abc/story-points", `{"story_points":5}`)
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del ítem debe ser un UUID")
 }
 
 // HU-20 · CA-20.4 · Verifica que asignar Story Points a un ítem inexistente responda 404.
 func TestAsignarStoryPoints_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPatch, "/api/items/999/story-points", `{"story_points":5}`)
+	rec := do(t, newHandler(), http.MethodPatch, "/api/items/"+missingItemID+"/story-points", `{"story_points":5}`)
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
@@ -320,7 +320,7 @@ func TestAsignarStoryPoints_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPatch, "/api/items/1/story-points", `{"story_points":5}`)
+	rec := do(t, h, http.MethodPatch, "/api/items/"+missingItemID+"/story-points", `{"story_points":5}`)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
