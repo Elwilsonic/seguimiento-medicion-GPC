@@ -32,6 +32,8 @@ func newHandlerWithRegisteredEffort(t *testing.T) http.Handler {
 	return h
 }
 
+// HU-52, CA-52.3: el esfuerzo, su sprint y su ítem se identifican con su
+// UUID.
 // HU-28 · CA-28.7 · Verifica que la corrección desde la API responda 200 con el esfuerzo corregido.
 func TestCorregirEsfuerzo_Devuelve200ConElEsfuerzoCorregido(t *testing.T) {
 	h := newHandlerWithRegisteredEffort(t)
@@ -41,8 +43,8 @@ func TestCorregirEsfuerzo_Devuelve200ConElEsfuerzoCorregido(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got effortJSON
 	decode(t, rec, &got)
-	want := effortJSON{ID: 1, SprintID: 1, ItemID: 1, Integrante: "García Santiago",
-		Fecha: "2026-10-24", Actividad: "Implementar el registro", Horas: 10}
+	want := effortJSON{ID: apiID(t, h, kindEffort, 1), SprintID: apiID(t, h, kindSprint, 1), ItemID: apiID(t, h, kindItem, 1),
+		Integrante: "García Santiago", Fecha: "2026-10-24", Actividad: "Implementar el registro", Horas: 10}
 	if got != want {
 		t.Errorf("esfuerzo = %+v, se esperaba %+v", got, want)
 	}
@@ -70,18 +72,21 @@ func TestCorregirEsfuerzo_JSONInvalidoDevuelve400(t *testing.T) {
 	expectStatus(t, rec, http.StatusBadRequest)
 }
 
-// HU-28 · CA-28.7 · Verifica que un {id} no numérico responda 400.
+// HU-52, CA-52.4: el {id} del esfuerzo es un UUID.
+// HU-28 · CA-28.7 · Verifica que un {id} que no es un UUID responda 400.
 func TestCorregirEsfuerzo_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodPatch, "/api/esfuerzos/abc/horas", `{"horas":10}`)
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del esfuerzo debe ser un UUID")
 }
 
-// CA-28.4 · Un esfuerzo inexistente, 0 o negativo devuelve 404.
-// HU-28 · CA-28.4 · Verifica que corregir un esfuerzo inexistente, 0 o negativo responda 404.
+// CA-28.4 · Un esfuerzo inexistente devuelve 404. HU-52, CA-52.4: es un UUID
+// que nunca se asignó, o el nulo; el 0 y los negativos ya no son UUID y
+// responden 400 (efforts_uuid_test.go).
+// HU-28 · CA-28.4 · Verifica que corregir un esfuerzo inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
 func TestCorregirEsfuerzo_InexistenteDevuelve404(t *testing.T) {
 	h := newHandlerWithRegisteredEffort(t)
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{neverAssignedUUID, nilUUID} {
 		rec := do(t, h, http.MethodPatch, "/api/esfuerzos/"+id+"/horas", `{"horas":10}`)
 
 		expectError(t, rec, http.StatusNotFound, effort.ErrEffortNotFound.Error())
@@ -135,7 +140,9 @@ func TestCorregirEsfuerzo_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPatch, correctEffortPath, `{"horas":10}`)
+	// HU-52, CA-52.4: con el repositorio roto no se crea ningún esfuerzo, así
+	// que la ruta lleva un UUID que no existe y la falla aparece al buscarlo.
+	rec := do(t, h, http.MethodPatch, "/api/esfuerzos/"+neverAssignedUUID+"/horas", `{"horas":10}`)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }

@@ -41,16 +41,16 @@ func newHandlerWithDefectList(t *testing.T) http.Handler {
 	t.Helper()
 	h := newHandlerWithDefects(t)
 	for range 3 {
-		expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
+		expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefectFor(t, h)), http.StatusCreated)
 	}
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/2/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/3/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/3/estado", `{"estado":"RESUELTO","sprint_resolucion_id":1}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/3/estado", resolveIn(apiID(t, h, kindSprint, 1))), http.StatusOK)
 
 	createProject(t, h, "Sistema de stock")
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 2)+"/backlog", validItem), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 2)+"/sprints", validSprint), http.StatusCreated)
-	other := `{"descripcion":"El stock queda negativo","severidad":"MEDIA","sprint_deteccion_id":2}`
+	other := `{"descripcion":"El stock queda negativo","severidad":"MEDIA","sprint_deteccion_id":"` + apiID(t, h, kindSprint, 2) + `"}`
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/2/defectos", other), http.StatusCreated)
 	return h
 }
@@ -65,18 +65,25 @@ func listDefects(t *testing.T, h http.Handler, path string) defectListJSON {
 	return got
 }
 
-func defectIDs(list defectListJSON) []int {
-	ids := make([]int, 0, len(list.Defectos))
+func defectIDs(list defectListJSON) []string {
+	ids := make([]string, 0, len(list.Defectos))
 	for _, d := range list.Defectos {
 		ids = append(ids, d.ID)
 	}
 	return ids
 }
 
-func assertDefectIDs(t *testing.T, path string, got defectListJSON, want []int) {
+// assertDefectIDs verifica que la lista tenga, en orden, los defectos want,
+// nombrados por su orden de registro en h: el defecto N es el "id" que
+// devolvió la API al registrarlo (HU-52, CA-52.3).
+func assertDefectIDs(t *testing.T, h http.Handler, path string, got defectListJSON, want []int) {
 	t.Helper()
-	if ids := defectIDs(got); !slices.Equal(ids, want) {
-		t.Errorf("%s: IDs = %v, se esperaban %v", path, ids, want)
+	wantIDs := make([]string, 0, len(want))
+	for _, n := range want {
+		wantIDs = append(wantIDs, apiID(t, h, kindDefect, n))
+	}
+	if ids := defectIDs(got); !slices.Equal(ids, wantIDs) {
+		t.Errorf("%s: IDs = %v, se esperaban %v", path, ids, wantIDs)
 	}
 	if got.Cantidad != len(want) {
 		t.Errorf("%s: cantidad = %d, se esperaba %d", path, got.Cantidad, len(want))
@@ -89,38 +96,38 @@ func TestListarDefectosDelProyecto_Devuelve200ConLosDefectosYLaCantidad(t *testi
 
 	got := listDefects(t, h, projectPath(t, h, 1)+"/defectos")
 
-	assertDefectIDs(t, "proyecto 1", got, []int{1, 2, 3})
+	assertDefectIDs(t, h, "proyecto 1", got, []int{1, 2, 3})
 	if len(got.Defectos) != 3 {
 		t.Fatalf("defectos = %+v, se esperaban 3", got.Defectos)
 	}
 	wantStates := []defect.Status{defect.StatusOpen, defect.StatusInCorrection, defect.StatusResolved}
 	for i, want := range wantStates {
 		if got.Defectos[i].Estado != want {
-			t.Errorf("estado del defecto %d = %q, se esperaba %q", got.Defectos[i].ID, got.Defectos[i].Estado, want)
+			t.Errorf("estado del defecto %s = %q, se esperaba %q", got.Defectos[i].ID, got.Defectos[i].Estado, want)
 		}
 	}
 	wantResolved := defectJSON{
-		ID:                 3,
+		ID:                 apiID(t, h, kindDefect, 3),
 		Descripcion:        "El total no descuenta el descuento",
 		Severidad:          defect.SeverityHigh,
 		Estado:             defect.StatusResolved,
-		ItemID:             1,
-		SprintDeteccionID:  1,
-		SprintResolucionID: 1,
+		ItemID:             apiID(t, h, kindItem, 1),
+		SprintDeteccionID:  apiID(t, h, kindSprint, 1),
+		SprintResolucionID: apiID(t, h, kindSprint, 1),
 	}
 	if got.Defectos[2] != wantResolved {
 		t.Errorf("defecto 3 = %+v, se esperaba %+v", got.Defectos[2], wantResolved)
 	}
 
-	assertDefectIDs(t, "proyecto 2", listDefects(t, h, projectPath(t, h, 2)+"/defectos"), []int{4})
+	assertDefectIDs(t, h, "proyecto 2", listDefects(t, h, projectPath(t, h, 2)+"/defectos"), []int{4})
 }
 
 // HU-31 · CA-31.9 · Verifica que GET /api/sprints/{id}/defectos responda 200 con los defectos detectados en el sprint.
 func TestListarDefectosDelSprint_Devuelve200ConLosDefectosYLaCantidad(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 
-	assertDefectIDs(t, "sprint 1", listDefects(t, h, "/api/sprints/1/defectos"), []int{1, 2, 3})
-	assertDefectIDs(t, "sprint 2", listDefects(t, h, "/api/sprints/2/defectos"), []int{4})
+	assertDefectIDs(t, h, "sprint 1", listDefects(t, h, "/api/sprints/1/defectos"), []int{1, 2, 3})
+	assertDefectIDs(t, h, "sprint 2", listDefects(t, h, "/api/sprints/2/defectos"), []int{4})
 }
 
 // HU-31 · CA-31.3 · Verifica que ?estado= filtre por estado sin distinguir mayúsculas ni espacios de los extremos.
@@ -139,7 +146,7 @@ func TestListarDefectos_FiltraPorEstado(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.path, func(t *testing.T) {
-			assertDefectIDs(t, c.path, listDefects(t, h, c.path), c.want)
+			assertDefectIDs(t, h, c.path, listDefects(t, h, c.path), c.want)
 		})
 	}
 }
@@ -154,7 +161,7 @@ func TestListarDefectos_FiltroVacioOConSoloEspaciosNoFiltra(t *testing.T) {
 		for _, query := range []string{"", "?estado=", "?estado=%20%20%20", "?estado=%09"} {
 			path := base + query
 			t.Run(path, func(t *testing.T) {
-				assertDefectIDs(t, path, listDefects(t, h, path), []int{1, 2, 3})
+				assertDefectIDs(t, h, path, listDefects(t, h, path), []int{1, 2, 3})
 			})
 		}
 	}
@@ -200,7 +207,7 @@ func TestListarDefectos_EstadoInvalidoDevuelve400(t *testing.T) {
 		"/api/sprints/1/defectos?estado=EN%20CORRECCION",
 		// El filtro se valida antes de consultar: 400 y no 404.
 		"/api/proyectos/" + missingProjectID + "/defectos?estado=CERRADO",
-		"/api/sprints/999/defectos?estado=CERRADO",
+		"/api/sprints/" + neverAssignedUUID + "/defectos?estado=CERRADO",
 	} {
 		t.Run(path, func(t *testing.T) {
 			rec := do(t, h, http.MethodGet, path, "")
@@ -211,9 +218,9 @@ func TestListarDefectos_EstadoInvalidoDevuelve400(t *testing.T) {
 }
 
 // HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
-// esa forma y responden 400 (projects_uuid_test.go). Los sprints conservan el
-// ID entero.
-// HU-31 · CA-31.5 · Verifica que un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) o un sprint inexistente, incluidos 0 y negativo, dé 404.
+// esa forma y responden 400 (projects_uuid_test.go). HU-52, CA-52.4: el del
+// sprint también, y su 400 está en defects_uuid_test.go.
+// HU-31 · CA-31.5 · Verifica que un proyecto o un sprint inexistentes (un UUID que nunca se asignó o el UUID nulo) den 404.
 func TestListarDefectos_InexistenteDevuelve404(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 	cases := []struct {
@@ -223,9 +230,9 @@ func TestListarDefectos_InexistenteDevuelve404(t *testing.T) {
 		{"/api/proyectos/" + missingProjectID + "/defectos", project.ErrProjectNotFound},
 		{"/api/proyectos/" + nilProjectID + "/defectos", project.ErrProjectNotFound},
 		{"/api/proyectos/" + missingProjectID + "/defectos?estado=ABIERTO", project.ErrProjectNotFound},
-		{"/api/sprints/999/defectos", sprint.ErrSprintNotFound},
-		{"/api/sprints/0/defectos", sprint.ErrSprintNotFound},
-		{"/api/sprints/-1/defectos?estado=ABIERTO", sprint.ErrSprintNotFound},
+		{"/api/sprints/" + neverAssignedUUID + "/defectos", sprint.ErrSprintNotFound},
+		{"/api/sprints/" + nilUUID + "/defectos", sprint.ErrSprintNotFound},
+		{"/api/sprints/" + neverAssignedUUID + "/defectos?estado=ABIERTO", sprint.ErrSprintNotFound},
 	}
 	for _, c := range cases {
 		t.Run(c.path, func(t *testing.T) {

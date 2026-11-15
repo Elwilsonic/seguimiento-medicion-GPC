@@ -357,7 +357,7 @@ func TestInterfaz_FormularioDeDefecto(t *testing.T) {
 		"<h2>Defectos</h2>",
 		`id="form-registrar-defecto"`,
 		"Registrar defecto",
-		`name="sprint_deteccion_id" type="number" min="1" required`,
+		`name="sprint_deteccion_id" type="text"`,
 		`id="msg-defectos"`,
 	} {
 		if !strings.Contains(page, want) {
@@ -452,9 +452,9 @@ func TestInterfaz_FormularioCambiarEstadoDeDefecto(t *testing.T) {
 	}
 	for _, want := range []string{
 		"Cambiar estado de defecto",
-		`name="defecto_id" type="number" min="1" required`,
+		`name="defecto_id" type="text"`,
 		`<select name="estado" required></select>`,
-		`name="sprint_resolucion_id" type="number" min="1" placeholder`,
+		`name="sprint_resolucion_id" type="text"`,
 	} {
 		if !strings.Contains(formulario, want) {
 			t.Errorf("el formulario para cambiar el estado no contiene %q", want)
@@ -644,7 +644,7 @@ func TestInterfaz_FormularioDeConsultaDeEsfuerzos(t *testing.T) {
 		"Consultar esfuerzos",
 		`<option value="sprint">Sprint</option>`,
 		`<option value="item">Historia</option>`,
-		`name="referencia" type="number" min="1"`,
+		`name="referencia" type="text"`,
 		`id="esfuerzos"`,
 		`id="total-esfuerzos"`,
 		`id="msg-esfuerzos"`,

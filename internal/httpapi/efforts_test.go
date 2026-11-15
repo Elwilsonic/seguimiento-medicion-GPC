@@ -22,10 +22,12 @@ import (
 // expone el registro por HTTP. Hay un caso exitoso y un test por cada código de
 // error de la tabla HTTP de la SDD (400, 404, 409, 413 y 500).
 
+// HU-52, CA-52.3: el esfuerzo, su sprint y su ítem se identifican con su
+// UUID, como texto.
 type effortJSON struct {
-	ID         int     `json:"id"`
-	SprintID   int     `json:"sprint_id"`
-	ItemID     int     `json:"item_id"`
+	ID         string  `json:"id"`
+	SprintID   string  `json:"sprint_id"`
+	ItemID     string  `json:"item_id"`
 	Integrante string  `json:"integrante"`
 	Fecha      string  `json:"fecha"`
 	Actividad  string  `json:"actividad"`
@@ -45,6 +47,7 @@ func newHandlerWithEffort(t *testing.T) http.Handler {
 	return h
 }
 
+// HU-52, CA-52.3: el id es un UUID, y el sprint y el ítem son sus UUID.
 // HU-26 · CA-26.11 · Verifica que POST /api/sprints/{id}/items/{itemId}/esfuerzos responda 201 con el esfuerzo registrado.
 func TestRegistrarEsfuerzo_Devuelve201ConElEsfuerzo(t *testing.T) {
 	h := newHandlerWithEffort(t)
@@ -54,7 +57,8 @@ func TestRegistrarEsfuerzo_Devuelve201ConElEsfuerzo(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got effortJSON
 	decode(t, rec, &got)
-	want := effortJSON{ID: 1, SprintID: 1, ItemID: 1, Integrante: "García Santiago",
+	expectUUIDv4(t, "id", got.ID)
+	want := effortJSON{ID: got.ID, SprintID: apiID(t, h, kindSprint, 1), ItemID: apiID(t, h, kindItem, 1), Integrante: "García Santiago",
 		Fecha: "2026-10-24", Actividad: "Implementar el registro", Horas: 2.5}
 	if got != want {
 		t.Errorf("esfuerzo = %+v, se esperaba %+v", got, want)
@@ -154,31 +158,35 @@ func TestRegistrarEsfuerzo_HorasNoNumericasDevuelven400(t *testing.T) {
 	expectStatus(t, rec, http.StatusBadRequest)
 }
 
-// HU-26 · CA-26.11 · Verifica que un {id} o {itemId} no numérico responda 400.
+// HU-52, CA-52.4: el {id} del sprint y el {itemId} son UUID, cada uno con el
+// mensaje de su entidad.
+// HU-26 · CA-26.11 · Verifica que un {id} o {itemId} que no es un UUID responda 400.
 func TestRegistrarEsfuerzo_IDNoNumericoDevuelve400(t *testing.T) {
-	cases := map[string]string{
-		"sprint": "/api/sprints/abc/items/1/esfuerzos",
-		"ítem":   "/api/sprints/1/items/abc/esfuerzos",
+	cases := map[string]struct{ path, want string }{
+		"sprint": {"/api/sprints/abc/items/1/esfuerzos", "el id del sprint debe ser un UUID"},
+		"ítem":   {"/api/sprints/1/items/abc/esfuerzos", "el id del ítem debe ser un UUID"},
 	}
-	for name, path := range cases {
+	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			h := newHandlerWithEffort(t)
 
-			rec := do(t, h, http.MethodPost, path, validEffort)
+			rec := do(t, h, http.MethodPost, tc.path, validEffort)
 
-			expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+			expectError(t, rec, http.StatusBadRequest, tc.want)
 		})
 	}
 }
 
+// HU-52, CA-52.4: un sprint o un ítem inexistentes son UUID que nunca se
+// asignaron.
 // HU-26 · CA-26.4 · Verifica que un sprint o un ítem inexistente responda 404.
 func TestRegistrarEsfuerzo_InexistenteDevuelve404(t *testing.T) {
 	cases := map[string]struct {
 		path string
 		want error
 	}{
-		"sprint inexistente": {"/api/sprints/999/items/1/esfuerzos", sprint.ErrSprintNotFound},
-		"ítem inexistente":   {"/api/sprints/1/items/999/esfuerzos", backlog.ErrItemNotFound},
+		"sprint inexistente": {"/api/sprints/" + neverAssignedUUID + "/items/1/esfuerzos", sprint.ErrSprintNotFound},
+		"ítem inexistente":   {"/api/sprints/1/items/" + neverAssignedUUID + "/esfuerzos", backlog.ErrItemNotFound},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -210,6 +218,8 @@ func TestRegistrarEsfuerzo_ItemSinSprintDevuelve409(t *testing.T) {
 	expectError(t, rec, http.StatusConflict, sprint.ErrItemNotAssignedToSprint.Error())
 }
 
+// HU-52, CA-52.1: el id ya no dice cuántos esfuerzos hay, así que se cuenta
+// con la lista del sprint.
 // HU-26 · CA-26.11 · Verifica que un cuerpo de más de 1 MiB responda 413.
 func TestRegistrarEsfuerzo_CuerpoMayorA1MiBDa413(t *testing.T) {
 	h := newHandlerWithEffort(t)
@@ -219,13 +229,15 @@ func TestRegistrarEsfuerzo_CuerpoMayorA1MiBDa413(t *testing.T) {
 
 	expectError(t, rec, http.StatusRequestEntityTooLarge, "el cuerpo del pedido supera el tamaño máximo de 1 MiB")
 
-	// El cuerpo rechazado no se procesó: el siguiente registro recibe el ID 1.
-	rec = do(t, h, http.MethodPost, effortsPath, validEffort)
-	expectStatus(t, rec, http.StatusCreated)
-	var got effortJSON
-	decode(t, rec, &got)
-	if got.ID != 1 {
-		t.Errorf("ID = %d, se esperaba 1", got.ID)
+	// El cuerpo rechazado no se procesó: después del siguiente registro, el
+	// sprint tiene un solo esfuerzo.
+	expectStatus(t, do(t, h, http.MethodPost, effortsPath, validEffort), http.StatusCreated)
+	list := do(t, h, http.MethodGet, "/api/sprints/1/esfuerzos", "")
+	expectStatus(t, list, http.StatusOK)
+	var got effortListJSON
+	decode(t, list, &got)
+	if len(got.Esfuerzos) != 1 {
+		t.Errorf("esfuerzos del sprint = %d, se esperaba 1", len(got.Esfuerzos))
 	}
 }
 
