@@ -38,7 +38,94 @@ La base no cambia rutas ni salidas de la API: los helpers y el resolvedor quedan
 
 ### Ítems e integrantes (Cardozo Leandro)
 
-Pendiente de su responsable.
+**25 tests nuevos (funciones `Test`), 2 runners de godog y 31 escenarios BDD** (17 de ítems y 14 de integrantes), en la rama `feature/HU-52-uuid-items-integrantes`, desde la base y con la rama de integración traída en `bebcfc4`. Se reparten así:
+
+- 11 de ítems en `internal/httpapi/items_uuid_test.go`, 10 de integrantes en `internal/httpapi/members_uuid_test.go`, 3 de la interfaz en `internal/httpapi/items_members_uuid_web_test.go` y 1 del helper de rutas de los tests en `internal/httpapi/entity_ids_helper_test.go` (segunda desviación de la base);
+- los runners `TestFeatures_HU52Items` y `TestFeatures_HU52Integrantes` en `internal/httpapi/items_members_uuid_features_test.go`, sobre `features/HU-52-items.feature` y `features/HU-52-integrantes.feature`, a nivel de la API.
+
+Cada test lleva `// HU-52 · CA-52.N · Verifica que …`, y cada runner `// HU-52 · BDD · Verifica que …` (contados con `grep`: CA-52.1, 2; CA-52.2, 2; CA-52.3, 8; CA-52.4, 10; CA-52.6, 3). La correspondencia con los escenarios no es 1 a 1, y los tests de esta parte prueban solo las 5 rutas de su fila en D3 (`GET` y `PUT /api/items/{id}`, `PATCH …/estado` y `…/story-points`, y `PUT /api/integrantes/{id}`), más la creación y la lista del backlog y de los integrantes. Los 1000 identificadores (CA-52.2), PostgreSQL (CA-52.5) y la concurrencia (CA-52.7) los cubre la base.
+
+#### Criterio → test → código
+
+| Criterio | Escenarios BDD | Tests de Go (archivo) | Código que lo implementa (función y archivo) |
+|---|---|---|---|
+| CA-52.1 Al crear un ítem o registrar un integrante, su id es un UUID v4 | "Crear un ítem le asigna un UUID versión 4", "El primer ítem no es el 1", "Registrar un integrante le asigna un UUID versión 4" y "El primer integrante no es el 1" (runners [`TestFeatures_HU52Items`](../../internal/httpapi/items_members_uuid_features_test.go#L21) y [`TestFeatures_HU52Integrantes`](../../internal/httpapi/items_members_uuid_features_test.go#L26)) | [`TestCrearItem_IDEsUUIDVersion4`](../../internal/httpapi/items_uuid_test.go#L131) (`internal/httpapi/items_uuid_test.go`); [`TestRegistrarIntegrante_IDEsUUIDVersion4`](../../internal/httpapi/members_uuid_test.go#L86) (`internal/httpapi/members_uuid_test.go`) | [`toItemResponse`](../../internal/httpapi/items.go#L212) y [`server.createItem`](../../internal/httpapi/items.go#L52) ([`internal/httpapi/items.go`](../../internal/httpapi/items.go)); [`server.registerMember`](../../internal/httpapi/members.go#L27) ([`internal/httpapi/members.go`](../../internal/httpapi/members.go)) |
+| CA-52.2 Dos ítems o dos integrantes no tienen el mismo id | "El backlog identifica cada ítem con su UUID" y "La lista identifica cada integrante con su UUID" | [`TestCrearItem_DosItemsTienenUUIDDistintos`](../../internal/httpapi/items_uuid_test.go#L148); [`TestRegistrarIntegrante_DosIntegrantesTienenUUIDDistintos`](../../internal/httpapi/members_uuid_test.go#L98) | Las mismas de CA-52.1, con el `PublicID` que genera la base |
+| CA-52.3 Las 5 rutas aceptan el UUID (también en mayúsculas) y ninguna respuesta de ítem o integrante expone el entero; un ítem sin sprint responde `""`, y con sprint, el UUID del sprint | "Consultar un ítem por su UUID", "El UUID del ítem se acepta en mayúsculas", "Modificar, cambiar el estado y estimar un ítem por su UUID", "El backlog identifica cada ítem con su UUID y un ítem sin sprint con \"\"", "Modificar un integrante por su UUID", "El UUID del integrante se acepta en mayúsculas", "La lista identifica cada integrante con su UUID" y "Consultar un integrante por su UUID sigue sin estar permitido" | [`TestRutasDeItem_AceptanElUUID`](../../internal/httpapi/items_uuid_test.go#L161), [`TestRutasDeItem_AceptanElUUIDEnMayusculas`](../../internal/httpapi/items_uuid_test.go#L178), [`TestRespuestasDeItem_NoExponenElIDEntero`](../../internal/httpapi/items_uuid_test.go#L283) y [`TestConsultarItem_SprintIDEsElUUIDDelSprint`](../../internal/httpapi/items_uuid_test.go#L319) (`internal/httpapi/items_uuid_test.go`); [`TestModificarIntegrante_AceptaElUUID`](../../internal/httpapi/members_uuid_test.go#L110), [`TestModificarIntegrante_AceptaElUUIDEnMayusculas`](../../internal/httpapi/members_uuid_test.go#L123) y [`TestListarIntegrantes_IdentificaCadaIntegranteConSuUUID`](../../internal/httpapi/members_uuid_test.go#L185) (`internal/httpapi/members_uuid_test.go`); [`TestWithEntityIDs_FueraDeLaTablaTraduceElUUIDAlEntero`](../../internal/httpapi/entity_ids_helper_test.go#L73) (`internal/httpapi/entity_ids_helper_test.go`, el helper de los tests) | [`server.getItem`](../../internal/httpapi/items.go#L99), [`server.updateItem`](../../internal/httpapi/items.go#L114), [`server.changeItemStatus`](../../internal/httpapi/items.go#L134), [`server.assignStoryPoints`](../../internal/httpapi/items.go#L154), [`server.listItems`](../../internal/httpapi/items.go#L74) y [`toItemResponse`](../../internal/httpapi/items.go#L212) ([`internal/httpapi/items.go`](../../internal/httpapi/items.go)); [`server.updateMember`](../../internal/httpapi/members_update.go#L9) ([`internal/httpapi/members_update.go`](../../internal/httpapi/members_update.go)); [`server.listMembers`](../../internal/httpapi/members_list.go#L9) ([`internal/httpapi/members_list.go`](../../internal/httpapi/members_list.go)); en los tests, [`withEntityIDs`](../../internal/httpapi/entity_ids_test.go#L184) ([`internal/httpapi/entity_ids_test.go`](../../internal/httpapi/entity_ids_test.go)) |
+| CA-52.4 Un id que no es un UUID responde 400 con el mensaje del ítem o del integrante; un UUID inexistente o el nulo, 404; se conserva el orden de errores de HU-07 y HU-16 | "Un ID numérico de ítem se rechaza en cada ruta" (4 ejemplos), "Otras formas del UUID del ítem se rechazan" (3), "Un UUID que no corresponde a ningún ítem", "El UUID nulo no corresponde a ningún ítem", "El ID del ítem se valida antes que el cuerpo", "Con un UUID inexistente se conserva el orden de errores de HU-07", y los mismos 6 casos de integrantes (HU-16) | [`TestRutasDeItem_IDNumericoDevuelve400`](../../internal/httpapi/items_uuid_test.go#L195), [`TestRutasDeItem_OtrasFormasDelUUIDDevuelven400`](../../internal/httpapi/items_uuid_test.go#L207), [`TestRutasDeItem_UUIDInexistenteDevuelve404`](../../internal/httpapi/items_uuid_test.go#L219), [`TestOrdenDeErroresItem_IDInvalidoAntesQueElCuerpo`](../../internal/httpapi/items_uuid_test.go#L231) y [`TestOrdenDeErroresItem_UUIDInexistenteConservaElOrden`](../../internal/httpapi/items_uuid_test.go#L244) (`internal/httpapi/items_uuid_test.go`); [`TestModificarIntegrante_IDNumericoDevuelve400`](../../internal/httpapi/members_uuid_test.go#L136), [`TestModificarIntegrante_OtrasFormasDelUUIDDevuelven400`](../../internal/httpapi/members_uuid_test.go#L146), [`TestModificarIntegrante_UUIDInexistenteDevuelve404`](../../internal/httpapi/members_uuid_test.go#L157), [`TestOrdenDeErroresIntegrante_IDInvalidoAntesQueElCuerpo`](../../internal/httpapi/members_uuid_test.go#L167) y [`TestOrdenDeErroresIntegrante_UUIDInexistenteConservaElOrden`](../../internal/httpapi/members_uuid_test.go#L176) (`internal/httpapi/members_uuid_test.go`) | Los handlers de CA-52.3, que leen el `{id}` con `itemIDFromPath` y `memberIDFromPath` de la base antes del cuerpo; el centinela `missingInternalID` de la base, que deja la inexistencia en el mismo punto del `Manager` |
+| CA-52.6 La interfaz usa el id como texto: «ID del integrante» acepta el UUID, y el backlog y las historias de los reportes muestran "—" para un ítem sin sprint (`""`) | — | [`TestInterfaz_IDDelIntegranteAceptaElUUIDComoTexto`](../../internal/httpapi/items_members_uuid_web_test.go#L32), [`TestInterfaz_BacklogMuestraSinSprintConElTextoVacio`](../../internal/httpapi/items_members_uuid_web_test.go#L48) y [`TestInterfaz_NoConvierteLosIDsDeItemsEIntegrantesANumero`](../../internal/httpapi/items_members_uuid_web_test.go#L60) (`internal/httpapi/items_members_uuid_web_test.go`); la aserción de `filaHistoriaReporte` en `web_test.go` | El campo `id` de `form-modificar-integrante` en [`internal/web/index.html`](../../internal/web/index.html); `filaItem` y `filaHistoriaReporte` en [`internal/web/app.js`](../../internal/web/app.js) |
+
+#### Tests existentes adaptados
+
+En el RED (`2350f63`), para ítems e integrantes:
+
+- `items_test.go`: las comparaciones del `id` con un número pasan a `itemRef(t, h, n)`, el `sprint_id` de un ítem sin asignar pasa de `"0"` a `""` (D7), los 4 casos de "inexistente" con `999` pasan a un UUID que no existe, el 400 de `…/story-points` espera "el id del ítem debe ser un UUID", y el 500 por error del repositorio usa un UUID.
+- `server_test.go`: las 2 comparaciones del `id` de los ítems usan `itemRef`; la tabla de `TestRutasConID_IDNoNumericoDevuelve400` suma `uuidErrorByCase`, con un bloque por responsable y los 4 casos de esta parte; la fila "modificar integrante" de los cuerpos usa un UUID.
+- Los 7 JSON de integrantes con el id escrito a mano (`members_test.go:61`, `members_update_test.go:42`, `63` y `138`, `members_list_test.go:40` y `41`, y la fila "registrar integrante" de `server_test.go`) usan `jsonMemberID(t, h, n)`. Como el `"id":1` probaba que no se había guardado nada antes y con UUID el id ya no cuenta los registros, `expectOnlyOneMember` verifica con la lista que hay un solo integrante.
+- `members_update_test.go`: el caso de inexistente pasa de 999, 0 y -1 a un UUID inexistente y al nulo (el 0 y el negativo ya no son un UUID y dan 400), y el 500 usa un UUID.
+
+**Cambios de comportamiento de HU-51** (cierran la parte de ítems e integrantes del pendiente R1 de HU-51):
+
+- `TestRutasDeOtrasEntidades_ConservanElIDEntero` (`projects_uuid_test.go`): las filas de ítems e integrantes esperan su mensaje de UUID. Después de traer la rama de integración, las 2 filas de sprints esperan "el id del sprint debe ser un UUID" (la parte de Buttini Cristobal), y queda una fila de García Santiago que todavía lee un entero, `GET /api/items/abc/esfuerzos`, con el comentario de que García la cambia en su GREEN. Antes de fijarla se comprobó con una corrida que responde 400 con "el id debe ser un número entero".
+- `TestRespuestas_IdentificanElProyectoConSuUUID` (`projects_uuid_test.go`): usa `do()` en lugar de `serveRaw`, así que `/api/items/1` y `/api/integrantes/1` se traducen al UUID.
+- `features/HU-51-identificadores-uuid.feature`, **línea 86**: "Un ítem consultado por su propio ID" pide `/api/items/{ítem}`, y el paso guarda el id que devolvió la API (`uuid_features_test.go`).
+- `features/HU-51-identificadores-uuid.feature`, **línea 144**: "Las demás entidades conservan su ID entero" pasó de `/api/items/abc` a `/api/sprints/abc/metricas` en el RED, y al traer la rama de integración a `/api/items/abc/esfuerzos` (García), con la nota en el comentario del escenario. El mensaje de la línea 146 queda igual.
+
+**Tests de otros responsables que se tocaron**, por la segunda desviación de la base (ver más abajo) o al traer la rama de integración:
+
+| Archivo (responsable) | Qué cambió | Motivo |
+|---|---|---|
+| `sprints_test.go` (Buttini Cristobal), líneas 124, 204 y 281 | El `id` del ítem se compara con `itemRef`; en la 124, al resolver el conflicto del merge, queda la versión de Buttini: el `sprint_id` contra `sprintRef(t, h, 1)` | El `id` del ítem pasa a ser UUID; con los sprints en UUID, el `sprint_id` se compara con el UUID real del sprint |
+| `reports_test.go` (base, HU-38 y HU-49) | `idInt` pasa a `itemNumber` en la lista de historias, y el contrato del reporte del proyecto arma el `id` y el `sprint_id` de cada historia con `jsonItemID` y `jsonItemSprintID` | El `id` de cada historia pasa a ser UUID |
+| `sprint_reports_test.go` (Buttini Cristobal, HU-39) | El contrato del reporte del sprint arma el `id` y el `sprint_id` de cada historia con `jsonItemID` y `jsonItemSprintID` | Igual que en el reporte del proyecto |
+| `web_test.go` (HU-49) | La aserción de `filaHistoriaReporte` compara `h.sprint_id` con `""` | Las historias de los reportes salen de `toItemResponse`, así que "sin sprint" pasa de `0` a `""` (D7) |
+| `projects_uuid_test.go` y `features/HU-51-identificadores-uuid.feature` (HU-51) | Lo descrito en "Cambios de comportamiento de HU-51" | Ítems, integrantes y sprints ya no tienen ID entero |
+
+Al traer la rama de integración también se resolvió que `itemRef` estaba declarada dos veces (en `items_uuid_test.go` y en `sprints_uuid_test.go`, de Buttini, con la misma firma): se borró la de `items_uuid_test.go` y se usa la de Buttini, sin tocar su archivo.
+
+**Limitación de `jsonItemSprintID`.** Los contratos de los reportes leen el `sprint_id` esperado de cada historia con `GET /api/items/{id}`, así que lo comparan contra la propia API. Que sea el UUID correcto del sprint lo verifica, contra el dominio, [`TestConsultarItem_SprintIDEsElUUIDDelSprint`](../../internal/httpapi/items_uuid_test.go#L319).
+
+#### Commits
+
+| Fase | Commit | Mensaje |
+|---|---|---|
+| RED | 2350f63 | `test(HU-52): agregar tests de ítems e integrantes (RED)` |
+| GREEN | ca39108 | `feat(HU-52): identificar los ítems y los integrantes con un UUID público (GREEN)` |
+| Merge de la rama de integración (con sprints y Planning Poker, PR #204) | bebcfc4 | `Merge remote-tracking branch 'origin/feature/HU-52-uuid-entidades' into feature/HU-52-uuid-items-integrantes` |
+| Refactor | — | No hubo refactor |
+
+#### RED (`2350f63`)
+
+`go test -count=1 -p 1 ./...` en memoria: 14 paquetes en ok y solo `internal/httpapi` en FAIL, con 42 tests de primer nivel que fallan, todos de ítems e integrantes y por aserción, sin panics ni SKIP. Los escenarios fallan 17 de 17 en ítems y 13 de 14 en integrantes (el que pasa es el 405 de `GET /api/integrantes/{id}`, que ya funcionaba). El `-update` de los links cambió 34 líneas en 8 evidencias, solo números de línea.
+
+#### GREEN (`ca39108`) y merge (`bebcfc4`)
+
+Con el GREEN, antes de traer la rama de integración, `internal/httpapi` dio 779 PASS, 0 FAIL y 0 SKIP. Después del merge (`bebcfc4`), corrido el 15/11/2026:
+
+| Corrida | `internal/httpapi` | Resto |
+|---|---|---|
+| En memoria (`go test -count=1 -p 1 -v ./internal/httpapi/`) | 800 PASS, 13 FAIL, 0 SKIP | `go test -count=1 -p 1 ./...`: los otros 14 paquetes en ok |
+| Con PostgreSQL (`TEST_DATABASE_URL='postgres://gpc:gpc_dev@localhost:5433/gpc_test?sslmode=disable' go test -count=1 -p 1 -v ./...`) | 800 PASS, 13 FAIL, 0 SKIP | 0 FAIL y 0 SKIP en los otros 14 paquetes: `internal/postgres` 2 PASS, `internal/postgrestest` 15 PASS, y pasan los tests de `postgres_repository_test.go` de `backlog` (3), `member` (3), `project` (9), `defect` (10), `effort` (7) y `poker` (2) |
+
+Los escenarios de esta parte pasan todos: 17 de 17 en ítems (94 pasos) y 14 de 14 en integrantes (70 pasos). `gofmt -l .` sin salida, `go vet ./...` sin errores y `openspec validate hu-52-identificadores-uuid-entidades --strict` válido. La base local se recreó con `docker compose down -v` y `docker compose up -d --wait` (D8), y se comprobó que `backlog_items` de `gpc_test` tiene `public_id` de tipo `uuid`.
+
+**Los 13 fallos que quedan dependen de la parte de García Santiago** (defectos y esfuerzos). Todos responden 400, "el cuerpo del pedido no es un JSON válido", al registrar el defecto en los helpers de los ejemplos de TEC-03: el cuerpo lleva `"sprint_deteccion_id":%s` con el `id` del sprint, que ahora es un UUID sin comillas (el comentario "García: cuando sprint pase a UUID, este id va entre comillas" lo anticipa), y `defects.go` todavía lee un entero.
+
+| Archivo | Tests |
+|---|---|
+| `metrics_test.go` | [`TestConsultaMetricas_ContratoDelSprint`](../../internal/httpapi/metrics_test.go#L634), [`TestConsultaMetricas_ContratoDelProyecto`](../../internal/httpapi/metrics_test.go#L660), [`TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto`](../../internal/httpapi/metrics_test.go#L833) |
+| `report_pdf_test.go` | [`TestReportePDF_Devuelve200ConElArchivo`](../../internal/httpapi/report_pdf_test.go#L54), [`TestReportePDF_TieneLosMismosValoresQueElReporteJSON`](../../internal/httpapi/report_pdf_test.go#L93) |
+| `reports_test.go` | [`TestReporteProyecto_ContratoDelEjemploDeTEC03`](../../internal/httpapi/reports_test.go#L85), [`TestReporteProyecto_CadaParteEsIgualASuEndpoint`](../../internal/httpapi/reports_test.go#L255), [`TestReporteProyecto_CadaHistoriaEsIgualASuConsultaEnElBacklog`](../../internal/httpapi/reports_test.go#L399), [`TestReporteProyecto_FallaLaLecturaDeLasHistoriasDevuelve500`](../../internal/httpapi/reports_test.go#L457) |
+| `sprint_reports_test.go` | [`TestReporteSprint_ContratoDelEjemploDeTEC03`](../../internal/httpapi/sprint_reports_test.go#L76), [`TestReporteSprint_CadaParteEsIgualASuEndpoint`](../../internal/httpapi/sprint_reports_test.go#L223), [`TestReporteSprint_CadaHistoriaEsIgualASuConsultaEnElBacklog`](../../internal/httpapi/sprint_reports_test.go#L360), [`TestReporteSprint_FallaLaLecturaDeLasHistoriasDevuelve500`](../../internal/httpapi/sprint_reports_test.go#L375) |
+
+Como referencia, la rama de integración sola (`041889c`, copiada con `git archive`) dio en `internal/httpapi` 637 PASS, 119 FAIL y 0 SKIP, porque las rutas de sprints y Planning Poker necesitaban los ítems en UUID.
+
+**Discrepancia de puerto.** `docker-compose.yml` publica la base en `127.0.0.1:${POSTGRES_PORT:-5433}` y no hay `.env`, así que el puerto es 5433, como dice el README. `tasks.md` (comandos de cierre) dice 5434. Se usó 5433, y `tasks.md` no se corrigió.
+
+**No verificado:**
+
+- En el navegador: que el campo «ID del integrante» acepte el UUID como texto y que el backlog muestre "—" para un ítem sin sprint. Lo cubren solo los tests del contenido de `index.html` y `app.js`, sin un motor de JavaScript.
+- `-race` (CA-52.7): en Windows no anda; lo corre la CI.
 
 ### Sprints y Planning Poker (Buttini Cristobal)
 
