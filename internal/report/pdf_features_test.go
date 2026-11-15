@@ -179,20 +179,27 @@ func (s *pdfScenario) containsAll(texts []string) error {
 	if err != nil {
 		return err
 	}
+	content := pdfContent(pdf)
 	for _, text := range texts {
-		if !bytes.Contains(pdf, pdfText(text)) {
+		if !bytes.Contains(content, pdfText(text)) {
 			return fmt.Errorf("el PDF no contiene %q", text)
 		}
 	}
 	return nil
 }
 
+// pdfContainsLines verifica las líneas de la tabla, con los marcadores de
+// los IDs reemplazados por sus UUID (HU-52, CA-52.3).
 func (s *pdfScenario) pdfContainsLines(table *godog.Table) error {
-	texts := make([]string, 0, len(table.Rows))
-	for _, row := range table.Rows {
-		texts = append(texts, row.Cells[0].Value)
+	rep, err := s.env.reports.Project(s.projectID)
+	if err != nil {
+		return err
 	}
-	return s.containsAll(texts)
+	lines := make([]pdfLine, 0, len(table.Rows))
+	for _, row := range table.Rows {
+		lines = append(lines, pdfLine{Text: row.Cells[0].Value})
+	}
+	return s.containsAll(texts(withPublicIDs(rep, lines)))
 }
 
 // pdfContainsEveryLine verifica que el PDF tiene cada línea del contenido del

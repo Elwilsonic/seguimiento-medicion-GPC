@@ -316,10 +316,12 @@ func (s *storiesScenario) pdfSectionIs(table *godog.Table) error {
 	if end == len(lines) || lines[end].Text != "Esfuerzos" || !followsHeading(lines, start, "Métricas") {
 		return fmt.Errorf("la sección \"Historias\" no está entre \"Métricas\" y \"Esfuerzos\": títulos %v", headings)
 	}
-	var want []string
+	var rows []pdfLine
 	for _, row := range table.Rows[1:] {
-		want = append(want, row.Cells[0].Value)
+		rows = append(rows, pdfLine{Text: row.Cells[0].Value})
 	}
+	// HU-52 (CA-52.3): los marcadores de los IDs se reemplazan por sus UUID.
+	want := texts(withPublicIDs(s.projectReport, rows))
 	if !reflect.DeepEqual(have, want) {
 		return fmt.Errorf("sección \"Historias\" = %q, se esperaba %q", have, want)
 	}

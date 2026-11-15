@@ -90,8 +90,8 @@ Característica: HU-49 Ver las historias y sus estimaciones en el reporte
     Cuando genero el reporte del proyecto "Sistema de ventas"
     Entonces la sección "Historias" del PDF del reporte, entre "Métricas" y "Esfuerzos", es:
       | linea                                                                                  |
-      | #1 · Registrar venta · ALTA · TERMINADO · 3 SP · 8.0 h estimadas · sprint 1            |
-      | #2 · Consultar stock · MEDIA · PENDIENTE · sin estimar · sin horas estimadas · sin sprint |
+      | #{historia1} · Registrar venta · ALTA · TERMINADO · 3 SP · 8.0 h estimadas · sprint {sprint1} |
+      | #{historia2} · Consultar stock · MEDIA · PENDIENTE · sin estimar · sin horas estimadas · sin sprint |
       | Cantidad: 2 historia(s), 1 completada(s)                                               |
 
   Escenario: Si falla la lectura de las historias del proyecto, no hay reporte parcial (CA-49.5)

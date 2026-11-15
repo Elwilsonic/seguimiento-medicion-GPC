@@ -73,12 +73,18 @@ func TestReportePDF_Devuelve200ConElArchivo(t *testing.T) {
 	expectPDFHas(t, pdf,
 		"Reporte del proyecto «Software Metrics»",
 		"Inicio: 2026-10-05",
-		"#3 · 2026-10-08 · Ana · Pruebas · ítem 3 · sprint 1 · 3 h",
-		// La línea del defecto sigue en la línea siguiente porque es más larga
-		// que el ancho de la página: se verifica su comienzo.
-		"#1 · ALTA · RESUELTO · ítem 1 · detectado en sprint 1",
+		// HU-52: las líneas de esfuerzos y defectos empiezan con el UUID y
+		// siguen en la línea siguiente: se verifica el comienzo de su texto.
+		" · 2026-10-08 · Ana · Pruebas · ",
+		" · ALTA · RESUELTO · ",
 		"Integrantes que registraron esfuerzo: Ana, Luis",
 	)
+	// HU-52 (CA-52.3): ya no aparecen los IDs enteros.
+	for _, old := range []string{"#3 · 2026-10-08", "#1 · ALTA", "ítem 1 ·", "sprint 1 ·"} {
+		if bytes.Contains(pdf, pdfBytes(old)) {
+			t.Errorf("el PDF todavía muestra el ID entero en %q", old)
+		}
+	}
 }
 
 // HU-40 · CA-40.3 · Verifica que los valores del PDF sean los mismos que los del reporte en JSON de HU-38, con el mismo redondeo.

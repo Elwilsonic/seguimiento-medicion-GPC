@@ -20,9 +20,9 @@ Característica: HU-40 Exportar un reporte a un archivo PDF
       | Velocidad: 8.0 SP por sprint (1 sprint(s) cerrado(s)).                                  |
       | Historias completadas: 50.0 % (2 de 4).                                                 |
       | Desviación: 0.0 h (0.0 %).                                                              |
-      | #1 · 2026-10-06 · Ana · Desarrollo · ítem 1 · sprint 1 · 12 h                           |
+      | #{esfuerzo1} · 2026-10-06 · Ana · Desarrollo · ítem {historia1} · sprint {sprint1} · 12 h |
       | Total: 20.0 horas                                                                       |
-      | #1 · ALTA · RESUELTO · ítem 1 · detectado en sprint 1 · resuelto en sprint 1 · Defecto |
+      | #{defecto1} · ALTA · RESUELTO · ítem {historia1} · detectado en sprint {sprint1} · resuelto en sprint {sprint1} · Defecto |
       | Integrantes que registraron esfuerzo: Ana, Luis                                         |
     Y el PDF contiene cada línea del reporte del proyecto
 

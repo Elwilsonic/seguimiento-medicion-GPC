@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -22,7 +24,9 @@ import (
 // en los bytes del PDF, que se escribe sin comprimir (decisión 6 de la SDD).
 
 // tec03Lines son las 24 líneas del ejemplo de TEC-03 de la SDD, más las 6 de
-// la sección "Historias" de HU-49 (CA-49.6).
+// la sección "Historias" de HU-49. Los IDs van como marcadores ({historia1},
+// {sprint1}, {esfuerzo1}, {defecto1}…) que withPublicIDs reemplaza por los UUID
+// del reporte (CA-49.6 y HU-52, CA-52.3).
 var tec03Lines = []pdfLine{
 	{Text: "Reporte del proyecto «Software Metrics»", Heading: true},
 	{Text: "Proyecto", Heading: true},
@@ -39,18 +43,18 @@ var tec03Lines = []pdfLine{
 	{Text: "Desviación: 0.0 h (0.0 %)."},
 	{Text: "Defectos: 1 detectados, 1 resuelto(s)."},
 	{Text: "Historias", Heading: true},
-	{Text: "#1 · A · MEDIA · TERMINADO · 5 SP · 10.0 h estimadas · sprint 1"},
-	{Text: "#2 · B · MEDIA · TERMINADO · 3 SP · 6.0 h estimadas · sprint 1"},
-	{Text: "#3 · C · MEDIA · EN_CURSO · 2 SP · sin horas estimadas · sprint 1"},
-	{Text: "#4 · D · MEDIA · PENDIENTE · sin estimar · 4.0 h estimadas · sprint 1"},
+	{Text: "#{historia1} · A · MEDIA · TERMINADO · 5 SP · 10.0 h estimadas · sprint {sprint1}"},
+	{Text: "#{historia2} · B · MEDIA · TERMINADO · 3 SP · 6.0 h estimadas · sprint {sprint1}"},
+	{Text: "#{historia3} · C · MEDIA · EN_CURSO · 2 SP · sin horas estimadas · sprint {sprint1}"},
+	{Text: "#{historia4} · D · MEDIA · PENDIENTE · sin estimar · 4.0 h estimadas · sprint {sprint1}"},
 	{Text: "Cantidad: 4 historia(s), 2 completada(s)"},
 	{Text: "Esfuerzos", Heading: true},
-	{Text: "#1 · 2026-10-06 · Ana · Desarrollo · ítem 1 · sprint 1 · 12 h"},
-	{Text: "#2 · 2026-10-06 · Luis · Desarrollo · ítem 2 · sprint 1 · 5 h"},
-	{Text: "#3 · 2026-10-06 · Ana · Desarrollo · ítem 3 · sprint 1 · 3 h"},
+	{Text: "#{esfuerzo1} · 2026-10-06 · Ana · Desarrollo · ítem {historia1} · sprint {sprint1} · 12 h"},
+	{Text: "#{esfuerzo2} · 2026-10-06 · Luis · Desarrollo · ítem {historia2} · sprint {sprint1} · 5 h"},
+	{Text: "#{esfuerzo3} · 2026-10-06 · Ana · Desarrollo · ítem {historia3} · sprint {sprint1} · 3 h"},
 	{Text: "Total: 20.0 horas"},
 	{Text: "Defectos", Heading: true},
-	{Text: "#1 · ALTA · RESUELTO · ítem 1 · detectado en sprint 1 · resuelto en sprint 1 · Defecto"},
+	{Text: "#{defecto1} · ALTA · RESUELTO · ítem {historia1} · detectado en sprint {sprint1} · resuelto en sprint {sprint1} · Defecto"},
 	{Text: "Cantidad: 1 defecto(s)"},
 	{Text: "Integrantes", Heading: true},
 	{Text: "Integrantes que registraron esfuerzo: Ana, Luis"},
@@ -123,11 +127,27 @@ func firstBytes(b []byte) []byte {
 	return b
 }
 
+// pdfTextObject es el texto de una línea escrita en el PDF: BT x y Td (…)Tj ET.
+var pdfTextObject = regexp.MustCompile(`Td \(((?:\\.|[^\\)])*)\)Tj`)
+
+// pdfContent devuelve el texto de las líneas del PDF unidas por un espacio.
+// Una línea más larga que el ancho de la página sigue en la siguiente, cortada
+// en un espacio, así que unirlas así devuelve la línea original (HU-52: los
+// UUID alargan las líneas).
+func pdfContent(pdf []byte) []byte {
+	var parts [][]byte
+	for _, m := range pdfTextObject.FindAllSubmatch(pdf, -1) {
+		parts = append(parts, m[1])
+	}
+	return bytes.Join(parts, []byte(" "))
+}
+
 // expectPDFContains falla si el PDF no contiene alguno de los textos.
 func expectPDFContains(t *testing.T, pdf []byte, texts ...string) {
 	t.Helper()
+	content := pdfContent(pdf)
 	for _, text := range texts {
-		if !bytes.Contains(pdf, pdfText(text)) {
+		if !bytes.Contains(content, pdfText(text)) {
 			t.Errorf("el PDF no contiene %q", text)
 		}
 	}
@@ -156,8 +176,51 @@ func TestProjectReportLines_EjemploDeTEC03(t *testing.T) {
 
 	got := projectReportLines(rep)
 
-	if !reflect.DeepEqual(got, tec03Lines) {
-		t.Errorf("líneas =\n%v\nse esperaba\n%v", got, tec03Lines)
+	want := withPublicIDs(rep, tec03Lines)
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("líneas =\n%v\nse esperaba\n%v", got, want)
+	}
+}
+
+// placeholder es un marcador de las líneas esperadas: {historia1}, {sprint2}…
+var placeholder = regexp.MustCompile(`\{(historia|sprint|esfuerzo|defecto)(\d+)\}`)
+
+// withPublicIDs devuelve una copia de lines con cada marcador reemplazado por
+// el UUID de esa entidad en el reporte: {historiaN} es la historia N,
+// {sprintN} el sprint N, {esfuerzoN} el esfuerzo N y {defectoN} el defecto N,
+// en el orden del reporte (HU-52, CA-52.3).
+func withPublicIDs(rep ProjectReport, lines []pdfLine) []pdfLine {
+	out := make([]pdfLine, len(lines))
+	for i, l := range lines {
+		l.Text = placeholder.ReplaceAllStringFunc(l.Text, func(m string) string {
+			g := placeholder.FindStringSubmatch(m)
+			n, _ := strconv.Atoi(g[2])
+			switch g[1] {
+			case "historia":
+				return rep.Stories.Stories[n-1].PublicID.String()
+			case "sprint":
+				return rep.Sprints[n-1].PublicID.String()
+			case "esfuerzo":
+				return rep.Efforts.Efforts[n-1].PublicID.String()
+			default:
+				return rep.Defects.Defects[n-1].PublicID.String()
+			}
+		})
+		out[i] = l
+	}
+	return out
+}
+
+// HU-52 · CA-52.3 · Verifica que el texto del PDF no muestre el ID entero de ninguna historia, esfuerzo, defecto ni sprint.
+func TestProjectReportLines_SinIDsEnteros(t *testing.T) {
+	e := newReportEnv()
+	rep := generate(t, e, e.tec03Project(t))
+	integerID := regexp.MustCompile(`#\d+ ·|ítem \d+ ·|sprint \d+( ·|$)`)
+
+	for _, l := range projectReportLines(rep) {
+		if integerID.MatchString(l.Text) {
+			t.Errorf("la línea %q muestra un ID entero", l.Text)
+		}
 	}
 }
 
@@ -186,14 +249,15 @@ func TestProjectReportLines_HistoriasConYSinEstimacion(t *testing.T) {
 	e.story(t, projectID, "Consultar stock", backlog.PriorityMedium, 0, 0, backlog.StatusPending, 0)
 	e.story(t, projectID, "Emitir factura", backlog.PriorityLow, 0, 2.25, backlog.StatusInProgress, 0)
 
-	got := projectReportLines(generate(t, e, projectID))
+	rep := generate(t, e, projectID)
+	got := projectReportLines(rep)
 
-	expectLines(t, got,
-		"#1 · Registrar venta · ALTA · TERMINADO · 3 SP · 8.0 h estimadas · sprint 1",
-		"#2 · Consultar stock · MEDIA · PENDIENTE · sin estimar · sin horas estimadas · sin sprint",
-		"#3 · Emitir factura · BAJA · EN_CURSO · sin estimar · 2.3 h estimadas · sin sprint",
-		"Cantidad: 3 historia(s), 1 completada(s)",
-	)
+	expectLines(t, got, texts(withPublicIDs(rep, []pdfLine{
+		{Text: "#{historia1} · Registrar venta · ALTA · TERMINADO · 3 SP · 8.0 h estimadas · sprint {sprint1}"},
+		{Text: "#{historia2} · Consultar stock · MEDIA · PENDIENTE · sin estimar · sin horas estimadas · sin sprint"},
+		{Text: "#{historia3} · Emitir factura · BAJA · EN_CURSO · sin estimar · 2.3 h estimadas · sin sprint"},
+		{Text: "Cantidad: 3 historia(s), 1 completada(s)"},
+	}))...)
 }
 
 // HU-40 · CA-40.3 · Verifica que el PDF muestre la fecha de fin del proyecto cuando está registrada.
@@ -209,6 +273,15 @@ func TestProjectReportLines_ConFechaDeFin(t *testing.T) {
 	got := projectReportLines(generate(t, e, projectID))
 
 	expectLines(t, got, "Inicio: 2026-10-05", "Fin: 2026-12-18")
+}
+
+// texts devuelve el texto de cada línea.
+func texts(lines []pdfLine) []string {
+	out := make([]string, len(lines))
+	for i, l := range lines {
+		out[i] = l.Text
+	}
+	return out
 }
 
 // expectLines falla si alguno de los textos no es una línea de lines.
@@ -266,13 +339,14 @@ func TestProjectReportLines_HorasDeCadaEsfuerzoTalCual(t *testing.T) {
 	e.effort(t, s.ID, it.ID, "Ana", 1.5)
 	e.effort(t, s.ID, it.ID, "Luis", 0.25)
 
-	got := projectReportLines(generate(t, e, projectID))
+	rep := generate(t, e, projectID)
+	got := projectReportLines(rep)
 
-	expectLines(t, got,
-		"#1 · 2026-10-06 · Ana · Desarrollo · ítem 1 · sprint 1 · 1.5 h",
-		"#2 · 2026-10-06 · Luis · Desarrollo · ítem 1 · sprint 1 · 0.25 h",
-		"Total: 1.8 horas",
-	)
+	expectLines(t, got, texts(withPublicIDs(rep, []pdfLine{
+		{Text: "#{esfuerzo1} · 2026-10-06 · Ana · Desarrollo · ítem {historia1} · sprint {sprint1} · 1.5 h"},
+		{Text: "#{esfuerzo2} · 2026-10-06 · Luis · Desarrollo · ítem {historia1} · sprint {sprint1} · 0.25 h"},
+		{Text: "Total: 1.8 horas"},
+	}))...)
 }
 
 // HU-40 · CA-40.3 · Verifica que un defecto sin sprint de resolución lo indique en su línea.
@@ -284,12 +358,13 @@ func TestProjectReportLines_DefectoSinSprintDeResolucion(t *testing.T) {
 	it := e.item(t, projectID, "A", 0, 0, backlog.StatusPending, s.ID)
 	e.saveDefect(t, it.ID, s.ID, defect.StatusOpen, 0)
 
-	got := projectReportLines(generate(t, e, projectID))
+	rep := generate(t, e, projectID)
+	got := projectReportLines(rep)
 
-	expectLines(t, got,
-		"#1 · ALTA · ABIERTO · ítem 1 · detectado en sprint 1 · sin sprint de resolución · Defecto",
-		"Cantidad: 1 defecto(s)",
-	)
+	expectLines(t, got, texts(withPublicIDs(rep, []pdfLine{
+		{Text: "#{defecto1} · ALTA · ABIERTO · ítem {historia1} · detectado en sprint {sprint1} · sin sprint de resolución · Defecto"},
+		{Text: "Cantidad: 1 defecto(s)"},
+	}))...)
 }
 
 // HU-40 · CA-40.1 · Verifica que se genere un PDF válido con cada línea del reporte y los títulos en negrita.
@@ -302,10 +377,14 @@ func TestWriteProjectPDF_GeneraUnPDFConCadaLineaDelReporte(t *testing.T) {
 	pdf := writePDF(t, rep)
 
 	expectValidPDF(t, pdf)
-	for _, l := range tec03Lines {
+	for _, l := range withPublicIDs(rep, tec03Lines) {
 		expectPDFContains(t, pdf, l.Text)
 	}
-	expectPDFContains(t, pdf, "/BaseFont /Helvetica-Bold", "/BaseFont /Helvetica")
+	for _, font := range []string{"/BaseFont /Helvetica-Bold", "/BaseFont /Helvetica"} {
+		if !bytes.Contains(pdf, []byte(font)) {
+			t.Errorf("el PDF no usa la fuente %q", font)
+		}
+	}
 }
 
 // HU-40 · CA-40.5 · Verifica que un proyecto sin datos genere un PDF, no un error.
@@ -350,10 +429,11 @@ func TestWriteProjectPDF_TextoLargoYVariasPaginas(t *testing.T) {
 		e.effort(t, s.ID, it.ID, "Ana", 1)
 	}
 
-	pdf := writePDF(t, generate(t, e, projectID))
+	rep := generate(t, e, projectID)
+	pdf := writePDF(t, rep)
 
 	expectValidPDF(t, pdf)
-	expectPDFContains(t, pdf, "Total: 120.0 horas", "#120 · 2026-10-06 · Ana")
+	expectPDFContains(t, pdf, "Total: 120.0 horas", "#"+rep.Efforts.Efforts[119].PublicID.String()+" · 2026-10-06 · Ana")
 	if pages := bytes.Count(pdf, []byte("<</Type /Page\n")); pages < 2 {
 		t.Errorf("el PDF tiene %d página(s), se esperaban al menos 2", pages)
 	}
