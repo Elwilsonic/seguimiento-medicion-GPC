@@ -35,7 +35,9 @@ type datesRequest struct {
 }
 
 type projectResponse struct {
-	ID          int    `json:"id"`
+	// ID es el UUID del proyecto (HU-51, CA-51.3): el ID entero interno no
+	// sale de la API.
+	ID          string `json:"id"`
 	Nombre      string `json:"nombre"`
 	Descripcion string `json:"descripcion"`
 	Estado      string `json:"estado"`
@@ -62,7 +64,7 @@ func (s *server) createProject(w http.ResponseWriter, r *http.Request) {
 
 // HU-03
 func (s *server) getProject(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, _, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -93,7 +95,7 @@ func (s *server) listProjects(w http.ResponseWriter, r *http.Request) {
 
 // HU-02
 func (s *server) updateProject(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, _, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -114,7 +116,7 @@ func (s *server) updateProject(w http.ResponseWriter, r *http.Request) {
 // HU-18. La fecha se lee con el formato de las fechas de los sprints; una
 // fecha vacía o ausente llega al Manager en cero (ErrMissingStartDate).
 func (s *server) setProjectStartDate(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, _, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -140,7 +142,7 @@ func (s *server) setProjectStartDate(w http.ResponseWriter, r *http.Request) {
 // HU-41. Mismo formato que la fecha de inicio; una fecha vacía o ausente
 // llega al Manager en cero (ErrMissingEndDate).
 func (s *server) setProjectEndDate(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, _, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -167,7 +169,7 @@ func (s *server) setProjectEndDate(w http.ResponseWriter, r *http.Request) {
 // orden (primero fecha_inicio); una fecha vacía o ausente llega al Manager en
 // cero (ErrMissingStartDate o ErrMissingEndDate).
 func (s *server) setProjectDates(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, _, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -196,7 +198,7 @@ func (s *server) setProjectDates(w http.ResponseWriter, r *http.Request) {
 }
 
 func toProjectResponse(p project.Project) projectResponse {
-	resp := projectResponse{ID: p.ID, Nombre: p.Name, Descripcion: p.Description, Estado: string(p.Status)}
+	resp := projectResponse{ID: p.PublicID.String(), Nombre: p.Name, Descripcion: p.Description, Estado: string(p.Status)}
 	// El cero no se formatea: saldría 0001-01-01 (RN-18.7).
 	if !p.StartDate.IsZero() {
 		resp.FechaInicio = p.StartDate.Format(dateLayout)

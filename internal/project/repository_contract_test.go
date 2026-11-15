@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 	"time"
+	"uuid"
 )
 
 // TEC-05 · Persistencia con PostgreSQL en Docker (Issue #35)
@@ -19,10 +20,12 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 		first := contractSave(t, repo, Project{Name: "Alfa", Description: "Primero", Status: StatusPlanned})
 		second := contractSave(t, repo, Project{Name: "Beta", Status: StatusInProgress})
 
-		if want := (Project{ID: 1, Name: "Alfa", Description: "Primero", Status: StatusPlanned}); first != want {
+		// HU-51: el PublicID lo asigna contractSave; que Save lo conserve lo
+		// verifica runRepositoryPublicIDContract.
+		if want := (Project{ID: 1, PublicID: first.PublicID, Name: "Alfa", Description: "Primero", Status: StatusPlanned}); first != want {
 			t.Errorf("primer Save = %+v, se esperaba %+v", first, want)
 		}
-		if want := (Project{ID: 2, Name: "Beta", Status: StatusInProgress}); second != want {
+		if want := (Project{ID: 2, PublicID: second.PublicID, Name: "Beta", Status: StatusInProgress}); second != want {
 			t.Errorf("segundo Save = %+v, se esperaba %+v", second, want)
 		}
 	})
@@ -107,7 +110,8 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 	t.Run("Update reemplaza el proyecto guardado", func(t *testing.T) {
 		repo := newRepo(t)
 		saved := contractSave(t, repo, Project{Name: "Alfa", Description: "Antes", Status: StatusPlanned})
-		changed := Project{ID: saved.ID, Name: "Alfa 2", Description: "Después", Status: StatusFinished}
+		// HU-51: Update no cambia el PublicID (en PostgreSQL no lo escribe).
+		changed := Project{ID: saved.ID, PublicID: saved.PublicID, Name: "Alfa 2", Description: "Después", Status: StatusFinished}
 
 		got, err := repo.Update(changed)
 		if err != nil {
@@ -193,9 +197,14 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 // contractStartDate es una fecha de inicio como la lee la API: 00:00 UTC.
 var contractStartDate = time.Date(2026, 10, 23, 0, 0, 0, 0, time.UTC)
 
-// contractSave guarda p en repo y falla el test si hay un error.
+// contractSave guarda p en repo y falla el test si hay un error. Si p no
+// tiene identificador público, le asigna uno nuevo: en PostgreSQL es único
+// (HU-51, CA-51.5), y Save lo recibe del Manager, que acá no se usa.
 func contractSave(t *testing.T, repo Repository, p Project) Project {
 	t.Helper()
+	if p.PublicID == (uuid.UUID{}) {
+		p.PublicID = uuid.NewV4()
+	}
 	saved, err := repo.Save(p)
 	if err != nil {
 		t.Fatalf("Save devolvió un error inesperado: %v", err)
@@ -276,4 +285,62 @@ var contractEndDate = time.Date(2026, 12, 18, 0, 0, 0, 0, time.UTC)
 // HU-41 · CA-41.12 · Verifica que el repositorio en memoria conserve la fecha de fin, sin registrar o registrada.
 func TestMemoryRepository_ContratoFechaDeFin(t *testing.T) {
 	runRepositoryEndDateContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
+}
+
+// HU-51 · Identificadores UUID, parte de proyectos (Issue #193)
+//
+// runRepositoryPublicIDContract verifica que toda implementación de
+// Repository guarde el identificador público que recibe y lo busque igual,
+// en memoria y en PostgreSQL (CA-51.5).
+func runRepositoryPublicIDContract(t *testing.T, newRepo func(t *testing.T) Repository) {
+	t.Run("Save conserva el PublicID y GetByPublicID devuelve el proyecto", func(t *testing.T) {
+		repo := newRepo(t)
+		first := contractSave(t, repo, Project{PublicID: contractPublicID1, Name: "Alfa", Status: StatusPlanned})
+		second := contractSave(t, repo, Project{PublicID: contractPublicID2, Name: "Beta", Description: "Segundo", Status: StatusInProgress})
+
+		if first.PublicID != contractPublicID1 {
+			t.Errorf("Save: PublicID = %s, se esperaba %s", first.PublicID, contractPublicID1)
+		}
+		for _, want := range []Project{first, second} {
+			got, err := repo.GetByPublicID(want.PublicID)
+			if err != nil {
+				t.Fatalf("GetByPublicID(%s) devolvió un error inesperado: %v", want.PublicID, err)
+			}
+			if got != want {
+				t.Errorf("GetByPublicID(%s) = %+v, se esperaba %+v", want.PublicID, got, want)
+			}
+			byID, err := repo.GetByID(want.ID)
+			if err != nil {
+				t.Fatalf("GetByID(%d) devolvió un error inesperado: %v", want.ID, err)
+			}
+			if byID.PublicID != want.PublicID {
+				t.Errorf("GetByID(%d): PublicID = %s, se esperaba %s", want.ID, byID.PublicID, want.PublicID)
+			}
+		}
+	})
+
+	t.Run("GetByPublicID de un UUID inexistente da ErrProjectNotFound", func(t *testing.T) {
+		repo := newRepo(t)
+		contractSave(t, repo, Project{PublicID: contractPublicID1, Name: "Alfa", Status: StatusPlanned})
+
+		got, err := repo.GetByPublicID(contractPublicID2)
+		if !errors.Is(err, ErrProjectNotFound) {
+			t.Errorf("err = %v, se esperaba %v", err, ErrProjectNotFound)
+		}
+		if got != (Project{}) {
+			t.Errorf("GetByPublicID = %+v, se esperaba un proyecto vacío", got)
+		}
+	})
+}
+
+// contractPublicID1 y contractPublicID2 son identificadores públicos fijos
+// para los tests de contrato.
+var (
+	contractPublicID1 = uuid.MustParse("3f2b8c1d-5e6a-4b7c-8d9e-0f1a2b3c4d5e")
+	contractPublicID2 = uuid.MustParse("9a8b7c6d-5e4f-4a3b-b2c1-d0e9f8a7b6c5")
+)
+
+// HU-51 · CA-51.5 · Verifica que el repositorio en memoria guarde y busque los proyectos por su identificador público.
+func TestMemoryRepository_ContratoUUID(t *testing.T) {
+	runRepositoryPublicIDContract(t, func(*testing.T) Repository { return NewMemoryRepository() })
 }

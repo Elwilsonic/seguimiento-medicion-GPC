@@ -44,15 +44,15 @@ func TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID(t *te
 	h := newHandler()
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Sistema de ventas","descripcion":"Ventas online"}`), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"Inventario","descripcion":""}`), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPut, "/api/proyectos/2", `{"nombre":"Inventario","descripcion":"","estado":"EN_CURSO"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/2/fecha-inicio", `{"fecha_inicio":"2026-03-01"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/2/fecha-fin", `{"fecha_fin":"2026-06-30"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPut, projectPath(t, h, 2), `{"nombre":"Inventario","descripcion":"","estado":"EN_CURSO"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 2)+"/fecha-inicio", `{"fecha_inicio":"2026-03-01"}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 2)+"/fecha-fin", `{"fecha_fin":"2026-06-30"}`), http.StatusOK)
 
 	rec := do(t, h, http.MethodGet, "/api/proyectos", "")
 
 	expectStatus(t, rec, http.StatusOK)
-	want := `[{"id":2,"nombre":"Inventario","descripcion":"","estado":"EN_CURSO","fecha_inicio":"2026-03-01","fecha_fin":"2026-06-30"},` +
-		`{"id":1,"nombre":"Sistema de ventas","descripcion":"Ventas online","estado":"PLANIFICADO","fecha_inicio":"","fecha_fin":""}]`
+	want := `[{"id":` + jsonProjectID(t, h, 2) + `,"nombre":"Inventario","descripcion":"","estado":"EN_CURSO","fecha_inicio":"2026-03-01","fecha_fin":"2026-06-30"},` +
+		`{"id":` + jsonProjectID(t, h, 1) + `,"nombre":"Sistema de ventas","descripcion":"Ventas online","estado":"PLANIFICADO","fecha_inicio":"","fecha_fin":""}]`
 	if got := strings.TrimSpace(rec.Body.String()); got != want {
 		t.Errorf("cuerpo = %s, se esperaba %s", got, want)
 	}
@@ -60,7 +60,7 @@ func TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID(t *te
 	// Cada elemento es idéntico a la respuesta de GET /api/proyectos/{id}.
 	var list []json.RawMessage
 	decode(t, rec, &list)
-	for i, path := range []string{"/api/proyectos/2", "/api/proyectos/1"} {
+	for i, path := range []string{"{proyecto2}", "{proyecto}"} {
 		one := do(t, h, http.MethodGet, path, "")
 		expectStatus(t, one, http.StatusOK)
 		if i < len(list) && string(list[i]) != strings.TrimSpace(one.Body.String()) {

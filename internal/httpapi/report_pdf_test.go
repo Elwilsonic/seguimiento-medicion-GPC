@@ -56,13 +56,14 @@ func TestReportePDF_Devuelve200ConElArchivo(t *testing.T) {
 	reportTEC03(t, h)
 
 	// get y no do, porque do exige una respuesta JSON.
-	rec := get(t, h, "/api/proyectos/1/reporte/pdf")
+	rec := get(t, h, projectPath(t, h, 1)+"/reporte/pdf")
 
 	expectStatus(t, rec, http.StatusOK)
 	if got := rec.Header().Get("Content-Type"); got != "application/pdf" {
 		t.Errorf("Content-Type = %q, se esperaba application/pdf", got)
 	}
-	if got, want := rec.Header().Get("Content-Disposition"), `attachment; filename="reporte-proyecto-1.pdf"`; got != want {
+	// HU-51: el nombre del archivo lleva el id del proyecto, que es su UUID.
+	if got, want := rec.Header().Get("Content-Disposition"), `attachment; filename="reporte-proyecto-`+projectID(t, h, 1)+`.pdf"`; got != want {
 		t.Errorf("Content-Disposition = %q, se esperaba %q", got, want)
 	}
 	pdf := rec.Body.Bytes()
@@ -107,12 +108,12 @@ func TestReportePDF_TieneLosMismosValoresQueElReporteJSON(t *testing.T) {
 			Integrantes []string `json:"integrantes"`
 		} `json:"integrantes"`
 	}
-	jsonRec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte", "")
+	jsonRec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte", "")
 	expectStatus(t, jsonRec, http.StatusOK)
 	decode(t, jsonRec, &rep)
 
 	// get y no do, porque do exige una respuesta JSON.
-	rec := get(t, h, "/api/proyectos/1/reporte/pdf")
+	rec := get(t, h, projectPath(t, h, 1)+"/reporte/pdf")
 
 	expectStatus(t, rec, http.StatusOK)
 	m := rep.Metricas
@@ -128,23 +129,25 @@ func TestReportePDF_TieneLosMismosValoresQueElReporteJSON(t *testing.T) {
 	)
 }
 
-// HU-40 · CA-40.6 · Verifica que un proyecto inexistente, 0 o negativo responda 404 en JSON.
+// HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
+// esa forma y responden 400 (projects_uuid_test.go).
+// HU-40 · CA-40.6 · Verifica que un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404 en JSON.
 // CA-40.6 · Un proyecto inexistente, 0 o negativo devuelve 404 en JSON.
 func TestReportePDF_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingProjectID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/proyectos/"+id+"/reporte/pdf", "")
 
 		expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 	}
 }
 
-// HU-40 · CA-40.1 · Verifica que un {id} no numérico responda 400 en JSON.
+// HU-40 · CA-40.1 · Verifica que un {id} de proyecto que no es un UUID responda 400 en JSON (HU-51).
 // CA-40.1 · Un {id} no numérico devuelve 400 en JSON.
 func TestReportePDF_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/reporte/pdf", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
 // HU-40 · CA-40.2 · Verifica que una falla al armar el reporte responda 500 sin detalle y sin un PDF a medias.
@@ -160,7 +163,7 @@ func TestReportePDF_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/reporte/pdf", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte/pdf", "")
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 	if bytes.Contains(rec.Body.Bytes(), []byte("%PDF-")) {

@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
+	"uuid"
 
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/defect"
@@ -32,10 +34,11 @@ import (
 
 // projectJSON y itemJSON son las respuestas que devuelve la API.
 type projectJSON struct {
-	ID          int    `json:"id"`
-	Nombre      string `json:"nombre"`
-	Descripcion string `json:"descripcion"`
-	Estado      string `json:"estado"`
+	// HU-51: el id del proyecto se lee como projectRef.
+	ID          projectRef `json:"id"`
+	Nombre      string     `json:"nombre"`
+	Descripcion string     `json:"descripcion"`
+	Estado      string     `json:"estado"`
 	// HU-18, CA-18.6: fecha de inicio en AAAA-MM-DD, o "" si no está
 	// registrada.
 	FechaInicio string `json:"fecha_inicio"`
@@ -45,14 +48,14 @@ type projectJSON struct {
 }
 
 type itemJSON struct {
-	ID          int      `json:"id"`
-	ProyectoID  int      `json:"proyecto_id"`
-	Titulo      string   `json:"titulo"`
-	Descripcion string   `json:"descripcion"`
-	Prioridad   string   `json:"prioridad"`
-	Criterios   []string `json:"criterios"`
-	Estado      string   `json:"estado"`
-	StoryPoints int      `json:"story_points"`
+	ID          int        `json:"id"`
+	ProyectoID  projectRef `json:"proyecto_id"`
+	Titulo      string     `json:"titulo"`
+	Descripcion string     `json:"descripcion"`
+	Prioridad   string     `json:"prioridad"`
+	Criterios   []string   `json:"criterios"`
+	Estado      string     `json:"estado"`
+	StoryPoints int        `json:"story_points"`
 	// TEC-04, CA-TEC04.9: la respuesta suma las horas estimadas (HU-07) y el
 	// sprint asignado (HU-11).
 	HorasEstimadas float64 `json:"horas_estimadas"`
@@ -80,12 +83,18 @@ func newMembers(projects *project.Manager) *member.Manager {
 	return member.NewManager(member.NewMemoryRepository(), projects)
 }
 
-// do hace un pedido a la API y verifica que la respuesta sea JSON.
+// do hace un pedido a la API y verifica que la respuesta sea JSON. Si el
+// pedido crea un proyecto, guarda su "id" para projectPath, y en la ruta
+// reemplaza "{proyecto}" y "{proyecto2}" con withProject (HU-51).
 func do(t *testing.T, h http.Handler, method, path, body string) *httptest.ResponseRecorder {
 	t.Helper()
+	path = withProject(t, h, path)
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
+	if method == http.MethodPost && path == "/api/proyectos" && rec.Code == http.StatusCreated {
+		recordProjectID(t, h, rec)
+	}
 	if ct := rec.Header().Get("Content-Type"); ct != "application/json" {
 		t.Errorf("%s %s: Content-Type = %q, se esperaba application/json", method, path, ct)
 	}
@@ -119,14 +128,122 @@ func expectError(t *testing.T, rec *httptest.ResponseRecorder, wantStatus int, w
 	}
 }
 
-// createProject crea un proyecto por la API y devuelve su ID.
-func createProject(t *testing.T, h http.Handler, name string) int {
+// createProject crea un proyecto por la API y devuelve su "id" como texto
+// (HU-51: el UUID del proyecto).
+func createProject(t *testing.T, h http.Handler, name string) string {
 	t.Helper()
 	rec := do(t, h, http.MethodPost, "/api/proyectos", `{"nombre":"`+name+`","descripcion":""}`)
 	expectStatus(t, rec, http.StatusCreated)
-	var p projectJSON
-	decode(t, rec, &p)
-	return p.ID
+	return rawProjectID(t, rec)
+}
+
+// HU-51 · Identificadores UUID, parte de proyectos (Issue #193). Los
+// proyectos se identifican por un UUID que asigna el sistema (CA-51.1), así
+// que los tests no escriben IDs fijos: projectIDs guarda, por handler, el
+// "id" de cada proyecto creado con POST /api/proyectos, en el orden de
+// creación, y projectPath arma la ruta con él.
+var (
+	projectIDsMu sync.Mutex
+	projectIDs   = map[http.Handler][]json.RawMessage{}
+)
+
+// projectRef es el id de un proyecto en una respuesta (id o proyecto_id),
+// como texto. Acepta un texto JSON o un número, así que los tests adaptados
+// verifican lo mismo que antes de HU-51 sin depender del tipo; que sea un UUID
+// y no un número lo verifican los tests de HU-51 (CA-51.3).
+type projectRef string
+
+func (r *projectRef) UnmarshalJSON(b []byte) error {
+	*r = projectRef(strings.Trim(string(b), `"`))
+	return nil
+}
+
+// missingProjectID es un UUID versión 4 que nunca se asigna a un proyecto
+// (HU-51, CA-51.4).
+const missingProjectID = "6f1c2a4e-8b3d-4c7a-9e2f-1a2b3c4d5e6f"
+
+// nilProjectID es el UUID nulo: tiene la forma de un UUID pero nunca se
+// asigna, así que responde 404 (HU-51, CA-51.4).
+const nilProjectID = "00000000-0000-0000-0000-000000000000"
+
+// rawProjectID devuelve el "id" de la respuesta como texto, sin comillas.
+// Acepta texto o número: el tipo lo verifican los tests de HU-51.
+func rawProjectID(t *testing.T, rec *httptest.ResponseRecorder) string {
+	t.Helper()
+	return strings.Trim(string(rawProjectJSON(t, rec)), `"`)
+}
+
+// rawProjectJSON devuelve el "id" de la respuesta como valor JSON crudo.
+func rawProjectJSON(t *testing.T, rec *httptest.ResponseRecorder) json.RawMessage {
+	t.Helper()
+	var body struct {
+		ID json.RawMessage `json:"id"`
+	}
+	decode(t, rec, &body)
+	return body.ID
+}
+
+func recordProjectID(t *testing.T, h http.Handler, rec *httptest.ResponseRecorder) {
+	t.Helper()
+	id := rawProjectJSON(t, rec)
+	projectIDsMu.Lock()
+	defer projectIDsMu.Unlock()
+	projectIDs[h] = append(projectIDs[h], id)
+}
+
+// projectJSONID devuelve el "id" del n-ésimo proyecto creado por la API en
+// h, contando desde 1, como valor JSON crudo, tal como lo devolvió la API.
+func projectJSONID(t *testing.T, h http.Handler, n int) json.RawMessage {
+	t.Helper()
+	projectIDsMu.Lock()
+	ids := projectIDs[h]
+	projectIDsMu.Unlock()
+	if n < 1 || n > len(ids) {
+		t.Fatalf("projectID: el handler tiene %d proyectos creados por la API, no existe el %d", len(ids), n)
+	}
+	return ids[n-1]
+}
+
+// projectID devuelve el "id" del n-ésimo proyecto creado por la API en h,
+// contando desde 1, como texto.
+func projectID(t *testing.T, h http.Handler, n int) string {
+	t.Helper()
+	return strings.Trim(string(projectJSONID(t, h, n)), `"`)
+}
+
+// ref devuelve el "id" del n-ésimo proyecto creado por la API en h como
+// projectRef, para comparar con los campos id y proyecto_id.
+func ref(t *testing.T, h http.Handler, n int) projectRef {
+	t.Helper()
+	return projectRef(projectID(t, h, n))
+}
+
+// projectPath devuelve la ruta del n-ésimo proyecto creado por la API en h,
+// contando desde 1: "/api/proyectos/{su id}".
+func projectPath(t *testing.T, h http.Handler, n int) string {
+	t.Helper()
+	return "/api/proyectos/" + projectID(t, h, n)
+}
+
+// jsonProjectID es el "id" del n-ésimo proyecto de h como valor JSON, tal
+// como lo devolvió la API, para armar las respuestas esperadas (HU-51).
+func jsonProjectID(t *testing.T, h http.Handler, n int) string {
+	t.Helper()
+	return string(projectJSONID(t, h, n))
+}
+
+// withProject reemplaza en path "{proyecto}" y "{proyecto2}" por la ruta del
+// primer y del segundo proyecto creados por la API en h (HU-51). Lo usan las
+// tablas de rutas, que se arman antes de crear los proyectos.
+func withProject(t *testing.T, h http.Handler, path string) string {
+	t.Helper()
+	if strings.Contains(path, "{proyecto2}") {
+		path = strings.ReplaceAll(path, "{proyecto2}", projectPath(t, h, 2))
+	}
+	if strings.Contains(path, "{proyecto}") {
+		path = strings.ReplaceAll(path, "{proyecto}", projectPath(t, h, 1))
+	}
+	return path
 }
 
 const validItem = `{"titulo":"Login de usuarios","descripcion":"Acceso","prioridad":"alta","criterios":["Credenciales válidas"]}`
@@ -141,7 +258,9 @@ func TestCrearProyecto_Devuelve201ConElProyectoCreado(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var p projectJSON
 	decode(t, rec, &p)
-	want := projectJSON{ID: 1, Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "PLANIFICADO"}
+	// HU-51: el id lo asigna el sistema; que sea un UUID versión 4 lo
+	// verifica TestCrearProyecto_IDEsUUIDVersion4.
+	want := projectJSON{ID: p.ID, Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "PLANIFICADO"}
 	if p != want {
 		t.Errorf("proyecto = %+v, se esperaba %+v", p, want)
 	}
@@ -177,19 +296,22 @@ func TestConsultarProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandler()
 	id := createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1), "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
 	decode(t, rec, &p)
-	if p.ID != id || p.Nombre != "Sistema de ventas" || p.Estado != "PLANIFICADO" {
+	if string(p.ID) != id || p.Nombre != "Sistema de ventas" || p.Estado != "PLANIFICADO" {
 		t.Errorf("proyecto = %+v", p)
 	}
 }
 
-// TEC-01 · CA-TEC01.2 · Verifica que consultar un proyecto inexistente, 0 o negativo responda 404.
+// HU-51: un {id} con forma de UUID que no existe (también el UUID nulo)
+// responde 404; el 0 y los negativos ya no son UUID y responden 400
+// (TestRutasConID_IDNoNumericoDevuelve400 y projects_uuid_test.go).
+// TEC-01 · CA-TEC01.2 · Verifica que consultar un proyecto inexistente, también con el UUID nulo, responda 404.
 func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
-	for _, path := range []string{"/api/proyectos/999", "/api/proyectos/0", "/api/proyectos/-1"} {
+	for _, path := range []string{"/api/proyectos/" + missingProjectID, "/api/proyectos/" + nilProjectID} {
 		t.Run(path, func(t *testing.T) {
 			rec := do(t, newHandler(), http.MethodGet, path, "")
 
@@ -198,14 +320,16 @@ func TestConsultarProyecto_InexistenteDevuelve404(t *testing.T) {
 	}
 }
 
-// TEC-01 · CA-TEC01.2 · Verifica que un {id} no numérico responda 400.
+// HU-51, CA-51.4: el {id} de un proyecto es un UUID, así que el mensaje es
+// el de errInvalidProjectID.
+// TEC-01 · CA-TEC01.2 · Verifica que un {id} de proyecto que no es un UUID responda 400.
 func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
-// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id no numérico.
+// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id inválido: las de proyecto con el mensaje de UUID (HU-51) y las demás con el de número entero.
 // CA-TEC01.2 · Las demás rutas con {id} también rechazan un id no numérico.
 func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 	casos := []struct {
@@ -274,7 +398,13 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		t.Run(c.nombre, func(t *testing.T) {
 			rec := do(t, newHandler(), c.method, c.path, c.body)
 
-			expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+			// HU-51, CA-51.4: las rutas de proyecto responden con el mensaje
+			// de errInvalidProjectID; las demás entidades conservan el suyo.
+			want := "el id debe ser un número entero"
+			if strings.HasPrefix(c.path, "/api/proyectos/") {
+				want = "el id del proyecto debe ser un UUID"
+			}
+			expectError(t, rec, http.StatusBadRequest, want)
 		})
 	}
 }
@@ -285,18 +415,18 @@ func TestModificarProyecto_Devuelve200ConElProyectoModificado(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"Nueva versión","estado":"en_curso"}`)
+	rec := do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Ventas 2.0","descripcion":"Nueva versión","estado":"en_curso"}`)
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
 	decode(t, rec, &p)
-	want := projectJSON{ID: 1, Nombre: "Ventas 2.0", Descripcion: "Nueva versión", Estado: "EN_CURSO"}
+	want := projectJSON{ID: ref(t, h, 1), Nombre: "Ventas 2.0", Descripcion: "Nueva versión", Estado: "EN_CURSO"}
 	if p != want {
 		t.Errorf("proyecto = %+v, se esperaba %+v", p, want)
 	}
 
 	// La consulta posterior devuelve los datos modificados.
-	rec = do(t, h, http.MethodGet, "/api/proyectos/1", "")
+	rec = do(t, h, http.MethodGet, projectPath(t, h, 1), "")
 	decode(t, rec, &p)
 	if p != want {
 		t.Errorf("proyecto consultado = %+v, se esperaba %+v", p, want)
@@ -308,7 +438,7 @@ func TestModificarProyecto_EstadoInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PAUSADO"}`)
+	rec := do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Sistema de ventas","descripcion":"","estado":"PAUSADO"}`)
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrInvalidStatus.Error())
 }
@@ -319,14 +449,14 @@ func TestModificarProyecto_NombreRepetidoDevuelve409(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	createProject(t, h, "Portal de clientes")
 
-	rec := do(t, h, http.MethodPut, "/api/proyectos/2", `{"nombre":"Sistema de ventas","descripcion":"","estado":"PLANIFICADO"}`)
+	rec := do(t, h, http.MethodPut, projectPath(t, h, 2), `{"nombre":"Sistema de ventas","descripcion":"","estado":"PLANIFICADO"}`)
 
 	expectError(t, rec, http.StatusConflict, project.ErrDuplicateName.Error())
 }
 
 // TEC-01 · CA-TEC01.2 · Verifica que modificar un proyecto inexistente responda 404.
 func TestModificarProyecto_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPut, "/api/proyectos/999", `{"nombre":"Otro","descripcion":"","estado":"PLANIFICADO"}`)
+	rec := do(t, newHandler(), http.MethodPut, "/api/proyectos/"+missingProjectID, `{"nombre":"Otro","descripcion":"","estado":"PLANIFICADO"}`)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -336,7 +466,7 @@ func TestModificarProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `no es json`)
+	rec := do(t, h, http.MethodPut, projectPath(t, h, 1), `no es json`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -370,18 +500,18 @@ func expectProjectStartDate(t *testing.T, h http.Handler, id, want string) {
 func TestRegistrarFechaInicioProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}`)
+	do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}`)
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+	rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-10-23"))
 
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
 	decode(t, rec, &p)
-	want := projectJSON{ID: 1, Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "EN_CURSO", FechaInicio: "2026-10-23"}
+	want := projectJSON{ID: ref(t, h, 1), Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "EN_CURSO", FechaInicio: "2026-10-23"}
 	if p != want {
 		t.Errorf("proyecto = %+v, se esperaba %+v", p, want)
 	}
-	expectProjectStartDate(t, h, "1", "2026-10-23")
+	expectProjectStartDate(t, h, projectID(t, h, 1), "2026-10-23")
 }
 
 // HU-18 · CA-18.5 · Verifica que volver a registrar la fecha de inicio por la API reemplace la anterior.
@@ -389,12 +519,12 @@ func TestRegistrarFechaInicioProyecto_Devuelve200ConElProyecto(t *testing.T) {
 func TestRegistrarFechaInicioProyecto_VolverARegistrarReemplazaLaFecha(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+	do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-10-23"))
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-11-02"))
+	rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-11-02"))
 
 	expectStatus(t, rec, http.StatusOK)
-	expectProjectStartDate(t, h, "1", "2026-11-02")
+	expectProjectStartDate(t, h, projectID(t, h, 1), "2026-11-02")
 }
 
 // HU-18 · CA-18.3 · Verifica que una fecha de inicio vacía, null o ausente responda 400.
@@ -410,10 +540,10 @@ func TestRegistrarFechaInicioProyecto_FechaAusenteDevuelve400(t *testing.T) {
 			h := newHandler()
 			createProject(t, h, "Sistema de ventas")
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", body)
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", body)
 
 			expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
-			expectProjectStartDate(t, h, "1", "")
+			expectProjectStartDate(t, h, projectID(t, h, 1), "")
 		})
 	}
 }
@@ -426,10 +556,10 @@ func TestRegistrarFechaInicioProyecto_FormatoOFechaInvalidaDevuelve400(t *testin
 			h := newHandler()
 			createProject(t, h, "Sistema de ventas")
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio(date))
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio(date))
 
 			expectError(t, rec, http.StatusBadRequest, "las fechas deben tener el formato AAAA-MM-DD")
-			expectProjectStartDate(t, h, "1", "")
+			expectProjectStartDate(t, h, projectID(t, h, 1), "")
 		})
 	}
 }
@@ -443,7 +573,7 @@ func TestRegistrarFechaInicioProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 			h := newHandler()
 			createProject(t, h, "Sistema de ventas")
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", body)
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", body)
 
 			expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 		})
@@ -453,7 +583,7 @@ func TestRegistrarFechaInicioProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 // HU-18 · CA-18.4 · Verifica que registrar la fecha de inicio de un proyecto inexistente responda 404.
 // CA-18.4
 func TestRegistrarFechaInicioProyecto_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-inicio", fechaInicio("2026-10-23"))
+	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/"+missingProjectID+"/fecha-inicio", fechaInicio("2026-10-23"))
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -461,7 +591,7 @@ func TestRegistrarFechaInicioProyecto_InexistenteDevuelve404(t *testing.T) {
 // HU-18 · CA-18.3 · Verifica que la fecha se valide antes que el proyecto: fecha vacía en un proyecto inexistente responde 400.
 // CA-18.3 (orden de validación): la fecha se valida antes que el proyecto.
 func TestRegistrarFechaInicioProyecto_FechaVaciaEnProyectoInexistenteDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fecha-inicio", fechaInicio(""))
+	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/"+missingProjectID+"/fecha-inicio", fechaInicio(""))
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
 }
@@ -477,7 +607,9 @@ func TestRegistrarFechaInicioProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+	// HU-51: el repositorio roto no tiene proyectos; cualquier UUID con la
+	// forma correcta llega al repositorio, que falla.
+	rec := do(t, h, http.MethodPatch, "/api/proyectos/"+missingProjectID+"/fecha-inicio", fechaInicio("2026-10-23"))
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
@@ -495,10 +627,10 @@ func TestProyecto_RespuestasIncluyenLaFechaDeInicio(t *testing.T) {
 		t.Errorf("POST: fecha_inicio = %v (presente: %t), se esperaba \"\"", got, ok)
 	}
 
-	do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
-	expectProjectStartDate(t, h, "1", "2026-10-23")
+	do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-10-23"))
+	expectProjectStartDate(t, h, projectID(t, h, 1), "2026-10-23")
 
-	rec = do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO"}`)
+	rec = do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO"}`)
 	expectStatus(t, rec, http.StatusOK)
 	var p projectJSON
 	decode(t, rec, &p)
@@ -513,12 +645,12 @@ func TestProyecto_RespuestasIncluyenLaFechaDeInicio(t *testing.T) {
 func TestModificarProyecto_ConservaLaFechaDeInicio(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-inicio", fechaInicio("2026-10-23"))
+	do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-inicio", fechaInicio("2026-10-23"))
 
-	rec := do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO","fecha_inicio":"2020-01-01"}`)
+	rec := do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Ventas 2.0","descripcion":"","estado":"EN_CURSO","fecha_inicio":"2020-01-01"}`)
 
 	expectStatus(t, rec, http.StatusOK)
-	expectProjectStartDate(t, h, "1", "2026-10-23")
+	expectProjectStartDate(t, h, projectID(t, h, 1), "2026-10-23")
 }
 
 // TEC-01 · CA-TEC01.2 · Verifica que POST /api/proyectos/{id}/backlog cree el ítem de HU-04 y responda 201.
@@ -527,12 +659,12 @@ func TestCrearItem_Devuelve201ConElItemCreado(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem)
 
 	expectStatus(t, rec, http.StatusCreated)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != 1 || it.ProyectoID != 1 || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
+	if it.ID != 1 || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
 		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.StoryPoints != 0 ||
 		len(it.Criterios) != 1 || it.Criterios[0] != "Credenciales válidas" {
 		t.Errorf("ítem = %+v", it)
@@ -554,7 +686,7 @@ func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 			h := newHandler()
 			createProject(t, h, "Sistema de ventas")
 
-			rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", tc.body)
+			rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", tc.body)
 
 			expectError(t, rec, http.StatusBadRequest, tc.want.Error())
 		})
@@ -563,7 +695,7 @@ func TestCrearItem_DatosInvalidosDevuelven400(t *testing.T) {
 
 // TEC-01 · CA-TEC01.2 · Verifica que crear un ítem en un proyecto inexistente responda 404.
 func TestCrearItem_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/999/backlog", validItem)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/"+missingProjectID+"/backlog", validItem)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -573,7 +705,7 @@ func TestCrearItem_JSONInvalidoDevuelve400(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":`)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", `{"titulo":`)
 
 	expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
 }
@@ -584,11 +716,11 @@ func TestListarBacklog_Devuelve200ConLosItemsDelProyecto(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 	createProject(t, h, "Portal de clientes")
-	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem)
-	do(t, h, http.MethodPost, "/api/proyectos/2/backlog", `{"titulo":"Otro proyecto","prioridad":"BAJA","criterios":["Ok"]}`)
-	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem)
+	do(t, h, http.MethodPost, projectPath(t, h, 2)+"/backlog", `{"titulo":"Otro proyecto","prioridad":"BAJA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/backlog", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
@@ -603,7 +735,7 @@ func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/backlog", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	if got := strings.TrimSpace(rec.Body.String()); got != "[]" {
@@ -613,7 +745,7 @@ func TestListarBacklog_SinItemsDevuelveListaVacia(t *testing.T) {
 
 // TEC-01 · CA-TEC01.2 · Verifica que listar el backlog de un proyecto inexistente responda 404.
 func TestListarBacklog_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/999/backlog", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/"+missingProjectID+"/backlog", "")
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -628,6 +760,9 @@ func (brokenRepository) Save(project.Project) (project.Project, error) {
 }
 func (brokenRepository) List() ([]project.Project, error) { return nil, errStorage }
 func (brokenRepository) GetByID(int) (project.Project, error) {
+	return project.Project{}, errStorage
+}
+func (brokenRepository) GetByPublicID(uuid.UUID) (project.Project, error) {
 	return project.Project{}, errStorage
 }
 func (brokenRepository) Update(project.Project) (project.Project, error) {
@@ -674,17 +809,24 @@ var bodyEndpoints = []bodyEndpoint{
 		name:   "crear proyecto",
 		method: http.MethodPost,
 		path:   "/api/proyectos",
+		// HU-51: el segundo proyecto no tiene un ID conocido de antemano,
+		// así que se verifica con la lista de HU-50 que sigue habiendo uno.
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/api/proyectos/2", "")
-			expectStatus(t, rec, http.StatusNotFound)
+			rec := do(t, h, http.MethodGet, "/api/proyectos", "")
+			expectStatus(t, rec, http.StatusOK)
+			var list []projectJSON
+			decode(t, rec, &list)
+			if len(list) != 1 {
+				t.Errorf("proyectos = %+v, se esperaba solo el proyecto 1", list)
+			}
 		},
 	},
 	{
 		name:   "modificar proyecto",
 		method: http.MethodPut,
-		path:   "/api/proyectos/1",
+		path:   "{proyecto}",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1), "")
 			expectStatus(t, rec, http.StatusOK)
 			var p projectJSON
 			decode(t, rec, &p)
@@ -698,9 +840,9 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "registrar fecha de inicio",
 		method: http.MethodPatch,
-		path:   "/api/proyectos/1/fecha-inicio",
+		path:   "{proyecto}/fecha-inicio",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1), "")
 			expectStatus(t, rec, http.StatusOK)
 			var p projectJSON
 			decode(t, rec, &p)
@@ -714,9 +856,9 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "registrar fecha de fin",
 		method: http.MethodPatch,
-		path:   "/api/proyectos/1/fecha-fin",
+		path:   "{proyecto}/fecha-fin",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1), "")
 			expectStatus(t, rec, http.StatusOK)
 			var p projectJSON
 			decode(t, rec, &p)
@@ -730,9 +872,9 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "modificar fechas",
 		method: http.MethodPatch,
-		path:   "/api/proyectos/1/fechas",
+		path:   "{proyecto}/fechas",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/api/proyectos/1", "")
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1), "")
 			expectStatus(t, rec, http.StatusOK)
 			var p projectJSON
 			decode(t, rec, &p)
@@ -744,9 +886,9 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "crear ítem",
 		method: http.MethodPost,
-		path:   "/api/proyectos/1/backlog",
+		path:   "{proyecto}/backlog",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog", "")
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/backlog", "")
 			expectStatus(t, rec, http.StatusOK)
 			var items []itemJSON
 			decode(t, rec, &items)
@@ -795,7 +937,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "crear sprint",
 		method: http.MethodPost,
-		path:   "/api/proyectos/1/sprints",
+		path:   "{proyecto}/sprints",
 		untouched: func(t *testing.T, h http.Handler) {
 			rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
 			expectStatus(t, rec, http.StatusNotFound)
@@ -817,12 +959,12 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "registrar integrante",
 		method: http.MethodPost,
-		path:   "/api/proyectos/1/integrantes",
+		path:   "{proyecto}/integrantes",
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
-			rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
+			rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", `{"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
 			expectStatus(t, rec, http.StatusCreated)
-			expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
+			expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
 		},
 	},
 	{name: "modificar integrante", method: http.MethodPut, path: "/api/integrantes/1", untouched: expectNoMemberSaved},

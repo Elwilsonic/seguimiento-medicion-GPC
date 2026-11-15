@@ -23,7 +23,7 @@ import (
 // TestRutasConID_IDNoNumericoDevuelve400.
 
 type summaryJSON struct {
-	ProyectoID      int         `json:"proyecto_id"`
+	ProyectoID      projectRef  `json:"proyecto_id"`
 	Nombre          string      `json:"nombre"`
 	Estado          string      `json:"estado"`
 	ItemsPendientes int         `json:"items_pendientes"`
@@ -37,7 +37,7 @@ type summaryJSON struct {
 func summaryItem(t *testing.T, h http.Handler, title, status string, sprintID int) {
 	t.Helper()
 	var it itemJSON
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/backlog",
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog",
 		fmt.Sprintf(`{"titulo":%q,"prioridad":"MEDIA","criterios":["Criterio"]}`, title))
 	expectStatus(t, rec, http.StatusCreated)
 	decode(t, rec, &it)
@@ -58,8 +58,8 @@ func summaryItem(t *testing.T, h http.Handler, title, status string, sprintID in
 func TestResumenProyecto_Devuelve200ConElResumen(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"","estado":"EN_CURSO"}`), http.StatusOK)
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint)
+	expectStatus(t, do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Sistema de ventas","descripcion":"","estado":"EN_CURSO"}`), http.StatusOK)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint)
 	expectStatus(t, rec, http.StatusCreated)
 	var sp sprintJSON
 	decode(t, rec, &sp)
@@ -70,18 +70,18 @@ func TestResumenProyecto_Devuelve200ConElResumen(t *testing.T) {
 	summaryItem(t, h, "E", "TERMINADO", sp.ID)
 	summaryItem(t, h, "F", "TERMINADO", 0)
 
-	rec = do(t, h, http.MethodGet, "/api/proyectos/1/resumen", "")
+	rec = do(t, h, http.MethodGet, projectPath(t, h, 1)+"/resumen", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var got summaryJSON
 	decode(t, rec, &got)
-	if got.ProyectoID != 1 || got.Nombre != "Sistema de ventas" || got.Estado != "EN_CURSO" {
-		t.Errorf("proyecto = %d %q %s, se esperaba 1 \"Sistema de ventas\" EN_CURSO", got.ProyectoID, got.Nombre, got.Estado)
+	if got.ProyectoID != ref(t, h, 1) || got.Nombre != "Sistema de ventas" || got.Estado != "EN_CURSO" {
+		t.Errorf("proyecto = %s %q %s, se esperaba %s \"Sistema de ventas\" EN_CURSO", got.ProyectoID, got.Nombre, got.Estado, projectID(t, h, 1))
 	}
 	if got.ItemsPendientes != 2 || got.ItemsEnCurso != 1 || got.ItemsTerminados != 3 {
 		t.Errorf("ítems = %d, %d y %d, se esperaba 2, 1 y 3", got.ItemsPendientes, got.ItemsEnCurso, got.ItemsTerminados)
 	}
-	want := sprintJSON{ID: sp.ID, ProyectoID: 1, Nombre: "Sprint 1", FechaInicio: "2026-10-01", FechaFin: "2026-10-14", Objetivo: "Gestionar el backlog", Estado: "ABIERTO"}
+	want := sprintJSON{ID: sp.ID, ProyectoID: ref(t, h, 1), Nombre: "Sprint 1", FechaInicio: "2026-10-01", FechaFin: "2026-10-14", Objetivo: "Gestionar el backlog", Estado: "ABIERTO"}
 	if got.SprintActual == nil || *got.SprintActual != want {
 		t.Errorf("sprint_actual = %+v, se esperaba %+v", got.SprintActual, want)
 	}
@@ -92,10 +92,10 @@ func TestResumenProyecto_Devuelve200ConElResumen(t *testing.T) {
 func TestResumenProyecto_SinSprintAbiertoSprintActualEsNull(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/resumen", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/resumen", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	if !strings.Contains(rec.Body.String(), `"sprint_actual":null`) {
@@ -109,12 +109,12 @@ func TestResumenProyecto_ProyectoSinDatosDevuelveCerosYNull(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/resumen", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/resumen", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var got summaryJSON
 	decode(t, rec, &got)
-	want := summaryJSON{ProyectoID: 1, Nombre: "Sistema de ventas", Estado: "PLANIFICADO"}
+	want := summaryJSON{ProyectoID: ref(t, h, 1), Nombre: "Sistema de ventas", Estado: "PLANIFICADO"}
 	if got != want {
 		t.Errorf("resumen = %+v, se esperaba %+v", got, want)
 	}
@@ -128,7 +128,7 @@ func TestResumenProyecto_ProyectoSinDatosDevuelveCerosYNull(t *testing.T) {
 // HU-36 · CA-36.6 · Verifica que un proyecto inexistente devuelva 404. También
 // cubre CA-36.5.
 func TestResumenProyecto_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/99/resumen", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/"+missingProjectID+"/resumen", "")
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -145,7 +145,7 @@ func TestResumenProyecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) 
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/resumen", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/resumen", "")
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }

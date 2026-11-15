@@ -1,6 +1,9 @@
 package project
 
-import "slices"
+import (
+	"slices"
+	"uuid"
+)
 
 // MemoryRepository guarda los proyectos en memoria (Sprint 1). No es seguro
 // para uso concurrente: se accede a través del Manager, que lo protege.
@@ -32,6 +35,17 @@ func (r *MemoryRepository) List() ([]Project, error) {
 func (r *MemoryRepository) GetByID(id int) (Project, error) {
 	for _, p := range r.projects {
 		if p.ID == id {
+			return p, nil
+		}
+	}
+	return Project{}, ErrProjectNotFound
+}
+
+// GetByPublicID devuelve una copia del proyecto con ese identificador
+// público, o ErrProjectNotFound si no existe (HU-51).
+func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Project, error) {
+	for _, p := range r.projects {
+		if p.PublicID == id {
 			return p, nil
 		}
 	}

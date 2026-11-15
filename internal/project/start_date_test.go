@@ -60,7 +60,8 @@ func mustGet(t *testing.T, manager *project.Manager, id int) project.Project {
 // CA-18.1
 func TestSetStartDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	manager, _ := newManager()
-	if _, err := manager.Create("Sistema de ventas", "Gestión de ventas"); err != nil {
+	created, err := manager.Create("Sistema de ventas", "Gestión de ventas")
+	if err != nil {
 		t.Fatalf("Create() devolvió un error inesperado: %v", err)
 	}
 	if _, err := manager.Update(1, "Sistema de ventas", "Gestión de ventas", "EN_CURSO"); err != nil {
@@ -73,7 +74,9 @@ func TestSetStartDate_RegistraLaFechaYConservaLosDemasDatos(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SetStartDate() devolvió un error inesperado: %v", err)
 	}
-	want := project.Project{ID: 1, Name: "Sistema de ventas", Description: "Gestión de ventas", Status: project.StatusInProgress, StartDate: date}
+	// HU-51: el PublicID lo asigna Create al azar; se compara con el del
+	// proyecto creado, así que también se verifica que se conserva.
+	want := project.Project{ID: 1, PublicID: created.PublicID, Name: "Sistema de ventas", Description: "Gestión de ventas", Status: project.StatusInProgress, StartDate: date}
 	if p != want {
 		t.Errorf("proyecto devuelto = %+v, se esperaba %+v", p, want)
 	}
@@ -255,15 +258,20 @@ func TestSetStartDate_SinProyectosCreadosDevuelveErrProjectNotFound(t *testing.T
 // CA-18.1 (RN-18.6): registrar la fecha de un proyecto no cambia los demás.
 func TestSetStartDate_NoModificaOtrosProyectos(t *testing.T) {
 	manager, _ := newManager()
+	var created []project.Project
 	for _, name := range []string{"Proyecto A", "Proyecto B"} {
-		if _, err := manager.Create(name, ""); err != nil {
+		p, err := manager.Create(name, "")
+		if err != nil {
 			t.Fatalf("Create() devolvió un error inesperado: %v", err)
 		}
+		created = append(created, p)
 	}
 
 	mustSetStartDate(t, manager, 2, day(t, "2026-10-23"))
 
-	if got := mustGet(t, manager, 1); got != (project.Project{ID: 1, Name: "Proyecto A", Status: project.StatusPlanned}) {
+	// HU-51: el PublicID lo asigna Create al azar; se compara con el del
+	// proyecto creado, así que también se verifica que se conserva.
+	if got := mustGet(t, manager, 1); got != (project.Project{ID: 1, PublicID: created[0].PublicID, Name: "Proyecto A", Status: project.StatusPlanned}) {
 		t.Errorf("proyecto 1 = %+v, se esperaba sin cambios", got)
 	}
 	if got := mustGet(t, manager, 2).StartDate; !got.Equal(day(t, "2026-10-23")) {

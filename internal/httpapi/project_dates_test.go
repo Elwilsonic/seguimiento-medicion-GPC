@@ -30,7 +30,7 @@ func fechas(inicio, fin string) string {
 func newHandlerWithDates(t *testing.T) http.Handler {
 	t.Helper()
 	h := newHandlerWithStartDate(t)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/proyectos/1/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fecha-fin", fechaFin("2026-12-18")), http.StatusOK)
 	return h
 }
 
@@ -58,18 +58,18 @@ func TestModificarFechasProyecto_Devuelve200ConElProyecto(t *testing.T) {
 	for caseName, dates := range casos {
 		t.Run(caseName, func(t *testing.T) {
 			h := newHandlerWithDates(t)
-			expectStatus(t, do(t, h, http.MethodPut, "/api/proyectos/1", `{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}`), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPut, projectPath(t, h, 1), `{"nombre":"Sistema de ventas","descripcion":"Gestión de ventas","estado":"EN_CURSO"}`), http.StatusOK)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", fechas(dates[0], dates[1]))
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", fechas(dates[0], dates[1]))
 
 			expectStatus(t, rec, http.StatusOK)
 			var p projectJSON
 			decode(t, rec, &p)
-			want := projectJSON{ID: 1, Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "EN_CURSO", FechaInicio: dates[0], FechaFin: dates[1]}
+			want := projectJSON{ID: ref(t, h, 1), Nombre: "Sistema de ventas", Descripcion: "Gestión de ventas", Estado: "EN_CURSO", FechaInicio: dates[0], FechaFin: dates[1]}
 			if p != want {
 				t.Errorf("proyecto = %+v, se esperaba %+v", p, want)
 			}
-			expectProjectDates(t, h, "1", dates[0], dates[1])
+			expectProjectDates(t, h, projectID(t, h, 1), dates[0], dates[1])
 		})
 	}
 }
@@ -90,10 +90,10 @@ func TestModificarFechasProyecto_FechaDeInicioAusenteDevuelve400(t *testing.T) {
 		t.Run(caseName, func(t *testing.T) {
 			h := newHandlerWithDates(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", body)
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", body)
 
 			expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
-			expectProjectDates(t, h, "1", "2026-10-23", "2026-12-18")
+			expectProjectDates(t, h, projectID(t, h, 1), "2026-10-23", "2026-12-18")
 		})
 	}
 }
@@ -111,10 +111,10 @@ func TestModificarFechasProyecto_FechaDeFinAusenteDevuelve400(t *testing.T) {
 		t.Run(caseName, func(t *testing.T) {
 			h := newHandlerWithDates(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", body)
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", body)
 
 			expectError(t, rec, http.StatusBadRequest, project.ErrMissingEndDate.Error())
-			expectProjectDates(t, h, "1", "2026-10-23", "2026-12-18")
+			expectProjectDates(t, h, projectID(t, h, 1), "2026-10-23", "2026-12-18")
 		})
 	}
 }
@@ -131,10 +131,10 @@ func TestModificarFechasProyecto_FormatoOFechaInvalidaDevuelve400(t *testing.T) 
 			t.Run(campo+"_"+date, func(t *testing.T) {
 				h := newHandlerWithDates(t)
 
-				rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", body)
+				rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", body)
 
 				expectError(t, rec, http.StatusBadRequest, "las fechas deben tener el formato AAAA-MM-DD")
-				expectProjectDates(t, h, "1", "2026-10-23", "2026-12-18")
+				expectProjectDates(t, h, projectID(t, h, 1), "2026-10-23", "2026-12-18")
 			})
 		}
 	}
@@ -152,26 +152,28 @@ func TestModificarFechasProyecto_JSONInvalidoDevuelve400(t *testing.T) {
 		t.Run(body, func(t *testing.T) {
 			h := newHandlerWithDates(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", body)
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", body)
 
 			expectError(t, rec, http.StatusBadRequest, "el cuerpo del pedido no es un JSON válido")
-			expectProjectDates(t, h, "1", "2026-10-23", "2026-12-18")
+			expectProjectDates(t, h, projectID(t, h, 1), "2026-10-23", "2026-12-18")
 		})
 	}
 }
 
-// HU-19 · CA-19.8 · Verifica que un {id} que no es un número entero dé 400.
+// HU-19 · CA-19.8 · Verifica que un {id} de proyecto que no es un UUID dé 400 (HU-51).
 // CA-19.8: un {id} que no es un número entero da 400.
 func TestModificarFechasProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithDates(t), http.MethodPatch, "/api/proyectos/abc/fechas", fechas("2027-01-11", "2027-03-19"))
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
-// HU-19 · CA-19.3 · Verifica que modificar las fechas de un proyecto inexistente dé 404.
+// HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
+// esa forma y responden 400 (projects_uuid_test.go).
+// HU-19 · CA-19.3 · Verifica que modificar las fechas de un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) dé 404.
 // CA-19.3
 func TestModificarFechasProyecto_InexistenteDevuelve404(t *testing.T) {
-	for _, id := range []string{"999", "0", "-1"} {
+	for _, id := range []string{missingProjectID, nilProjectID} {
 		t.Run(id, func(t *testing.T) {
 			rec := do(t, newHandlerWithDates(t), http.MethodPatch, "/api/proyectos/"+id+"/fechas", fechas("2027-01-11", "2027-03-19"))
 
@@ -183,7 +185,7 @@ func TestModificarFechasProyecto_InexistenteDevuelve404(t *testing.T) {
 // HU-19 · CA-19.5 · Verifica que las fechas vacías se validen antes que la existencia del proyecto y den 400.
 // CA-19.5 (orden de validación): las fechas se validan antes que el proyecto.
 func TestModificarFechasProyecto_FechasVaciasEnProyectoInexistenteDevuelve400(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/999/fechas", fechas("", ""))
+	rec := do(t, newHandler(), http.MethodPatch, "/api/proyectos/"+missingProjectID+"/fechas", fechas("", ""))
 
 	expectError(t, rec, http.StatusBadRequest, project.ErrMissingStartDate.Error())
 }
@@ -195,19 +197,19 @@ func TestModificarFechasProyecto_SinLasDosFechasDevuelve409(t *testing.T) {
 		h := newHandler()
 		createProject(t, h, "Sistema de ventas")
 
-		rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", fechas("2027-01-11", "2027-03-19"))
+		rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", fechas("2027-01-11", "2027-03-19"))
 
 		expectError(t, rec, http.StatusConflict, project.ErrDatesNotRegistered.Error())
-		expectProjectDates(t, h, "1", "", "")
+		expectProjectDates(t, h, projectID(t, h, 1), "", "")
 	})
 
 	t.Run("solo con inicio", func(t *testing.T) {
 		h := newHandlerWithStartDate(t)
 
-		rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", fechas("2027-01-11", "2027-03-19"))
+		rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", fechas("2027-01-11", "2027-03-19"))
 
 		expectError(t, rec, http.StatusConflict, project.ErrDatesNotRegistered.Error())
-		expectProjectDates(t, h, "1", "2026-10-23", "")
+		expectProjectDates(t, h, projectID(t, h, 1), "2026-10-23", "")
 	})
 }
 
@@ -219,10 +221,10 @@ func TestModificarFechasProyecto_FinNoPosteriorAlInicioDevuelve409(t *testing.T)
 		t.Run(fin, func(t *testing.T) {
 			h := newHandlerWithDates(t)
 
-			rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", fechas("2027-01-11", fin))
+			rec := do(t, h, http.MethodPatch, projectPath(t, h, 1)+"/fechas", fechas("2027-01-11", fin))
 
 			expectError(t, rec, http.StatusConflict, project.ErrEndNotAfterStart.Error())
-			expectProjectDates(t, h, "1", "2026-10-23", "2026-12-18")
+			expectProjectDates(t, h, projectID(t, h, 1), "2026-10-23", "2026-12-18")
 		})
 	}
 }
@@ -238,7 +240,9 @@ func TestModificarFechasProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPatch, "/api/proyectos/1/fechas", fechas("2027-01-11", "2027-03-19"))
+	// HU-51: el repositorio roto no tiene proyectos; cualquier UUID con la
+	// forma correcta llega al repositorio, que falla.
+	rec := do(t, h, http.MethodPatch, "/api/proyectos/"+missingProjectID+"/fechas", fechas("2027-01-11", "2027-03-19"))
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }

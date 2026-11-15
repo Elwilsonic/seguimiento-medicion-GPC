@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 	"time"
+	"uuid"
 
 	"seguimiento-medicion-gpc/internal/backlog"
 	"seguimiento-medicion-gpc/internal/defect"
@@ -367,6 +368,9 @@ func TestProject_EjemploDeTEC03(t *testing.T) {
 
 	wantProject := project.Project{ID: projectID, Name: "Software Metrics", Description: "Estimación y seguimiento de proyectos",
 		Status: project.StatusInProgress, StartDate: time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)}
+	// HU-51: el reporte no recibe el UUID del proyecto, así que el PublicID se
+	// toma del proyecto del reporte; los demás campos se comparan como antes.
+	wantProject.PublicID = mustPublicID(t, e, projectID)
 	if got.Project != wantProject {
 		t.Errorf("Project = %+v, se esperaba %+v", got.Project, wantProject)
 	}
@@ -567,6 +571,9 @@ func TestProject_ProyectoSinDatos(t *testing.T) {
 	got := generate(t, e, projectID)
 
 	want := project.Project{ID: projectID, Name: "Proyecto sin datos", Description: "Recién creado", Status: project.StatusPlanned}
+	// HU-51: el reporte no recibe el UUID del proyecto, así que el PublicID se
+	// toma del proyecto del reporte; los demás campos se comparan como antes.
+	want.PublicID = mustPublicID(t, e, projectID)
 	if got.Project != want {
 		t.Errorf("Project = %+v, se esperaba %+v (sin fecha de inicio)", got.Project, want)
 	}
@@ -733,4 +740,15 @@ func TestProject_NoModificaNadaYDevuelveCopias(t *testing.T) {
 		!reflect.DeepEqual(effortsAfter, effortsBefore) || !reflect.DeepEqual(defectsAfter, defectsBefore) {
 		t.Error("el reporte modificó los ítems, los sprints, los esfuerzos o los defectos")
 	}
+}
+
+// mustPublicID devuelve el identificador público del proyecto guardado
+// (HU-51), para compararlo con el del reporte.
+func mustPublicID(t *testing.T, e *reportEnv, projectID int) uuid.UUID {
+	t.Helper()
+	p, err := e.projects.Get(projectID)
+	if err != nil {
+		t.Fatalf("Get(%d) devolvió un error inesperado: %v", projectID, err)
+	}
+	return p.PublicID
 }

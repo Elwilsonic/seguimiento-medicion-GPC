@@ -87,19 +87,25 @@ type defectListResponse struct {
 
 // listDefectsByProject atiende GET /api/proyectos/{id}/defectos.
 func (s *server) listDefectsByProject(w http.ResponseWriter, r *http.Request) {
-	s.listDefects(w, r, s.defects.ListByProject)
+	// HU-51: el {id} del proyecto es su UUID.
+	projectID := func(r *http.Request) (int, error) {
+		id, _, err := s.projectIDFromPath(r)
+		return id, err
+	}
+	s.listDefects(w, r, projectID, s.defects.ListByProject)
 }
 
 // listDefectsBySprint atiende GET /api/sprints/{id}/defectos.
 func (s *server) listDefectsBySprint(w http.ResponseWriter, r *http.Request) {
-	s.listDefects(w, r, s.defects.ListBySprint)
+	s.listDefects(w, r, pathID, s.defects.ListBySprint)
 }
 
-// listDefects lista con list y aplica el filtro ?estado=. El orden de los
-// errores es ID de la ruta, estado del filtro y Manager. El handler decide
-// que un filtro vacío o con solo espacios no filtra (D3).
-func (s *server) listDefects(w http.ResponseWriter, r *http.Request, list func(int) ([]defect.Defect, error)) {
-	id, err := pathID(r)
+// listDefects lee el ID de la ruta con readID, lista con list y aplica el
+// filtro ?estado=. El orden de los errores es ID de la ruta, estado del
+// filtro y Manager. El handler decide que un filtro vacío o con solo espacios
+// no filtra (D3).
+func (s *server) listDefects(w http.ResponseWriter, r *http.Request, readID func(*http.Request) (int, error), list func(int) ([]defect.Defect, error)) {
+	id, err := readID(r)
 	if err != nil {
 		writeError(w, err)
 		return

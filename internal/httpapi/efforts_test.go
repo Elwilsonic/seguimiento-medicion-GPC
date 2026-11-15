@@ -238,8 +238,8 @@ func TestRegistrarEsfuerzo_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/items/1", ""), http.StatusOK)
 
 	rec := do(t, h, http.MethodPost, effortsPath, validEffort)

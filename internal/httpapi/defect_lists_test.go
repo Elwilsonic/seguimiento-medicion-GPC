@@ -48,8 +48,8 @@ func newHandlerWithDefectList(t *testing.T) http.Handler {
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/3/estado", `{"estado":"RESUELTO","sprint_resolucion_id":1}`), http.StatusOK)
 
 	createProject(t, h, "Sistema de stock")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/2/backlog", validItem), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/2/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 2)+"/backlog", validItem), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 2)+"/sprints", validSprint), http.StatusCreated)
 	other := `{"descripcion":"El stock queda negativo","severidad":"MEDIA","sprint_deteccion_id":2}`
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/2/defectos", other), http.StatusCreated)
 	return h
@@ -87,7 +87,7 @@ func assertDefectIDs(t *testing.T, path string, got defectListJSON, want []int) 
 func TestListarDefectosDelProyecto_Devuelve200ConLosDefectosYLaCantidad(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 
-	got := listDefects(t, h, "/api/proyectos/1/defectos")
+	got := listDefects(t, h, projectPath(t, h, 1)+"/defectos")
 
 	assertDefectIDs(t, "proyecto 1", got, []int{1, 2, 3})
 	if len(got.Defectos) != 3 {
@@ -112,7 +112,7 @@ func TestListarDefectosDelProyecto_Devuelve200ConLosDefectosYLaCantidad(t *testi
 		t.Errorf("defecto 3 = %+v, se esperaba %+v", got.Defectos[2], wantResolved)
 	}
 
-	assertDefectIDs(t, "proyecto 2", listDefects(t, h, "/api/proyectos/2/defectos"), []int{4})
+	assertDefectIDs(t, "proyecto 2", listDefects(t, h, projectPath(t, h, 2)+"/defectos"), []int{4})
 }
 
 // HU-31 · CA-31.9 · Verifica que GET /api/sprints/{id}/defectos responda 200 con los defectos detectados en el sprint.
@@ -130,9 +130,9 @@ func TestListarDefectos_FiltraPorEstado(t *testing.T) {
 		path string
 		want []int
 	}{
-		{"/api/proyectos/1/defectos?estado=RESUELTO", []int{3}},
-		{"/api/proyectos/1/defectos?estado=en_correccion", []int{2}},
-		{"/api/proyectos/1/defectos?estado=%20Abierto%20", []int{1}},
+		{"{proyecto}/defectos?estado=RESUELTO", []int{3}},
+		{"{proyecto}/defectos?estado=en_correccion", []int{2}},
+		{"{proyecto}/defectos?estado=%20Abierto%20", []int{1}},
 		{"/api/sprints/1/defectos?estado=ABIERTO", []int{1}},
 		{"/api/sprints/1/defectos?estado=resuelto", []int{3}},
 		{"/api/sprints/2/defectos?estado=ABIERTO", []int{4}},
@@ -150,7 +150,7 @@ func TestListarDefectos_FiltraPorEstado(t *testing.T) {
 func TestListarDefectos_FiltroVacioOConSoloEspaciosNoFiltra(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 
-	for _, base := range []string{"/api/proyectos/1/defectos", "/api/sprints/1/defectos"} {
+	for _, base := range []string{"{proyecto}/defectos", "/api/sprints/1/defectos"} {
 		for _, query := range []string{"", "?estado=", "?estado=%20%20%20", "?estado=%09"} {
 			path := base + query
 			t.Run(path, func(t *testing.T) {
@@ -169,9 +169,9 @@ func TestListarDefectos_SinDefectosDevuelveListaVaciaYCantidadCero(t *testing.T)
 		h    http.Handler
 		path string
 	}{
-		{"proyecto sin defectos", empty, "/api/proyectos/1/defectos"},
+		{"proyecto sin defectos", empty, "{proyecto}/defectos"},
 		{"sprint sin defectos", empty, "/api/sprints/1/defectos"},
-		{"filtro sin coincidencias en el proyecto", populated, "/api/proyectos/2/defectos?estado=RESUELTO"},
+		{"filtro sin coincidencias en el proyecto", populated, "{proyecto2}/defectos?estado=RESUELTO"},
 		{"filtro sin coincidencias en el sprint", populated, "/api/sprints/2/defectos?estado=EN_CORRECCION"},
 	}
 	for _, c := range cases {
@@ -195,11 +195,11 @@ func TestListarDefectos_EstadoInvalidoDevuelve400(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 
 	for _, path := range []string{
-		"/api/proyectos/1/defectos?estado=CERRADO",
+		"{proyecto}/defectos?estado=CERRADO",
 		"/api/sprints/1/defectos?estado=PENDIENTE",
 		"/api/sprints/1/defectos?estado=EN%20CORRECCION",
 		// El filtro se valida antes de consultar: 400 y no 404.
-		"/api/proyectos/999/defectos?estado=CERRADO",
+		"/api/proyectos/" + missingProjectID + "/defectos?estado=CERRADO",
 		"/api/sprints/999/defectos?estado=CERRADO",
 	} {
 		t.Run(path, func(t *testing.T) {
@@ -210,16 +210,19 @@ func TestListarDefectos_EstadoInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
-// HU-31 · CA-31.5 · Verifica que un proyecto o un sprint inexistente, incluidos 0 y negativo, dé 404.
+// HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
+// esa forma y responden 400 (projects_uuid_test.go). Los sprints conservan el
+// ID entero.
+// HU-31 · CA-31.5 · Verifica que un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) o un sprint inexistente, incluidos 0 y negativo, dé 404.
 func TestListarDefectos_InexistenteDevuelve404(t *testing.T) {
 	h := newHandlerWithDefectList(t)
 	cases := []struct {
 		path string
 		want error
 	}{
-		{"/api/proyectos/999/defectos", project.ErrProjectNotFound},
-		{"/api/proyectos/0/defectos", project.ErrProjectNotFound},
-		{"/api/proyectos/-1/defectos?estado=ABIERTO", project.ErrProjectNotFound},
+		{"/api/proyectos/" + missingProjectID + "/defectos", project.ErrProjectNotFound},
+		{"/api/proyectos/" + nilProjectID + "/defectos", project.ErrProjectNotFound},
+		{"/api/proyectos/" + missingProjectID + "/defectos?estado=ABIERTO", project.ErrProjectNotFound},
 		{"/api/sprints/999/defectos", sprint.ErrSprintNotFound},
 		{"/api/sprints/0/defectos", sprint.ErrSprintNotFound},
 		{"/api/sprints/-1/defectos?estado=ABIERTO", sprint.ErrSprintNotFound},
@@ -237,7 +240,7 @@ func TestListarDefectos_InexistenteDevuelve404(t *testing.T) {
 func TestListarDefectos_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	h := newHandlerWithDefectRepository(t, brokenDefectRepository{})
 
-	for _, path := range []string{"/api/proyectos/1/defectos", "/api/sprints/1/defectos?estado=ABIERTO"} {
+	for _, path := range []string{"{proyecto}/defectos", "/api/sprints/1/defectos?estado=ABIERTO"} {
 		t.Run(path, func(t *testing.T) {
 			rec := do(t, h, http.MethodGet, path, "")
 

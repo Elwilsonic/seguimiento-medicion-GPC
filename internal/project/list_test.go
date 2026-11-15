@@ -52,9 +52,11 @@ func TestList_DevuelveTodosLosProyectosConSusDatos(t *testing.T) {
 
 	got := mustList(t, manager)
 
+	// HU-51: el PublicID lo asigna Create al azar; se compara con el del
+	// proyecto creado, así que también se verifica que se conserva.
 	want := []project.Project{
-		{ID: inventario.ID, Name: "Inventario", Description: "", Status: project.StatusInProgress, StartDate: start, EndDate: end},
-		{ID: ventas.ID, Name: "Sistema de ventas", Description: "Ventas online", Status: project.StatusPlanned},
+		{ID: inventario.ID, PublicID: inventario.PublicID, Name: "Inventario", Description: "", Status: project.StatusInProgress, StartDate: start, EndDate: end},
+		{ID: ventas.ID, PublicID: ventas.PublicID, Name: "Sistema de ventas", Description: "Ventas online", Status: project.StatusPlanned},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("List() = %+v, se esperaba %+v", got, want)

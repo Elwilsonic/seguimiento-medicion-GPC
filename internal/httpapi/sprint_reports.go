@@ -32,15 +32,22 @@ func (s *server) sprintReport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toSprintReportResponse(rep))
+	publicID, err := s.publicProjectID(rep.Sprint.ProjectID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toSprintReportResponse(rep, publicID))
 }
 
-func toSprintReportResponse(rep report.SprintReport) sprintReportResponse {
+// toSprintReportResponse arma el reporte con publicID, el UUID del proyecto
+// del sprint (HU-51).
+func toSprintReportResponse(rep report.SprintReport, publicID string) sprintReportResponse {
 	return sprintReportResponse{
-		Sprint: toSprintResponse(rep.Sprint),
+		Sprint: toSprintResponse(rep.Sprint, publicID),
 		// La misma conversión que GET /api/sprints/{id}/metricas (decisión 4).
 		Metricas:    toSprintMetricsResponse(rep.Metrics),
-		Historias:   toStoryListResponse(rep.Stories),
+		Historias:   toStoryListResponse(rep.Stories, publicID),
 		Esfuerzos:   toEffortListResponse(effort.Summary{Efforts: rep.Efforts.Efforts, TotalHours: rep.Efforts.TotalHours}),
 		Defectos:    toDefectListResponse(rep.Defects.Defects),
 		Integrantes: toMemberListResponse(rep.Members),

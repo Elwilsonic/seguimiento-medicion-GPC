@@ -3,6 +3,7 @@ package project
 import (
 	"errors"
 	"time"
+	"uuid"
 )
 
 // Status es el estado de un proyecto (RN-01.6).
@@ -17,7 +18,10 @@ const (
 // Project es un proyecto. Todos sus campos son valores, así que una copia
 // no comparte estado con el proyecto guardado.
 type Project struct {
-	ID          int
+	ID int
+	// PublicID es el identificador público del proyecto (HU-51, D1): el único
+	// que muestran la API y la interfaz. ID queda como clave interna.
+	PublicID    uuid.UUID
 	Name        string
 	Description string
 	Status      Status

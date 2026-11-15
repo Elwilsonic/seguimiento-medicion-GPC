@@ -37,9 +37,9 @@ func (brokenMemberRepository) Update(member.Member) (member.Member, error) {
 // pedido rechazado no guardó nada.
 func expectNoMemberSaved(t *testing.T, h http.Handler) {
 	t.Helper()
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", validMember)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", validMember)
 	expectStatus(t, rec, http.StatusCreated)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
+	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
 }
 
 // newHandlerWithMembers arma la API con el proyecto 1 y los integrantes 1
@@ -47,8 +47,8 @@ func expectNoMemberSaved(t *testing.T, h http.Handler) {
 func newHandlerWithMembers(t *testing.T) http.Handler {
 	t.Helper()
 	h := newHandlerWithProject(t)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", validMember), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"Bruno","rol":"AGILE_ENABLER"}`), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", validMember), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", `{"nombre":"Bruno","rol":"AGILE_ENABLER"}`), http.StatusCreated)
 	return h
 }
 
@@ -60,7 +60,7 @@ func TestModificarIntegrante_Devuelve200ConElIntegrante(t *testing.T) {
 	rec := do(t, h, http.MethodPut, "/api/integrantes/1", `{"nombre":"  Ana María ","rol":"agile_enabler"}`)
 
 	expectStatus(t, rec, http.StatusOK)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"Ana María","rol":"AGILE_ENABLER"}`)
+	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana María","rol":"AGILE_ENABLER"}`)
 }
 
 // CA-16.2 y CA-16.7 · Los datos inválidos devuelven 400 con el mensaje del
@@ -135,7 +135,7 @@ func TestModificarIntegrante_PropioNombreConOtrasMayusculasDevuelve200(t *testin
 	rec := do(t, h, http.MethodPut, "/api/integrantes/1", `{"nombre":"ANA PÉREZ","rol":"PRODUCT_BUILDER"}`)
 
 	expectStatus(t, rec, http.StatusOK)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":1,"nombre":"ANA PÉREZ","rol":"PRODUCT_BUILDER"}`)
+	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"ANA PÉREZ","rol":"PRODUCT_BUILDER"}`)
 }
 
 // CA-16.7 · Los demás métodos devuelven 405. GET necesita su ruta porque, sin
@@ -190,7 +190,7 @@ func TestModificarIntegrante_ErrorDelRepositorioDevuelve500SinDetalle(t *testing
 func TestModificarIntegrante_NoCambiaLosEsfuerzosRegistrados(t *testing.T) {
 	h := newHandlerWithEffort(t)
 	expectStatus(t, do(t, h, http.MethodPost, effortsPath, validEffort), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/integrantes", `{"nombre":"García Santiago","rol":"PRODUCT_BUILDER"}`), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", `{"nombre":"García Santiago","rol":"PRODUCT_BUILDER"}`), http.StatusCreated)
 
 	expectStatus(t, do(t, h, http.MethodPut, "/api/integrantes/1", `{"nombre":"Santiago García","rol":"PRODUCT_BUILDER"}`), http.StatusOK)
 

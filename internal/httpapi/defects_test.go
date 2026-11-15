@@ -53,8 +53,8 @@ func newHandlerWithDefectRepository(t *testing.T, repo defect.Repository) http.H
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	return h
 }
 
@@ -231,7 +231,7 @@ func TestRegistrarDefecto_SprintCerradoDevuelve409(t *testing.T) {
 func TestRegistrarDefecto_SprintDeOtroProyectoDevuelve409(t *testing.T) {
 	h := newHandlerWithDefects(t)
 	createProject(t, h, "Sistema de facturación")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/2/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 2)+"/sprints", validSprint), http.StatusCreated)
 	body := `{"descripcion":"El total no descuenta el descuento","severidad":"ALTA","sprint_deteccion_id":2}`
 
 	rec := do(t, h, http.MethodPost, defectsPath, body)
@@ -443,7 +443,7 @@ func TestCambiarEstadoDefecto_SprintDeOtroProyectoDevuelve409(t *testing.T) {
 	h := newHandlerWithDefect(t)
 	changeDefectStatus(t, h, `{"estado":"EN_CORRECCION"}`)
 	createProject(t, h, "Sistema de facturación")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/2/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 2)+"/sprints", validSprint), http.StatusCreated)
 
 	rec := do(t, h, http.MethodPatch, defectStatusPath, `{"estado":"RESUELTO","sprint_resolucion_id":2}`)
 

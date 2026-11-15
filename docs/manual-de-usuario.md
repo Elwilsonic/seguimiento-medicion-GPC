@@ -46,7 +46,7 @@ Con este comando los datos se guardan **en memoria** y se pierden al detener el 
 
 La interfaz es una sola página. Arriba está la barra **Proyecto actual / Sprint actual**, y debajo, una sección por tema: Proyectos, Integrantes, Product Backlog, Planning Poker, Métricas, Dashboard, Reportes, Sprints y Defectos.
 
-- **Proyecto actual (ID):** casi todas las secciones trabajan sobre este proyecto. Se completa solo al crear un proyecto. Para volver a uno existente, tocá **Ver proyectos**: aparece una tabla con todos los proyectos, con su ID, nombre, descripción, estado y fechas, y el mensaje "N proyecto(s).". Tocá **Elegir** en la fila del proyecto: queda como proyecto actual y se cargan sus datos y su backlog, sin escribir su número (HU-50). Los proyectos aparecen en orden alfabético por nombre, sin distinguir mayúsculas; los nombres que empiezan con acento o con ñ (por ejemplo, "Ábaco") quedan al final, después de los que empiezan con "z". Si sabés el ID, también podés escribirlo y tocar **Cargar proyecto**.
+- **Proyecto actual (ID):** casi todas las secciones trabajan sobre este proyecto. Su ID es un UUID que asigna el sistema, por ejemplo `3f2b8c1d-5e6a-4b7c-8d9e-0f1a2b3c4d5e`, y no un número correlativo (HU-51); las capturas de este manual son anteriores y muestran IDs numéricos. Se completa solo al crear un proyecto. Para volver a uno existente, tocá **Ver proyectos**: aparece una tabla con todos los proyectos, con su ID, nombre, descripción, estado y fechas, y el mensaje "N proyecto(s).". Tocá **Elegir** en la fila del proyecto: queda como proyecto actual y se cargan sus datos y su backlog, sin escribir su ID (HU-50). Los proyectos aparecen en orden alfabético por nombre, sin distinguir mayúsculas; los nombres que empiezan con acento o con ñ (por ejemplo, "Ábaco") quedan al final, después de los que empiezan con "z". Si sabés el ID, también podés escribirlo o pegarlo, en mayúsculas o minúsculas, y tocar **Cargar proyecto**; un ID que no es un UUID, como "1", da el error "el id del proyecto debe ser un UUID".
 - **Sprint actual (ID):** lo usan "Asignar al sprint", "Completar", los reportes del sprint y la consulta de defectos por sprint. Se completa solo al crear un sprint, y también se puede elegir desde la tabla de "Ver sprints del proyecto" o escribiendo su ID.
 - **Mensajes:** cada sección muestra el resultado de la última acción debajo de sus formularios. En **verde** si salió bien (por ejemplo, "Proyecto 1 creado.") y en **rojo** si la aplicación rechazó el pedido, con el motivo. En la [sección 14](#14-mensajes-de-error-comunes) están los errores más comunes y cómo resolverlos.
 - **Fechas:** los campos de fecha usan el calendario del navegador; la aplicación muestra las fechas como `AAAA-MM-DD`.
@@ -66,7 +66,7 @@ Recorrido recomendado para un proyecto nuevo: crear el proyecto y registrar sus 
 ### Consultar y modificar el proyecto (HU-02 y HU-03)
 
 1. Elegí el proyecto en **Proyecto actual (ID)** y tocá **Cargar proyecto**.
-2. En **Proyecto actual** se ve el resumen: ID, nombre, estado y fechas (por ejemplo, "Proyecto 1: Sistema de ventas (EN_CURSO), inicio: 2026-10-05, fin: 2026-11-02").
+2. En **Proyecto actual** se ve el resumen: ID, nombre, estado y fechas (por ejemplo, "Proyecto 3f2b8c1d-5e6a-4b7c-8d9e-0f1a2b3c4d5e: Sistema de ventas (EN_CURSO), inicio: 2026-10-05, fin: 2026-11-02").
 3. Para modificarlo, cambiá el **Nombre**, la **Descripción** o el **Estado** (`PLANIFICADO`, `EN_CURSO` o `FINALIZADO`) y tocá **Guardar cambios**. Se guardan los tres campos juntos.
 
 La captura de la sección siguiente muestra el proyecto ya modificado a `EN_CURSO`.
@@ -261,7 +261,7 @@ Todas salen de una sola consulta (HU-35). Si una métrica no se puede calcular (
 
 1. **Reporte del proyecto (HU-38):** con el proyecto actual elegido, en **Reportes** tocá **Generar reporte**. Muestra los datos del proyecto, sus métricas, la tabla de historias, la tabla de esfuerzos con el total de horas, la tabla de defectos con la cantidad y los integrantes que registraron esfuerzo.
 2. **Historias del reporte (HU-49):** la tabla de historias lista cada historia del backlog con su prioridad, su estado, sus Story Points ("—" si no está estimada), sus horas estimadas y su sprint ("—" si no está asignada). Debajo indica cuántas historias hay y cuántas están completadas (`TERMINADO`).
-3. **Exportar a PDF (HU-40):** tocá **Descargar PDF**. El navegador descarga el mismo reporte del proyecto como `reporte-proyecto-N.pdf`, donde N es el ID del proyecto. El PDF incluye la sección "Historias".
+3. **Exportar a PDF (HU-40):** tocá **Descargar PDF**. El navegador descarga el mismo reporte del proyecto como `reporte-proyecto-{UUID}.pdf`, con el UUID del proyecto (HU-51). El PDF incluye la sección "Historias".
 4. **Reporte del sprint (HU-39):** con el sprint actual elegido, tocá **Generar reporte del sprint**. Muestra lo mismo acotado al sprint, abierto o cerrado: sus datos, sus métricas, las historias asignadas al sprint, sus esfuerzos, los defectos detectados o resueltos en él y los integrantes que registraron esfuerzo en el sprint.
 
 ![Reporte del proyecto, PDF descargado y reporte del sprint 1](img/manual-de-usuario/18-reportes.png)
@@ -275,6 +275,7 @@ Los errores se muestran en rojo debajo de la sección donde se hizo la acción. 
 | No se pudo conectar con el servidor. ¿Está en ejecución? | El servidor está detenido o se reinició. | Iniciá el servidor (sección 1) y recargá la página. Con almacenamiento en memoria, los datos anteriores se perdieron. |
 | Elegí un proyecto: creá uno o escribí su ID en «Proyecto actual». | La acción necesita un proyecto actual y el campo está vacío. | Creá un proyecto o escribí su ID arriba y tocá **Cargar proyecto**. |
 | Elegí un sprint: creá uno o escribí su ID en «Sprint actual». | La acción necesita un sprint actual. | Creá un sprint o elegilo desde **Ver sprints del proyecto**. |
+| el id del proyecto debe ser un UUID | El ID escrito en «Proyecto actual» no es un UUID, por ejemplo un número como "1" (HU-51). | Elegí el proyecto con **Ver proyectos** y **Elegir**, o copiá su UUID completo. |
 | no existe un proyecto con ese id (también ítem, sprint, defecto, esfuerzo, integrante o sesión) | El ID escrito no existe. | Revisá el ID en la tabla correspondiente. Con almacenamiento en memoria, los IDs se pierden al reiniciar. |
 | ya existe un proyecto con ese nombre | El nombre del proyecto se repite. | Usá otro nombre. |
 | el ítem necesita al menos un criterio de aceptación | El campo de criterios está vacío. | Escribí al menos un criterio, uno por línea. |

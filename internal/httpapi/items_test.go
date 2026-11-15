@@ -32,7 +32,7 @@ func newHandlerWithItem(t *testing.T) http.Handler {
 	t.Helper()
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem), http.StatusCreated)
 	return h
 }
 
@@ -46,7 +46,7 @@ func TestConsultarItem_Devuelve200ConElItem(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != 1 || it.ProyectoID != 1 || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
+	if it.ID != 1 || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
 		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.HorasEstimadas != 0 || it.SprintID != 0 ||
 		len(it.Criterios) != 1 || it.Criterios[0] != "Credenciales válidas" {
 		t.Errorf("ítem = %+v", it)
@@ -161,11 +161,11 @@ func TestCambiarEstadoItem_TransicionNoPermitidaDevuelve409(t *testing.T) {
 func TestListarBacklogPorPrioridad_Devuelve200OrdenadoPorPrioridad(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
-	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":"Reportes","prioridad":"BAJA","criterios":["Ok"]}`)
-	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
-	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", `{"titulo":"Login","prioridad":"ALTA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", `{"titulo":"Reportes","prioridad":"BAJA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", `{"titulo":"Cierre de sesión","prioridad":"MEDIA","criterios":["Ok"]}`)
+	do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", `{"titulo":"Login","prioridad":"ALTA","criterios":["Ok"]}`)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/backlog?orden=prioridad", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/backlog?orden=prioridad", "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
@@ -177,7 +177,7 @@ func TestListarBacklogPorPrioridad_Devuelve200OrdenadoPorPrioridad(t *testing.T)
 
 // TEC-04 · CA-TEC04.9 · Verifica que listar por prioridad el backlog de un proyecto inexistente responda 404.
 func TestListarBacklogPorPrioridad_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/999/backlog?orden=prioridad", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/"+missingProjectID+"/backlog?orden=prioridad", "")
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }

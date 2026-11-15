@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"uuid"
 
 	"seguimiento-medicion-gpc/internal/project"
 )
@@ -33,6 +34,17 @@ func (r *fixedStatusRepository) List() ([]project.Project, error) {
 func (r *fixedStatusRepository) GetByID(id int) (project.Project, error) {
 	for _, p := range r.projects {
 		if p.ID == id {
+			return p, nil
+		}
+	}
+	return project.Project{}, project.ErrProjectNotFound
+}
+
+// GetByPublicID busca por el identificador público (HU-51 agrega la
+// operación a la interfaz; el falso la cumple para seguir compilando).
+func (r *fixedStatusRepository) GetByPublicID(id uuid.UUID) (project.Project, error) {
+	for _, p := range r.projects {
+		if p.PublicID == id {
 			return p, nil
 		}
 	}

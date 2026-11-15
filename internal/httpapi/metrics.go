@@ -22,7 +22,8 @@ type sprintMetricsResponse struct {
 // projectMetricsResponse es la respuesta de GET /api/proyectos/{id}/metricas
 // (HU-32 y HU-34). Velocidad es null si no hay sprints cerrados (RN-32.6).
 type projectMetricsResponse struct {
-	ProyectoID      int      `json:"proyecto_id"`
+	// ProyectoID es el UUID del proyecto (HU-51, CA-51.3).
+	ProyectoID      string   `json:"proyecto_id"`
 	SPPlanificados  int      `json:"sp_planificados"`
 	SPCompletados   int      `json:"sp_completados"`
 	ItemsSinEstimar int      `json:"items_sin_estimar"`
@@ -83,7 +84,7 @@ type sprintWithMetricsResponse struct {
 // projectSprintsMetrics atiende GET /api/proyectos/{id}/metricas/sprints
 // (HU-37, CA-37.4). Un proyecto sin sprints devuelve [], no null.
 func (s *server) projectSprintsMetrics(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -95,7 +96,7 @@ func (s *server) projectSprintsMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 	resp := make([]sprintWithMetricsResponse, 0, len(list))
 	for _, e := range list {
-		resp = append(resp, sprintWithMetricsResponse{Sprint: toSprintResponse(e.Sprint), Metricas: toSprintMetricsResponse(e.Metrics)})
+		resp = append(resp, sprintWithMetricsResponse{Sprint: toSprintResponse(e.Sprint, publicID), Metricas: toSprintMetricsResponse(e.Metrics)})
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -103,7 +104,7 @@ func (s *server) projectSprintsMetrics(w http.ResponseWriter, r *http.Request) {
 // projectMetrics atiende GET /api/proyectos/{id}/metricas (HU-32) con una
 // sola consulta de todas las métricas del proyecto (HU-35, RN-35.1).
 func (s *server) projectMetrics(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -113,15 +114,17 @@ func (s *server) projectMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toProjectMetricsResponse(m))
+	writeJSON(w, http.StatusOK, toProjectMetricsResponse(m, publicID))
 }
 
 // toProjectMetricsResponse arma la respuesta de las métricas del proyecto. La
 // usan GET /api/proyectos/{id}/metricas (HU-35) y la parte "metricas" del
 // reporte del proyecto (HU-38).
-func toProjectMetricsResponse(m metrics.ProjectMetrics) projectMetricsResponse {
+// toProjectMetricsResponse arma las métricas con publicID, el UUID del
+// proyecto (HU-51).
+func toProjectMetricsResponse(m metrics.ProjectMetrics, publicID string) projectMetricsResponse {
 	return projectMetricsResponse{
-		ProyectoID:         m.ProjectID,
+		ProyectoID:         publicID,
 		SPPlanificados:     m.Points.Planned,
 		SPCompletados:      m.Points.Completed,
 		ItemsSinEstimar:    m.Points.Unestimated,

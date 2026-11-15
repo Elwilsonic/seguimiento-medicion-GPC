@@ -28,7 +28,7 @@ La capa HTTP solo llama a los Manager; los Manager solo acceden a los datos a tr
 | Paquete | Qué hace | Historias |
 |---|---|---|
 | `cmd/server` | `main`: lee `STORAGE`, `DATABASE_URL` y `PORT` (`storage.go`), arma los repositorios en memoria o PostgreSQL (`repositories.go`), crea los Manager y arranca el servidor con timeouts | TEC-01, TEC-04, TEC-05 |
-| `internal/project` | Proyectos: crear, modificar, consultar, listar todos ordenados por nombre (`List`), registrar la fecha de inicio y la de fin, que tiene que ser posterior al inicio, y modificar juntas las dos fechas ya registradas (`SetDates`). Estados `PLANIFICADO`, `EN_CURSO` y `FINALIZADO`; nombre único | HU-01, HU-02, HU-03, HU-18, HU-19, HU-41, HU-50 |
+| `internal/project` | Proyectos: crear, modificar, consultar, listar todos ordenados por nombre (`List`), registrar la fecha de inicio y la de fin, que tiene que ser posterior al inicio, y modificar juntas las dos fechas ya registradas (`SetDates`). Estados `PLANIFICADO`, `EN_CURSO` y `FINALIZADO`; nombre único. Cada proyecto tiene un ID entero interno y un identificador público UUID versión 4 (`PublicID`), que asigna `Create` y busca `GetByPublicID` | HU-01, HU-02, HU-03, HU-18, HU-19, HU-41, HU-50, HU-51 |
 | `internal/member` | Integrantes de un proyecto: registrar (`Register`), modificar el nombre y el rol (`Update`) y listar por proyecto (`List`, ordenados por ID). Roles `PRODUCT_ARCHITECT`, `AGILE_ENABLER` y `PRODUCT_BUILDER`; el nombre no se repite en el proyecto, sin distinguir mayúsculas y con cualquier rol | HU-15, HU-16, HU-17 |
 | `internal/backlog` | Ítems del Product Backlog: crear, consultar, listar (por ID o por prioridad), modificar, cambiar el estado (`PENDIENTE` ↔ `EN_CURSO` ↔ `TERMINADO`, de a un paso), asignar story points (escala 1, 2, 3, 5, 8, 13, 21) y asignar a un sprint | HU-04 a HU-09, HU-11, HU-20 |
 | `internal/sprint` | Sprints: crear (uno solo `ABIERTO` por proyecto), asignar ítems, completarlos, listar los completados, cerrar (`CERRADO`) y listar los sprints de un proyecto, abiertos y cerrados (`History`) | HU-10 a HU-14 |
@@ -110,7 +110,7 @@ Cada dominio con datos propios define su interfaz `Repository` en `repository.go
 
 | Paquete | Operaciones de `Repository` |
 |---|---|
-| `project` | `Save`, `List`, `GetByID`, `Update` |
+| `project` | `Save`, `List`, `GetByID`, `GetByPublicID` (HU-51), `Update` |
 | `backlog` | `Save`, `ListByProject`, `GetByID`, `Update` |
 | `sprint` | `Save`, `OpenByProject`, `GetByID`, `Update`, `ListByProject` |
 | `poker` | `Save`, `OpenByItem`, `GetByID`, `Update` |
@@ -126,7 +126,7 @@ Cada dominio con datos propios define su interfaz `Repository` en `repository.go
 
 ### 2.2 Implementación en PostgreSQL
 
-`postgres_repository.go` en cada paquete (TEC-05). Usa el driver `github.com/jackc/pgx/v5` con un único pool (`pgxpool`) compartido por todos los repositorios, que abre `postgres.Open`. Los IDs los asigna la base (`GENERATED ... AS IDENTITY`). El esquema está en [`db/init/01-schema.sql`](../db/init/01-schema.sql), con las tablas `projects` (con `start_date` y `end_date`, `NULL` si no están registradas, HU-18 y HU-41), `backlog_items`, `sprints`, `efforts`, `defects`, `poker_sessions` y `members` (HU-15); [`02-test-database.sql`](../db/init/02-test-database.sql) crea la base `gpc_test` con el mismo esquema.
+`postgres_repository.go` en cada paquete (TEC-05). Usa el driver `github.com/jackc/pgx/v5` con un único pool (`pgxpool`) compartido por todos los repositorios, que abre `postgres.Open`. Los IDs los asigna la base (`GENERATED ... AS IDENTITY`). El esquema está en [`db/init/01-schema.sql`](../db/init/01-schema.sql), con las tablas `projects` (con `start_date` y `end_date`, `NULL` si no están registradas, HU-18 y HU-41, y `public_id UUID NOT NULL UNIQUE`, el identificador público, HU-51), `backlog_items`, `sprints`, `efforts`, `defects`, `poker_sessions` y `members` (HU-15); [`02-test-database.sql`](../db/init/02-test-database.sql) crea la base `gpc_test` con el mismo esquema.
 
 ### 2.3 Contrato común
 
@@ -140,7 +140,7 @@ Todas las rutas están en `internal/httpapi/server.go` (`NewHandler`) y usan sol
 
 | Objeto | Campos |
 |---|---|
-| Proyecto | `id`, `nombre`, `descripcion`, `estado`, `fecha_inicio` y `fecha_fin` (`""` si no están registradas) |
+| Proyecto | `id` (el UUID del proyecto, como texto, HU-51), `nombre`, `descripcion`, `estado`, `fecha_inicio` y `fecha_fin` (`""` si no están registradas) |
 | Ítem | `id`, `proyecto_id`, `titulo`, `descripcion`, `prioridad`, `criterios` (lista), `estado`, `story_points` (0 si no está estimado), `horas_estimadas`, `sprint_id` (0 si no está asignado) |
 | Sprint | `id`, `proyecto_id`, `nombre`, `fecha_inicio`, `fecha_fin`, `objetivo`, `estado` |
 | Sesión de Poker | `id`, `item_id`, `estado`, `ronda`, `votos` (lista de `{integrante, puntos}`), `cartas` (la escala). Solo la respuesta de revelar suma `comparacion`: `{hay_diferencias, menor, mayor}`, con `menor` y `mayor` como `{puntos, integrantes}` |
@@ -157,9 +157,17 @@ Todas las rutas están en `internal/httpapi/server.go` (`NewHandler`) y usan sol
 | Reporte del sprint | `sprint`, `metricas` (del sprint), `historias` (las asignadas al sprint, HU-49), `esfuerzos` (del sprint), `defectos` (los detectados o resueltos en el sprint) e `integrantes` |
 | Error | `error` (mensaje en español) |
 
-Una lista vacía se devuelve como `[]`, nunca como `null`.
+Una lista vacía se devuelve como `[]`, nunca como `null`. Desde HU-51, el `proyecto_id` de ítems, sprints, integrantes, métricas y resumen es el UUID del proyecto, como texto; el ID entero interno del proyecto no sale de la API.
 
 ### 3.2 Endpoints
+
+**Identificador de proyecto en las rutas (HU-51).** El `{id}` de las 17 rutas `/api/proyectos/{id}…` es el UUID del proyecto. Lo traducen tres piezas de `internal/httpapi/server.go`:
+
+- `parseProjectID` acepta solo la forma canónica: 36 caracteres con guiones en las posiciones 8, 13, 18 y 23, validados después con `uuid.Parse` de la biblioteca estándar, con mayúsculas o minúsculas. Rechaza los números, las llaves, el prefijo `urn:uuid:` y la forma sin guiones con `errInvalidProjectID` ("el id del proyecto debe ser un UUID", 400 en `statusFor`). No exige la versión 4: un UUID de otra versión, o el nulo, simplemente no existe (404).
+- `projectIDFromPath` llama a `parseProjectID`, busca el proyecto con `Manager.GetByPublicID` y devuelve su ID interno y el UUID en minúsculas. Si el UUID no existe, devuelve el ID interno 0, que ningún proyecto tiene (RN-01.5): así cada `Manager` informa `ErrProjectNotFound` (404) en el mismo punto de su orden de validaciones que antes, y se conserva el orden de errores de HU-18, HU-19, HU-41 y HU-04.
+- `publicProjectID` busca el UUID para las respuestas de las rutas por ID de otra entidad (`/api/items/{id}`, `/api/sprints/{id}/…` y `/api/integrantes/{id}`). Si no encuentra el proyecto, responde 500, porque una entidad siempre pertenece a un proyecto que existe.
+
+Los ítems, sprints, integrantes, defectos, esfuerzos y sesiones de Planning Poker siguen con IDs enteros (`errInvalidID`, "el id debe ser un número entero"): es la parte pendiente de HU-51.
 
 | Método y ruta | Cuerpo de entrada | Respuesta correcta | Historia |
 |---|---|---|---|
@@ -203,7 +211,7 @@ Una lista vacía se devuelve como `[]`, nunca como `null`.
 | `GET /api/proyectos/{id}/metricas/sprints` | — | 200, métricas por sprint (`[]` sin sprints) | HU-37 |
 | `GET /api/proyectos/{id}/resumen` | — | 200, resumen del proyecto | HU-36 |
 | `GET /api/proyectos/{id}/reporte` | — | 200, reporte del proyecto | HU-38, HU-49 |
-| `GET /api/proyectos/{id}/reporte/pdf` | — | 200, el reporte del proyecto como archivo PDF (`application/pdf`, `reporte-proyecto-{id}.pdf`); los errores responden en JSON | HU-40 |
+| `GET /api/proyectos/{id}/reporte/pdf` | — | 200, el reporte del proyecto como archivo PDF (`application/pdf`, `reporte-proyecto-{UUID}.pdf`, HU-51); los errores responden en JSON | HU-40, HU-51 |
 | `GET /api/sprints/{id}/reporte` | — | 200, reporte del sprint, abierto o cerrado | HU-39, HU-49 |
 | `GET /` | — | 200, interfaz web | TEC-04 |
 
@@ -215,8 +223,8 @@ Todo error responde `{"error": "<mensaje>"}`. La traducción del error de domini
 
 | Código | Cuándo | Errores |
 |---|---|---|
-| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad, votante o rol vacíos; prioridad, estado, severidad, story points, carta o rol fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes (también la fecha de fin del proyecto); fin de sprint no posterior al inicio; sprint de detección faltante; estado de defecto inválido (también en el filtro `?estado=`); sprint de resolución faltante al resolver |
-| 404 | La entidad de la ruta no existe | Proyecto, ítem, sprint, sesión de Planning Poker, defecto, esfuerzo o integrante inexistente |
+| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` de proyecto que no es un UUID en forma canónica (`errInvalidProjectID`, HU-51); `{id}` de otra entidad que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad, votante o rol vacíos; prioridad, estado, severidad, story points, carta o rol fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes (también la fecha de fin del proyecto); fin de sprint no posterior al inicio; sprint de detección faltante; estado de defecto inválido (también en el filtro `?estado=`); sprint de resolución faltante al resolver |
+| 404 | La entidad de la ruta no existe | Proyecto (también un UUID que nunca se asignó o el UUID nulo, HU-51), ítem, sprint, sesión de Planning Poker, defecto, esfuerzo o integrante inexistente |
 | 405 | Método no permitido | Un método distinto del de la ruta (por ejemplo, `GET` en las rutas de sesiones de Planning Poker, incluida `/rounds`, o en `/api/integrantes/{id}`), con el encabezado `Allow`. La respuesta es texto, no JSON |
 | 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión de Planning Poker abierta para el ítem, o el ítem está terminado; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto; transición de estado de defecto no permitida; sprint de resolución de otro proyecto o anterior al de detección; fecha de fin de un proyecto sin fecha de inicio, o no posterior a ella; fecha de inicio no anterior a la fecha de fin registrada; modificar las fechas de un proyecto que no tiene registradas las dos; nombre de integrante repetido en el proyecto; corregir un esfuerzo de un sprint cerrado; repetir la ronda de una sesión no revelada o con otra sesión abierta para el ítem |
 | 413 | Cuerpo de más de 1 MiB | `el cuerpo del pedido supera el tamaño máximo de 1 MiB` |
@@ -284,7 +292,7 @@ En Git Bash, Linux o macOS: `TEST_DATABASE_URL="postgres://gpc:gpc_dev@localhost
 docker compose up -d --wait
 ```
 
-Levanta PostgreSQL 17 (`docker-compose.yml`) con los valores de `.env` o, si no existe, los de desarrollo de [`.env.example`](../.env.example): usuario `gpc`, contraseña `gpc_dev`, base `gpc`, publicada en `127.0.0.1:5433` (no en el 5432, para no chocar con un PostgreSQL instalado). Los scripts de `db/init/` crean el esquema y la base `gpc_test` **solo la primera vez**, con el volumen vacío. Si el esquema cambió, hay que recrear el volumen con `docker compose down -v` (borra los datos) y volver a levantar la base. El último cambio de esquema es la tabla `members` (HU-15).
+Levanta PostgreSQL 17 (`docker-compose.yml`) con los valores de `.env` o, si no existe, los de desarrollo de [`.env.example`](../.env.example): usuario `gpc`, contraseña `gpc_dev`, base `gpc`, publicada en `127.0.0.1:5433` (no en el 5432, para no chocar con un PostgreSQL instalado). Los scripts de `db/init/` crean el esquema y la base `gpc_test` **solo la primera vez**, con el volumen vacío. Si el esquema cambió, hay que recrear el volumen con `docker compose down -v` (borra los datos) y volver a levantar la base. El último cambio de esquema es la columna `public_id` de `projects` (HU-51); el anterior, la tabla `members` (HU-15).
 
 ### 5.2 Variables de entorno
 

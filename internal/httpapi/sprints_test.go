@@ -28,13 +28,13 @@ import (
 
 // sprintJSON es la respuesta de un sprint.
 type sprintJSON struct {
-	ID          int    `json:"id"`
-	ProyectoID  int    `json:"proyecto_id"`
-	Nombre      string `json:"nombre"`
-	FechaInicio string `json:"fecha_inicio"`
-	FechaFin    string `json:"fecha_fin"`
-	Objetivo    string `json:"objetivo"`
-	Estado      string `json:"estado"`
+	ID          int        `json:"id"`
+	ProyectoID  projectRef `json:"proyecto_id"`
+	Nombre      string     `json:"nombre"`
+	FechaInicio string     `json:"fecha_inicio"`
+	FechaFin    string     `json:"fecha_fin"`
+	Objetivo    string     `json:"objetivo"`
+	Estado      string     `json:"estado"`
 }
 
 const validSprint = `{"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Gestionar el backlog"}`
@@ -44,7 +44,7 @@ const validSprint = `{"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin
 func newHandlerWithSprint(t *testing.T) http.Handler {
 	t.Helper()
 	h := newHandlerWithItem(t)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	return h
 }
 
@@ -54,12 +54,12 @@ func TestCrearSprint_Devuelve201ConElSprintCreado(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint)
 
 	expectStatus(t, rec, http.StatusCreated)
 	var s sprintJSON
 	decode(t, rec, &s)
-	want := sprintJSON{ID: 1, ProyectoID: 1, Nombre: "Sprint 1", FechaInicio: "2026-10-01",
+	want := sprintJSON{ID: 1, ProyectoID: ref(t, h, 1), Nombre: "Sprint 1", FechaInicio: "2026-10-01",
 		FechaFin: "2026-10-14", Objetivo: "Gestionar el backlog", Estado: "ABIERTO"}
 	if s != want {
 		t.Errorf("sprint = %+v, se esperaba %+v", s, want)
@@ -87,7 +87,7 @@ func TestCrearSprint_DatosInvalidosDevuelven400(t *testing.T) {
 			h := newHandler()
 			createProject(t, h, "Sistema de ventas")
 
-			rec := do(t, h, http.MethodPost, "/api/proyectos/1/sprints", tc.body)
+			rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", tc.body)
 
 			expectError(t, rec, http.StatusBadRequest, tc.want)
 		})
@@ -96,7 +96,7 @@ func TestCrearSprint_DatosInvalidosDevuelven400(t *testing.T) {
 
 // TEC-04 · CA-TEC04.9 · Verifica que crear un sprint en un proyecto inexistente responda 404.
 func TestCrearSprint_ProyectoInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/999/sprints", validSprint)
+	rec := do(t, newHandler(), http.MethodPost, "/api/proyectos/"+missingProjectID+"/sprints", validSprint)
 
 	expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
 }
@@ -105,7 +105,7 @@ func TestCrearSprint_ProyectoInexistenteDevuelve404(t *testing.T) {
 func TestCrearSprint_SprintAbiertoExistenteDevuelve409(t *testing.T) {
 	h := newHandlerWithSprint(t)
 
-	rec := do(t, h, http.MethodPost, "/api/proyectos/1/sprints", validSprint)
+	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint)
 
 	expectError(t, rec, http.StatusConflict, sprint.ErrOpenSprintExists.Error())
 }
@@ -163,7 +163,7 @@ func TestAsignarItem_ConflictosDevuelven409(t *testing.T) {
 		"ítem de otro proyecto": {
 			setup: func(t *testing.T, h http.Handler) {
 				createProject(t, h, "Portal de clientes")
-				expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/2/backlog", validItem), http.StatusCreated)
+				expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 2)+"/backlog", validItem), http.StatusCreated)
 			},
 			path: "/api/sprints/1/items/2",
 			want: sprint.ErrItemFromAnotherProject,
@@ -267,7 +267,7 @@ func TestCompletarItem_ConflictosDevuelven409(t *testing.T) {
 // ítems completados).
 func TestListarCompletados_Devuelve200ConLosItemsTerminados(t *testing.T) {
 	h := newHandlerWithSprint(t)
-	do(t, h, http.MethodPost, "/api/proyectos/1/backlog", validItem)
+	do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem)
 	do(t, h, http.MethodPost, "/api/sprints/1/items/1", "")
 	do(t, h, http.MethodPost, "/api/sprints/1/items/2", "")
 	do(t, h, http.MethodPatch, "/api/items/2/estado", `{"estado":"EN_CURSO"}`)
@@ -344,14 +344,14 @@ func (r failingSprintListRepository) ListByProject(int) ([]sprint.Sprint, error)
 func TestListarSprintsDelProyecto_Devuelve200ConLosSprintsOrdenados(t *testing.T) {
 	h := newHandlerWithSprint(t)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/proyectos/1/sprints",
+	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints",
 		`{"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Métricas"}`), http.StatusCreated)
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/sprints", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/sprints", "")
 
 	expectRawJSON(t, rec, `[
-		{"id":1,"proyecto_id":1,"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Gestionar el backlog","estado":"CERRADO"},
-		{"id":2,"proyecto_id":1,"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Métricas","estado":"ABIERTO"}
+		{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Gestionar el backlog","estado":"CERRADO"},
+		{"id":2,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Métricas","estado":"ABIERTO"}
 	]`)
 }
 
@@ -361,24 +361,26 @@ func TestListarSprintsDelProyecto_SinSprintsDevuelveListaVacia(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 
-	rec := do(t, h, http.MethodGet, "/api/proyectos/1/sprints", "")
+	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/sprints", "")
 
 	expectRawJSON(t, rec, `[]`)
 }
 
-// HU-14 · CA-14.4 · Verifica que un {id} no numérico responda 400.
+// HU-14 · CA-14.4 · Verifica que un {id} de proyecto que no es un UUID responda 400 (HU-51).
 // CA-14.4 · Un {id} no numérico devuelve 400.
 func TestListarSprintsDelProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/proyectos/abc/sprints", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
-// HU-14 · CA-14.4 · Verifica que un proyecto inexistente, 0 o negativo responda 404.
+// HU-51: el {id} del proyecto es un UUID; el 0 y los negativos ya no tienen
+// esa forma y responden 400 (projects_uuid_test.go).
+// HU-14 · CA-14.4 · Verifica que un proyecto inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
 // CA-14.4 · Un proyecto inexistente, 0 o negativo devuelve 404.
 func TestListarSprintsDelProyecto_ProyectoInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingProjectID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/proyectos/"+id+"/sprints", "")
 
 		expectError(t, rec, http.StatusNotFound, project.ErrProjectNotFound.Error())
@@ -403,8 +405,17 @@ func TestListarSprintsDelProyecto_FallaDeUnRepositorioDevuelve500(t *testing.T) 
 		failingSprintListRepository{Repository: sprint.NewMemoryRepository(), err: errStorage})
 	createProject(t, sprintsBroken, "Sistema de ventas")
 
-	for _, h := range []http.Handler{projectsBroken, sprintsBroken} {
-		rec := do(t, h, http.MethodGet, "/api/proyectos/1/sprints", "")
+	// HU-51: el repositorio de proyectos roto no tiene proyectos; cualquier
+	// UUID con la forma correcta llega al repositorio, que falla.
+	cases := []struct {
+		h    http.Handler
+		path string
+	}{
+		{projectsBroken, "/api/proyectos/" + missingProjectID + "/sprints"},
+		{sprintsBroken, projectPath(t, sprintsBroken, 1) + "/sprints"},
+	}
+	for _, c := range cases {
+		rec := do(t, c.h, http.MethodGet, c.path, "")
 
 		expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 	}

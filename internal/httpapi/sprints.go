@@ -21,8 +21,9 @@ type sprintRequest struct {
 }
 
 type sprintResponse struct {
-	ID          int    `json:"id"`
-	ProyectoID  int    `json:"proyecto_id"`
+	ID int `json:"id"`
+	// ProyectoID es el UUID del proyecto (HU-51, CA-51.3).
+	ProyectoID  string `json:"proyecto_id"`
 	Nombre      string `json:"nombre"`
 	FechaInicio string `json:"fecha_inicio"`
 	FechaFin    string `json:"fecha_fin"`
@@ -32,7 +33,7 @@ type sprintResponse struct {
 
 // HU-10
 func (s *server) createSprint(w http.ResponseWriter, r *http.Request) {
-	projectID, err := pathID(r)
+	projectID, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -54,12 +55,12 @@ func (s *server) createSprint(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, toSprintResponse(sp))
+	writeJSON(w, http.StatusCreated, toSprintResponse(sp, publicID))
 }
 
 // HU-14
 func (s *server) listProjectSprints(w http.ResponseWriter, r *http.Request) {
-	projectID, err := pathID(r)
+	projectID, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -71,7 +72,7 @@ func (s *server) listProjectSprints(w http.ResponseWriter, r *http.Request) {
 	}
 	resp := make([]sprintResponse, 0, len(sprints))
 	for _, sp := range sprints {
-		resp = append(resp, toSprintResponse(sp))
+		resp = append(resp, toSprintResponse(sp, publicID))
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -88,7 +89,7 @@ func (s *server) assignItem(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toItemResponse(it))
+	s.writeItem(w, it)
 }
 
 // HU-12
@@ -103,7 +104,7 @@ func (s *server) completeItem(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toItemResponse(it))
+	s.writeItem(w, it)
 }
 
 // HU-12
@@ -118,11 +119,7 @@ func (s *server) listCompletedItems(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	resp := make([]itemResponse, 0, len(items))
-	for _, it := range items {
-		resp = append(resp, toItemResponse(it))
-	}
-	writeJSON(w, http.StatusOK, resp)
+	s.writeItems(w, items)
 }
 
 // HU-13
@@ -137,7 +134,12 @@ func (s *server) closeSprint(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toSprintResponse(sp))
+	publicID, err := s.publicProjectID(sp.ProjectID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, toSprintResponse(sp, publicID))
 }
 
 // sprintItemIDs lee el {id} del sprint y el {itemId} del ítem de la ruta.
@@ -164,10 +166,12 @@ func parseDate(value string) (time.Time, error) {
 	return date, nil
 }
 
-func toSprintResponse(sp sprint.Sprint) sprintResponse {
+// toSprintResponse arma la respuesta del sprint con publicID, el UUID de su
+// proyecto (HU-51).
+func toSprintResponse(sp sprint.Sprint, publicID string) sprintResponse {
 	return sprintResponse{
 		ID:          sp.ID,
-		ProyectoID:  sp.ProjectID,
+		ProyectoID:  publicID,
 		Nombre:      sp.Name,
 		FechaInicio: sp.StartDate.Format(dateLayout),
 		FechaFin:    sp.EndDate.Format(dateLayout),
