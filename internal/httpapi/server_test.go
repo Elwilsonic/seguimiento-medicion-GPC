@@ -329,7 +329,7 @@ func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
-// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id inválido: las de proyecto con el mensaje de UUID (HU-51) y las demás con el de número entero.
+// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id inválido: las de proyecto (HU-51) y las que ya pasaron a UUID en HU-52 con el mensaje de UUID de su entidad, y las demás con el de número entero.
 // CA-TEC01.2 · Las demás rutas con {id} también rechazan un id no numérico.
 func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 	casos := []struct {
@@ -377,9 +377,9 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		// HU-14, CA-14.4: listar los sprints del proyecto.
 		{"listar sprints del proyecto", http.MethodGet, "/api/proyectos/abc/sprints", ""},
 		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
-		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc", ""},
+		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/" + missingSprintID + "/items/abc", ""},
 		{"completar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1/completar", ""},
-		{"completar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc/completar", ""},
+		{"completar ítem: ítem", http.MethodPost, "/api/sprints/" + missingSprintID + "/items/abc/completar", ""},
 		{"listar completados", http.MethodGet, "/api/sprints/abc/completados", ""},
 		{"cerrar sprint", http.MethodPost, "/api/sprints/abc/cerrar", ""},
 
@@ -421,6 +421,12 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 			want := "el id debe ser un número entero"
 			if strings.HasPrefix(c.path, "/api/proyectos/") {
 				want = "el id del proyecto debe ser un UUID"
+			}
+
+			// HU-52, CA-52.4 · Sprints y Planning Poker (Buttini Cristobal):
+			// las rutas de sprints.go, poker.go, metrics.go y sprint_reports.go.
+			if m, ok := sprintsPokerInvalidIDMessages[c.nombre]; ok {
+				want = m
 			}
 			expectError(t, rec, http.StatusBadRequest, want)
 		})
@@ -938,7 +944,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "votar Planning Poker",
 		method: http.MethodPost,
-		path:   "/api/poker-sessions/1/votes",
+		path:   "/api/poker-sessions/" + missingSessionID + "/votes",
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
 		},
@@ -948,7 +954,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:      "registrar estimación Planning Poker",
 		method:    http.MethodPost,
-		path:      "/api/poker-sessions/1/estimate",
+		path:      "/api/poker-sessions/" + missingSessionID + "/estimate",
 		untouched: expectItemWithoutStoryPoints,
 	},
 	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
@@ -957,8 +963,8 @@ var bodyEndpoints = []bodyEndpoint{
 		method: http.MethodPost,
 		path:   "{proyecto}/sprints",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
-			expectStatus(t, rec, http.StatusNotFound)
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/sprints", "")
+			expectRawJSON(t, rec, `[]`)
 		},
 	},
 	// HU-30, CA-30.9: el cuerpo se rechaza antes de llegar al Manager. No

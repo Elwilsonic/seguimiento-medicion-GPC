@@ -101,8 +101,8 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
 
 Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:30 (`c329a62`). Toca solo los archivos de su fila en D3.
 
-- [ ] 3.1 Escribir `features/HU-52-sprints.feature` y `features/HU-52-planning-poker.feature` (de API), según `specs/sprints/spec.md` y `specs/planning-poker/spec.md`, con los runners `TestFeatures_HU52Sprints` y `TestFeatures_HU52PlanningPoker`.
-- [ ] 3.2 Escribir los tests en RED en `internal/httpapi/sprints_uuid_test.go`, `poker_uuid_test.go` y `sprints_poker_uuid_web_test.go`:
+- [x] 3.1 Escribir `features/HU-52-sprints.feature` y `features/HU-52-planning-poker.feature` (de API), según `specs/sprints/spec.md` y `specs/planning-poker/spec.md`, con los runners `TestFeatures_HU52Sprints` y `TestFeatures_HU52PlanningPoker`.
+- [x] 3.2 Escribir los tests en RED en `internal/httpapi/sprints_uuid_test.go`, `poker_uuid_test.go` y `sprints_poker_uuid_web_test.go`:
   - el `id` es un UUID v4 al crear un sprint o abrir una sesión, y repetir la ronda lo conserva (CA-52.1);
   - sus 11 rutas (tabla "Rutas por responsable" de D3: Planning Poker, las de `sprints.go`, `GET /api/sprints/{id}/metricas` y `/reporte`) aceptan el UUID del sprint, del ítem o de la sesión, también en mayúsculas (CA-52.3);
   - 400 con su mensaje y 404 en cada ruta, y `{id}` antes que `{itemId}` (CA-52.4);

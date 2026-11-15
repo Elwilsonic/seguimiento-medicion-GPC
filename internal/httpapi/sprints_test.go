@@ -59,7 +59,7 @@ func TestCrearSprint_Devuelve201ConElSprintCreado(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var s sprintJSON
 	decode(t, rec, &s)
-	want := sprintJSON{ID: "1", ProyectoID: ref(t, h, 1), Nombre: "Sprint 1", FechaInicio: "2026-10-01",
+	want := sprintJSON{ID: sprintRef(t, h, 1), ProyectoID: ref(t, h, 1), Nombre: "Sprint 1", FechaInicio: "2026-10-01",
 		FechaFin: "2026-10-14", Objetivo: "Gestionar el backlog", Estado: "ABIERTO"}
 	if s != want {
 		t.Errorf("sprint = %+v, se esperaba %+v", s, want)
@@ -121,7 +121,7 @@ func TestAsignarItem_Devuelve200ConElItemAsignado(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.SprintID != "1" {
+	if it.ID != itemRef(t, h, 1) || it.SprintID != sprintRef(t, h, 1) {
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 en el sprint 1", it)
 	}
 }
@@ -132,8 +132,8 @@ func TestAsignarItem_InexistenteDevuelve404(t *testing.T) {
 		path string
 		want error
 	}{
-		"sprint inexistente": {"/api/sprints/999/items/1", sprint.ErrSprintNotFound},
-		"ítem inexistente":   {"/api/sprints/1/items/999", backlog.ErrItemNotFound},
+		"sprint inexistente": {"/api/sprints/" + missingSprintID + "/items/1", sprint.ErrSprintNotFound},
+		"ítem inexistente":   {"/api/sprints/1/items/" + missingPokerItemID, backlog.ErrItemNotFound},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -201,7 +201,7 @@ func TestCompletarItem_Devuelve200ConElItemTerminado(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.Estado != "TERMINADO" {
+	if it.ID != itemRef(t, h, 1) || it.Estado != "TERMINADO" {
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 TERMINADO", it)
 	}
 }
@@ -212,8 +212,8 @@ func TestCompletarItem_InexistenteDevuelve404(t *testing.T) {
 		path string
 		want error
 	}{
-		"sprint inexistente": {"/api/sprints/999/items/1/completar", sprint.ErrSprintNotFound},
-		"ítem inexistente":   {"/api/sprints/1/items/999/completar", backlog.ErrItemNotFound},
+		"sprint inexistente": {"/api/sprints/" + missingSprintID + "/items/1/completar", sprint.ErrSprintNotFound},
+		"ítem inexistente":   {"/api/sprints/1/items/" + missingPokerItemID + "/completar", backlog.ErrItemNotFound},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -278,14 +278,14 @@ func TestListarCompletados_Devuelve200ConLosItemsTerminados(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
 	decode(t, rec, &items)
-	if len(items) != 1 || items[0].ID != "2" || items[0].Estado != "TERMINADO" {
+	if len(items) != 1 || items[0].ID != itemRef(t, h, 2) || items[0].Estado != "TERMINADO" {
 		t.Errorf("ítems = %+v, se esperaba solo el ítem 2 TERMINADO", items)
 	}
 }
 
 // TEC-04 · CA-TEC04.9 · Verifica que listar los completados de un sprint inexistente responda 404.
 func TestListarCompletados_SprintInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/999/completados", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/"+missingSprintID+"/completados", "")
 
 	expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
 }
@@ -300,14 +300,14 @@ func TestCerrarSprint_Devuelve200ConElSprintCerrado(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var s sprintJSON
 	decode(t, rec, &s)
-	if s.ID != "1" || s.Nombre != "Sprint 1" || s.Estado != "CERRADO" {
+	if s.ID != sprintRef(t, h, 1) || s.Nombre != "Sprint 1" || s.Estado != "CERRADO" {
 		t.Errorf("sprint = %+v, se esperaba el sprint 1 CERRADO", s)
 	}
 }
 
 // TEC-04 · CA-TEC04.9 · Verifica que cerrar un sprint inexistente responda 404.
 func TestCerrarSprint_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/api/sprints/999/cerrar", "")
+	rec := do(t, newHandler(), http.MethodPost, "/api/sprints/"+missingSprintID+"/cerrar", "")
 
 	expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
 }
@@ -350,8 +350,8 @@ func TestListarSprintsDelProyecto_Devuelve200ConLosSprintsOrdenados(t *testing.T
 	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/sprints", "")
 
 	expectRawJSON(t, rec, `[
-		{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Gestionar el backlog","estado":"CERRADO"},
-		{"id":2,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Métricas","estado":"ABIERTO"}
+		{"id":`+jsonRef(sprintRef(t, h, 1))+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Sprint 1","fecha_inicio":"2026-10-01","fecha_fin":"2026-10-14","objetivo":"Gestionar el backlog","estado":"CERRADO"},
+		{"id":`+jsonRef(sprintRef(t, h, 2))+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fin":"2026-10-28","objetivo":"Métricas","estado":"ABIERTO"}
 	]`)
 }
 
