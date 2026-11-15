@@ -123,6 +123,34 @@ orden de integración
         +----> PR ----+----> PR ---------+----> PR   (cualquier orden)
 ```
 
+**Cambio en D3, aprobado por el Agile Enabler el 15/11/2026: una rama de integración.** Al medir la parte de sprints y Planning Poker antes del RED (aplicar el GREEN, correr `go test -count=1 ./...` y revertir), fallaron 123 tests, y la mayoría no eran de esa parte. Las partes no son independientes, porque cada una cambia la respuesta de una entidad que reciben las rutas de otra:
+
+- las rutas de sprints y Planning Poker reciben ítems (`POST /api/sprints/{id}/items/{itemId}`, `…/completar` y `POST /api/items/{id}/poker-sessions`): al exigir el UUID del ítem, fallan mientras la API devuelva el ítem con su entero, que es la parte de ítems. Fueron 81 fallos "el id del ítem debe ser un UUID", también en tests de esfuerzos y de reportes;
+- las rutas de defectos y esfuerzos reciben sprints: cuando la creación de un sprint devuelve su UUID, esas rutas siguen esperando un entero. Fueron 37 fallos "el id debe ser un número entero".
+
+Así, ninguna parte puede integrarse sola en `main` con la CI en verde, y "cualquier orden" no se cumple. El reparto de D3 no cambia (quién hace qué y qué archivos toca); cambia el destino de los PR:
+
+- **Rama de integración:** `feature/HU-52-uuid-entidades`, creada por Buttini Cristobal desde `main` (`29051da`, con la base).
+- **Todos los PR de HU-52 van a esa rama, no a `main`,** en el mismo orden de antes: el ajuste de la base de Cardozo Leandro, ítems e integrantes, sprints y Planning Poker, y defectos y esfuerzos.
+- **Sin CI en esos PR:** la CI corre solo hacia `main`. Cada responsable corre `go test ./...` en su máquina, en memoria y con PostgreSQL, y pega la salida en el PR. Se esperan fallos entre una parte y otra (por ejemplo, "el id del ítem debe ser un UUID" antes de que entre la parte de ítems): el PR dice cuántos quedan y de qué parte dependen, y fuera de esos no puede haber ningún otro.
+- **Revisión:** cada PR a la rama de integración lo revisa otro integrante y se integra con "Create a merge commit".
+- **Un solo PR a `main`,** cuando estén las tres partes. Ese corre la CI (con `-race`), tiene que dar verde con 0 fallos y cierra HU-52 con `Closes #197`.
+- **Horario:** las tres partes integradas en la rama de integración a las 12:00 del lunes 16/11/2026, y el PR a `main` aprobado e integrado antes de las 14:00. Si a las 12:00 falta alguna, se decide en ese momento con el Agile Enabler.
+
+```
+orden de integración (desde el 15/11/2026)
+
+  main (con la base) --> feature/HU-52-uuid-entidades
+                                  ^
+        +-------------------------+-------------------------+
+        |                         |                         |
+  items+integrantes          sprints+poker            defectos+esfuerzos
+   (Cardozo)                  (Buttini)                 (Garcia)
+        PR ------------------>    PR ------------------>    PR    (sin CI; go test local en el PR)
+
+  feature/HU-52-uuid-entidades --> PR a main (CI con -race, 0 fallos, Closes #197)
+```
+
 ### D4. Un UUID inexistente se traduce a un ID interno que nunca se asigna, y no al 0
 
 `xIDFromPath` sigue el patrón de `projectIDFromPath`:
