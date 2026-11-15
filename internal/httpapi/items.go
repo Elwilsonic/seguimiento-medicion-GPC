@@ -32,7 +32,8 @@ type storyPointsRequest struct {
 }
 
 type itemResponse struct {
-	ID int `json:"id"`
+	// ID es el UUID público del ítem (HU-52, CA-52.3).
+	ID string `json:"id"`
 	// ProyectoID es el UUID del proyecto (HU-51, CA-51.3).
 	ProyectoID  string   `json:"proyecto_id"`
 	Titulo      string   `json:"titulo"`
@@ -43,7 +44,8 @@ type itemResponse struct {
 	StoryPoints int      `json:"story_points"`
 	// TEC-04, CA-TEC04.9: horas estimadas (HU-07) y sprint asignado (HU-11).
 	HorasEstimadas float64 `json:"horas_estimadas"`
-	SprintID       int     `json:"sprint_id"`
+	// SprintID es el UUID del sprint asignado, o "" si no tiene (HU-52, D7).
+	SprintID string `json:"sprint_id"`
 }
 
 // HU-04
@@ -95,7 +97,7 @@ func (s *server) listItems(w http.ResponseWriter, r *http.Request) {
 
 // HU-05
 func (s *server) getItem(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.itemIDFromPath(r, "id")
 	if err != nil {
 		writeError(w, err)
 		return
@@ -110,7 +112,7 @@ func (s *server) getItem(w http.ResponseWriter, r *http.Request) {
 
 // HU-07
 func (s *server) updateItem(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.itemIDFromPath(r, "id")
 	if err != nil {
 		writeError(w, err)
 		return
@@ -130,7 +132,7 @@ func (s *server) updateItem(w http.ResponseWriter, r *http.Request) {
 
 // HU-08
 func (s *server) changeItemStatus(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.itemIDFromPath(r, "id")
 	if err != nil {
 		writeError(w, err)
 		return
@@ -150,7 +152,7 @@ func (s *server) changeItemStatus(w http.ResponseWriter, r *http.Request) {
 
 // HU-20
 func (s *server) assignStoryPoints(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.itemIDFromPath(r, "id")
 	if err != nil {
 		writeError(w, err)
 		return
@@ -209,7 +211,7 @@ func (s *server) writeItems(w http.ResponseWriter, items []backlog.Item) {
 // proyecto (HU-51).
 func toItemResponse(it backlog.Item, publicID string, ids *publicIDs) itemResponse {
 	return itemResponse{
-		ID:             it.ID,
+		ID:             it.PublicID.String(),
 		ProyectoID:     publicID,
 		Titulo:         it.Title,
 		Descripcion:    it.Description,
@@ -218,6 +220,6 @@ func toItemResponse(it backlog.Item, publicID string, ids *publicIDs) itemRespon
 		Estado:         string(it.Status),
 		StoryPoints:    it.StoryPoints,
 		HorasEstimadas: it.EstimatedHours,
-		SprintID:       it.SprintID,
+		SprintID:       ids.sprint(it.SprintID),
 	}
 }

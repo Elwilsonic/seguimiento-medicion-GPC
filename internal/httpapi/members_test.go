@@ -58,7 +58,7 @@ func TestRegistrarIntegrante_Devuelve201ConElIntegrante(t *testing.T) {
 	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", `{"nombre":"  Ana Pérez ","rol":"product_builder"}`)
 
 	expectStatus(t, rec, http.StatusCreated)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
+	expectMemberJSON(t, rec, `{"id":`+jsonMemberID(t, h, 1)+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
 }
 
 // HU-15 · CA-15.2 · Verifica que un nombre o rol vacío o inválido, o un JSON inválido, responda 400 con su mensaje.
