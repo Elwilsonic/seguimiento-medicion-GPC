@@ -121,7 +121,7 @@ func TestAsignarItem_Devuelve200ConElItemAsignado(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.SprintID != "1" {
+	if it.ID != itemRef(t, h, 1) || !uuidV4Canonical.MatchString(string(it.SprintID)) { // HU-52: sprint_id es el UUID del único sprint
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 en el sprint 1", it)
 	}
 }
@@ -201,7 +201,7 @@ func TestCompletarItem_Devuelve200ConElItemTerminado(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.Estado != "TERMINADO" {
+	if it.ID != itemRef(t, h, 1) || it.Estado != "TERMINADO" {
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 TERMINADO", it)
 	}
 }
@@ -278,7 +278,7 @@ func TestListarCompletados_Devuelve200ConLosItemsTerminados(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
 	decode(t, rec, &items)
-	if len(items) != 1 || items[0].ID != "2" || items[0].Estado != "TERMINADO" {
+	if len(items) != 1 || items[0].ID != itemRef(t, h, 2) || items[0].Estado != "TERMINADO" {
 		t.Errorf("ítems = %+v, se esperaba solo el ítem 2 TERMINADO", items)
 	}
 }

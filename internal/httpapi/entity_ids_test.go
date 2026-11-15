@@ -96,8 +96,9 @@ func serveRecording(t *testing.T, h http.Handler, rec *httptest.ResponseRecorder
 // uuidRoutes son las rutas cuyo handler ya recibe el UUID de sus entidades.
 // do() traduce los números de una ruta solo si la ruta está en esta tabla:
 // así, cuando un responsable pasa sus handlers a UUID, sus tests siguen
-// funcionando con las rutas fijas, y las rutas de los demás, que todavía
-// leen un entero, no se traducen (desviación de la base, D9 de design.md).
+// funcionando con las rutas fijas, y en las rutas de los demás, que todavía
+// leen un entero, el id se traduce al revés (withEntityIDs; desviaciones de
+// la base, D9 de design.md).
 //
 // Cada responsable agrega, en el GREEN de su entidad, las rutas cuyos
 // handlers están en sus archivos (tabla "Rutas por responsable" de D3), con
@@ -110,6 +111,11 @@ var uuidRoutes = []string{
 	// Cardozo Leandro (5): GET y PUT /api/items/{id},
 	// PATCH /api/items/{id}/estado y /api/items/{id}/story-points (items.go),
 	// y PUT /api/integrantes/{id} (members_update.go).
+	"GET /api/items/{id}",
+	"PUT /api/items/{id}",
+	"PATCH /api/items/{id}/estado",
+	"PATCH /api/items/{id}/story-points",
+	"PUT /api/integrantes/{id}",
 
 	// Buttini Cristobal (11): POST /api/items/{id}/poker-sessions y
 	// POST /api/poker-sessions/{id}/votes, /reveal, /estimate y /rounds
@@ -149,18 +155,27 @@ func inUUIDRoutes(method, path string) bool {
 	return false
 }
 
-// withEntityIDs traduce en path cada número que nombra una entidad al "id"
-// de la N-ésima entidad de ese tipo creada por la API en h, si la ruta del
-// pedido está en uuidRoutes. Entiende /api/{entidad}/{N}/... y el {itemId}
-// de /api/sprints/{N}/items/{M}/...
+// withEntityIDs traduce en path los ids de las entidades. Entiende
+// /api/{entidad}/{N}/... y el {itemId} de /api/sprints/{N}/items/{M}/...
+//
+//   - Si la ruta del pedido está en uuidRoutes, cada número N pasa al "id" de
+//     la N-ésima entidad de ese tipo creada por la API en h.
+//   - Si no está, es al revés (segunda desviación de la base, D9 de
+//     design.md): un "id" que la API devolvió al crear una entidad pasa al
+//     número N de su orden de creación, que es su ID interno, porque el
+//     handler de esa ruta todavía lee un entero. Así, un test que arma la
+//     ruta de otro responsable con el id que devolvió la API (por ejemplo,
+//     el UUID de un ítem en POST /api/sprints/{id}/items/{itemId}) sigue
+//     funcionando hasta que ese responsable pase su ruta a UUID.
+//
+// Las dos traducciones suponen lo mismo: que las entidades de ese tipo se
+// crean por la API, en orden, así que la N-ésima tiene el ID interno N.
 func withEntityIDs(h http.Handler, method, path string) string {
 	if !strings.HasPrefix(path, "/api/") {
 		return path
 	}
-	if rest, _, _ := strings.Cut(path, "?"); !inUUIDRoutes(method, rest) {
-		return path
-	}
 	rest, query, _ := strings.Cut(path, "?")
+	toUUID := inUUIDRoutes(method, rest)
 	parts := strings.Split(rest, "/")
 	entityIDsMu.Lock()
 	defer entityIDsMu.Unlock()
@@ -168,6 +183,15 @@ func withEntityIDs(h http.Handler, method, path string) string {
 	for i := 2; i+1 < len(parts); i++ {
 		kind, ok := pathSegments[parts[i]]
 		if !ok || (i > 2 && !(parts[2] == "sprints" && parts[i] == "items")) {
+			continue
+		}
+		if !toUUID {
+			for n, id := range ids[kind] {
+				if id == parts[i+1] {
+					parts[i+1] = strconv.Itoa(n + 1)
+					break
+				}
+			}
 			continue
 		}
 		n, err := strconv.Atoi(parts[i+1])

@@ -68,6 +68,45 @@ func itemRef(t *testing.T, h http.Handler, n int) idRef {
 	return idRef(ids[n-1])
 }
 
+// jsonItemID es el "id" del n-ésimo ítem creado por la API en h, como texto
+// JSON, para armar las respuestas esperadas (HU-52, CA-52.3).
+func jsonItemID(t *testing.T, h http.Handler, n int) string {
+	t.Helper()
+	return `"` + string(itemRef(t, h, n)) + `"`
+}
+
+// jsonItemSprintID es el "sprint_id" del n-ésimo ítem creado por la API en
+// h, como valor JSON, leído con GET /api/items/{id}. Los contratos de los
+// reportes lo usan porque, mientras los sprints no expongan su UUID en su
+// propio "id" (parte de Buttini Cristobal), el UUID del sprint solo se ve en
+// el ítem. Que sea el UUID correcto lo verifica
+// TestConsultarItem_SprintIDEsElUUIDDelSprint.
+func jsonItemSprintID(t *testing.T, h http.Handler, n int) string {
+	t.Helper()
+	rec := do(t, h, http.MethodGet, "/api/items/"+string(itemRef(t, h, n)), "")
+	expectStatus(t, rec, http.StatusOK)
+	var it map[string]json.RawMessage
+	decode(t, rec, &it)
+	return string(it["sprint_id"])
+}
+
+// itemNumber devuelve el orden de creación por la API, contando desde 1, del
+// ítem con ese id, que es su ID interno. Lo usan los tests que comparan el
+// orden de los ítems (HU-52: el id ya no es el número).
+func itemNumber(t *testing.T, h http.Handler, id idRef) int {
+	t.Helper()
+	entityIDsMu.Lock()
+	ids := entityIDs[h][kindItem]
+	entityIDsMu.Unlock()
+	for n, got := range ids {
+		if got == string(id) {
+			return n + 1
+		}
+	}
+	t.Fatalf("itemNumber: el ítem %q no fue creado por la API en este handler", string(id))
+	return 0
+}
+
 // createItemUUID crea un ítem en el primer proyecto de h y devuelve su id,
 // que tiene que ser un UUID versión 4.
 func createItemUUID(t *testing.T, h http.Handler, title string) string {

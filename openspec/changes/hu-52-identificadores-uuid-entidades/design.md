@@ -203,6 +203,16 @@ El esquema se recrea con `docker compose down -v` y `docker compose up -d --wait
 
 Es un ajuste de tests, sin ciclo RED/GREEN: no cambia el comportamiento ni lo que verifica ningún test, y no toca código de producción.
 
+**Segunda desviación de la base (15/11/2026).** Cardozo Leandro la encontró al preparar el GREEN de ítems e integrantes, y la decidió como responsable de esa parte (falta registrar la aprobación del Agile Enabler). Con `idRef`, los tests de otros responsables arman sus rutas con el `id` que devolvió la API. Apenas el ítem responde su UUID, ese UUID llega a rutas cuyos handlers todavía leen un entero (por ejemplo, el `{itemId}` de `POST /api/sprints/{id}/items/{itemId}`, de Buttini Cristobal, o `POST /api/items/{id}/defectos`, de García Santiago), y `uuidRoutes` no lo evita, porque la ruta ya trae el UUID. **Se resolvió en `withEntityIDs`** (`entity_ids_test.go`), solo en los tests: en una ruta que no está en `uuidRoutes`, un `id` que `do()` registró al crear una entidad se traduce al revés, al número de su orden de creación, que es su ID interno. Es la misma suposición que la traducción hacia el UUID: las entidades de ese tipo se crean por la API y en orden. Lo verifica `TestWithEntityIDs_FueraDeLaTablaTraduceElUUIDAlEntero`. Cuando cada responsable suma sus rutas a `uuidRoutes`, sus rutas dejan de traducirse al revés.
+
+Además, con el ítem en UUID, en los tests de otros responsables cambian algunos resultados que nombran un ítem, y se adaptan en el GREEN de ítems:
+
+- `sprints_test.go` (líneas 124, 204 y 281): el `id` de los ítems se compara con `itemRef`, y el `sprint_id` del ítem asignado, con la forma de un UUID (el único sprint del entorno), porque el UUID del sprint todavía no se ve en el `id` del sprint.
+- `reports_test.go`: la lista de historias se compara por orden de creación (`itemNumber`), y los contratos del reporte del proyecto y del sprint (`reports_test.go` y `sprint_reports_test.go`) arman el `id` y el `sprint_id` de cada historia con `jsonItemID` y `jsonItemSprintID`.
+- `internal/web/app.js` (`filaHistoriaReporte`) y su aserción de `web_test.go`: las historias de los reportes salen de `toItemResponse`, así que "sin sprint" pasa de `0` a `""` (D7), igual que en el backlog.
+
+Hasta que se integren sprints y Planning Poker, la API queda mezclada como prevé R2: el `sprint_id` de un ítem es el UUID del sprint, pero el `id` del propio sprint sigue siendo un entero.
+
 ### D10. Cantidades, contadas con comandos sobre `main` `a56b052`
 
 ```bash

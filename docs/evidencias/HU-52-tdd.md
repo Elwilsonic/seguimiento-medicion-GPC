@@ -312,6 +312,19 @@ Controles, todos con comandos:
 - **Links:** `go test ./internal/trazabilidad/ -run TestEnlaces -args -update` cambió 41 líneas en 13 evidencias de otras historias, y en todas solo cambian números de línea (`#Lnn`). Va en el commit de tests, para que `internal/trazabilidad` quede en ok en cada commit, como en la desviación 1.
 - **Aviso de Windows:** `go: unlinkat … being used by another process` apareció al borrar ejecutables temporales; se repitió con `go clean -testcache` y volvió a aparecer, sin ningún test fallido.
 
+### Segunda desviación de la base (15/11/2026)
+
+La encontró Cardozo Leandro al preparar el GREEN de ítems e integrantes, y la decidió como responsable de esa parte (falta registrar la aprobación del Agile Enabler). El detalle está en D9 de `design.md` ("Segunda desviación de la base"). Con el ítem en UUID, los tests de otros responsables mandaban ese UUID a rutas que todavía leen un entero, y `uuidRoutes` no lo evita.
+
+| Qué pasaba | Cómo se resolvió |
+|---|---|
+| Un `id` de la API (por ejemplo, el UUID de un ítem) llegaba a una ruta de otro responsable que todavía lee un entero, como `POST /api/sprints/{id}/items/{itemId}` | `withEntityIDs` ([`entity_ids_test.go`](../../internal/httpapi/entity_ids_test.go)), solo en los tests: fuera de `uuidRoutes`, traduce al revés el `id` registrado al número de su orden de creación (su ID interno). Lo verifica `TestWithEntityIDs_FueraDeLaTablaTraduceElUUIDAlEntero` |
+| `sprints_test.go` comparaba el `id` del ítem con `"1"` y `"2"` y el `sprint_id` con `"1"` | `itemRef`, y la forma de un UUID para el `sprint_id` |
+| `reports_test.go` pasaba el `id` de cada historia a entero y comparaba los contratos de los reportes con `"id": 1` y `"sprint_id": 1` | `itemNumber`, y `jsonItemID` y `jsonItemSprintID` en los contratos de `reports_test.go` y `sprint_reports_test.go` |
+| Las historias de los reportes (`toItemResponse`) muestran "sin sprint" como `""` | `filaHistoriaReporte` de `app.js` compara con `""`, y se adapta su aserción en `web_test.go` |
+
+Hasta que se integren sprints y Planning Poker, la API queda mezclada como prevé R2: el `sprint_id` de un ítem es el UUID del sprint, y el `id` del sprint sigue siendo un entero.
+
 ### Commits
 
 | Fase | Commit | Mensaje |

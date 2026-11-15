@@ -117,10 +117,10 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
   },
   "historias": {
     "historias": [
-      {"id": 1, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": 1},
-      {"id": 2, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": 1},
-      {"id": 3, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": 1},
-      {"id": 4, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": 1}
+      {"id": `+jsonItemID(t, h, 1)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": `+jsonItemSprintID(t, h, 1)+`},
+      {"id": `+jsonItemID(t, h, 2)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": `+jsonItemSprintID(t, h, 2)+`},
+      {"id": `+jsonItemID(t, h, 3)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": `+jsonItemSprintID(t, h, 3)+`},
+      {"id": `+jsonItemID(t, h, 4)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": `+jsonItemSprintID(t, h, 4)+`}
     ],
     "cantidad": 4,
     "completadas": 2
@@ -381,7 +381,7 @@ func expectStoriesMatchSources(t *testing.T, h http.Handler, parts map[string]js
 		if err := json.Unmarshal(story, &it); err != nil {
 			t.Fatalf("historia inválida (%v): %s", err, story)
 		}
-		ids = append(ids, idInt(t, it.ID))
+		ids = append(ids, itemNumber(t, h, it.ID))
 		path := fmt.Sprintf("/api/items/%s", string(it.ID))
 		source := do(t, h, http.MethodGet, path, "")
 		expectStatus(t, source, http.StatusOK)
