@@ -132,7 +132,7 @@ Seguí este orden:
 
 ## Cambios con OpenSpec (desde TEC-10)
 
-Desde TEC-10 (Issue #177), cada historia o tarea nueva se especifica con OpenSpec (`openspec/`, decisión 22 de `docs/decisiones-tecnicas.md`). La cadena es la misma de arriba; solo cambian el paso 2 y el cierre:
+Desde TEC-10 (Issue #177), cada historia nueva, o tarea que cambie el comportamiento del sistema, se especifica con OpenSpec (`openspec/`, decisión 22 de `docs/decisiones-tecnicas.md`). Las tareas que no lo cambian (documentación, comentarios de los tests, CI) se especifican con su Issue, como antes. La cadena es la misma de arriba; solo cambian el paso 2 y el cierre:
 
 - **Paso 0:** igual. Además, leé `openspec/config.yaml` y las specs de `openspec/specs/` del área que vas a tocar. Con `/opsx:explore`, el agente lee ese código antes de proponer.
 - **Pasos 1 y 2:** la historia y la SDD se escriben con `/opsx:propose nombre-del-cambio`, que crea `openspec/changes/nombre-del-cambio/` con:
