@@ -117,7 +117,7 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
   - «Sprint actual» y las secciones de Sprints y Planning Poker de `index.html` y `app.js`.
 
   Correr los comandos de cierre y proponer `git commit -m "feat(HU-52): identificar los sprints y las sesiones de Planning Poker con un UUID público (GREEN)" -m "Refs #197"`.
-- [ ] 3.4 Refactor, si aplica. Completar la sección de Buttini en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de sprints y Planning Poker" -m "Refs #197"`.
+- [x] 3.4 Refactor, si aplica. Completar la sección de Buttini en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de sprints y Planning Poker" -m "Refs #197"`.
 - [ ] 3.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
 
 ## 4. Defectos y esfuerzos (García Santiago, rama `feature/HU-52-uuid-defectos-esfuerzos`)
