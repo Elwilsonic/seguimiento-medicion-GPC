@@ -1,6 +1,6 @@
 # language: es
 # HU-51 · Identificadores UUID, parte de proyectos (Issue #193), vinculada a HU-01 (#14), HU-03 (#16) y HU-50 (#183)
-# Cambio (OpenSpec): openspec/changes/hu-51-identificadores-uuid/
+# Especificación (OpenSpec): openspec/specs/proyectos/spec.md
 # Los escenarios son a nivel de la API, porque lo observable de HU-51 son las
 # rutas, los 400 y 404 y las salidas (D8 de design.md). Los 1000 proyectos
 # (CA-51.2), PostgreSQL (CA-51.5), la interfaz (CA-51.6) y la concurrencia

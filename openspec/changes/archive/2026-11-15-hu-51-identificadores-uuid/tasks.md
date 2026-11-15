@@ -5,7 +5,8 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 ## 0. Aprobación y preparación
 
 - [x] 0.1 El Agile Enabler aprueba explícitamente la propuesta completa (proposal, specs, design y tasks), incluidas la alternativa B (D1), la traducción al ID interno 0 (D4), el pendiente R1 y los criterios CA-51.1 a CA-51.7 ajustados. Verificar que la aprobación quedó en el chat o en el Issue #193 antes de seguir.
-- [ ] 0.2 Actualizar los criterios del Issue #193 con los CA-51.1 a CA-51.7 definitivos, solo con el permiso del Agile Enabler. Verificar que el body del Issue los muestra.
+- [x] 0.2 Actualizar los criterios del Issue #193 con los CA-51.1 a CA-51.7 definitivos, solo con el permiso del Agile Enabler. Verificar que el body del Issue los muestra.
+  - **Cumplida:** los criterios definitivos del Issue #193 los actualizó Sosa Ricardo desde GitHub.
 - [x] 0.3 Correr `git switch main`, `git pull` y `git switch feature/HU-51-uuid`, y después `git merge main` (con autorización), para trabajar sobre los tests ya comentados por TEC-11 (R5). Verificar con `go test ./...` que la rama arranca en verde.
 
 **Prioridad del Agile Enabler:** si no llega todo para la Review del 15/11, primero que funcione la API de proyectos con UUID (CA-51.1 a CA-51.4).
@@ -72,9 +73,10 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
   - «Ver proyectos» y «Elegir»;
   - escribir "1" (error);
   - descargar el PDF (nombre con el UUID).
-- [ ] 3.6 Correr `go test ./...` y `go test -race ./...` y verificar que todo está en verde, incluidos los escenarios de HU-50 (el orden no cambia). Mostrar la salida y proponer `git commit -m "feat(HU-51): implementar identificadores UUID para proyectos (GREEN)" -m "Refs #193"`.
+- [x] 3.6 Correr `go test ./...` y `go test -race ./...` y verificar que todo está en verde, incluidos los escenarios de HU-50 (el orden no cambia). Mostrar la salida y proponer `git commit -m "feat(HU-51): implementar identificadores UUID para proyectos (GREEN)" -m "Refs #193"`.
+  - **Cumplida (15/11/2026):** la CI del PR #195 pasó sobre `c40a33a` con `go test -race` y PostgreSQL. En Windows, `-race` no corre (sin cgo).
 
-**Desviación entre el RED y el GREEN (14/11/2026):** entre `test(HU-51): agregar tests (RED)` y el commit del GREEN hay un commit de tests, `test(HU-51): usar el id del proyecto en los JSON esperados de la lista y del reporte`, autorizado por el Agile Enabler. Motivo: al adaptar los tests en 2.5 se cambiaron los `proyecto_id`, pero quedaron 4 `"id"` del proyecto escritos a mano en los JSON esperados (`projects_list_test.go` y `reports_test.go`). En el RED pasaban porque el ID todavía era 1 y 2, y con el GREEN fallaban 3 tests que el GREEN no puede tocar. La corrección usa `jsonProjectID(t, h, n)`, como el resto de los tests adaptados. Con el estado del RED, esos 3 tests siguen pasando y fallan los mismos 62 tests que antes. Además, `go test -race` no se corre en Windows; queda para la CI.
+**Desviación entre el RED y el GREEN (14/11/2026):** entre `test(HU-51): agregar tests (RED)` y el commit del GREEN hay un commit de tests, `test(HU-51): usar el id del proyecto en los JSON esperados de la lista y del reporte`, autorizado por Sosa Ricardo. Motivo: al adaptar los tests en 2.5 se cambiaron los `proyecto_id`, pero quedaron 4 `"id"` del proyecto escritos a mano en los JSON esperados (`projects_list_test.go` y `reports_test.go`). En el RED pasaban porque el ID todavía era 1 y 2, y con el GREEN fallaban 3 tests que el GREEN no puede tocar. La corrección usa `jsonProjectID(t, h, n)`, como el resto de los tests adaptados. Con el estado del RED, esos 3 tests siguen pasando y fallan los mismos 62 tests que antes. Además, `go test -race` no se corre en Windows; queda para la CI.
 
 ## 4. Refactor
 
@@ -106,7 +108,8 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 ## 6. Pull Request y trazabilidad
 
 - [x] 6.1 Con los commits autorizados y pusheados, abrir el Pull Request de `feature/HU-51-uuid` hacia `main`, con `Closes #193` en la descripción si no queda nada por cambiar, y pedir la revisión de otro integrante. Verificar que la CI está en verde. La CI aplica `01-schema.sql` sobre una base nueva, así que prueba `public_id`.
-- [ ] 6.2 Agregar al Issue #193 la sección "## Trazabilidad" con los links (a `blob/main`) a la propuesta (`openspec/changes/hu-51-identificadores-uuid/proposal.md`), al BDD y a la evidencia. Verificar que los tres archivos existen en la rama.
+- [x] 6.2 Agregar al Issue #193 la sección "## Trazabilidad" con los links (a `blob/main`) a la propuesta (`openspec/changes/hu-51-identificadores-uuid/proposal.md`), al BDD y a la evidencia. Verificar que los tres archivos existen en la rama.
+  - **Cumplida:** Sosa Ricardo agregó la sección "## Trazabilidad" al Issue #193 desde GitHub, con el PR abierto.
 
 ## Workflow follow-up
 
