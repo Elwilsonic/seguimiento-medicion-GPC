@@ -1,6 +1,8 @@
 package effort
 
 import (
+	"uuid"
+
 	"errors"
 	"testing"
 	"time"
@@ -314,6 +316,11 @@ func contractEffortWithID(id int, member, activity string, hours float64) Effort
 // contractSave guarda effort en repo y falla el test si hay un error.
 func contractSave(t *testing.T, repo Repository, effort Effort) Effort {
 	t.Helper()
+	// HU-52: Save guarda el PublicID que recibe, y PostgreSQL lo exige único;
+	// si el test no lo fija, se asigna uno nuevo.
+	if effort.PublicID == (uuid.UUID{}) {
+		effort.PublicID = uuid.NewV4()
+	}
 	saved, err := repo.Save(effort)
 	if err != nil {
 		t.Fatalf("Save devolvió un error inesperado: %v", err)
@@ -325,6 +332,8 @@ func contractSave(t *testing.T, repo Repository, effort Effort) Effort {
 // (el mismo instante), no con ==.
 func contractAssertEffort(t *testing.T, op string, got, want Effort) {
 	t.Helper()
+	// HU-52: el PublicID lo verifica runRepositoryPublicIDContract.
+	got.PublicID, want.PublicID = uuid.UUID{}, uuid.UUID{}
 	if !got.Date.Equal(want.Date) {
 		t.Errorf("%s: fecha = %v, se esperaba %v", op, got.Date, want.Date)
 	}

@@ -1,6 +1,8 @@
 package member
 
 import (
+	"uuid"
+
 	"reflect"
 	"testing"
 )
@@ -21,10 +23,10 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 		first := contractSave(t, repo, Member{ProjectID: 1, Name: "Ana Pérez", Role: RoleProductBuilder})
 		second := contractSave(t, repo, Member{ProjectID: 2, Name: "Bruno", Role: RoleAgileEnabler})
 
-		if want := (Member{ID: 1, ProjectID: 1, Name: "Ana Pérez", Role: RoleProductBuilder}); first != want {
+		if want := (Member{ID: 1, PublicID: first.PublicID, ProjectID: 1, Name: "Ana Pérez", Role: RoleProductBuilder}); first != want {
 			t.Errorf("primer Save = %+v, se esperaba %+v", first, want)
 		}
-		if want := (Member{ID: 2, ProjectID: 2, Name: "Bruno", Role: RoleAgileEnabler}); second != want {
+		if want := (Member{ID: 2, PublicID: second.PublicID, ProjectID: 2, Name: "Bruno", Role: RoleAgileEnabler}); second != want {
 			t.Errorf("segundo Save = %+v, se esperaba %+v", second, want)
 		}
 	})
@@ -90,6 +92,11 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) Repository) 
 
 func contractSave(t *testing.T, repo Repository, m Member) Member {
 	t.Helper()
+	// HU-52: Save guarda el PublicID que recibe, y PostgreSQL lo exige único;
+	// si el test no lo fija, se asigna uno nuevo.
+	if m.PublicID == (uuid.UUID{}) {
+		m.PublicID = uuid.NewV4()
+	}
 	saved, err := repo.Save(m)
 	if err != nil {
 		t.Fatalf("Save(%+v) devolvió %v", m, err)

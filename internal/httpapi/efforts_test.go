@@ -1,6 +1,8 @@
 package httpapi_test
 
 import (
+	"uuid"
+
 	"net/http"
 	"strings"
 	"testing"
@@ -269,4 +271,9 @@ func (brokenEffortRepository) GetByID(int) (effort.Effort, error) {
 
 func (brokenEffortRepository) Update(effort.Effort) (effort.Effort, error) {
 	return effort.Effort{}, errStorage
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (brokenEffortRepository) GetByPublicID(uuid.UUID) (effort.Effort, error) {
+	return effort.Effort{}, effort.ErrEffortNotFound
 }

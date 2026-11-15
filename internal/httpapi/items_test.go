@@ -1,6 +1,8 @@
 package httpapi_test
 
 import (
+	"uuid"
+
 	"net/http"
 	"testing"
 
@@ -333,4 +335,9 @@ func expectItemWithoutStoryPoints(t *testing.T, h http.Handler) {
 	if it.StoryPoints != 0 {
 		t.Errorf("story points = %d, se esperaba el ítem sin estimar", it.StoryPoints)
 	}
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (brokenItemRepository) GetByPublicID(uuid.UUID) (backlog.Item, error) {
+	return backlog.Item{}, backlog.ErrItemNotFound
 }

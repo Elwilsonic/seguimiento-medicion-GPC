@@ -1,6 +1,8 @@
 package sprint
 
 import (
+	"uuid"
+
 	"errors"
 	"testing"
 	"time"
@@ -245,6 +247,11 @@ func contractSprint(projectID int, name string, status Status) Sprint {
 // contractSave guarda sprint en repo y falla el test si hay un error.
 func contractSave(t *testing.T, repo Repository, sprint Sprint) Sprint {
 	t.Helper()
+	// HU-52: Save guarda el PublicID que recibe, y PostgreSQL lo exige único;
+	// si el test no lo fija, se asigna uno nuevo.
+	if sprint.PublicID == (uuid.UUID{}) {
+		sprint.PublicID = uuid.NewV4()
+	}
 	saved, err := repo.Save(sprint)
 	if err != nil {
 		t.Fatalf("Save devolvió un error inesperado: %v", err)
@@ -256,6 +263,8 @@ func contractSave(t *testing.T, repo Repository, sprint Sprint) Sprint {
 // Equal (el mismo instante), no con ==.
 func contractAssertSprint(t *testing.T, op string, got, want Sprint) {
 	t.Helper()
+	// HU-52: el PublicID lo verifica runRepositoryPublicIDContract.
+	got.PublicID, want.PublicID = uuid.UUID{}, uuid.UUID{}
 	if !got.StartDate.Equal(want.StartDate) || !got.EndDate.Equal(want.EndDate) {
 		t.Errorf("%s: fechas = %v a %v, se esperaba %v a %v", op, got.StartDate, got.EndDate, want.StartDate, want.EndDate)
 	}

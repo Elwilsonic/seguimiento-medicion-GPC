@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strconv"
 	"uuid"
@@ -35,6 +36,14 @@ var (
 	// errInvalidProjectID: el {id} de una ruta de proyecto no es un UUID en
 	// forma canónica (HU-51, D2).
 	errInvalidProjectID = errors.New("el id del proyecto debe ser un UUID")
+	// Los errores de formato del resto de las entidades (HU-52, CA-52.4): el
+	// {id}, el {itemId} o un campo del cuerpo no es un UUID en forma canónica.
+	errInvalidItemID    = errors.New("el id del ítem debe ser un UUID")
+	errInvalidSprintID  = errors.New("el id del sprint debe ser un UUID")
+	errInvalidMemberID  = errors.New("el id del integrante debe ser un UUID")
+	errInvalidDefectID  = errors.New("el id del defecto debe ser un UUID")
+	errInvalidEffortID  = errors.New("el id del esfuerzo debe ser un UUID")
+	errInvalidSessionID = errors.New("el id de la sesión debe ser un UUID")
 	errInvalidDate      = errors.New("las fechas deben tener el formato AAAA-MM-DD")
 	errInternal         = errors.New("error interno del servidor")
 )
@@ -206,6 +215,96 @@ func (s *server) publicProjectID(projectID int) (string, error) {
 		return "", fmt.Errorf("leer el proyecto %d: %v", projectID, err)
 	}
 	return p.PublicID.String(), nil
+}
+
+// missingInternalID es el ID interno de un UUID que no corresponde a ninguna
+// entidad (HU-52, D4). No es el 0, porque en defectos el 0 (y cualquier
+// negativo) es "sprint faltante" (400 de HU-29 y HU-30), y un sprint
+// inexistente tiene que seguir dando 404. Es el máximo de INTEGER en
+// PostgreSQL: un valor más grande haría fallar la consulta (500). Ningún
+// repositorio llega a asignarlo, así que cada Manager informa la inexistencia
+// en el mismo punto de su orden de validaciones que con un ID entero.
+const missingInternalID = math.MaxInt32
+
+// parsePublicID lee s como UUID en forma canónica, con la misma regla que
+// parseProjectID (HU-51, D2). Si no lo es, devuelve invalid, el error de
+// formato de la entidad (HU-52, D6).
+func parsePublicID(s string, invalid error) (uuid.UUID, error) {
+	return uuid.UUID{}, invalid
+}
+
+// itemIDFromPath lee el parámetro name de la ruta ({id} o {itemId}) como el
+// UUID de un ítem y devuelve su ID interno (HU-52, D4).
+func (s *server) itemIDFromPath(r *http.Request, name string) (int, error) {
+	return 0, errInvalidItemID
+}
+
+// sprintIDFromPath lee el {id} de la ruta como el UUID de un sprint y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) sprintIDFromPath(r *http.Request) (int, error) {
+	return 0, errInvalidSprintID
+}
+
+// memberIDFromPath lee el {id} de la ruta como el UUID de un integrante y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) memberIDFromPath(r *http.Request) (int, error) {
+	return 0, errInvalidMemberID
+}
+
+// defectIDFromPath lee el {id} de la ruta como el UUID de un defecto y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) defectIDFromPath(r *http.Request) (int, error) {
+	return 0, errInvalidDefectID
+}
+
+// effortIDFromPath lee el {id} de la ruta como el UUID de un esfuerzo y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) effortIDFromPath(r *http.Request) (int, error) {
+	return 0, errInvalidEffortID
+}
+
+// sessionIDFromPath lee el {id} de la ruta como el UUID de una sesión de
+// Planning Poker y devuelve su ID interno (HU-52, D4).
+func (s *server) sessionIDFromPath(r *http.Request) (int, error) {
+	return 0, errInvalidSessionID
+}
+
+// sprintIDFromBody lee un campo del cuerpo que nombra un sprint (HU-29 y
+// HU-30) como su UUID y devuelve su ID interno. Un texto vacío da 0, que
+// sigue siendo "sprint faltante" (HU-52, D4).
+func (s *server) sprintIDFromBody(text string) (int, error) {
+	return 0, nil
+}
+
+// publicIDs traduce los IDs internos de ítems y sprints a sus UUID, para las
+// respuestas (HU-52, D5). Busca cada ID una sola vez y guarda el primer
+// error, que writeResolved informa como 500.
+type publicIDs struct {
+	s   *server
+	err error
+}
+
+// newPublicIDs devuelve un resolvedor vacío.
+func (s *server) newPublicIDs() *publicIDs {
+	return &publicIDs{s: s}
+}
+
+// item devuelve el UUID del ítem con ese ID interno, o "" para el 0 ("sin
+// resolver").
+func (ids *publicIDs) item(id int) string {
+	return ""
+}
+
+// sprint devuelve el UUID del sprint con ese ID interno, o "" para el 0
+// ("sin asignar" o "sin resolver", D7).
+func (ids *publicIDs) sprint(id int) string {
+	return ""
+}
+
+// writeResolved responde con v, o con 500 si el resolvedor tuvo un error al
+// buscar algún UUID (HU-52, D5).
+func (s *server) writeResolved(w http.ResponseWriter, status int, v any, ids *publicIDs) {
+	writeJSON(w, status, v)
 }
 
 // pathInt lee el parámetro name de la ruta como número entero.

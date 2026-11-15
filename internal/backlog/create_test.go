@@ -1,6 +1,8 @@
 package backlog
 
 import (
+	"uuid"
+
 	"errors"
 	"fmt"
 	"reflect"
@@ -531,4 +533,9 @@ func TestCreate_ErrorDelRepositorioAlGuardarSeDevuelve(t *testing.T) {
 	if !reflect.DeepEqual(item, Item{}) {
 		t.Errorf("ítem devuelto = %+v, se esperaba un ítem vacío", item)
 	}
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (failingRepository) GetByPublicID(uuid.UUID) (Item, error) {
+	return Item{}, ErrItemNotFound
 }

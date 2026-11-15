@@ -82,7 +82,7 @@ func TestRegister_GuardaElIntegranteConNombreYRol(t *testing.T) {
 
 	got := e.register(t, 1, "Ana Pérez", "PRODUCT_BUILDER")
 
-	want := Member{ID: 1, ProjectID: 1, Name: "Ana Pérez", Role: RoleProductBuilder}
+	want := Member{ID: 1, PublicID: got.PublicID, ProjectID: 1, Name: "Ana Pérez", Role: RoleProductBuilder} // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if got != want {
 		t.Errorf("Register = %+v, se esperaba %+v", got, want)
 	}
@@ -106,6 +106,7 @@ func TestRegister_AceptaLosTresRolesConIDsCorrelativos(t *testing.T) {
 		{ID: 2, ProjectID: 1, Name: "Bruno", Role: RoleAgileEnabler},
 		{ID: 3, ProjectID: 2, Name: "Carla", Role: RoleProductBuilder},
 	}
+	copyPublicIDs(want, got) // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("integrantes = %+v, se esperaba %+v", got, want)
 	}
@@ -277,7 +278,7 @@ func TestRegister_DevuelveUnaCopia(t *testing.T) {
 	got.Name = "Otro"
 	got.Role = RoleAgileEnabler
 
-	want := []Member{{ID: 1, ProjectID: 1, Name: "Ana", Role: RoleProductBuilder}}
+	want := []Member{{ID: 1, PublicID: got.PublicID, ProjectID: 1, Name: "Ana", Role: RoleProductBuilder}} // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if stored := e.stored(t, 1); !reflect.DeepEqual(stored, want) {
 		t.Errorf("guardados = %+v, se esperaba %+v", stored, want)
 	}

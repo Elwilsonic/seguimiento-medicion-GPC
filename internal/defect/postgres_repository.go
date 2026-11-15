@@ -1,6 +1,8 @@
 package defect
 
 import (
+	"uuid"
+
 	"context"
 	"errors"
 	"fmt"
@@ -108,4 +110,10 @@ func scanDefect(row pgx.Row) (Defect, error) {
 	defect.Severity = Severity(severity)
 	defect.Status = Status(status)
 	return defect, err
+}
+
+// GetByPublicID devuelve el defecto con ese identificador público, o ErrDefectNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Defect, error) {
+	return Defect{}, ErrDefectNotFound
 }

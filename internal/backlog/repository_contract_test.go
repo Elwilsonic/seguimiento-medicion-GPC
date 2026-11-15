@@ -1,6 +1,8 @@
 package backlog
 
 import (
+	"uuid"
+
 	"errors"
 	"fmt"
 	"reflect"
@@ -302,6 +304,11 @@ func contractItem(projectID int, title string) Item {
 // contractSave guarda item en repo y falla el test si hay un error.
 func contractSave(t *testing.T, repo Repository, item Item) Item {
 	t.Helper()
+	// HU-52: Save guarda el PublicID que recibe, y PostgreSQL lo exige único;
+	// si el test no lo fija, se asigna uno nuevo.
+	if item.PublicID == (uuid.UUID{}) {
+		item.PublicID = uuid.NewV4()
+	}
 	saved, err := repo.Save(item)
 	if err != nil {
 		t.Fatalf("Save devolvió un error inesperado: %v", err)
@@ -314,6 +321,8 @@ func contractSave(t *testing.T, repo Repository, item Item) Item {
 // reflect.DeepEqual, con los criterios en nil de los dos lados.
 func contractAssertItem(t *testing.T, op string, got, want Item) {
 	t.Helper()
+	// HU-52: el PublicID lo verifica runRepositoryPublicIDContract.
+	got.PublicID, want.PublicID = uuid.UUID{}, uuid.UUID{}
 	gotCriteria, wantCriteria := got.AcceptanceCriteria, want.AcceptanceCriteria
 	got.AcceptanceCriteria, want.AcceptanceCriteria = nil, nil
 	if !reflect.DeepEqual(got, want) {

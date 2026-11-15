@@ -1,8 +1,13 @@
 package backlog
 
+import "uuid"
+
 // Repository es el almacenamiento de los ítems del Product Backlog. La
 // lógica de negocio accede a los ítems solo a través de esta interfaz.
 type Repository interface {
+	// GetByPublicID devuelve una copia del ítem con ese identificador
+	// público, o ErrItemNotFound si no existe (HU-52).
+	GetByPublicID(id uuid.UUID) (Item, error)
 	// Save guarda un ítem nuevo, le asigna el ID y devuelve una copia.
 	Save(item Item) (Item, error)
 

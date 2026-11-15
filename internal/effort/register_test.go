@@ -1,6 +1,8 @@
 package effort
 
 import (
+	"uuid"
+
 	"errors"
 	"math"
 	"slices"
@@ -578,4 +580,9 @@ func (r failingEffortRepository) GetByID(int) (Effort, error) {
 
 func (r failingEffortRepository) Update(Effort) (Effort, error) {
 	return Effort{}, r.err
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (failingEffortRepository) GetByPublicID(uuid.UUID) (Effort, error) {
+	return Effort{}, ErrEffortNotFound
 }

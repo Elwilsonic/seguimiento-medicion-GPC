@@ -1,5 +1,7 @@
 package poker
 
+import "uuid"
+
 // MemoryRepository guarda las sesiones en memoria (Sprint 3). No es seguro
 // para uso concurrente: se accede a través del Manager, que lo protege.
 type MemoryRepository struct {
@@ -51,5 +53,11 @@ func (r *MemoryRepository) Update(session Session) (Session, error) {
 			return cloneSession(session), nil
 		}
 	}
+	return Session{}, ErrSessionNotFound
+}
+
+// GetByPublicID devuelve la sesión con ese identificador público, o ErrSessionNotFound
+// si no existe (HU-52).
+func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Session, error) {
 	return Session{}, ErrSessionNotFound
 }

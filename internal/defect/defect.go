@@ -1,6 +1,9 @@
 package defect
 
-import "errors"
+import (
+	"errors"
+	"uuid"
+)
 
 // Status es el estado de un defecto (RN-29.3). Un defecto se registra en
 // StatusOpen (HU-29); las transiciones entre estados están en status.go
@@ -46,7 +49,10 @@ func SeverityValues() []string {
 // Defect es un defecto asociado a una historia del backlog. No tiene slices
 // ni mapas, así que una copia no comparte estado con el defecto guardado.
 type Defect struct {
-	ID                 int
+	ID int
+	// PublicID es el identificador público del defecto (HU-52, D1): el único que
+	// muestran la API y la interfaz. ID queda como clave interna.
+	PublicID           uuid.UUID
 	Description        string
 	Severity           Severity
 	Status             Status

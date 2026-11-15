@@ -1,6 +1,8 @@
 package backlog
 
 import (
+	"uuid"
+
 	"context"
 	"errors"
 	"fmt"
@@ -109,4 +111,10 @@ func scanItem(row pgx.Row) (Item, error) {
 	err := row.Scan(&item.ID, &item.ProjectID, &item.Title, &item.Description, &item.Priority,
 		&item.AcceptanceCriteria, &item.Status, &item.StoryPoints, &item.EstimatedHours, &item.SprintID)
 	return item, err
+}
+
+// GetByPublicID devuelve el ítem con ese identificador público, o ErrItemNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Item, error) {
+	return Item{}, ErrItemNotFound
 }

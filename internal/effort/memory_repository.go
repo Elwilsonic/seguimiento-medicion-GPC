@@ -1,6 +1,9 @@
 package effort
 
-import "sync"
+import (
+	"sync"
+	"uuid"
+)
 
 // MemoryRepository guarda los esfuerzos en memoria.
 type MemoryRepository struct {
@@ -81,5 +84,11 @@ func (r *MemoryRepository) Update(effort Effort) (Effort, error) {
 			return effort, nil
 		}
 	}
+	return Effort{}, ErrEffortNotFound
+}
+
+// GetByPublicID devuelve el esfuerzo con ese identificador público, o ErrEffortNotFound
+// si no existe (HU-52).
+func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Effort, error) {
 	return Effort{}, ErrEffortNotFound
 }

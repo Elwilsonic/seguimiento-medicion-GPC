@@ -35,6 +35,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 
 	sprints := sprint.NewPostgresRepository(pool)
 	savedSprint, err := sprints.Save(sprint.Sprint{
+		PublicID:  uuid.NewV4(),
 		ProjectID: 1,
 		Name:      "Sprint 1",
 		StartDate: contractDate,
@@ -48,6 +49,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 
 	items := backlog.NewPostgresRepository(pool)
 	if _, err := items.Save(backlog.Item{
+		PublicID:           uuid.NewV4(),
 		ProjectID:          1,
 		Title:              "Login de usuarios",
 		Description:        "Formulario de acceso",
@@ -60,6 +62,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 	}
 
 	savedSprint2, err := sprints.Save(sprint.Sprint{
+		PublicID:  uuid.NewV4(),
 		ProjectID: 1,
 		Name:      "Sprint 2",
 		StartDate: contractDate.AddDate(0, 0, 7),
@@ -72,6 +75,7 @@ func newPostgresTestRepository(t *testing.T, pool *pgxpool.Pool) Repository {
 	}
 
 	if _, err := items.Save(backlog.Item{
+		PublicID:           uuid.NewV4(),
 		ProjectID:          1,
 		Title:              "Cierre de sesión",
 		Description:        "Cerrar la sesión",

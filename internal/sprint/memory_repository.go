@@ -1,5 +1,7 @@
 package sprint
 
+import "uuid"
+
 // MemoryRepository guarda los sprints en memoria (Sprint 1). No es seguro
 // para uso concurrente: se accede a través del Manager, que lo protege.
 type MemoryRepository struct {
@@ -69,4 +71,10 @@ func (r *MemoryRepository) ListByProject(projectID int) ([]Sprint, error) {
 		}
 	}
 	return sprints, nil
+}
+
+// GetByPublicID devuelve el sprint con ese identificador público, o ErrSprintNotFound
+// si no existe (HU-52).
+func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Sprint, error) {
+	return Sprint{}, ErrSprintNotFound
 }

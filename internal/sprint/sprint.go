@@ -1,6 +1,8 @@
 package sprint
 
 import (
+	"uuid"
+
 	"errors"
 	"time"
 )
@@ -17,7 +19,10 @@ const (
 // Sprint es un sprint de un proyecto. No tiene slices ni mapas, así que una
 // copia no comparte estado con el sprint guardado (RN-10.8).
 type Sprint struct {
-	ID        int
+	ID int
+	// PublicID es el identificador público del sprint (HU-52, D1): el único que
+	// muestran la API y la interfaz. ID queda como clave interna.
+	PublicID  uuid.UUID
 	ProjectID int
 	Name      string
 	StartDate time.Time

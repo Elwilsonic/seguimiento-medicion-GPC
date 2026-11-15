@@ -1,6 +1,8 @@
 package httpapi_test
 
 import (
+	"uuid"
+
 	"bytes"
 	"encoding/json"
 	"net/http"
@@ -136,4 +138,9 @@ func TestRegistrarIntegrante_ErrorDelRepositorioDevuelve500SinDetalle(t *testing
 	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", validMember)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (brokenMemberRepository) GetByPublicID(uuid.UUID) (member.Member, error) {
+	return member.Member{}, member.ErrMemberNotFound
 }

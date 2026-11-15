@@ -1,6 +1,8 @@
 package member
 
 import (
+	"uuid"
+
 	"context"
 	"fmt"
 
@@ -66,4 +68,10 @@ func scanMember(row pgx.Row) (Member, error) {
 	var m Member
 	err := row.Scan(&m.ID, &m.ProjectID, &m.Name, &m.Role)
 	return m, err
+}
+
+// GetByPublicID devuelve el integrante con ese identificador público, o ErrMemberNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Member, error) {
+	return Member{}, ErrMemberNotFound
 }

@@ -1,7 +1,12 @@
 package member
 
+import "uuid"
+
 // Repository guarda los integrantes (HU-15).
 type Repository interface {
+	// GetByPublicID devuelve una copia del integrante con ese identificador
+	// público, o ErrMemberNotFound si no existe (HU-52).
+	GetByPublicID(id uuid.UUID) (Member, error)
 	// Save asigna el siguiente ID correlativo global, guarda el integrante y
 	// devuelve una copia (RN-15.7).
 	Save(Member) (Member, error)

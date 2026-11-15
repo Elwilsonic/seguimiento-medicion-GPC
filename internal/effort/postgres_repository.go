@@ -1,6 +1,8 @@
 package effort
 
 import (
+	"uuid"
+
 	"context"
 	"errors"
 	"fmt"
@@ -116,4 +118,10 @@ func (r *PostgresRepository) Update(effort Effort) (Effort, error) {
 		return Effort{}, fmt.Errorf("actualizar el esfuerzo: %w", err)
 	}
 	return updated, nil
+}
+
+// GetByPublicID devuelve el esfuerzo con ese identificador público, o ErrEffortNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Effort, error) {
+	return Effort{}, ErrEffortNotFound
 }

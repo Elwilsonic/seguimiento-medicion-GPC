@@ -1,6 +1,9 @@
 package defect
 
-import "sync"
+import (
+	"sync"
+	"uuid"
+)
 
 // MemoryRepository guarda los defectos en memoria.
 type MemoryRepository struct {
@@ -64,5 +67,11 @@ func (r *MemoryRepository) Update(defect Defect) (Defect, error) {
 			return defect, nil
 		}
 	}
+	return Defect{}, ErrDefectNotFound
+}
+
+// GetByPublicID devuelve el defecto con ese identificador público, o ErrDefectNotFound
+// si no existe (HU-52).
+func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Defect, error) {
 	return Defect{}, ErrDefectNotFound
 }

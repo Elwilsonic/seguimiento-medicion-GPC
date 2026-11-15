@@ -1,6 +1,8 @@
 package httpapi_test
 
 import (
+	"uuid"
+
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -819,4 +821,9 @@ func TestRepetirRondaPoker_IgnoraElCuerpo(t *testing.T) {
 	if got.Estado != "ABIERTA" || got.Ronda != 2 {
 		t.Errorf("sesión = %+v, se esperaba ABIERTA en la ronda 2", got)
 	}
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (brokenPokerRepository) GetByPublicID(uuid.UUID) (poker.Session, error) {
+	return poker.Session{}, poker.ErrSessionNotFound
 }

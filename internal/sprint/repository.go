@@ -1,8 +1,13 @@
 package sprint
 
+import "uuid"
+
 // Repository es el almacenamiento de los sprints. La lógica de negocio accede
 // a los datos solo a través de esta interfaz.
 type Repository interface {
+	// GetByPublicID devuelve una copia del sprint con ese identificador
+	// público, o ErrSprintNotFound si no existe (HU-52).
+	GetByPublicID(id uuid.UUID) (Sprint, error)
 	// Save guarda un sprint nuevo, le asigna el ID y devuelve una copia.
 	Save(sprint Sprint) (Sprint, error)
 

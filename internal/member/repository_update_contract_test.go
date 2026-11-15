@@ -63,7 +63,7 @@ func runRepositoryUpdateContract(t *testing.T, newRepo func(t *testing.T) Reposi
 		if err != nil {
 			t.Fatalf("Update devolvió %v", err)
 		}
-		want := Member{ID: saved.ID, ProjectID: 1, Name: "Ana Pérez", Role: RoleAgileEnabler}
+		want := Member{ID: saved.ID, PublicID: saved.PublicID, ProjectID: 1, Name: "Ana Pérez", Role: RoleAgileEnabler}
 		if got != want {
 			t.Errorf("Update = %+v, se esperaba %+v", got, want)
 		}

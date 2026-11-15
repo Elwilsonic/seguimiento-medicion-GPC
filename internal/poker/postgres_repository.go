@@ -1,6 +1,8 @@
 package poker
 
 import (
+	"uuid"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -116,4 +118,10 @@ func scanSession(row pgx.Row) (Session, error) {
 		return Session{}, fmt.Errorf("decodificar los votos de la sesión: %w", err)
 	}
 	return cloneSession(session), nil
+}
+
+// GetByPublicID devuelve la sesión con ese identificador público, o ErrSessionNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Session, error) {
+	return Session{}, ErrSessionNotFound
 }

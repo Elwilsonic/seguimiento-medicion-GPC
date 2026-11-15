@@ -63,7 +63,7 @@ func TestUpdate_CambiaElNombreYElRol(t *testing.T) {
 
 	got := e.update(t, 1, "Ana Pérez", "AGILE_ENABLER")
 
-	want := Member{ID: 1, ProjectID: 1, Name: "Ana Pérez", Role: RoleAgileEnabler}
+	want := Member{ID: 1, PublicID: got.PublicID, ProjectID: 1, Name: "Ana Pérez", Role: RoleAgileEnabler} // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if got != want {
 		t.Errorf("Update = %+v, se esperaba %+v", got, want)
 	}
@@ -133,7 +133,7 @@ func TestUpdate_NormalizaElNombreYElRol(t *testing.T) {
 
 	got := e.update(t, 1, "  Ana Pérez  ", "  agile_enabler ")
 
-	want := Member{ID: 1, ProjectID: 1, Name: "Ana Pérez", Role: RoleAgileEnabler}
+	want := Member{ID: 1, PublicID: got.PublicID, ProjectID: 1, Name: "Ana Pérez", Role: RoleAgileEnabler} // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if got != want {
 		t.Errorf("Update = %+v, se esperaba %+v", got, want)
 	}

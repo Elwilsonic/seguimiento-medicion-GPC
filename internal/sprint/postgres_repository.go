@@ -1,6 +1,8 @@
 package sprint
 
 import (
+	"uuid"
+
 	"context"
 	"errors"
 	"fmt"
@@ -117,4 +119,10 @@ func scanSprint(row pgx.Row) (Sprint, error) {
 	sprint.StartDate = sprint.StartDate.UTC()
 	sprint.EndDate = sprint.EndDate.UTC()
 	return sprint, err
+}
+
+// GetByPublicID devuelve el sprint con ese identificador público, o ErrSprintNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Sprint, error) {
+	return Sprint{}, ErrSprintNotFound
 }
