@@ -449,7 +449,7 @@ Controles, todos con comandos:
 
 ### Segunda desviación de la base (15/11/2026)
 
-La encontró Cardozo Leandro al preparar el GREEN de ítems e integrantes, y la decidió como responsable de esa parte (falta registrar la aprobación del Agile Enabler). El detalle está en D9 de `design.md` ("Segunda desviación de la base"). Con el ítem en UUID, los tests de otros responsables mandaban ese UUID a rutas que todavía leen un entero, y `uuidRoutes` no lo evita.
+La encontró Cardozo Leandro al preparar el GREEN de ítems e integrantes, y la decidió como responsable de esa parte. Aprobada por Peñalbé Hernán (Agile Enabler) el 15/11/2026, con dos condiciones: (1) el PR de ítems e integrantes apunta a la rama de integración feature/HU-52-uuid-entidades y no a main; (2) la traducción inversa es temporal: cuando García agregue sus 7 rutas a uuidRoutes deja de usarse, y en su PR, o en el PR final a main, se borra y se verifica que go test ./... quede en verde sin ella, para que ningún test termine el sprint dependiendo de ella. El detalle está en D9 de `design.md` ("Segunda desviación de la base"). Con el ítem en UUID, los tests de otros responsables mandaban ese UUID a rutas que todavía leen un entero, y `uuidRoutes` no lo evita.
 
 | Qué pasaba | Cómo se resolvió |
 |---|---|
