@@ -89,7 +89,7 @@ func TestReporteProyecto_ContratoDelEjemploDeTEC03(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "proyecto": {
-    "id": 1,
+    "id": `+jsonProjectID(t, h, 1)+`,
     "nombre": "Software Metrics",
     "descripcion": "Estimación y seguimiento de proyectos",
     "estado": "EN_CURSO",
@@ -190,7 +190,7 @@ func TestReporteProyecto_ContratoDelProyectoVacio(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "proyecto": {
-    "id": 2,
+    "id": `+jsonProjectID(t, h, 2)+`,
     "nombre": "Proyecto sin datos",
     "descripcion": "Recién creado",
     "estado": "PLANIFICADO",

@@ -51,8 +51,8 @@ func TestListarProyectos_DevuelveLosProyectosConElFormatoDeLaConsultaPorID(t *te
 	rec := do(t, h, http.MethodGet, "/api/proyectos", "")
 
 	expectStatus(t, rec, http.StatusOK)
-	want := `[{"id":2,"nombre":"Inventario","descripcion":"","estado":"EN_CURSO","fecha_inicio":"2026-03-01","fecha_fin":"2026-06-30"},` +
-		`{"id":1,"nombre":"Sistema de ventas","descripcion":"Ventas online","estado":"PLANIFICADO","fecha_inicio":"","fecha_fin":""}]`
+	want := `[{"id":` + jsonProjectID(t, h, 2) + `,"nombre":"Inventario","descripcion":"","estado":"EN_CURSO","fecha_inicio":"2026-03-01","fecha_fin":"2026-06-30"},` +
+		`{"id":` + jsonProjectID(t, h, 1) + `,"nombre":"Sistema de ventas","descripcion":"Ventas online","estado":"PLANIFICADO","fecha_inicio":"","fecha_fin":""}]`
 	if got := strings.TrimSpace(rec.Body.String()); got != want {
 		t.Errorf("cuerpo = %s, se esperaba %s", got, want)
 	}
