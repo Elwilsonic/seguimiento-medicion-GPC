@@ -1,6 +1,8 @@
 package defect
 
 import (
+	"uuid"
+
 	"errors"
 	"testing"
 )
@@ -93,6 +95,11 @@ func contractDefectWithID(id int, description string, severity Severity) Defect 
 // contractSave guarda defect en repo y falla el test si hay un error.
 func contractSave(t *testing.T, repo Repository, defect Defect) Defect {
 	t.Helper()
+	// HU-52: Save guarda el PublicID que recibe, y PostgreSQL lo exige único;
+	// si el test no lo fija, se asigna uno nuevo.
+	if defect.PublicID == (uuid.UUID{}) {
+		defect.PublicID = uuid.NewV4()
+	}
 	saved, err := repo.Save(defect)
 	if err != nil {
 		t.Fatalf("Save devolvió un error inesperado: %v", err)
@@ -103,6 +110,8 @@ func contractSave(t *testing.T, repo Repository, defect Defect) Defect {
 // contractAssertDefect compara got con want.
 func contractAssertDefect(t *testing.T, op string, got, want Defect) {
 	t.Helper()
+	// HU-52: el PublicID lo verifica runRepositoryPublicIDContract.
+	got.PublicID, want.PublicID = uuid.UUID{}, uuid.UUID{}
 	if got != want {
 		t.Errorf("%s = %+v, se esperaba %+v", op, got, want)
 	}

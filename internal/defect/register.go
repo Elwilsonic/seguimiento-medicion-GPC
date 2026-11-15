@@ -1,6 +1,8 @@
 package defect
 
 import (
+	"uuid"
+
 	"strings"
 
 	"seguimiento-medicion-gpc/internal/sprint"
@@ -37,6 +39,7 @@ func (m *Manager) Register(itemID int, description, severity string, detectionSp
 		}
 
 		saved, err = m.repo.Save(Defect{
+			PublicID:           uuid.NewV4(),
 			Description:        description,
 			Severity:           Severity(severity),
 			Status:             StatusOpen,

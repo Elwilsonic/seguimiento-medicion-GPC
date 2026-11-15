@@ -1,6 +1,8 @@
 package httpapi_test
 
 import (
+	"uuid"
+
 	"net/http"
 	"strings"
 	"testing"
@@ -473,4 +475,9 @@ func TestCambiarEstadoDefecto_ErrorDelRepositorioDevuelve500SinDetalle(t *testin
 	rec := do(t, h, http.MethodPatch, defectStatusPath, `{"estado":"EN_CORRECCION"}`)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (brokenDefectRepository) GetByPublicID(uuid.UUID) (defect.Defect, error) {
+	return defect.Defect{}, defect.ErrDefectNotFound
 }

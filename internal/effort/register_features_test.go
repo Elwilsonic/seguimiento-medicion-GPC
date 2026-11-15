@@ -322,6 +322,7 @@ func (s *effortScenario) savedKeepsInput() error {
 		return fmt.Errorf("fecha guardada = %v, se esperaba %v", got.Date, want.Date)
 	}
 	got.Date = want.Date
+	want.PublicID = got.PublicID // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if got != want {
 		return fmt.Errorf("esfuerzo guardado = %+v, se esperaba %+v", got, want)
 	}

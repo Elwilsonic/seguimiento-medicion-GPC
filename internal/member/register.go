@@ -1,6 +1,9 @@
 package member
 
-import "strings"
+import (
+	"strings"
+	"uuid"
+)
 
 // Register registra un integrante en un proyecto existente (HU-15) y
 // devuelve una copia. El orden de validación es: nombre, rol, existencia del
@@ -41,7 +44,7 @@ func (m *Manager) Register(projectID int, name, role string) (Member, error) {
 		return Member{}, ErrDuplicateMember
 	}
 
-	return m.repo.Save(Member{ProjectID: projectID, Name: name, Role: normalized})
+	return m.repo.Save(Member{PublicID: uuid.NewV4(), ProjectID: projectID, Name: name, Role: normalized})
 }
 
 // normalizeRole valida el rol contra los tres roles válidos, sin distinguir

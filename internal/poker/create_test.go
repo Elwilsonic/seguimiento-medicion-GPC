@@ -1,6 +1,8 @@
 package poker
 
 import (
+	"uuid"
+
 	"errors"
 	"sync"
 	"testing"
@@ -320,4 +322,9 @@ func TestOpenSession_ErrorDelRepositorioSEPropaga(t *testing.T) {
 			t.Fatalf("error = %v, se esperaba errRepository", err)
 		}
 	})
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (failingRepository) GetByPublicID(uuid.UUID) (Session, error) {
+	return Session{}, ErrSessionNotFound
 }

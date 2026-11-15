@@ -1,6 +1,8 @@
 package sprint
 
 import (
+	"uuid"
+
 	"context"
 	"errors"
 	"fmt"
@@ -23,16 +25,16 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // sprintColumns son las columnas de un sprint, en el orden de scanSprint.
-const sprintColumns = "id, project_id, name, start_date, end_date, goal, status"
+const sprintColumns = "id, project_id, name, start_date, end_date, goal, status, public_id"
 
 // Save guarda el sprint; la base asigna el siguiente ID correlativo global
 // (RN-10.6). Devuelve el sprint tal como quedó guardado: las fechas en UTC y
 // con precisión de microsegundos, la de PostgreSQL.
 func (r *PostgresRepository) Save(sprint Sprint) (Sprint, error) {
 	row := r.pool.QueryRow(context.Background(),
-		`INSERT INTO sprints (project_id, name, start_date, end_date, goal, status)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING `+sprintColumns,
-		sprint.ProjectID, sprint.Name, sprint.StartDate, sprint.EndDate, sprint.Goal, sprint.Status)
+		`INSERT INTO sprints (project_id, name, start_date, end_date, goal, status, public_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING `+sprintColumns,
+		sprint.ProjectID, sprint.Name, sprint.StartDate, sprint.EndDate, sprint.Goal, sprint.Status, sprint.PublicID)
 	saved, err := scanSprint(row)
 	if err != nil {
 		return Sprint{}, fmt.Errorf("guardar el sprint: %w", err)
@@ -113,8 +115,23 @@ func (r *PostgresRepository) ListByProject(projectID int) ([]Sprint, error) {
 // fechas a UTC: pgx devuelve timestamptz en la zona local de la máquina.
 func scanSprint(row pgx.Row) (Sprint, error) {
 	var sprint Sprint
-	err := row.Scan(&sprint.ID, &sprint.ProjectID, &sprint.Name, &sprint.StartDate, &sprint.EndDate, &sprint.Goal, &sprint.Status)
+	err := row.Scan(&sprint.ID, &sprint.ProjectID, &sprint.Name, &sprint.StartDate, &sprint.EndDate, &sprint.Goal, &sprint.Status, &sprint.PublicID)
 	sprint.StartDate = sprint.StartDate.UTC()
 	sprint.EndDate = sprint.EndDate.UTC()
 	return sprint, err
+}
+
+// GetByPublicID devuelve el sprint con ese identificador público, o ErrSprintNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Sprint, error) {
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+sprintColumns+" FROM sprints WHERE public_id = $1", id)
+	sprint, err := scanSprint(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Sprint{}, ErrSprintNotFound
+	}
+	if err != nil {
+		return Sprint{}, fmt.Errorf("buscar el sprint: %w", err)
+	}
+	return sprint, nil
 }

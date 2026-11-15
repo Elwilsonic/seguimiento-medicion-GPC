@@ -1,8 +1,13 @@
 package poker
 
+import "uuid"
+
 // Repository es el almacenamiento de las sesiones de Planning Poker. La
 // lógica de negocio accede a las sesiones solo a través de esta interfaz.
 type Repository interface {
+	// GetByPublicID devuelve una copia de la sesión con ese identificador
+	// público, o ErrSessionNotFound si no existe (HU-52).
+	GetByPublicID(id uuid.UUID) (Session, error)
 	// Save guarda una sesión nueva, le asigna el ID y devuelve una copia.
 	Save(session Session) (Session, error)
 

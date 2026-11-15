@@ -67,6 +67,7 @@ func TestList_DevuelveLosIntegrantesOrdenadosPorIDConSuRol(t *testing.T) {
 		{ID: 2, ProjectID: 1, Name: "Bruno Díaz", Role: RoleProductBuilder},
 		{ID: 3, ProjectID: 1, Name: "Carla Ruiz", Role: RoleProductArchitect},
 	}
+	copyPublicIDs(want, got) // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("List = %+v, se esperaba %+v", got, want)
 	}
@@ -112,6 +113,7 @@ func TestList_MuestraLosDatosModificados(t *testing.T) {
 	got := e.list(t, 1)
 
 	want := []Member{{ID: 1, ProjectID: 1, Name: "Ana Pérez", Role: RoleAgileEnabler}, bruno}
+	copyPublicIDs(want, got) // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("List = %+v, se esperaba %+v", got, want)
 	}
@@ -241,5 +243,14 @@ func TestList_ConsultasSimultaneasConRegistros(t *testing.T) {
 
 	if got := e.list(t, 1); len(got) != len(names) {
 		t.Errorf("List devolvió %d integrantes, se esperaban %d", len(got), len(names))
+	}
+}
+
+// copyPublicIDs copia en want el PublicID de cada integrante de got, en el
+// mismo orden (HU-52): así la comparación sigue verificando todos los demás
+// campos.
+func copyPublicIDs(want, got []Member) {
+	for i := range min(len(want), len(got)) {
+		want[i].PublicID = got[i].PublicID
 	}
 }

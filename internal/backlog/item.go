@@ -1,6 +1,9 @@
 package backlog
 
-import "errors"
+import (
+	"errors"
+	"uuid"
+)
 
 // Priority es la prioridad de un ítem del backlog (RN-04.3).
 type Priority string
@@ -25,7 +28,10 @@ const (
 // criterios de aceptación: el repositorio y el Manager siempre devuelven
 // listas nuevas (RN-04.9).
 type Item struct {
-	ID                 int
+	ID int
+	// PublicID es el identificador público del ítem (HU-52, D1): el único que
+	// muestran la API y la interfaz. ID queda como clave interna.
+	PublicID           uuid.UUID
 	ProjectID          int
 	Title              string
 	Description        string

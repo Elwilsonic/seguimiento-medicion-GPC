@@ -1,6 +1,8 @@
 package sprint
 
 import (
+	"uuid"
+
 	"strings"
 	"time"
 )
@@ -59,6 +61,7 @@ func (m *Manager) Create(projectID int, name string, startDate, endDate time.Tim
 	}
 
 	sprint := Sprint{
+		PublicID:  uuid.NewV4(),
 		ProjectID: projectID,
 		Name:      name,
 		StartDate: startDate,

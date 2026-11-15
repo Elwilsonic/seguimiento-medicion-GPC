@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strconv"
 	"uuid"
@@ -35,6 +36,14 @@ var (
 	// errInvalidProjectID: el {id} de una ruta de proyecto no es un UUID en
 	// forma canónica (HU-51, D2).
 	errInvalidProjectID = errors.New("el id del proyecto debe ser un UUID")
+	// Los errores de formato del resto de las entidades (HU-52, CA-52.4): el
+	// {id}, el {itemId} o un campo del cuerpo no es un UUID en forma canónica.
+	errInvalidItemID    = errors.New("el id del ítem debe ser un UUID")
+	errInvalidSprintID  = errors.New("el id del sprint debe ser un UUID")
+	errInvalidMemberID  = errors.New("el id del integrante debe ser un UUID")
+	errInvalidDefectID  = errors.New("el id del defecto debe ser un UUID")
+	errInvalidEffortID  = errors.New("el id del esfuerzo debe ser un UUID")
+	errInvalidSessionID = errors.New("el id de la sesión debe ser un UUID")
 	errInvalidDate      = errors.New("las fechas deben tener el formato AAAA-MM-DD")
 	errInternal         = errors.New("error interno del servidor")
 )
@@ -162,14 +171,7 @@ func pathID(r *http.Request) (int, error) {
 // una sola URL. No exige la versión 4: un UUID de otra versión tiene la forma
 // correcta y simplemente no existe (404).
 func parseProjectID(s string) (uuid.UUID, error) {
-	if len(s) != 36 || s[8] != '-' || s[13] != '-' || s[18] != '-' || s[23] != '-' {
-		return uuid.UUID{}, errInvalidProjectID
-	}
-	u, err := uuid.Parse(s)
-	if err != nil {
-		return uuid.UUID{}, errInvalidProjectID
-	}
-	return u, nil
+	return parsePublicID(s, errInvalidProjectID)
 }
 
 // projectIDFromPath lee el {id} de una ruta de proyecto (HU-51, D4) y
@@ -208,6 +210,157 @@ func (s *server) publicProjectID(projectID int) (string, error) {
 	return p.PublicID.String(), nil
 }
 
+// missingInternalID es el ID interno de un UUID que no corresponde a ninguna
+// entidad (HU-52, D4). No es el 0, porque en defectos el 0 (y cualquier
+// negativo) es "sprint faltante" (400 de HU-29 y HU-30), y un sprint
+// inexistente tiene que seguir dando 404. Es el máximo de INTEGER en
+// PostgreSQL: un valor más grande haría fallar la consulta (500). Ningún
+// repositorio llega a asignarlo, así que cada Manager informa la inexistencia
+// en el mismo punto de su orden de validaciones que con un ID entero.
+const missingInternalID = math.MaxInt32
+
+// parsePublicID lee s como UUID en forma canónica, con la misma regla que
+// parseProjectID (HU-51, D2). Si no lo es, devuelve invalid, el error de
+// formato de la entidad (HU-52, D6).
+func parsePublicID(s string, invalid error) (uuid.UUID, error) {
+	if len(s) != 36 || s[8] != '-' || s[13] != '-' || s[18] != '-' || s[23] != '-' {
+		return uuid.UUID{}, invalid
+	}
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.UUID{}, invalid
+	}
+	return u, nil
+}
+
+// internalID traduce el UUID de text a su ID interno con lookup (HU-52, D4):
+// un texto que no es un UUID da invalid (400), un UUID que no existe da
+// missingInternalID y otro error del repositorio se devuelve tal cual (500).
+func internalID[T any](text string, invalid, notFound error, lookup func(uuid.UUID) (T, error), id func(T) int) (int, error) {
+	u, err := parsePublicID(text, invalid)
+	if err != nil {
+		return 0, err
+	}
+	v, err := lookup(u)
+	if errors.Is(err, notFound) {
+		return missingInternalID, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return id(v), nil
+}
+
+// itemIDFromPath lee el parámetro name de la ruta ({id} o {itemId}) como el
+// UUID de un ítem y devuelve su ID interno (HU-52, D4).
+func (s *server) itemIDFromPath(r *http.Request, name string) (int, error) {
+	return internalID(r.PathValue(name), errInvalidItemID, backlog.ErrItemNotFound, s.items.GetByPublicID, func(v backlog.Item) int { return v.ID })
+}
+
+// sprintIDFromPath lee el {id} de la ruta como el UUID de un sprint y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) sprintIDFromPath(r *http.Request) (int, error) {
+	return internalID(r.PathValue("id"), errInvalidSprintID, sprint.ErrSprintNotFound, s.sprints.GetByPublicID, func(v sprint.Sprint) int { return v.ID })
+}
+
+// memberIDFromPath lee el {id} de la ruta como el UUID de un integrante y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) memberIDFromPath(r *http.Request) (int, error) {
+	return internalID(r.PathValue("id"), errInvalidMemberID, member.ErrMemberNotFound, s.members.GetByPublicID, func(v member.Member) int { return v.ID })
+}
+
+// defectIDFromPath lee el {id} de la ruta como el UUID de un defecto y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) defectIDFromPath(r *http.Request) (int, error) {
+	return internalID(r.PathValue("id"), errInvalidDefectID, defect.ErrDefectNotFound, s.defects.GetByPublicID, func(v defect.Defect) int { return v.ID })
+}
+
+// effortIDFromPath lee el {id} de la ruta como el UUID de un esfuerzo y
+// devuelve su ID interno (HU-52, D4).
+func (s *server) effortIDFromPath(r *http.Request) (int, error) {
+	return internalID(r.PathValue("id"), errInvalidEffortID, effort.ErrEffortNotFound, s.efforts.GetByPublicID, func(v effort.Effort) int { return v.ID })
+}
+
+// sessionIDFromPath lee el {id} de la ruta como el UUID de una sesión de
+// Planning Poker y devuelve su ID interno (HU-52, D4).
+func (s *server) sessionIDFromPath(r *http.Request) (int, error) {
+	return internalID(r.PathValue("id"), errInvalidSessionID, poker.ErrSessionNotFound, s.poker.GetByPublicID, func(v poker.Session) int { return v.ID })
+}
+
+// sprintIDFromBody lee un campo del cuerpo que nombra un sprint (HU-29 y
+// HU-30) como su UUID y devuelve su ID interno. Un texto vacío da 0, que
+// sigue siendo "sprint faltante" (HU-52, D4).
+func (s *server) sprintIDFromBody(text string) (int, error) {
+	if text == "" {
+		return 0, nil
+	}
+	return internalID(text, errInvalidSprintID, sprint.ErrSprintNotFound, s.sprints.GetByPublicID, func(v sprint.Sprint) int { return v.ID })
+}
+
+// publicIDs traduce los IDs internos de ítems y sprints a sus UUID, para las
+// respuestas (HU-52, D5). Busca cada ID una sola vez y guarda el primer
+// error, que writeResolved informa como 500.
+type publicIDs struct {
+	s       *server
+	items   map[int]string
+	sprints map[int]string
+	err     error
+}
+
+// newPublicIDs devuelve un resolvedor vacío.
+func (s *server) newPublicIDs() *publicIDs {
+	return &publicIDs{s: s, items: map[int]string{}, sprints: map[int]string{}}
+}
+
+// item devuelve el UUID del ítem con ese ID interno, o "" para el 0 ("sin
+// resolver").
+func (ids *publicIDs) item(id int) string {
+	return resolve(ids, ids.items, id, func(id int) (uuid.UUID, error) {
+		it, err := ids.s.items.GetItem(id)
+		return it.PublicID, err
+	})
+}
+
+// sprint devuelve el UUID del sprint con ese ID interno, o "" para el 0
+// ("sin asignar" o "sin resolver", D7).
+func (ids *publicIDs) sprint(id int) string {
+	return resolve(ids, ids.sprints, id, func(id int) (uuid.UUID, error) {
+		sp, err := ids.s.sprints.Get(id)
+		return sp.PublicID, err
+	})
+}
+
+// resolve busca el UUID del ID interno id con lookup, una sola vez por ID
+// (cache). El 0 da "". El primer error queda en ids.err, sin su cadena (%v),
+// como en publicProjectID.
+func resolve(ids *publicIDs, cache map[int]string, id int, lookup func(int) (uuid.UUID, error)) string {
+	if id == 0 {
+		return ""
+	}
+	if s, ok := cache[id]; ok {
+		return s
+	}
+	u, err := lookup(id)
+	if err != nil {
+		if ids.err == nil {
+			ids.err = fmt.Errorf("leer el UUID del ID interno %d: %v", id, err)
+		}
+		return ""
+	}
+	cache[id] = u.String()
+	return cache[id]
+}
+
+// writeResolved responde con v, o con 500 si el resolvedor tuvo un error al
+// buscar algún UUID (HU-52, D5).
+func (s *server) writeResolved(w http.ResponseWriter, status int, v any, ids *publicIDs) {
+	if ids.err != nil {
+		writeError(w, ids.err)
+		return
+	}
+	writeJSON(w, status, v)
+}
+
 // pathInt lee el parámetro name de la ruta como número entero.
 func pathInt(r *http.Request, name string) (int, error) {
 	n, err := strconv.Atoi(r.PathValue(name))
@@ -222,6 +375,8 @@ func pathInt(r *http.Request, name string) (int, error) {
 func statusFor(err error) int {
 	switch {
 	case errors.Is(err, errInvalidJSON), errors.Is(err, errInvalidID), errors.Is(err, errInvalidProjectID),
+		errors.Is(err, errInvalidItemID), errors.Is(err, errInvalidSprintID), errors.Is(err, errInvalidMemberID),
+		errors.Is(err, errInvalidDefectID), errors.Is(err, errInvalidEffortID), errors.Is(err, errInvalidSessionID),
 		errors.Is(err, project.ErrEmptyName), errors.Is(err, project.ErrInvalidStatus),
 		errors.Is(err, project.ErrMissingStartDate), errors.Is(err, project.ErrMissingEndDate),
 		errors.Is(err, backlog.ErrEmptyTitle), errors.Is(err, backlog.ErrInvalidPriority),

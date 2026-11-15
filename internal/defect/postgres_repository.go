@@ -1,6 +1,8 @@
 package defect
 
 import (
+	"uuid"
+
 	"context"
 	"errors"
 	"fmt"
@@ -23,16 +25,16 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // defectColumns son las columnas de un defecto, en el orden de scanDefect.
-const defectColumns = "id, description, severity, status, item_id, detection_sprint_id, resolution_sprint_id"
+const defectColumns = "id, description, severity, status, item_id, detection_sprint_id, resolution_sprint_id, public_id"
 
 // Save guarda el defecto; la base asigna el siguiente ID correlativo global
 // (RN-29.8). Devuelve el defecto tal como quedó guardado.
 func (r *PostgresRepository) Save(defect Defect) (Defect, error) {
 	row := r.pool.QueryRow(context.Background(),
-		`INSERT INTO defects (description, severity, status, item_id, detection_sprint_id, resolution_sprint_id)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING `+defectColumns,
+		`INSERT INTO defects (description, severity, status, item_id, detection_sprint_id, resolution_sprint_id, public_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING `+defectColumns,
 		defect.Description, string(defect.Severity), string(defect.Status),
-		defect.ItemID, defect.DetectionSprintID, defect.ResolutionSprintID)
+		defect.ItemID, defect.DetectionSprintID, defect.ResolutionSprintID, defect.PublicID)
 	saved, err := scanDefect(row)
 	if err != nil {
 		return Defect{}, fmt.Errorf("guardar el defecto: %w", err)
@@ -104,8 +106,23 @@ func scanDefect(row pgx.Row) (Defect, error) {
 	var defect Defect
 	var severity, status string
 	err := row.Scan(&defect.ID, &defect.Description, &severity, &status,
-		&defect.ItemID, &defect.DetectionSprintID, &defect.ResolutionSprintID)
+		&defect.ItemID, &defect.DetectionSprintID, &defect.ResolutionSprintID, &defect.PublicID)
 	defect.Severity = Severity(severity)
 	defect.Status = Status(status)
 	return defect, err
+}
+
+// GetByPublicID devuelve el defecto con ese identificador público, o ErrDefectNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Defect, error) {
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+defectColumns+" FROM defects WHERE public_id = $1", id)
+	defect, err := scanDefect(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Defect{}, ErrDefectNotFound
+	}
+	if err != nil {
+		return Defect{}, fmt.Errorf("buscar el defecto: %w", err)
+	}
+	return defect, nil
 }

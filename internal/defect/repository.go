@@ -1,8 +1,13 @@
 package defect
 
+import "uuid"
+
 // Repository es el almacenamiento de los defectos. La lógica de negocio
 // accede a los datos solo a través de esta interfaz.
 type Repository interface {
+	// GetByPublicID devuelve una copia del defecto con ese identificador
+	// público, o ErrDefectNotFound si no existe (HU-52).
+	GetByPublicID(id uuid.UUID) (Defect, error)
 	// Save guarda un defecto nuevo, le asigna el ID y devuelve una copia.
 	Save(Defect) (Defect, error)
 

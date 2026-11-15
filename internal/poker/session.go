@@ -1,6 +1,8 @@
 package poker
 
 import (
+	"uuid"
+
 	"errors"
 	"slices"
 )
@@ -32,11 +34,14 @@ type Vote struct {
 // slice de votos, así que copiarla no copia la lista: el repositorio y el
 // Manager siempre devuelven listas nuevas (RN-21.8).
 type Session struct {
-	ID     int
-	ItemID int
-	Status Status
-	Round  int
-	Votes  []Vote
+	ID int
+	// PublicID es el identificador público de la sesión (HU-52, D1): el único que
+	// muestran la API y la interfaz. ID queda como clave interna.
+	PublicID uuid.UUID
+	ItemID   int
+	Status   Status
+	Round    int
+	Votes    []Vote
 }
 
 // cloneSession devuelve una copia por valor con su propia lista de votos. Una

@@ -36,6 +36,7 @@ type effortListResponse struct {
 // registerEffort atiende POST /api/sprints/{id}/items/{itemId}/esfuerzos. El
 // orden de los errores es IDs de la ruta, JSON, fecha, horas y Manager.
 func (s *server) registerEffort(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	sprintID, itemID, err := sprintItemIDs(r)
 	if err != nil {
 		writeError(w, err)
@@ -65,11 +66,12 @@ func (s *server) registerEffort(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, toEffortResponse(saved))
+	s.writeResolved(w, http.StatusCreated, toEffortResponse(saved, ids), ids)
 }
 
 // listEffortsByItem atiende GET /api/items/{id}/esfuerzos (HU-27).
 func (s *server) listEffortsByItem(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	itemID, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -80,11 +82,12 @@ func (s *server) listEffortsByItem(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toEffortListResponse(summary))
+	s.writeResolved(w, http.StatusOK, toEffortListResponse(summary, ids), ids)
 }
 
 // listEffortsBySprint atiende GET /api/sprints/{id}/esfuerzos (HU-27).
 func (s *server) listEffortsBySprint(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	sprintID, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -95,13 +98,13 @@ func (s *server) listEffortsBySprint(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toEffortListResponse(summary))
+	s.writeResolved(w, http.StatusOK, toEffortListResponse(summary, ids), ids)
 }
 
-func toEffortListResponse(summary effort.Summary) effortListResponse {
+func toEffortListResponse(summary effort.Summary, ids *publicIDs) effortListResponse {
 	efforts := make([]effortResponse, 0, len(summary.Efforts))
 	for _, effort := range summary.Efforts {
-		efforts = append(efforts, toEffortResponse(effort))
+		efforts = append(efforts, toEffortResponse(effort, ids))
 	}
 	return effortListResponse{
 		Esfuerzos: efforts,
@@ -110,7 +113,7 @@ func toEffortListResponse(summary effort.Summary) effortListResponse {
 	}
 }
 
-func toEffortResponse(e effort.Effort) effortResponse {
+func toEffortResponse(e effort.Effort, ids *publicIDs) effortResponse {
 	return effortResponse{
 		ID:         e.ID,
 		SprintID:   e.SprintID,
@@ -131,6 +134,7 @@ type effortHoursRequest struct {
 // correctEffortHours atiende PATCH /api/esfuerzos/{id}/horas (HU-28). Las horas
 // ausentes o no numéricas dan ErrInvalidHours, como en HU-26.
 func (s *server) correctEffortHours(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	id, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -154,5 +158,5 @@ func (s *server) correctEffortHours(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toEffortResponse(corrected))
+	s.writeResolved(w, http.StatusOK, toEffortResponse(corrected, ids), ids)
 }

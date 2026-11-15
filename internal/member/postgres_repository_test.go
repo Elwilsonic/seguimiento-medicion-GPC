@@ -56,6 +56,7 @@ func TestPostgresRepository_GuardaElIntegrante(t *testing.T) {
 	if err != nil {
 		t.Fatalf("leer el integrante guardado: %v", err)
 	}
+	got.PublicID = saved.PublicID // HU-52: el PublicID es aleatorio; lo verifica runRepositoryPublicIDContract.
 	if got != saved {
 		t.Errorf("integrante guardado = %+v, se esperaba %+v", got, saved)
 	}

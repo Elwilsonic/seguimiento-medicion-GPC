@@ -88,10 +88,10 @@ func newMembers(projects *project.Manager) *member.Manager {
 // reemplaza "{proyecto}" y "{proyecto2}" con withProject (HU-51).
 func do(t *testing.T, h http.Handler, method, path, body string) *httptest.ResponseRecorder {
 	t.Helper()
-	path = withProject(t, h, path)
+	path = withEntityIDs(h, withProject(t, h, path))
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, req)
+	serveRecording(t, h, rec, req)
 	if method == http.MethodPost && path == "/api/proyectos" && rec.Code == http.StatusCreated {
 		recordProjectID(t, h, rec)
 	}

@@ -1,6 +1,8 @@
 package sprint
 
 import (
+	"uuid"
+
 	"errors"
 	"fmt"
 	"reflect"
@@ -591,4 +593,9 @@ func TestCreate_ErrorDelRepositorioAlConsultarElSprintAbiertoSeDevuelve(t *testi
 // agregó la operación a la interfaz).
 func (r failingRepository) ListByProject(projectID int) ([]Sprint, error) {
 	return []Sprint{}, nil
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (failingRepository) GetByPublicID(uuid.UUID) (Sprint, error) {
+	return Sprint{}, ErrSprintNotFound
 }

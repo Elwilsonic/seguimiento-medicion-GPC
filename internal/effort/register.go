@@ -1,6 +1,8 @@
 package effort
 
 import (
+	"uuid"
+
 	"math"
 	"strings"
 	"time"
@@ -39,6 +41,7 @@ func (m *Manager) Register(sprintID, itemID int, member string, date time.Time, 
 			return sprint.ErrItemNotAssignedToSprint
 		}
 		saved, err = m.repo.Save(Effort{
+			PublicID: uuid.NewV4(),
 			Member:   member,
 			Date:     date,
 			Activity: activity,

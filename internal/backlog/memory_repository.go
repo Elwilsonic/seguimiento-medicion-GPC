@@ -1,6 +1,9 @@
 package backlog
 
-import "slices"
+import (
+	"slices"
+	"uuid"
+)
 
 // MemoryRepository guarda los ítems en memoria (Sprint 1). No es seguro para
 // uso concurrente: se accede a través del Manager, que lo protege.
@@ -74,4 +77,16 @@ func (r *MemoryRepository) ListByProject(projectID int) ([]Item, error) {
 		}
 	}
 	return result, nil
+}
+
+// GetByPublicID devuelve el ítem con ese identificador público, o ErrItemNotFound
+// si no existe (HU-52).
+func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Item, error) {
+	for _, item := range r.items {
+		if item.PublicID == id {
+			item.AcceptanceCriteria = slices.Clone(item.AcceptanceCriteria)
+			return item, nil
+		}
+	}
+	return Item{}, ErrItemNotFound
 }

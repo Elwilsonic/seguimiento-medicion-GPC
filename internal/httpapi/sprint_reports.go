@@ -22,6 +22,7 @@ type sprintReportResponse struct {
 
 // sprintReport atiende GET /api/sprints/{id}/reporte (HU-39).
 func (s *server) sprintReport(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	id, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -37,19 +38,19 @@ func (s *server) sprintReport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toSprintReportResponse(rep, publicID))
+	s.writeResolved(w, http.StatusOK, toSprintReportResponse(rep, publicID, ids), ids)
 }
 
 // toSprintReportResponse arma el reporte con publicID, el UUID del proyecto
 // del sprint (HU-51).
-func toSprintReportResponse(rep report.SprintReport, publicID string) sprintReportResponse {
+func toSprintReportResponse(rep report.SprintReport, publicID string, ids *publicIDs) sprintReportResponse {
 	return sprintReportResponse{
-		Sprint: toSprintResponse(rep.Sprint, publicID),
+		Sprint: toSprintResponse(rep.Sprint, publicID, ids),
 		// La misma conversión que GET /api/sprints/{id}/metricas (decisión 4).
-		Metricas:    toSprintMetricsResponse(rep.Metrics),
-		Historias:   toStoryListResponse(rep.Stories, publicID),
-		Esfuerzos:   toEffortListResponse(effort.Summary{Efforts: rep.Efforts.Efforts, TotalHours: rep.Efforts.TotalHours}),
-		Defectos:    toDefectListResponse(rep.Defects.Defects),
+		Metricas:    toSprintMetricsResponse(rep.Metrics, ids),
+		Historias:   toStoryListResponse(rep.Stories, publicID, ids),
+		Esfuerzos:   toEffortListResponse(effort.Summary{Efforts: rep.Efforts.Efforts, TotalHours: rep.Efforts.TotalHours}, ids),
+		Defectos:    toDefectListResponse(rep.Defects.Defects, ids),
 		Integrantes: toMemberListResponse(rep.Members),
 	}
 }

@@ -466,6 +466,7 @@ func (s *defectScenario) savedKeepsInput() error {
 	if defect.ID <= 0 {
 		return fmt.Errorf("el defecto guardado no tiene un ID válido: %+v", defect)
 	}
+	want.PublicID = defect.PublicID // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if defect != want {
 		return fmt.Errorf("defecto guardado = %+v, se esperaba %+v", defect, want)
 	}

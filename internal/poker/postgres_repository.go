@@ -1,6 +1,8 @@
 package poker
 
 import (
+	"uuid"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -24,7 +26,7 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 
 // pokerSessionColumns son las columnas de una sesión, en el orden de
 // scanSession.
-const pokerSessionColumns = "id, item_id, status, round_number, votes"
+const pokerSessionColumns = "id, item_id, status, round_number, votes, public_id"
 
 // Save guarda la sesión; la base asigna el siguiente ID correlativo global
 // (RN-21.7). Los votos se codifican con encoding/json en la columna JSONB.
@@ -38,9 +40,9 @@ func (r *PostgresRepository) Save(session Session) (Session, error) {
 		return Session{}, fmt.Errorf("codificar los votos de la sesión: %w", err)
 	}
 	row := r.pool.QueryRow(context.Background(),
-		`INSERT INTO poker_sessions (item_id, status, round_number, votes)
-		VALUES ($1, $2, $3, $4::jsonb) RETURNING `+pokerSessionColumns,
-		session.ItemID, session.Status, session.Round, string(encoded))
+		`INSERT INTO poker_sessions (item_id, status, round_number, votes, public_id)
+		VALUES ($1, $2, $3, $4::jsonb, $5) RETURNING `+pokerSessionColumns,
+		session.ItemID, session.Status, session.Round, string(encoded), session.PublicID)
 	saved, err := scanSession(row)
 	if err != nil {
 		return Session{}, fmt.Errorf("guardar la sesión de Planning Poker: %w", err)
@@ -109,11 +111,26 @@ func (r *PostgresRepository) Update(session Session) (Session, error) {
 func scanSession(row pgx.Row) (Session, error) {
 	var session Session
 	var votes []byte
-	if err := row.Scan(&session.ID, &session.ItemID, &session.Status, &session.Round, &votes); err != nil {
+	if err := row.Scan(&session.ID, &session.ItemID, &session.Status, &session.Round, &votes, &session.PublicID); err != nil {
 		return Session{}, err
 	}
 	if err := json.Unmarshal(votes, &session.Votes); err != nil {
 		return Session{}, fmt.Errorf("decodificar los votos de la sesión: %w", err)
 	}
 	return cloneSession(session), nil
+}
+
+// GetByPublicID devuelve la sesión con ese identificador público, o ErrSessionNotFound
+// si no existe (HU-52).
+func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Session, error) {
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+pokerSessionColumns+" FROM poker_sessions WHERE public_id = $1", id)
+	session, err := scanSession(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Session{}, ErrSessionNotFound
+	}
+	if err != nil {
+		return Session{}, fmt.Errorf("buscar la sesión de Planning Poker: %w", err)
+	}
+	return session, nil
 }

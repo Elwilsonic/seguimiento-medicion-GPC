@@ -28,6 +28,7 @@ type defectResponse struct {
 // registerDefect atiende POST /api/items/{id}/defectos. El orden de los errores
 // es ID de la ruta, JSON y Manager.
 func (s *server) registerDefect(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	itemID, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -45,7 +46,7 @@ func (s *server) registerDefect(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, toDefectResponse(saved))
+	s.writeResolved(w, http.StatusCreated, toDefectResponse(saved, ids), ids)
 }
 
 // Handler del cambio de estado de un defecto (HU-30, CA-30.9).
@@ -58,6 +59,7 @@ type defectStatusRequest struct {
 // changeDefectStatus atiende PATCH /api/defectos/{id}/estado. El orden de los
 // errores es ID de la ruta, JSON y Manager.
 func (s *server) changeDefectStatus(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	id, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -75,7 +77,7 @@ func (s *server) changeDefectStatus(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toDefectResponse(changed))
+	s.writeResolved(w, http.StatusOK, toDefectResponse(changed, ids), ids)
 }
 
 // Handlers de la consulta de defectos (HU-31, CA-31.9).
@@ -105,6 +107,7 @@ func (s *server) listDefectsBySprint(w http.ResponseWriter, r *http.Request) {
 // filtro y Manager. El handler decide que un filtro vacío o con solo espacios
 // no filtra (D3).
 func (s *server) listDefects(w http.ResponseWriter, r *http.Request, readID func(*http.Request) (int, error), list func(int) ([]defect.Defect, error)) {
+	ids := s.newPublicIDs()
 	id, err := readID(r)
 	if err != nil {
 		writeError(w, err)
@@ -128,20 +131,20 @@ func (s *server) listDefects(w http.ResponseWriter, r *http.Request, readID func
 	if estado != "" {
 		defects = defect.FilterByStatus(defects, status)
 	}
-	writeJSON(w, http.StatusOK, toDefectListResponse(defects))
+	s.writeResolved(w, http.StatusOK, toDefectListResponse(defects, ids), ids)
 }
 
 // toDefectListResponse arma la lista siempre no nil, para que una consulta
 // sin defectos sea [] y no null (D6).
-func toDefectListResponse(defects []defect.Defect) defectListResponse {
+func toDefectListResponse(defects []defect.Defect, ids *publicIDs) defectListResponse {
 	resp := make([]defectResponse, 0, len(defects))
 	for _, d := range defects {
-		resp = append(resp, toDefectResponse(d))
+		resp = append(resp, toDefectResponse(d, ids))
 	}
 	return defectListResponse{Defectos: resp, Cantidad: len(resp)}
 }
 
-func toDefectResponse(d defect.Defect) defectResponse {
+func toDefectResponse(d defect.Defect, ids *publicIDs) defectResponse {
 	return defectResponse{
 		ID:                 d.ID,
 		Descripcion:        d.Description,

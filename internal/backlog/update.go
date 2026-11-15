@@ -59,6 +59,7 @@ func (m *Manager) Update(id int, title, description, priority string, criteria [
 
 	item := Item{
 		ID:                 current.ID,
+		PublicID:           current.PublicID,
 		ProjectID:          current.ProjectID,
 		Title:              title,
 		Description:        description,

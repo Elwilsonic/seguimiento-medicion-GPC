@@ -135,6 +135,7 @@ func TestSprint_EjemploDeTEC03(t *testing.T) {
 
 	wantSprint := sprint.Sprint{ID: s.ID, ProjectID: s.ProjectID, Name: "Sprint 1", StartDate: time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC),
 		EndDate: time.Date(2026, 10, 16, 0, 0, 0, 0, time.UTC), Goal: "Registrar el esfuerzo del equipo", Status: sprint.StatusClosed}
+	wantSprint.PublicID = got.Sprint.PublicID // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if got.Sprint != wantSprint {
 		t.Errorf("Sprint = %+v, se esperaba %+v", got.Sprint, wantSprint)
 	}

@@ -1,6 +1,8 @@
 package backlog
 
 import (
+	"uuid"
+
 	"context"
 	"errors"
 	"fmt"
@@ -301,4 +303,9 @@ func (r failingGetStatusRepository) ListByProject(projectID int) ([]Item, error)
 
 func (r failingGetStatusRepository) Update(item Item) (Item, error) {
 	return Item{}, nil
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (failingGetStatusRepository) GetByPublicID(uuid.UUID) (Item, error) {
+	return Item{}, ErrItemNotFound
 }

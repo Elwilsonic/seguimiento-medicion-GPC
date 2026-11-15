@@ -1,6 +1,8 @@
 package sprint
 
 import (
+	"uuid"
+
 	"errors"
 	"fmt"
 	"reflect"
@@ -551,4 +553,9 @@ func TestAssignItem_ErrorDelRepositorioDeItemsSeDevuelve(t *testing.T) {
 	if assigned.ID != 0 {
 		t.Errorf("ítem devuelto = %+v, se esperaba un ítem vacío", assigned)
 	}
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (failingItemRepository) GetByPublicID(uuid.UUID) (backlog.Item, error) {
+	return backlog.Item{}, backlog.ErrItemNotFound
 }

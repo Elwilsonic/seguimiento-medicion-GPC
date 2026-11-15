@@ -108,7 +108,7 @@ func (s *updateScenario) updatedAs(id int, name, role, projectName string) error
 	if s.err != nil {
 		return fmt.Errorf("la modificación falló: %v", s.err)
 	}
-	want := Member{ID: id, ProjectID: s.projectIDs[projectName], Name: name, Role: Role(role)}
+	want := Member{ID: id, PublicID: s.result.PublicID, ProjectID: s.projectIDs[projectName], Name: name, Role: Role(role)} // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if s.result != want {
 		return fmt.Errorf("integrante = %+v, se esperaba %+v", s.result, want)
 	}

@@ -33,6 +33,7 @@ type sprintResponse struct {
 
 // HU-10
 func (s *server) createSprint(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	projectID, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
@@ -55,11 +56,12 @@ func (s *server) createSprint(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, toSprintResponse(sp, publicID))
+	s.writeResolved(w, http.StatusCreated, toSprintResponse(sp, publicID, ids), ids)
 }
 
 // HU-14
 func (s *server) listProjectSprints(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	projectID, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
@@ -72,9 +74,9 @@ func (s *server) listProjectSprints(w http.ResponseWriter, r *http.Request) {
 	}
 	resp := make([]sprintResponse, 0, len(sprints))
 	for _, sp := range sprints {
-		resp = append(resp, toSprintResponse(sp, publicID))
+		resp = append(resp, toSprintResponse(sp, publicID, ids))
 	}
-	writeJSON(w, http.StatusOK, resp)
+	s.writeResolved(w, http.StatusOK, resp, ids)
 }
 
 // HU-11
@@ -124,6 +126,7 @@ func (s *server) listCompletedItems(w http.ResponseWriter, r *http.Request) {
 
 // HU-13
 func (s *server) closeSprint(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	sprintID, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -139,7 +142,7 @@ func (s *server) closeSprint(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toSprintResponse(sp, publicID))
+	s.writeResolved(w, http.StatusOK, toSprintResponse(sp, publicID, ids), ids)
 }
 
 // sprintItemIDs lee el {id} del sprint y el {itemId} del ítem de la ruta.
@@ -168,7 +171,7 @@ func parseDate(value string) (time.Time, error) {
 
 // toSprintResponse arma la respuesta del sprint con publicID, el UUID de su
 // proyecto (HU-51).
-func toSprintResponse(sp sprint.Sprint, publicID string) sprintResponse {
+func toSprintResponse(sp sprint.Sprint, publicID string, ids *publicIDs) sprintResponse {
 	return sprintResponse{
 		ID:          sp.ID,
 		ProyectoID:  publicID,

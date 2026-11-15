@@ -201,6 +201,7 @@ func TestListItems_ModificarLaListaDevueltaNoAlteraLosItemsGuardados(t *testing.
 	if len(fresh) != 1 {
 		t.Fatalf("la nueva lista tiene %d ítems, se esperaba 1", len(fresh))
 	}
+	want.PublicID = fresh[0].PublicID // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if !reflect.DeepEqual(fresh[0], want) {
 		t.Errorf("ítem re-listado = %+v, se esperaba %+v", fresh[0], want)
 	}

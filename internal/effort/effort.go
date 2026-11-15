@@ -1,13 +1,18 @@
 package effort
 
 import (
+	"uuid"
+
 	"errors"
 	"time"
 )
 
 // Effort es un registro de horas trabajadas en una historia de un sprint.
 type Effort struct {
-	ID       int
+	ID int
+	// PublicID es el identificador público del esfuerzo (HU-52, D1): el único que
+	// muestran la API y la interfaz. ID queda como clave interna.
+	PublicID uuid.UUID
 	Member   string
 	Date     time.Time
 	Activity string

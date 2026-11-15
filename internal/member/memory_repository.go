@@ -1,5 +1,7 @@
 package member
 
+import "uuid"
+
 // MemoryRepository guarda los integrantes en memoria. No es seguro para uso
 // concurrente: se accede a través del Manager, que lo protege (RN-15.9).
 type MemoryRepository struct {
@@ -33,4 +35,15 @@ func (r *MemoryRepository) ListByProject(projectID int) ([]Member, error) {
 		}
 	}
 	return list, nil
+}
+
+// GetByPublicID devuelve el integrante con ese identificador público, o ErrMemberNotFound
+// si no existe (HU-52).
+func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Member, error) {
+	for _, m := range r.members {
+		if m.PublicID == id {
+			return m, nil
+		}
+	}
+	return Member{}, ErrMemberNotFound
 }

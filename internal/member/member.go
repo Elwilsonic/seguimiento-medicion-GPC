@@ -1,6 +1,9 @@
 package member
 
-import "errors"
+import (
+	"errors"
+	"uuid"
+)
 
 // Role es el rol de un integrante en la metodología (AGENTS.md).
 type Role string
@@ -15,7 +18,10 @@ const (
 // Member es un integrante de un proyecto (HU-15). No tiene slices ni mapas,
 // así que copiar el struct alcanza para devolver una copia (RN-15.10).
 type Member struct {
-	ID        int
+	ID int
+	// PublicID es el identificador público del integrante (HU-52, D1): el único que
+	// muestran la API y la interfaz. ID queda como clave interna.
+	PublicID  uuid.UUID
 	ProjectID int
 	Name      string
 	Role      Role

@@ -1,6 +1,8 @@
 package poker
 
 import (
+	"uuid"
+
 	"errors"
 	"slices"
 	"testing"
@@ -18,11 +20,11 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 	t.Run("Save asigna IDs correlativos y conserva los campos", func(t *testing.T) {
 		repo, itemID := newRepo(t)
 
-		first, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
+		first, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
 		if err != nil {
 			t.Fatalf("Save de la primera sesión: %v", err)
 		}
-		second, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 2, Votes: []Vote{}})
+		second, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 2, Votes: []Vote{}})
 		if err != nil {
 			t.Fatalf("Save de la segunda sesión: %v", err)
 		}
@@ -38,7 +40,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 	t.Run("Save normaliza una lista de votos nil", func(t *testing.T) {
 		repo, itemID := newRepo(t)
 
-		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1})
+		saved, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 1})
 		if err != nil {
 			t.Fatalf("Save: %v", err)
 		}
@@ -54,10 +56,11 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 		repo, itemID := newRepo(t)
 
 		saved, err := repo.Save(Session{
-			ItemID: itemID,
-			Status: StatusOpen,
-			Round:  1,
-			Votes:  []Vote{{Voter: "Cristobal", Points: 5}},
+			PublicID: uuid.NewV4(),
+			ItemID:   itemID,
+			Status:   StatusOpen,
+			Round:    1,
+			Votes:    []Vote{{Voter: "Cristobal", Points: 5}},
 		})
 		if err != nil {
 			t.Fatalf("Save: %v", err)
@@ -79,7 +82,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 	t.Run("OpenByItem devuelve la sesión abierta", func(t *testing.T) {
 		repo, itemID := newRepo(t)
 
-		if _, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}}); err != nil {
+		if _, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}}); err != nil {
 			t.Fatalf("Save: %v", err)
 		}
 		got, exists, err := repo.OpenByItem(itemID)
@@ -109,7 +112,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 	t.Run("OpenByItem ignora las sesiones de otro ítem", func(t *testing.T) {
 		repo, itemID := newRepo(t)
 
-		if _, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}}); err != nil {
+		if _, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}}); err != nil {
 			t.Fatalf("Save: %v", err)
 		}
 		_, exists, err := repo.OpenByItem(itemID + 999)
@@ -125,10 +128,11 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 		repo, itemID := newRepo(t)
 
 		if _, err := repo.Save(Session{
-			ItemID: itemID,
-			Status: StatusOpen,
-			Round:  1,
-			Votes:  []Vote{{Voter: "Cristobal", Points: 5}},
+			PublicID: uuid.NewV4(),
+			ItemID:   itemID,
+			Status:   StatusOpen,
+			Round:    1,
+			Votes:    []Vote{{Voter: "Cristobal", Points: 5}},
 		}); err != nil {
 			t.Fatalf("Save: %v", err)
 		}
@@ -155,7 +159,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 
 	t.Run("GetByID devuelve la sesión guardada", func(t *testing.T) {
 		repo, itemID := newRepo(t)
-		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
+		saved, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
 		if err != nil {
 			t.Fatalf("Save: %v", err)
 		}
@@ -180,7 +184,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 
 	t.Run("Update reemplaza la sesión y devuelve una copia", func(t *testing.T) {
 		repo, itemID := newRepo(t)
-		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
+		saved, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
 		if err != nil {
 			t.Fatalf("Save: %v", err)
 		}
@@ -203,7 +207,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 	// HU-23, CA-23.9: el estado revelado se persiste con sus votos.
 	t.Run("Update guarda el estado REVELADA y GetByID lo devuelve con sus votos", func(t *testing.T) {
 		repo, itemID := newRepo(t)
-		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
+		saved, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusOpen, Round: 1, Votes: []Vote{}})
 		if err != nil {
 			t.Fatalf("Save: %v", err)
 		}
@@ -225,7 +229,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 	// HU-25, CA-25.10: el estado cerrado se persiste con sus votos.
 	t.Run("Update guarda el estado CERRADA y GetByID lo devuelve con sus votos", func(t *testing.T) {
 		repo, itemID := newRepo(t)
-		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusRevealed, Round: 1, Votes: []Vote{{Voter: "Ana", Points: 5}, {Voter: "Bruno", Points: 8}}})
+		saved, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusRevealed, Round: 1, Votes: []Vote{{Voter: "Ana", Points: 5}, {Voter: "Bruno", Points: 8}}})
 		if err != nil {
 			t.Fatalf("Save: %v", err)
 		}
@@ -246,7 +250,7 @@ func runRepositoryContract(t *testing.T, newRepo func(t *testing.T) (Repository,
 	// HU-24, CA-24.11: la ronda nueva se persiste ABIERTA y sin votos.
 	t.Run("Update guarda una ronda nueva ABIERTA sin votos y OpenByItem la encuentra", func(t *testing.T) {
 		repo, itemID := newRepo(t)
-		saved, err := repo.Save(Session{ItemID: itemID, Status: StatusRevealed, Round: 1, Votes: []Vote{{Voter: "Ana", Points: 3}, {Voter: "Bruno", Points: 8}}})
+		saved, err := repo.Save(Session{PublicID: uuid.NewV4(), ItemID: itemID, Status: StatusRevealed, Round: 1, Votes: []Vote{{Voter: "Ana", Points: 3}, {Voter: "Bruno", Points: 8}}})
 		if err != nil {
 			t.Fatalf("Save: %v", err)
 		}

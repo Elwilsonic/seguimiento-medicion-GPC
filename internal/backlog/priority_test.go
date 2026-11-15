@@ -65,6 +65,7 @@ func TestListItemsByPriority_OrdenaAltaMediaBajaConTodosSusDatos(t *testing.T) {
 		{ID: 2, ProjectID: projectID, Title: "Recuperar contraseña", Description: "Por mail", Priority: PriorityMedium, AcceptanceCriteria: []string{"Mail enviado", "Link vence"}, Status: StatusPending, EstimatedHours: 4.5},
 		{ID: 1, ProjectID: projectID, Title: "Exportar reportes", Description: "Reportes en PDF", Priority: PriorityLow, AcceptanceCriteria: []string{"PDF generado"}, Status: StatusPending},
 	}
+	copyPublicIDs(want, got) // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("ListItemsByPriority() = %+v, se esperaba %+v", got, want)
 	}
@@ -384,7 +385,16 @@ func TestListItemsByPriority_ModificarLaListaDevueltaNoAlteraLosItemsGuardados(t
 		{ID: 2, ProjectID: projectID, Title: "Ítem 2", Priority: PriorityHigh, AcceptanceCriteria: []string{"Criterio"}, Status: StatusPending},
 		{ID: 1, ProjectID: projectID, Title: "Ítem 1", Priority: PriorityLow, AcceptanceCriteria: []string{"Criterio"}, Status: StatusPending},
 	}
+	copyPublicIDs(want, fresh) // HU-52: el PublicID es aleatorio; lo verifica public_id_test.go.
 	if !reflect.DeepEqual(fresh, want) {
 		t.Errorf("listado nuevo = %+v, se esperaba %+v", fresh, want)
+	}
+}
+
+// copyPublicIDs copia en want el PublicID de cada ítem de got, en el mismo
+// orden (HU-52): así la comparación sigue verificando todos los demás campos.
+func copyPublicIDs(want, got []Item) {
+	for i := range min(len(want), len(got)) {
+		want[i].PublicID = got[i].PublicID
 	}
 }

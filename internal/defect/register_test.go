@@ -1,6 +1,8 @@
 package defect
 
 import (
+	"uuid"
+
 	"errors"
 	"fmt"
 	"slices"
@@ -561,4 +563,14 @@ func TestRegister_ConcurrenteConCierre(t *testing.T) {
 			}
 		})
 	}
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (failingDefectRepository) GetByPublicID(uuid.UUID) (Defect, error) {
+	return Defect{}, ErrDefectNotFound
+}
+
+// GetByPublicID completa la interfaz de HU-52; este falso no lo usa.
+func (r *testDefectRepository) GetByPublicID(uuid.UUID) (Defect, error) {
+	return Defect{}, ErrDefectNotFound
 }
