@@ -12,8 +12,8 @@ type pokerVoteRequest struct {
 }
 
 type pokerSessionResponse struct {
-	ID     int                 `json:"id"`
-	ItemID int                 `json:"item_id"`
+	ID     string              `json:"id"`
+	ItemID string              `json:"item_id"`
 	Estado string              `json:"estado"`
 	Ronda  int                 `json:"ronda"`
 	Votos  []pokerVoteResponse `json:"votos"`
@@ -55,7 +55,7 @@ func (s *server) openPokerSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := pathID(r)
+	id, err := s.itemIDFromPath(r, "id")
 	if err != nil {
 		writeError(w, err)
 		return
@@ -71,14 +71,15 @@ func (s *server) openPokerSession(w http.ResponseWriter, r *http.Request) {
 	for i, voto := range session.Votes {
 		votos[i] = pokerVoteResponse{Integrante: voto.Voter, Puntos: voto.Points}
 	}
-	writeJSON(w, http.StatusCreated, pokerSessionResponse{
-		ID:     session.ID,
-		ItemID: session.ItemID,
+	ids := s.newPublicIDs()
+	s.writeResolved(w, http.StatusCreated, pokerSessionResponse{
+		ID:     session.PublicID.String(),
+		ItemID: ids.item(session.ItemID),
 		Estado: string(session.Status),
 		Ronda:  session.Round,
 		Votos:  votos,
 		Cartas: poker.Cards(),
-	})
+	}, ids)
 }
 
 func (s *server) votePokerSession(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +88,7 @@ func (s *server) votePokerSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
-	id, err := pathID(r)
+	id, err := s.sessionIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -102,17 +103,18 @@ func (s *server) votePokerSession(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, pokerSessionResponse{
-		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+	ids := s.newPublicIDs()
+	s.writeResolved(w, http.StatusOK, pokerSessionResponse{
+		ID: session.PublicID.String(), ItemID: ids.item(session.ItemID), Estado: string(session.Status),
 		Ronda: session.Round, Votos: []pokerVoteResponse{}, Cartas: poker.Cards(),
-	})
+	}, ids)
 }
 
 // revealPokerSession atiende POST /api/poker-sessions/{id}/reveal: revela
 // todos los votos de la sesión (HU-23, CA-23.8). La ruta no recibe cuerpo; si
 // llega uno, se ignora.
 func (s *server) revealPokerSession(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.sessionIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -128,22 +130,23 @@ func (s *server) revealPokerSession(w http.ResponseWriter, r *http.Request) {
 	}
 	// HU-24, RN-24.3: la comparación se calcula sobre los votos revelados.
 	comparison := poker.CompareVotes(session.Votes)
-	writeJSON(w, http.StatusOK, pokerSessionResponse{
-		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+	ids := s.newPublicIDs()
+	s.writeResolved(w, http.StatusOK, pokerSessionResponse{
+		ID: session.PublicID.String(), ItemID: ids.item(session.ItemID), Estado: string(session.Status),
 		Ronda: session.Round, Votos: votos, Cartas: poker.Cards(),
 		Comparacion: &pokerComparisonResponse{
 			HayDiferencias: comparison.HasDifferences,
 			Menor:          pokerVoteGroupResponse{Puntos: comparison.Lowest.Points, Integrantes: comparison.Lowest.Voters},
 			Mayor:          pokerVoteGroupResponse{Puntos: comparison.Highest.Points, Integrantes: comparison.Highest.Voters},
 		},
-	})
+	}, ids)
 }
 
 // repeatRoundPokerSession atiende POST /api/poker-sessions/{id}/rounds:
 // repite la ronda de una sesión revelada (HU-24, CA-24.12). La ruta no recibe
 // cuerpo; si llega uno, se ignora.
 func (s *server) repeatRoundPokerSession(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.sessionIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -153,10 +156,11 @@ func (s *server) repeatRoundPokerSession(w http.ResponseWriter, r *http.Request)
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, pokerSessionResponse{
-		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+	ids := s.newPublicIDs()
+	s.writeResolved(w, http.StatusOK, pokerSessionResponse{
+		ID: session.PublicID.String(), ItemID: ids.item(session.ItemID), Estado: string(session.Status),
 		Ronda: session.Round, Votos: []pokerVoteResponse{}, Cartas: poker.Cards(),
-	})
+	}, ids)
 }
 
 type pokerEstimateRequest struct {
@@ -167,7 +171,7 @@ type pokerEstimateRequest struct {
 // registra la estimación acordada en el ítem y cierra la sesión (HU-25,
 // CA-25.9). Los story points quedan visibles en el ítem.
 func (s *server) estimatePokerSession(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.sessionIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -186,8 +190,9 @@ func (s *server) estimatePokerSession(w http.ResponseWriter, r *http.Request) {
 	for i, voto := range session.Votes {
 		votos[i] = pokerVoteResponse{Integrante: voto.Voter, Puntos: voto.Points}
 	}
-	writeJSON(w, http.StatusOK, pokerSessionResponse{
-		ID: session.ID, ItemID: session.ItemID, Estado: string(session.Status),
+	ids := s.newPublicIDs()
+	s.writeResolved(w, http.StatusOK, pokerSessionResponse{
+		ID: session.PublicID.String(), ItemID: ids.item(session.ItemID), Estado: string(session.Status),
 		Ronda: session.Round, Votos: votos, Cartas: poker.Cards(),
-	})
+	}, ids)
 }

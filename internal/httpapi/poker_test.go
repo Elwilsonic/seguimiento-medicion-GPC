@@ -44,7 +44,7 @@ func TestAbrirSesionPoker_Devuelve201ConLaSesionAbierta(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != "1" || got.ItemID != "1" || got.Estado != "ABIERTA" || got.Ronda != 1 {
+	if got.ID != sessionRef(t, h, 1) || got.ItemID != itemRef(t, h, 1) || got.Estado != "ABIERTA" || got.Ronda != 1 {
 		t.Errorf("sesión = %+v, se esperaba ID 1, ítem 1, ABIERTA y ronda 1", got)
 	}
 	if got.Votos == nil {
@@ -68,12 +68,12 @@ func TestAbrirSesionPoker_Devuelve201ConLaSesionAbierta(t *testing.T) {
 func TestAbrirSesionPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/items/abc/poker-sessions", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del ítem debe ser un UUID")
 }
 
 // HU-21 · CA-21.7 · Verifica que abrir una sesión para un ítem inexistente responda 404 con ErrItemNotFound.
 func TestAbrirSesionPoker_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodPost, "/api/items/999/poker-sessions", "")
+	rec := do(t, newHandler(), http.MethodPost, "/api/items/"+missingPokerItemID+"/poker-sessions", "")
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 }
@@ -174,7 +174,7 @@ func TestVotarPoker_ErroresDevuelvenCodigoCorrespondiente(t *testing.T) {
 	rec = do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":4}`)
 	expectError(t, rec, http.StatusBadRequest, poker.ErrInvalidCard.Error())
 
-	rec = do(t, h, http.MethodPost, "/api/poker-sessions/999/votes", `{"integrante":"Ana","puntos":5}`)
+	rec = do(t, h, http.MethodPost, "/api/poker-sessions/"+missingSessionID+"/votes", `{"integrante":"Ana","puntos":5}`)
 	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
 }
 
@@ -205,7 +205,7 @@ func TestVotarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
 	}
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/"+session.PublicID.String()+"/votes", `{"integrante":"Ana","puntos":5}`)
 
 	expectError(t, rec, http.StatusConflict, poker.ErrSessionNotOpen.Error())
 }
@@ -239,13 +239,14 @@ func TestVotarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pokerManager.OpenSession(item.ID); err != nil {
+	session, err := pokerManager.OpenSession(item.ID)
+	if err != nil {
 		t.Fatal(err)
 	}
 	pokerRepo.failUpdate = true
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/votes", `{"integrante":"Ana","puntos":5}`)
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/"+session.PublicID.String()+"/votes", `{"integrante":"Ana","puntos":5}`)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }
@@ -275,7 +276,7 @@ func TestRevelarPoker_Devuelve200ConTodosLosVotos(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != "1" || got.ItemID != "1" || got.Estado != "REVELADA" || got.Ronda != 1 {
+	if got.ID != sessionRef(t, h, 1) || got.ItemID != itemRef(t, h, 1) || got.Estado != "REVELADA" || got.Ronda != 1 {
 		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, REVELADA, en la ronda 1", got)
 	}
 	want := []pokerVoteJSON{{Integrante: "Ana", Puntos: 5}, {Integrante: "Bruno", Puntos: 8}}
@@ -291,12 +292,12 @@ func TestRevelarPoker_Devuelve200ConTodosLosVotos(t *testing.T) {
 func TestRevelarPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/reveal", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id de la sesión debe ser un UUID")
 }
 
 // HU-23 · CA-23.8 · Verifica que revelar una sesión inexistente responda 404 con ErrSessionNotFound.
 func TestRevelarPoker_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/999/reveal", "")
+	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/"+missingSessionID+"/reveal", "")
 
 	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
 }
@@ -349,7 +350,7 @@ func TestRevelarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	pokerRepo.failUpdate = true
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
-	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/reveal", "")
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/"+session.PublicID.String()+"/reveal", "")
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 	stored, err := pokerRepo.GetByID(session.ID)
@@ -427,7 +428,7 @@ func TestRegistrarEstimacionPoker_Devuelve200ConSesionCerradaYStoryPointsEnElIte
 	expectStatus(t, rec, http.StatusOK)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != "1" || got.ItemID != "1" || got.Estado != "CERRADA" || got.Ronda != 1 {
+	if got.ID != sessionRef(t, h, 1) || got.ItemID != itemRef(t, h, 1) || got.Estado != "CERRADA" || got.Ronda != 1 {
 		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, CERRADA, en la ronda 1", got)
 	}
 	want := []pokerVoteJSON{{Integrante: "Ana", Puntos: 5}, {Integrante: "Bruno", Puntos: 8}}
@@ -444,7 +445,7 @@ func TestRegistrarEstimacionPoker_Devuelve200ConSesionCerradaYStoryPointsEnElIte
 func TestRegistrarEstimacionPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/estimate", `{"puntos":5}`)
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id de la sesión debe ser un UUID")
 }
 
 // HU-25 · CA-25.9 · Verifica que un cuerpo que no es JSON válido o con puntos no enteros responda 400 y no estime el ítem.
@@ -479,7 +480,7 @@ func TestRegistrarEstimacionPoker_CartaFueraDeLaEscalaDevuelve400(t *testing.T) 
 
 // HU-25 · CA-25.9 · Verifica que registrar la estimación de una sesión inexistente responda 404 con ErrSessionNotFound.
 func TestRegistrarEstimacionPoker_SesionInexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/999/estimate", `{"puntos":5}`)
+	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/"+missingSessionID+"/estimate", `{"puntos":5}`)
 
 	expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())
 }
@@ -500,13 +501,13 @@ func TestRegistrarEstimacionPoker_ItemInexistenteDevuelve404(t *testing.T) {
 	pokerRepo := poker.NewMemoryRepository()
 	// La sesión se guarda directamente en el repositorio, apuntando a un ítem
 	// que no existe.
-	session, err := pokerRepo.Save(poker.Session{ItemID: 99, Status: poker.StatusRevealed, Round: 1, Votes: []poker.Vote{{Voter: "Ana", Points: 5}}})
+	session, err := pokerRepo.Save(poker.Session{PublicID: uuid.NewV4(), ItemID: 99, Status: poker.StatusRevealed, Round: 1, Votes: []poker.Vote{{Voter: "Ana", Points: 5}}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	h := newEstimateHandler(pokerRepo)
 
-	rec := do(t, h, http.MethodPost, "/api/poker-sessions/1/estimate", `{"puntos":5}`)
+	rec := do(t, h, http.MethodPost, "/api/poker-sessions/"+session.PublicID.String()+"/estimate", `{"puntos":5}`)
 
 	expectError(t, rec, http.StatusNotFound, backlog.ErrItemNotFound.Error())
 	stored, err := pokerRepo.GetByID(session.ID)
@@ -713,7 +714,7 @@ func TestRepetirRondaPoker_Devuelve200ConRondaSiguienteYSinVotos(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != "1" || got.ItemID != "1" || got.Estado != "ABIERTA" || got.Ronda != 2 {
+	if got.ID != sessionRef(t, h, 1) || got.ItemID != itemRef(t, h, 1) || got.Estado != "ABIERTA" || got.Ronda != 2 {
 		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, ABIERTA, en la ronda 2", got)
 	}
 	if got.Votos == nil || len(got.Votos) != 0 {
@@ -730,15 +731,15 @@ func TestRepetirRondaPoker_Devuelve200ConRondaSiguienteYSinVotos(t *testing.T) {
 func TestRepetirRondaPoker_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandlerWithItem(t), http.MethodPost, "/api/poker-sessions/abc/rounds", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id de la sesión debe ser un UUID")
 }
 
-// HU-24 · CA-24.12 · Verifica que repetir la ronda de una sesión inexistente, 0 o negativa responda 404 con ErrSessionNotFound.
+// HU-24 · CA-24.12 · Verifica que repetir la ronda de una sesión inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404 con ErrSessionNotFound.
 func TestRepetirRondaPoker_InexistenteDevuelve404(t *testing.T) {
 	h := newHandlerWithItem(t)
 	revealSessionWithVotes(t, h)
 
-	for _, id := range []string{"999", "0", "-1"} {
+	for _, id := range []string{missingSessionID, nilProjectID} {
 		rec := do(t, h, http.MethodPost, "/api/poker-sessions/"+id+"/rounds", "")
 
 		expectError(t, rec, http.StatusNotFound, poker.ErrSessionNotFound.Error())

@@ -55,19 +55,6 @@ var itemRoutes = []itemRoute{
 	{http.MethodPatch, "/story-points", `{"story_points":5}`},
 }
 
-// itemRef devuelve el "id" del n-ésimo ítem creado por la API en h, contando
-// desde 1, como idRef, para comparar con los campos de itemJSON.
-func itemRef(t *testing.T, h http.Handler, n int) idRef {
-	t.Helper()
-	entityIDsMu.Lock()
-	ids := entityIDs[h][kindItem]
-	entityIDsMu.Unlock()
-	if n < 1 || n > len(ids) {
-		t.Fatalf("itemRef: el handler tiene %d ítems creados por la API, no existe el %d", len(ids), n)
-	}
-	return idRef(ids[n-1])
-}
-
 // jsonItemID es el "id" del n-ésimo ítem creado por la API en h, como texto
 // JSON, para armar las respuestas esperadas (HU-52, CA-52.3).
 func jsonItemID(t *testing.T, h http.Handler, n int) string {

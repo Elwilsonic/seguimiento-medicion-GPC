@@ -123,6 +123,17 @@ var uuidRoutes = []string{
 	// /api/sprints/{id}/items/{itemId}/completar, GET /api/sprints/{id}/completados
 	// y POST /api/sprints/{id}/cerrar (sprints.go); GET /api/sprints/{id}/metricas
 	// (metrics.go); GET /api/sprints/{id}/reporte (sprint_reports.go).
+	"POST /api/items/{id}/poker-sessions",
+	"POST /api/poker-sessions/{id}/votes",
+	"POST /api/poker-sessions/{id}/reveal",
+	"POST /api/poker-sessions/{id}/estimate",
+	"POST /api/poker-sessions/{id}/rounds",
+	"POST /api/sprints/{id}/items/{itemId}",
+	"POST /api/sprints/{id}/items/{itemId}/completar",
+	"GET /api/sprints/{id}/completados",
+	"POST /api/sprints/{id}/cerrar",
+	"GET /api/sprints/{id}/metricas",
+	"GET /api/sprints/{id}/reporte",
 
 	// García Santiago (7): POST /api/items/{id}/defectos,
 	// PATCH /api/defectos/{id}/estado y GET /api/sprints/{id}/defectos

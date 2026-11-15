@@ -139,8 +139,8 @@ Característica: HU-51 Identificadores UUID de los proyectos
     Entonces la respuesta tiene el código 400
     Y el error es "la fecha de inicio del proyecto es obligatoria"
 
-  # Caso límite
+  # Caso límite · HU-52: ruta de García Santiago (efforts.go), que todavía lee un entero; García la cambia en su GREEN
   Escenario: Las demás entidades conservan su ID entero (CA-51.4)
-    Cuando pido GET "/api/sprints/abc/metricas"
+    Cuando pido GET "/api/items/abc/esfuerzos"
     Entonces la respuesta tiene el código 400
     Y el error es "el id debe ser un número entero"

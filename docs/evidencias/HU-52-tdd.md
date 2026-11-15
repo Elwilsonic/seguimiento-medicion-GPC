@@ -7,6 +7,7 @@
 - **Aprobación:** Peñalbé Hernán (Agile Enabler) aprobó la propuesta el 15/11/2026 (`8b65300`), con el dominio de las 6 entidades en la base (D3), el centinela `missingInternalID = math.MaxInt32` (D4), las 6 entidades con el corte por entidad, el corte del lunes 16/11/2026 a las 14:00 y los Story Points en Planning Poker. Cada responsable autoriza sus propios commits.
 - **Organización:** una base compartida (Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme), tres partes por entidad y el PDF del reporte (Peñalbé Hernán). Esta evidencia tiene una sección por parte.
 - **Rama de la base:** `feature/HU-52-uuid-base`, con `main` traído en `e039429` (`45d2c31`, con la columna Código de las evidencias, PR #199).
+- **Rama de integración (cambio en D3, aprobado por el Agile Enabler el 15/11/2026):** `feature/HU-52-uuid-entidades`, creada por Buttini Cristobal desde `main` (`29051da`). Las partes por entidad no se pueden integrar solas en `main` con la CI en verde: al medir la de sprints y Planning Poker antes del RED fallaron 123 tests, 81 por "el id del ítem debe ser un UUID" (sus rutas reciben ítems) y 37 por "el id debe ser un número entero" (las rutas de defectos y esfuerzos reciben sprints). Por eso todos los PR de HU-52 van a esa rama, sin CI y con la salida de `go test ./...` (en memoria y con PostgreSQL) pegada en cada PR, que dice qué fallos quedan y de qué parte dependen. Un solo PR a `main`, con la CI en verde (`-race`) y 0 fallos, cierra HU-52 con `Closes #197`. Horario: las tres partes en la rama de integración a las 12:00 del 16/11/2026 y el PR a `main` integrado antes de las 14:00. El detalle está en D3 de [`design.md`](../../openspec/changes/hu-52-identificadores-uuid-entidades/design.md).
 
 ## Trazabilidad
 
@@ -41,7 +42,53 @@ Pendiente de su responsable.
 
 ### Sprints y Planning Poker (Buttini Cristobal)
 
-Pendiente de su responsable.
+**15 tests nuevos (funciones `Test`), 2 runners de godog y 17 escenarios BDD** (8 de sprints y 9 de Planning Poker), en la rama `feature/HU-52-uuid-sprints-poker`, desde la rama de integración. Se reparten así:
+
+- 6 de sprints en `internal/httpapi/sprints_uuid_test.go`, 7 de sesiones en `internal/httpapi/poker_uuid_test.go` y 2 de la interfaz en `internal/httpapi/sprints_poker_uuid_web_test.go`;
+- los runners `TestFeatures_HU52Sprints` y `TestFeatures_HU52PlanningPoker` en `internal/httpapi/sprints_poker_uuid_features_test.go`, sobre `features/HU-52-sprints.feature` y `features/HU-52-planning-poker.feature`, a nivel de la API.
+
+Los tests y los escenarios crean los sprints, los ítems y las sesiones con los `Manager` del dominio y usan su `PublicID`, así prueban solo las 11 rutas de esta parte (D3) sin depender de cómo responde la API de los ítems. Las cuentas de la tabla no suman 15 porque un test puede cubrir más de un criterio. Los 1000 identificadores (CA-52.2), PostgreSQL (CA-52.5) y la concurrencia (CA-52.7) los cubre la base.
+
+**Lo que queda en las otras partes (D3).** La tarea 3.2 nombra también el orden de errores de "integrante vacío" (HU-26) y el `sprint_id` de los ítems y de los esfuerzos. Esa ruta (`POST /api/sprints/{id}/items/{itemId}/esfuerzos`, `efforts.go`) y esas respuestas (`toItemResponse` y la de esfuerzos) son de García Santiago y de Cardozo Leandro, así que los prueban ellos. Esta parte cubre el `sprint_id` de las métricas, el `sprint_actual` del resumen, las métricas por sprint y el reporte del sprint, que salen de `toSprintResponse` y `toSprintMetricsResponse`.
+
+#### Criterio → test → código
+
+| Criterio | Escenarios BDD | Tests de Go (archivo) | Código que lo implementa (función y archivo) |
+|---|---|---|---|
+| CA-52.1 Al crear un sprint o abrir una sesión, su id es un UUID v4; repetir la ronda lo conserva | "Crear un sprint le asigna un UUID versión 4", "El primer sprint no es el 1", "Abrir una sesión le asigna un UUID versión 4" y "Repetir la ronda conserva el UUID de la sesión" (runners [`TestFeatures_HU52Sprints`](../../internal/httpapi/sprints_poker_uuid_features_test.go#L34) y [`TestFeatures_HU52PlanningPoker`](../../internal/httpapi/sprints_poker_uuid_features_test.go#L39)) | [`TestCrearSprint_IDEsUnUUIDVersion4`](../../internal/httpapi/sprints_uuid_test.go#L186) (`internal/httpapi/sprints_uuid_test.go`); [`TestAbrirSesion_IDEsUnUUIDVersion4YItemIDEsElDelItem`](../../internal/httpapi/poker_uuid_test.go#L53) y [`TestRepetirRonda_ConservaElUUIDDeLaSesion`](../../internal/httpapi/poker_uuid_test.go#L69) (`internal/httpapi/poker_uuid_test.go`) | [`toSprintResponse`](../../internal/httpapi/sprints.go#L174) ([`internal/httpapi/sprints.go`](../../internal/httpapi/sprints.go)); [`server.openPokerSession`](../../internal/httpapi/poker.go#L51) y [`server.repeatRoundPokerSession`](../../internal/httpapi/poker.go#L148) ([`internal/httpapi/poker.go`](../../internal/httpapi/poker.go)) |
+| CA-52.3 Las 11 rutas aceptan el UUID (también en mayúsculas) y ninguna respuesta expone el entero del sprint ni de la sesión | "Cerrar un sprint por su UUID", "El UUID del sprint se acepta en mayúsculas", "Asignar un ítem a un sprint por sus UUID", "Votar en una sesión por su UUID", "El UUID de la sesión se acepta en mayúsculas" y "Revelar la sesión no expone ningún número" | [`TestRutasDeSprint_AceptanElUUID`](../../internal/httpapi/sprints_uuid_test.go#L198) y [`TestRespuestasDeSprint_IdentificanElSprintConSuUUID`](../../internal/httpapi/sprints_uuid_test.go#L261) (`internal/httpapi/sprints_uuid_test.go`); [`TestRutasDeSesion_AceptanElUUID`](../../internal/httpapi/poker_uuid_test.go#L82) (`internal/httpapi/poker_uuid_test.go`) | [`server.assignItem`](../../internal/httpapi/sprints.go#L83), [`server.completeItem`](../../internal/httpapi/sprints.go#L98), [`server.listCompletedItems`](../../internal/httpapi/sprints.go#L113), [`server.closeSprint`](../../internal/httpapi/sprints.go#L128), [`server.sprintItemPublicIDs`](../../internal/httpapi/sprints.go#L189) y [`toSprintResponse`](../../internal/httpapi/sprints.go#L174) ([`internal/httpapi/sprints.go`](../../internal/httpapi/sprints.go)); las 5 rutas de [`internal/httpapi/poker.go`](../../internal/httpapi/poker.go), de [`server.openPokerSession`](../../internal/httpapi/poker.go#L51) a [`server.estimatePokerSession`](../../internal/httpapi/poker.go#L173); [`server.sprintMetrics`](../../internal/httpapi/metrics.go#L47) y [`toSprintMetricsResponse`](../../internal/httpapi/metrics.go#L65) ([`internal/httpapi/metrics.go`](../../internal/httpapi/metrics.go)); [`server.sprintReport`](../../internal/httpapi/sprint_reports.go#L24) ([`internal/httpapi/sprint_reports.go`](../../internal/httpapi/sprint_reports.go)) |
+| CA-52.4 Un id que no es un UUID responde 400 con el mensaje del sprint, de la sesión o del ítem; un UUID inexistente, 404; se conserva el orden de errores | "Un ID numérico de sprint responde 400", "Primero se valida el sprint y después el ítem", "Un UUID de sprint que no existe responde 404", "Un ID numérico de sesión responde 400", "El ID de la sesión se valida antes que el cuerpo", "Un UUID de sesión que no existe responde 404" y "Al votar se conserva el orden de errores" | [`TestRutasDeSprint_IDInvalidoDevuelve400`](../../internal/httpapi/sprints_uuid_test.go#L220), [`TestRutasDeSprint_UUIDInexistenteDevuelve404`](../../internal/httpapi/sprints_uuid_test.go#L233) y [`TestAsignarYCompletar_ElSprintSeValidaAntesQueElItem`](../../internal/httpapi/sprints_uuid_test.go#L245) (`internal/httpapi/sprints_uuid_test.go`); [`TestRutasDeSesion_IDInvalidoDevuelve400`](../../internal/httpapi/poker_uuid_test.go#L118), [`TestRutasDeSesion_UUIDInexistenteDevuelve404`](../../internal/httpapi/poker_uuid_test.go#L130), [`TestVotar_SeConservaElOrdenDeErrores`](../../internal/httpapi/poker_uuid_test.go#L141) y [`TestAbrirSesion_ItemInvalidoOInexistente`](../../internal/httpapi/poker_uuid_test.go#L150) (`internal/httpapi/poker_uuid_test.go`) | Los handlers de CA-52.3, que leen el `{id}` con `sprintIDFromPath`, `sessionIDFromPath` o `itemIDFromPath` de la base, antes del cuerpo; [`server.sprintItemPublicIDs`](../../internal/httpapi/sprints.go#L189), que lee el `{id}` antes que el `{itemId}` |
+| CA-52.6 La interfaz usa el UUID del sprint y de la sesión | — | [`TestInterfaz_SprintActualAceptaElUUIDComoTexto`](../../internal/httpapi/sprints_poker_uuid_web_test.go#L27) y [`TestInterfaz_NoConvierteElIDDelSprintNiDeLaSesionANumero`](../../internal/httpapi/sprints_poker_uuid_web_test.go#L43) (`internal/httpapi/sprints_poker_uuid_web_test.go`) | El campo «Sprint actual» de [`internal/web/index.html`](../../internal/web/index.html) (`type="text"`, `placeholder="UUID del sprint"`); `mostrarSprint` y Planning Poker de [`internal/web/app.js`](../../internal/web/app.js), que ya usaban el `id` como texto |
+
+#### Tests existentes adaptados
+
+25 tests existentes de los archivos de esta parte se adaptaron al comportamiento nuevo, sin cambiar lo que verifican: los mensajes de 400 pasan a "el id del sprint debe ser un UUID", "el id de la sesión debe ser un UUID" o "el id del ítem debe ser un UUID"; los casos de inexistente usan un UUID que nunca se asignó (y el nulo) en lugar de 999, 0 y -1, que ahora son un formato inválido; las sesiones guardadas directo en el repositorio se piden por su `PublicID`; y los `id` y `sprint_id` de sprints y sesiones se comparan con el `id` que devolvió la API al crearlos (`sprintRef`, `sessionRef` e `itemRef`), y no con `"1"`, porque con el UUID deja de ser 1. Además:
+
+- las 11 rutas de esta parte van a su bloque de `uuidRoutes` (`entity_ids_test.go`), en el RED y no en el GREEN, porque es código de test: mientras la producción no cambia, la traducción de `do()` es la identidad;
+- en `TestRutasConID_IDNoNumericoDevuelve400`, el mensaje de cada caso de esta parte sale de `sprintsPokerInvalidIDMessages`;
+- en `TestRespuestas_IdentificanElProyectoConSuUUID` (HU-51), `serveRaw` pasa a `do()`, para que las rutas de sprints usen el UUID que devolvió la API.
+
+#### Commits
+
+| Fase | Commit |
+|---|---|
+| RED | `d0e3f13` |
+| GREEN | `3ecab8e` |
+| Refactor | No hubo: la repetición de `pokerSessionResponse` en las 5 rutas de `poker.go` ya existía, y sacarla a una función ahora agrega riesgo de conflicto con el corte cerca |
+
+#### RED (`d0e3f13`)
+
+`go test -count=1 ./...` en memoria: 14 paquetes en `ok` (incluido `internal/trazabilidad`) y `internal/httpapi` en `FAIL`, con 41 tests que fallan, todos de esta parte y por aserción (0 de compilación y 0 `panic`): 16 de los 17 tests nuevos (el que verifica que app.js no convierte el id a número ya pasaba, porque protege lo que ya estaba bien), los 2 runners y 25 tests existentes adaptados. Ningún test de otra parte falla.
+
+#### GREEN (`3ecab8e`)
+
+Cambian solo `sprints.go`, `poker.go`, `metrics.go`, `sprint_reports.go`, `index.html` y los números de línea de 4 evidencias (`-update`); ningún `_test.go` ni `.feature`. `go test -count=1 ./...` en memoria: 14 paquetes en `ok` y `internal/httpapi` en `FAIL`, con 86 tests que fallan y 111 mensajes, todos de las otras partes, como prevé el cambio en D3:
+
+- 106 "el id del ítem debe ser un UUID": las rutas de esta parte reciben el ítem por su UUID, y la API todavía devuelve el ítem con su entero (parte de ítems, Cardozo Leandro);
+- 3 "el id debe ser un número entero": las rutas de esfuerzos y defectos todavía leen un entero (parte de García Santiago);
+- 2 que son consecuencia de lo anterior: un ítem que no se pudo asignar ni completar deja vacíos los completados y el reporte.
+
+Para verificarlo, se simuló la parte de ítems sin commitearla (el `id` y el `sprint_id` del ítem como texto, sus 4 rutas con UUID y en `uuidRoutes`): con eso no falla ningún test de esta parte, y lo que queda depende de la ruta de registrar un esfuerzo (García Santiago) o es de los tests de ítems.
 
 ### Defectos y esfuerzos (García Santiago)
 
@@ -344,7 +391,7 @@ Hasta que se integren sprints y Planning Poker, la API queda mezclada como prev�
 
 ## Pendiente al corte
 
-Estado al 15/11/2026, antes del corte del lunes 16/11/2026 a las 14:00. La base (PR #201, con el PDF del PR #200 integrado en su rama) está integrada en `main` el 15/11/2026 a las 18:30 (`c329a62`), por Cardozo Leandro. Las tres partes por entidad todavía no tienen rama ni PR en el repositorio (`git ls-remote --heads origin` muestra solo `feature/HU-52-uuid-base` y `feature/HU-52-uuid-pdf`): se crean desde `main`, que ya tiene la base. Según "Si no llega al corte" de `proposal.md`, lo que no esté en `main` con la CI en verde a esa hora queda así:
+Estado al 15/11/2026, antes del corte del lunes 16/11/2026 a las 14:00. La base (PR #201, con el PDF del PR #200 integrado en su rama) está integrada en `main` el 15/11/2026 a las 18:30 (`c329a62`), por Cardozo Leandro. Las tres partes por entidad todavía no tienen rama ni PR en el repositorio (`git ls-remote --heads origin` muestra solo `feature/HU-52-uuid-base` y `feature/HU-52-uuid-pdf`): se crean desde `main`, que ya tiene la base. **Desde el cambio en D3 del 15/11/2026, las tres partes van a la rama de integración `feature/HU-52-uuid-entidades`, y a `main` llegan juntas en un solo PR:** el corte por entidad de la tabla de abajo ya no aplica parte por parte, y si a las 12:00 del 16/11/2026 falta alguna, se decide con el Agile Enabler. Según "Si no llega al corte" de `proposal.md`, lo que no esté en `main` con la CI en verde a esa hora queda así:
 
 | Parte | Responsable | Estado | Lo que queda en `main` si no llega | Pendiente que se documenta |
 |---|---|---|---|---|

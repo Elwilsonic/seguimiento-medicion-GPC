@@ -208,16 +208,22 @@ func TestOrdenDeErrores_UUIDInexistenteConservaElOrden(t *testing.T) {
 	}
 }
 
-// HU-51 · CA-51.4 · Verifica que las rutas de las demás entidades conserven su ID entero y el mensaje "el id debe ser un número entero" (parte pendiente de HU-51), salvo las de ítems e integrantes, que con HU-52 reciben su UUID.
+// HU-51 · CA-51.4 · Verifica que las rutas de las demás entidades conserven su ID entero y el mensaje "el id debe ser un número entero" (parte pendiente de HU-51), salvo las de ítems, integrantes y sprints, que con HU-52 reciben su UUID.
 func TestRutasDeOtrasEntidades_ConservanElIDEntero(t *testing.T) {
 	h := newHandler()
 
+	// HU-52: una ruta de García Santiago (efforts.go) que todavía lee un
+	// entero; García la cambia en su GREEN.
+	path := "/api/items/abc/esfuerzos"
+	expectErrorBody(t, "GET "+path, serveRaw(h, http.MethodGet, path, ""), http.StatusBadRequest, "el id debe ser un número entero")
+	// HU-52, CA-52.4: los sprints ya no tienen ID entero (parte de Buttini
+	// Cristobal).
 	for _, path := range []string{"/api/sprints/abc/metricas", "/api/sprints/abc/reporte"} {
-		expectErrorBody(t, "GET "+path, serveRaw(h, http.MethodGet, path, ""), http.StatusBadRequest, "el id debe ser un número entero")
+		expectErrorBody(t, "GET "+path, serveRaw(h, http.MethodGet, path, ""), http.StatusBadRequest, "el id del sprint debe ser un UUID")
 	}
 	// HU-52, CA-52.4: los ítems y los integrantes ya no tienen ID entero
 	// (cierra esa parte del pendiente R1 de HU-51).
-	path := "/api/items/abc"
+	path = "/api/items/abc"
 	expectErrorBody(t, "GET "+path, serveRaw(h, http.MethodGet, path, ""), http.StatusBadRequest, "el id del ítem debe ser un UUID")
 	path = "/api/integrantes/abc"
 	expectErrorBody(t, "PUT "+path, serveRaw(h, http.MethodPut, path, validMember), http.StatusBadRequest, "el id del integrante debe ser un UUID")
