@@ -44,6 +44,8 @@ Motivación y alcance: ver `proposal.md`. Lo que existe hoy y condiciona el dise
 
 ## Decisions
 
+Las decisiones D1 a D10 fueron aprobadas por el Agile Enabler (Peñalbé Hernán) el 15/11/2026, incluidas D3 (el dominio de las 6 entidades en la base, en pareja) y D4 (el centinela `missingInternalID = math.MaxInt32`).
+
 ### D1. El mismo diseño que HU-51: UUID público y entero interno (alternativa B)
 
 Cada entidad conserva su ID entero (clave primaria y claves foráneas) y suma un `PublicID uuid.UUID`, que es lo único que muestran la API y la interfaz. La API traduce el UUID al ID interno.
@@ -62,7 +64,7 @@ Se crean `backlog`, `sprints`, `integrantes`, `defectos`, `esfuerzos` y `plannin
 
 ### D3. La base compartida hace el dominio de las 6 entidades y todo lo compartido
 
-La base (Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme) se integra primero, con el horario propuesto del domingo 15/11/2026 a las 21:00 (sujeto a la aprobación del Agile Enabler), y deja listo todo lo que tocarían varias entidades a la vez:
+La base (Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme) se integra primero, con el horario aprobado del domingo 15/11/2026 a las 21:00, y deja listo todo lo que tocarían varias entidades a la vez:
 
 | Pieza de la base | Archivos |
 |---|---|
@@ -234,7 +236,7 @@ Todos los IDs fijos de tests están en 15 archivos de `internal/httpapi`. Los `.
 - **[R4] Los links de la evidencia se corren con cada merge.** → `-update` de `internal/trazabilidad` después de cada `git merge main`, como en HU-51.
 - **[R5] El centinela `math.MaxInt32` como ID real.** → Una tabla tendría que llegar a 2147483647 filas, y en ese caso `GENERATED ALWAYS AS IDENTITY` ya falla por desborde. Queda documentado.
 - **[R6] La firma con el resolvedor sin usar en la base.** → Es un parámetro que todavía no se usa, y queda así hasta que cada entidad lo use. Si una entidad no llega al corte, queda sin usar para esa entidad, y se documenta.
-- **[R7] La carga de la base.** → La hacen dos personas en pareja (Sosa y Cardozo, sujeto a que Cardozo lo confirme), con el horario propuesto del domingo 15/11/2026 a las 21:00. La base toca el dominio de 6 paquetes, el esquema, `server.go`, los reportes y los tests compartidos. Es la parte más grande y la que más se repite. Se mide en la tarea B.0 (la prueba de los tests que se rompen) y se avisa si no llega a una hora acordada con el Agile Enabler.
+- **[R7] La carga de la base.** → La hacen dos personas en pareja (Sosa y Cardozo, sujeto a que Cardozo lo confirme), con el horario aprobado del domingo 15/11/2026 a las 21:00. La base toca el dominio de 6 paquetes, el esquema, `server.go`, los reportes y los tests compartidos. Es la parte más grande y la que más se repite. Se mide en la tarea B.0 (la prueba de los tests que se rompen) y se avisa si no llega a una hora acordada con el Agile Enabler.
 - **[Trade-off] Dos identificadores por entidad,** como en HU-51.
 - **[Trade-off] UUID largos en la interfaz y en los mensajes.** → Las entidades se eligen desde listas y botones donde existen. Donde hay que escribir el ID (esfuerzos y defectos), se copia de la tabla.
 

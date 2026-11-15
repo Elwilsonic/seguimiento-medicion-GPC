@@ -1,6 +1,6 @@
 # Tasks: HU-52 · Identificadores UUID del resto de las entidades (Issue #197)
 
-Corte: lunes 16/11/2026 a las 14:00. Cada commit y cada push necesitan la autorización explícita de su responsable, con el comando exacto propuesto antes (quién autoriza lo confirma el Agile Enabler: `openspec/config.yaml` dice "del Agile Enabler", y en HU-51 autorizó cada responsable). Cada test nuevo lleva arriba `// HU-52 · CA-52.N · Verifica que …`, y cada runner de godog `// HU-52 · BDD · Verifica que …`. Los tests adaptados conservan su comentario de TEC-11. Los merges con `main` se hacen con `git merge main` (nunca rebase), y los PR con "Create a merge commit".
+Corte: lunes 16/11/2026 a las 14:00. Cada commit y cada push necesitan la autorización explícita de su responsable, con el comando exacto propuesto antes (lo decidió el Agile Enabler el 15/11/2026: cada responsable autoriza sus propios commits, como en HU-51). Cada test nuevo lleva arriba `// HU-52 · CA-52.N · Verifica que …`, y cada runner de godog `// HU-52 · BDD · Verifica que …`. Los tests adaptados conservan su comentario de TEC-11. Los merges con `main` se hacen con `git merge main` (nunca rebase), y los PR con "Create a merge commit".
 
 Comandos de verificación de cada sección (los "comandos de cierre"):
 
@@ -15,13 +15,13 @@ openspec validate hu-52-identificadores-uuid-entidades --strict
 
 ## 0. Aprobación y preparación
 
-- [ ] 0.1 El Agile Enabler aprueba explícitamente la propuesta completa (proposal, las 6 specs, design y tasks), incluidas las tres diferencias con el acta de Planning (alcance, corte y Story Points), D3 (el dominio de las 6 entidades en la base), D4 (el centinela `math.MaxInt32`), D5 (el resolvedor), D7 (`""` para "sin sprint"), la base en pareja (Sosa y Cardozo) y su horario propuesto (domingo 15/11/2026 a las 21:00). Verificar que la aprobación quedó en el chat o en el Issue #197.
+- [x] 0.1 El Agile Enabler aprueba explícitamente la propuesta completa (proposal, las 6 specs, design y tasks), incluidas las tres diferencias con el acta de Planning (alcance, corte y Story Points), D3 (el dominio de las 6 entidades en la base), D4 (el centinela `math.MaxInt32`), D5 (el resolvedor), D7 (`""` para "sin sprint"), la base en pareja (Sosa y Cardozo) y su horario (domingo 15/11/2026 a las 21:00). Verificar que la aprobación quedó en el chat o en el Issue #197. Aprobada por WhatsApp el 15/11/2026.
 - [ ] 0.2 Actualizar los criterios del Issue #197 con los CA-52.1 a CA-52.7 definitivos, solo con el permiso del Agile Enabler. Verificar que el body del Issue los muestra.
-- [ ] 0.3 Registrar la aprobación en `proposal.md` (línea de estado) y proponer `git commit -m "docs(HU-52): registrar la aprobación de la propuesta" -m "Refs #197"`.
+- [x] 0.3 Registrar la aprobación en `proposal.md` (línea de estado) y proponer `git commit -m "docs(HU-52): registrar la aprobación de la propuesta" -m "Refs #197"`.
 
 ## 1. Base compartida (Sosa Ricardo y Cardozo Leandro en pareja, rama `feature/HU-52-uuid-base`)
 
-La base la hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme. Horario propuesto: integrada en `main` el domingo 15/11/2026 a las 21:00, sujeto a la aprobación del Agile Enabler.
+La base la hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme. Horario: integrada en `main` el domingo 15/11/2026 a las 21:00, aprobado por el Agile Enabler.
 
 - [ ] 1.1 Medir antes del RED, y revertir: asignar `uuid.NewV4()` en las 6 creaciones y correr `go test -count=1 ./...`. Anotar qué tests de dominio fallan por comparar structs completos (como los 7 de HU-51); esos se adaptan en 1.4.
 - [ ] 1.2 Escribir `features/HU-52-base.feature` (de dominio, en español): crear cada una de las 6 entidades le asigna un UUID v4 canónico; muchas creaciones dan UUID distintos; se busca por UUID y un UUID inexistente da el error de su entidad. Escribir los pasos y el runner `TestFeatures_HU52Base`. Verificar con `go test -run TestFeatures_HU52Base ./...` que corren y fallan solo por lo nuevo.
@@ -71,7 +71,7 @@ La base la hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo 
   - la sección "Pendiente al corte".
 
   Agregar la fila de HU-52 al README y actualizar `docs/reportes/cobertura.md` y `docs/ia/registro.md`. Proponer `git commit -m "docs(HU-52): agregar la evidencia de la base" -m "Refs #197"`.
-- [ ] 1.12 Push, PR de la base hacia `main` y revisión de otro integrante, para integrarla el domingo 15/11/2026 a las 21:00 (horario propuesto). Avisar a los tres responsables cuando esté integrada. Si a esa hora no está, avisar al Agile Enabler y aplicar R1 de `design.md`.
+- [ ] 1.12 Push, PR de la base hacia `main` y revisión de otro integrante, para integrarla el domingo 15/11/2026 a las 21:00. Antes del PR, traer `main` y correr `go test ./internal/trazabilidad/ -run TestEnlaces -args -update`. Avisar a los tres responsables cuando esté integrada. Si a esa hora no está, avisar al Agile Enabler y aplicar R1 de `design.md`.
 
 ## 2. Ítems e integrantes (Cardozo Leandro, rama `feature/HU-52-uuid-items-integrantes`)
 

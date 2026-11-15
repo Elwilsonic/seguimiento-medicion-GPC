@@ -2,11 +2,16 @@
 
 > Issue del repositorio: #197 · Épica E1 · Gestión de proyectos, con alcance en E2 a E8 · Vinculada a HU-51 (#193) y a las historias de cada entidad (HU-04 a HU-17 y HU-20 a HU-31)
 >
-> Estado: propuesta pendiente de aprobación del Agile Enabler (Peñalbé Hernán).
+> Aprobada por: Peñalbé Hernán (Agile Enabler), 15/11/2026. Sus decisiones:
+>
+> 1. Se aprueba con el dominio de las 6 entidades en la base (D3), hecha en pareja con Cardozo Leandro, y con el centinela `missingInternalID = math.MaxInt32` (D4).
+> 2. La base se integra en `main` hoy, 15/11/2026, a las 21:00. Antes del PR se trae `main` y se corre `go test ./internal/trazabilidad/ -run TestEnlaces -args -update` (el #199, con la columna Código, ya está en `main`).
+> 3. Diferencias con el acta: se aprueban las 6 entidades (con el corte por entidad), el corte del lunes 16/11/2026 a las 14:00, y los Story Points se votan en Planning Poker.
+> 4. Cada responsable autoriza sus propios commits, como en HU-51.
 >
 > **Corte: lunes 16/11/2026 a las 14:00** (el Sprint 5 se extiende hasta ese momento). Lo que no esté integrado en `main` con la CI en verde a esa hora queda como pendiente, según la sección "Si no llega al corte".
 >
-> **Horario propuesto para la base:** integrada en `main` el domingo 15/11/2026 a las 21:00, sujeto a la aprobación del Agile Enabler. La hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme.
+> **Horario de la base:** integrada en `main` el domingo 15/11/2026 a las 21:00. La hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme.
 
 ## Historia de usuario
 
@@ -63,9 +68,9 @@ Los RN de "ID entero correlativo global" de cada SDD siguen valiendo para la cla
 
 El acta del Planning del Sprint 5 (`docs/actas/sprint-5/planning.md`) no tiene a HU-52: planifica HU-51 (13 SP) por partes. Primero van los proyectos (obligatorio), y después, "si el equipo llega con tiempo", "HU-51 en el resto de las entidades (backlog, sprints, defectos y esfuerzo)". Lo que no llegue "queda escrito en la propuesta de OpenSpec como trabajo pendiente". HU-52 es esa segunda parte, ahora como historia propia con su Issue (#197).
 
-**Hay tres diferencias, para que las decida el Agile Enabler:**
+**Hay tres diferencias, que el Agile Enabler decidió el 15/11/2026: se aprueban las 6 entidades (con el corte por entidad), el corte del lunes 16/11/2026 a las 14:00, y los Story Points se votan en Planning Poker.**
 
-1. **Alcance:** el acta nombra 4 entidades (backlog, sprints, defectos y esfuerzo). El Issue #197, y esta propuesta, suman integrantes (HU-15 a HU-17) y sesiones de Planning Poker (HU-21 a HU-25). Si se aprueba el alcance del acta, esas dos entidades quedan como pendiente documentado.
+1. **Alcance:** el acta nombra 4 entidades (backlog, sprints, defectos y esfuerzo). El Issue #197, y esta propuesta, suman integrantes (HU-15 a HU-17) y sesiones de Planning Poker (HU-21 a HU-25). El Agile Enabler aprobó las 6 entidades, con el corte por entidad de "Si no llega al corte".
 2. **Plazo:** el acta no prevé un corte después del 14/11 ("no hay Sprint siguiente"). El Issue fija el corte el lunes 16/11 a las 14:00 y extiende el Sprint 5 hasta esa hora.
 3. **Story Points:** el acta cuenta este trabajo dentro de los 13 SP de HU-51. El Issue #197 dice "a estimar con Planning Poker".
 
