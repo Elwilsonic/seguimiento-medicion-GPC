@@ -294,6 +294,25 @@ Observación de Buttini Cristobal en la revisión del PR #201. `entityIDs` (`int
 3. **El esquema no cambió en el RED:** con `public_id NOT NULL`, los tests de PostgreSQL habrían fallado por una causa ajena a los tests nuevos (como en HU-51).
 4. **`-race` lo corre la CI:** en Windows no anda (`-race requires cgo`), así que los 6 tests de CA-52.7 corrieron acá sin `-race`.
 
+### Desviación de la base (15/11/2026)
+
+Cardozo Leandro la encontró al empezar la sección 2 (ítems e integrantes), y el Agile Enabler (Peñalbé Hernán) decidió el 15/11/2026 resolverla con un ajuste de tests en la rama `feature/HU-52-ajuste-base`, desde `main` (`29051da`), antes de las entidades. El detalle está en D9 de `design.md` ("Desviación de la base"). **Es un ajuste de tests sin ciclo RED/GREEN:** no cambia el comportamiento ni lo que verifica ningún test, y no toca código de producción.
+
+| Faltaba | Cómo se resolvió |
+|---|---|
+| 7 structs de los tests (`itemJSON`, `sprintJSON`, `defectJSON`, `effortJSON`, `pokerSessionJSON`, `sprintMetricsJSON` y una anónima de `reports_test.go`) leían el id como `int`, y el GREEN de una entidad rompía los tests de las demás | El tipo `idRef` ([`ids_ref_test.go`](../../internal/httpapi/ids_ref_test.go)), que acepta un número o un texto, y la adaptación mecánica de sus usos: 60 comparaciones, literales y funciones (58 errores del compilador, más 2 literales en las mismas líneas) y 52 `%d` |
+| `do()` traducía todas las rutas, también las de handlers que todavía leen un entero | La tabla `uuidRoutes` ([`entity_ids_test.go`](../../internal/httpapi/entity_ids_test.go)), vacía, con un bloque por responsable; cada uno activa sus rutas en su GREEN |
+| La tabla de `TestRutasConID_IDNoNumericoDevuelve400` no estaba separada por entidad | 8 bloques separados por líneas en blanco; las 37 filas y sus 21 comentarios quedan iguales |
+
+Controles, todos con comandos:
+
+- **Tests de `internal/httpapi`** (`go test -count=1 -p 1 -v ./internal/httpapi/`): antes, 720 PASS, 0 FAIL y 0 SKIP; después, 722 PASS, 0 FAIL y 0 SKIP. Los 2 nuevos son los del helper: `TestWithEntityIDs_TablaVaciaNoTraduce` y `TestWithEntityIDs_TraduceSoloLasRutasDeLaTabla` ([`entity_ids_helper_test.go`](../../internal/httpapi/entity_ids_helper_test.go)).
+- **`go test -count=1 -p 1 ./...`:** 15 paquetes en ok y ningún FAIL. `go vet ./...` sin errores y `gofmt -l .` sin salida.
+- **Producción:** `git diff --stat origin/main -- . ':!*_test.go' ':!docs' ':!openspec'` vacío.
+- **Diff de los tests:** 14 archivos `*_test.go` modificados (228 líneas agregadas y 148 borradas) y 2 nuevos. Comparando el diff sin los cambios de tipo y de formato, no cambió ninguna aserción, mensaje ni nombre: solo la tabla `uuidRoutes`, la llamada de `do()`, los encabezados de los bloques y el comentario para García de los 3 cuerpos con `sprint_deteccion_id`.
+- **Links:** `go test ./internal/trazabilidad/ -run TestEnlaces -args -update` cambió 41 líneas en 13 evidencias de otras historias, y en todas solo cambian números de línea (`#Lnn`). Va en el commit de tests, para que `internal/trazabilidad` quede en ok en cada commit, como en la desviación 1.
+- **Aviso de Windows:** `go: unlinkat … being used by another process` apareció al borrar ejecutables temporales; se repitió con `go clean -testcache` y volvió a aparecer, sin ningún test fallido.
+
 ### Commits
 
 | Fase | Commit | Mensaje |

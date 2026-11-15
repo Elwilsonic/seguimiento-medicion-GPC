@@ -23,13 +23,13 @@ import (
 // HTTP de la SDD (400, 404, 409, 413 y 500).
 
 type defectJSON struct {
-	ID                 int             `json:"id"`
+	ID                 idRef           `json:"id"`
 	Descripcion        string          `json:"descripcion"`
 	Severidad          defect.Severity `json:"severidad"`
 	Estado             defect.Status   `json:"estado"`
-	ItemID             int             `json:"item_id"`
-	SprintDeteccionID  int             `json:"sprint_deteccion_id"`
-	SprintResolucionID int             `json:"sprint_resolucion_id"`
+	ItemID             idRef           `json:"item_id"`
+	SprintDeteccionID  idRef           `json:"sprint_deteccion_id"`
+	SprintResolucionID idRef           `json:"sprint_resolucion_id"`
 }
 
 const validDefect = `{"descripcion":"  El total no descuenta el descuento  ","severidad":" alta ","sprint_deteccion_id":1}`
@@ -70,13 +70,13 @@ func TestRegistrarDefecto_Devuelve201ConElDefecto(t *testing.T) {
 	var got defectJSON
 	decode(t, rec, &got)
 	want := defectJSON{
-		ID:                 1,
+		ID:                 "1",
 		Descripcion:        "El total no descuenta el descuento",
 		Severidad:          defect.SeverityHigh,
 		Estado:             defect.StatusOpen,
-		ItemID:             1,
-		SprintDeteccionID:  1,
-		SprintResolucionID: 0,
+		ItemID:             "1",
+		SprintDeteccionID:  "1",
+		SprintResolucionID: "0",
 	}
 	if got != want {
 		t.Errorf("defecto = %+v, se esperaba %+v", got, want)
@@ -99,8 +99,8 @@ func TestRegistrarDefecto_IgnoraEstadoYSprintDeResolucion(t *testing.T) {
 	if got.Estado != defect.StatusOpen {
 		t.Errorf("estado = %q, se esperaba %q", got.Estado, defect.StatusOpen)
 	}
-	if got.SprintResolucionID != 0 {
-		t.Errorf("sprint de resolución = %d, se esperaba 0", got.SprintResolucionID)
+	if got.SprintResolucionID != "0" {
+		t.Errorf("sprint de resolución = %s, se esperaba 0", string(got.SprintResolucionID))
 	}
 }
 
@@ -255,8 +255,8 @@ func TestRegistrarDefecto_CuerpoMayorA1MiBDa413(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got defectJSON
 	decode(t, rec, &got)
-	if got.ID != 1 {
-		t.Errorf("ID = %d, se esperaba 1", got.ID)
+	if got.ID != "1" {
+		t.Errorf("ID = %s, se esperaba 1", string(got.ID))
 	}
 }
 
@@ -319,13 +319,13 @@ func TestCambiarEstadoDefecto_Devuelve200ConElDefecto(t *testing.T) {
 
 	got := changeDefectStatus(t, h, `{"estado":" en_correccion "}`)
 	want := defectJSON{
-		ID:                 1,
+		ID:                 "1",
 		Descripcion:        "El total no descuenta el descuento",
 		Severidad:          defect.SeverityHigh,
 		Estado:             defect.StatusInCorrection,
-		ItemID:             1,
-		SprintDeteccionID:  1,
-		SprintResolucionID: 0,
+		ItemID:             "1",
+		SprintDeteccionID:  "1",
+		SprintResolucionID: "0",
 	}
 	if got != want {
 		t.Errorf("defecto = %+v, se esperaba %+v", got, want)
@@ -333,7 +333,7 @@ func TestCambiarEstadoDefecto_Devuelve200ConElDefecto(t *testing.T) {
 
 	got = changeDefectStatus(t, h, `{"estado":"RESUELTO","sprint_resolucion_id":1}`)
 	want.Estado = defect.StatusResolved
-	want.SprintResolucionID = 1
+	want.SprintResolucionID = "1"
 	if got != want {
 		t.Errorf("defecto = %+v, se esperaba %+v", got, want)
 	}

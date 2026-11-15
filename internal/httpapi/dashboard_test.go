@@ -34,21 +34,21 @@ type summaryJSON struct {
 
 // summaryItem crea por la API un ítem del proyecto 1, lo asigna al sprint si
 // sprintID no es 0 y lo lleva al estado pedido.
-func summaryItem(t *testing.T, h http.Handler, title, status string, sprintID int) {
+func summaryItem(t *testing.T, h http.Handler, title, status string, sprintID idRef) {
 	t.Helper()
 	var it itemJSON
 	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog",
 		fmt.Sprintf(`{"titulo":%q,"prioridad":"MEDIA","criterios":["Criterio"]}`, title))
 	expectStatus(t, rec, http.StatusCreated)
 	decode(t, rec, &it)
-	if sprintID != 0 {
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sprintID, it.ID), ""), http.StatusOK)
+	if sprintID != "0" {
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s", string(sprintID), string(it.ID)), ""), http.StatusOK)
 	}
 	if status != "PENDIENTE" {
-		expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/estado", it.ID), `{"estado":"EN_CURSO"}`), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/estado", string(it.ID)), `{"estado":"EN_CURSO"}`), http.StatusOK)
 	}
 	if status == "TERMINADO" {
-		expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/estado", it.ID), `{"estado":"TERMINADO"}`), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/estado", string(it.ID)), `{"estado":"TERMINADO"}`), http.StatusOK)
 	}
 }
 
@@ -64,11 +64,11 @@ func TestResumenProyecto_Devuelve200ConElResumen(t *testing.T) {
 	var sp sprintJSON
 	decode(t, rec, &sp)
 	summaryItem(t, h, "A", "PENDIENTE", sp.ID)
-	summaryItem(t, h, "B", "PENDIENTE", 0)
+	summaryItem(t, h, "B", "PENDIENTE", "0")
 	summaryItem(t, h, "C", "EN_CURSO", sp.ID)
 	summaryItem(t, h, "D", "TERMINADO", sp.ID)
 	summaryItem(t, h, "E", "TERMINADO", sp.ID)
-	summaryItem(t, h, "F", "TERMINADO", 0)
+	summaryItem(t, h, "F", "TERMINADO", "0")
 
 	rec = do(t, h, http.MethodGet, projectPath(t, h, 1)+"/resumen", "")
 
