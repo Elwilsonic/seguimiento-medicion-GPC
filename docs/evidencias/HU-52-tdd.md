@@ -1,0 +1,261 @@
+# Evidencia TDD · HU-52 Identificadores UUID del resto de las entidades
+
+> Issue del repositorio: #197 · Épica E1, con alcance en E2 a E8 · Vinculada a HU-51 (#193) y a las historias de cada entidad (HU-04 a HU-17 y HU-20 a HU-31) · Especificada con OpenSpec (TEC-10, #177)
+
+- **Historia:** como integrante del equipo, quiero que los ítems del backlog, los sprints, los integrantes, los defectos, los registros de esfuerzo y las sesiones de Planning Poker se identifiquen con un UUID en lugar de un número correlativo, para que no se pueda adivinar ni recorrer ninguna entidad, ni deducir cuántas hay.
+- **Especificación (OpenSpec):** el cambio [`openspec/changes/hu-52-identificadores-uuid-entidades/`](../../openspec/changes/hu-52-identificadores-uuid-entidades/): [propuesta](../../openspec/changes/hu-52-identificadores-uuid-entidades/proposal.md), [diseño](../../openspec/changes/hu-52-identificadores-uuid-entidades/design.md), [tareas](../../openspec/changes/hu-52-identificadores-uuid-entidades/tasks.md) y una spec delta por entidad (`specs/backlog`, `sprints`, `integrantes`, `defectos`, `esfuerzos` y `planning-poker`).
+- **Aprobación:** Peñalbé Hernán (Agile Enabler) aprobó la propuesta el 15/11/2026 (`8b65300`), con el dominio de las 6 entidades en la base (D3), el centinela `missingInternalID = math.MaxInt32` (D4), las 6 entidades con el corte por entidad, el corte del lunes 16/11/2026 a las 14:00 y los Story Points en Planning Poker. Cada responsable autoriza sus propios commits.
+- **Organización:** una base compartida (Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro lo confirme), tres partes por entidad y el PDF del reporte (Peñalbé Hernán). Esta evidencia tiene una sección por parte.
+- **Rama de la base:** `feature/HU-52-uuid-base`, con `main` traído en `e039429` (`45d2c31`, con la columna Código de las evidencias, PR #199).
+
+## Trazabilidad
+
+### Base compartida
+
+**68 tests nuevos (funciones `Test`) y 36 ejecuciones de escenarios BDD.** Se reparten así:
+
+- 36 de dominio, 6 por paquete, en `public_id_test.go` de `backlog`, `sprint`, `member`, `defect`, `effort` y `poker`;
+- 18 de repositorio, 3 por paquete, en `public_id_repository_test.go`: el contrato `GetByPublicID` en memoria y en PostgreSQL, y el UUID repetido en PostgreSQL;
+- 13 internos de `internal/httpapi` en `public_ids_internal_test.go`, porque los helpers no se exportan;
+- el runner de godog de `features/HU-52-base.feature`, en `internal/httpapi/uuid_base_features_test.go`, que ejecuta los 36 escenarios (6 esquemas × 6 entidades).
+
+Las cuentas de tests de la tabla no suman 68 porque un test puede cubrir más de un criterio, y la correspondencia con los escenarios no es 1 a 1: los 1000 identificadores (CA-52.2), PostgreSQL (CA-52.5) y la concurrencia (CA-52.7) se cubren solo con tests de Go.
+
+La base no cambia rutas ni salidas de la API: los helpers y el resolvedor quedan listos, y cada entidad los usa en su parte. Por eso CA-52.3 y CA-52.4 se cumplen recién con las partes integradas, y CA-52.6 (la interfaz) es solo de las partes de cada entidad. **El PDF del reporte quedó fuera de la base por decisión del Agile Enabler** (15/11/2026): lo toma Peñalbé Hernán, en paralelo con las entidades (D3 y sección 5 de `tasks.md`). Hasta que se integre, el PDF sigue mostrando IDs enteros, y CA-52.3 no se cumple del todo.
+
+#### Criterio → test → código
+
+| Criterio | Escenarios BDD | Tests de Go (archivo) | Código que lo implementa (función y archivo) |
+|---|---|---|---|
+| CA-52.1 Al crearse, cada entidad recibe un identificador público UUID v4 en forma canónica | "Crear una entidad le asigna un UUID versión 4" (6 ejemplos; runner [`TestFeatures_HU52Base`](../../internal/httpapi/uuid_base_features_test.go#L31), `internal/httpapi/uuid_base_features_test.go`) | [`TestCreate_AsignaUnUUIDVersion4AlItem`](../../internal/backlog/public_id_test.go#L35) (`internal/backlog/public_id_test.go`); [`TestCreate_AsignaUnUUIDVersion4AlSprint`](../../internal/sprint/public_id_test.go#L28) (`internal/sprint/public_id_test.go`); [`TestRegister_AsignaUnUUIDVersion4AlIntegrante`](../../internal/member/public_id_test.go#L54) (`internal/member/public_id_test.go`); [`TestRegister_AsignaUnUUIDVersion4AlDefecto`](../../internal/defect/public_id_test.go#L61) (`internal/defect/public_id_test.go`); [`TestRegister_AsignaUnUUIDVersion4AlEsfuerzo`](../../internal/effort/public_id_test.go#L58) (`internal/effort/public_id_test.go`); [`TestOpenSession_AsignaUnUUIDVersion4ALaSesion`](../../internal/poker/public_id_test.go#L63) (`internal/poker/public_id_test.go`) | `uuid.NewV4()` en [`Manager.Create`](../../internal/backlog/create.go#L14) ([`internal/backlog/create.go`](../../internal/backlog/create.go)), [`Manager.Create`](../../internal/sprint/create.go#L16) ([`internal/sprint/create.go`](../../internal/sprint/create.go)), [`Manager.Register`](../../internal/member/register.go#L12) ([`internal/member/register.go`](../../internal/member/register.go)), [`Manager.Register`](../../internal/defect/register.go#L14) ([`internal/defect/register.go`](../../internal/defect/register.go)), [`Manager.Register`](../../internal/effort/register.go#L17) ([`internal/effort/register.go`](../../internal/effort/register.go)) y [`Manager.OpenSession`](../../internal/poker/create.go#L15) ([`internal/poker/create.go`](../../internal/poker/create.go)); el campo `PublicID` de [`Item`](../../internal/backlog/item.go#L30), [`Sprint`](../../internal/sprint/sprint.go#L21), [`Member`](../../internal/member/member.go#L20), [`Defect`](../../internal/defect/defect.go#L51), [`Effort`](../../internal/effort/effort.go#L11) y [`Session`](../../internal/poker/session.go#L36) |
+| CA-52.2 Dos entidades del mismo tipo nunca tienen el mismo identificador público, y no se puede deducir otro ni la cantidad | "Varias creaciones dan identificadores distintos" (6 ejemplos; runner [`TestFeatures_HU52Base`](../../internal/httpapi/uuid_base_features_test.go#L31)) | [`TestCreate_MilItemsConUUIDDistintosYNoCorrelativos`](../../internal/backlog/public_id_test.go#L53); [`TestCreate_MilSprintsConUUIDDistintosYNoCorrelativos`](../../internal/sprint/public_id_test.go#L47); [`TestRegister_MilIntegrantesConUUIDDistintosYNoCorrelativos`](../../internal/member/public_id_test.go#L71); [`TestRegister_MilDefectosConUUIDDistintosYNoCorrelativos`](../../internal/defect/public_id_test.go#L78); [`TestRegister_MilEsfuerzosConUUIDDistintosYNoCorrelativos`](../../internal/effort/public_id_test.go#L75); [`TestOpenSession_MilSesionesConUUIDDistintosYNoCorrelativos`](../../internal/poker/public_id_test.go#L80) (en `public_id_test.go` de cada paquete) | Las mismas 6 funciones de creación de CA-52.1; `public_id UUID NOT NULL UNIQUE` en las 6 tablas ([`db/init/01-schema.sql`](../../db/init/01-schema.sql)) |
+| CA-52.3 Las rutas aceptan el UUID y ninguna respuesta expone el entero (en la base: la búsqueda por UUID, la traducción al ID interno y el resolvedor de las respuestas) | "Buscar una entidad por su UUID" (6 ejemplos; runner [`TestFeatures_HU52Base`](../../internal/httpapi/uuid_base_features_test.go#L31)) | [`TestGetByPublicID_DevuelveElItemYUnaCopia`](../../internal/backlog/public_id_test.go#L110), [`TestGetByPublicID_DevuelveElSprint`](../../internal/sprint/public_id_test.go#L112), [`TestGetByPublicID_DevuelveElIntegrante`](../../internal/member/public_id_test.go#L130), [`TestGetByPublicID_DevuelveElDefecto`](../../internal/defect/public_id_test.go#L137), [`TestGetByPublicID_DevuelveElEsfuerzo`](../../internal/effort/public_id_test.go#L134), [`TestGetByPublicID_DevuelveLaSesion`](../../internal/poker/public_id_test.go#L140) (en `public_id_test.go` de cada paquete); [`TestParsePublicID_AceptaLaFormaCanonicaYMayusculas`](../../internal/httpapi/public_ids_internal_test.go#L53), [`TestIDFromPath_UUIDExistenteDaElIDInterno`](../../internal/httpapi/public_ids_internal_test.go#L192), [`TestSprintIDFromBody_TraduceElUUIDDelCuerpo`](../../internal/httpapi/public_ids_internal_test.go#L242), [`TestPublicIDs_DevuelveLosUUIDYVacioParaElCero`](../../internal/httpapi/public_ids_internal_test.go#L282), [`TestPublicIDs_BuscaCadaIDUnaSolaVez`](../../internal/httpapi/public_ids_internal_test.go#L304), [`TestWriteResolved_ErrorDelResolvedorEs500`](../../internal/httpapi/public_ids_internal_test.go#L321), [`TestWriteResolved_SinErrorRespondeLaRespuesta`](../../internal/httpapi/public_ids_internal_test.go#L340) (`internal/httpapi/public_ids_internal_test.go`) | `Manager.GetByPublicID` de cada paquete: [`backlog`](../../internal/backlog/public_id.go), [`sprint`](../../internal/sprint/public_id.go), [`member`](../../internal/member/public_id.go), [`defect`](../../internal/defect/public_id.go), [`effort`](../../internal/effort/public_id.go) y [`poker`](../../internal/poker/public_id.go) (`public_id.go`); [`parsePublicID`](../../internal/httpapi/server.go#L225), [`internalID`](../../internal/httpapi/server.go#L239), [`server.itemIDFromPath`](../../internal/httpapi/server.go#L256), [`server.sprintIDFromPath`](../../internal/httpapi/server.go#L262), [`server.memberIDFromPath`](../../internal/httpapi/server.go#L268), [`server.defectIDFromPath`](../../internal/httpapi/server.go#L274), [`server.effortIDFromPath`](../../internal/httpapi/server.go#L280), [`server.sessionIDFromPath`](../../internal/httpapi/server.go#L286), [`server.sprintIDFromBody`](../../internal/httpapi/server.go#L293), [`server.newPublicIDs`](../../internal/httpapi/server.go#L311), [`publicIDs.item`](../../internal/httpapi/server.go#L317), [`publicIDs.sprint`](../../internal/httpapi/server.go#L326), [`resolve`](../../internal/httpapi/server.go#L336) y [`server.writeResolved`](../../internal/httpapi/server.go#L356) ([`internal/httpapi/server.go`](../../internal/httpapi/server.go)); el parámetro `ids` de las funciones de respuesta y los 19 handlers que responden con `writeResolved` (`items.go`, `sprints.go`, `efforts.go`, `defects.go`, `metrics.go`, `reports.go`, `sprint_reports.go` y `dashboard.go`), sin cambiar todavía su salida |
+| CA-52.4 Un ID que no es un UUID responde 400 con el mensaje de su entidad; un UUID que no existe, 404, conservando el orden de errores (en la base: los errores, su 400 y el centinela) | "El UUID nulo no corresponde a ninguna entidad" y "Un UUID que nunca se asignó da el error de su entidad" (6 ejemplos cada uno; runner [`TestFeatures_HU52Base`](../../internal/httpapi/uuid_base_features_test.go#L31)) | [`TestGetByPublicID_ItemInexistenteDevuelveErrItemNotFound`](../../internal/backlog/public_id_test.go#L139), [`TestGetByPublicID_SprintInexistenteDevuelveErrSprintNotFound`](../../internal/sprint/public_id_test.go#L135), [`TestGetByPublicID_ElIntegranteInexistenteDevuelveErrMemberNotFound`](../../internal/member/public_id_test.go#L153), [`TestGetByPublicID_ElDefectoInexistenteDevuelveErrDefectNotFound`](../../internal/defect/public_id_test.go#L160), [`TestGetByPublicID_ElEsfuerzoInexistenteDevuelveErrEffortNotFound`](../../internal/effort/public_id_test.go#L157), [`TestGetByPublicID_LaSesionInexistenteDevuelveErrSessionNotFound`](../../internal/poker/public_id_test.go#L163) (en `public_id_test.go` de cada paquete); [`TestStatusFor_IDsDeEntidadInvalidosSon400`](../../internal/httpapi/public_ids_internal_test.go#L41), [`TestParsePublicID_RechazaConElErrorDeLaEntidad`](../../internal/httpapi/public_ids_internal_test.go#L67), [`TestMissingInternalID_EsElMaximoDeInteger`](../../internal/httpapi/public_ids_internal_test.go#L87), [`TestIDFromPath_UUIDInexistenteDaMissingInternalID`](../../internal/httpapi/public_ids_internal_test.go#L210), [`TestIDFromPath_FormatoInvalidoDaElErrorDeLaEntidad`](../../internal/httpapi/public_ids_internal_test.go#L225), [`TestSprintIDFromBody_FormatoInvalidoDaErrInvalidSprintID`](../../internal/httpapi/public_ids_internal_test.go#L267) (`internal/httpapi/public_ids_internal_test.go`) | [`errInvalidItemID`](../../internal/httpapi/server.go#L41) y los otros 5 errores de formato, [`missingInternalID`](../../internal/httpapi/server.go#L220), [`internalID`](../../internal/httpapi/server.go#L239) y [`statusFor`](../../internal/httpapi/server.go#L375) ([`internal/httpapi/server.go`](../../internal/httpapi/server.go)); `GetByPublicID` de los repositorios, que dan el error de no encontrado de cada entidad |
+| CA-52.5 Funciona igual en memoria y en PostgreSQL: las 6 tablas suman `public_id` (UUID, único), y las modificaciones lo conservan | "Modificar una entidad conserva su UUID" (6 ejemplos; runner [`TestFeatures_HU52Base`](../../internal/httpapi/uuid_base_features_test.go#L31)) | [`TestModificaciones_ConservanElUUIDDelItem`](../../internal/backlog/public_id_test.go#L157), [`TestClose_ConservaElUUIDDelSprint`](../../internal/sprint/public_id_test.go#L154), [`TestUpdate_ConservaElUUIDDelIntegrante`](../../internal/member/public_id_test.go#L171), [`TestChangeStatus_ConservaElUUIDDelDefecto`](../../internal/defect/public_id_test.go#L178), [`TestCorrectHours_ConservaElUUIDDelEsfuerzo`](../../internal/effort/public_id_test.go#L175), [`TestOperaciones_ConservanElUUIDDeLaSesion`](../../internal/poker/public_id_test.go#L181) (en `public_id_test.go` de cada paquete); en `public_id_repository_test.go` de cada paquete, backlog: [`TestMemoryRepository_ContratoPublicID`](../../internal/backlog/public_id_repository_test.go#L108), [`TestPostgresRepository_ContratoPublicID`](../../internal/backlog/public_id_repository_test.go#L113) y [`TestPostgresRepository_PublicIDRepetidoFalla`](../../internal/backlog/public_id_repository_test.go#L121); sprint: [`TestMemoryRepository_ContratoPublicID`](../../internal/sprint/public_id_repository_test.go#L108), [`TestPostgresRepository_ContratoPublicID`](../../internal/sprint/public_id_repository_test.go#L113) y [`TestPostgresRepository_PublicIDRepetidoFalla`](../../internal/sprint/public_id_repository_test.go#L121); member: [`TestMemoryRepository_ContratoPublicID`](../../internal/member/public_id_repository_test.go#L108), [`TestPostgresRepository_ContratoPublicID`](../../internal/member/public_id_repository_test.go#L113) y [`TestPostgresRepository_PublicIDRepetidoFalla`](../../internal/member/public_id_repository_test.go#L121); defect: [`TestMemoryRepository_ContratoPublicID`](../../internal/defect/public_id_repository_test.go#L108), [`TestPostgresRepository_ContratoPublicID`](../../internal/defect/public_id_repository_test.go#L113) y [`TestPostgresRepository_PublicIDRepetidoFalla`](../../internal/defect/public_id_repository_test.go#L121); effort: [`TestMemoryRepository_ContratoPublicID`](../../internal/effort/public_id_repository_test.go#L108), [`TestPostgresRepository_ContratoPublicID`](../../internal/effort/public_id_repository_test.go#L113) y [`TestPostgresRepository_PublicIDRepetidoFalla`](../../internal/effort/public_id_repository_test.go#L121); poker: [`TestMemoryRepository_ContratoPublicID`](../../internal/poker/public_id_repository_test.go#L108), [`TestPostgresRepository_ContratoPublicID`](../../internal/poker/public_id_repository_test.go#L113) y [`TestPostgresRepository_PublicIDRepetidoFalla`](../../internal/poker/public_id_repository_test.go#L121) | `GetByPublicID` de los repositorios en memoria y en PostgreSQL, `public_id` en `Save` y en el `scan` de PostgreSQL de los 6 paquetes; por ejemplo, [`MemoryRepository.GetByPublicID`](../../internal/backlog/memory_repository.go#L84) ([`internal/backlog/memory_repository.go`](../../internal/backlog/memory_repository.go)), [`PostgresRepository.Save`](../../internal/backlog/postgres_repository.go#L33), [`scanItem`](../../internal/backlog/postgres_repository.go#L109) y [`PostgresRepository.GetByPublicID`](../../internal/backlog/postgres_repository.go#L118) ([`internal/backlog/postgres_repository.go`](../../internal/backlog/postgres_repository.go)); [`Manager.Update`](../../internal/backlog/update.go#L23), que conserva el `PublicID` ([`internal/backlog/update.go`](../../internal/backlog/update.go)); [`db/init/01-schema.sql`](../../db/init/01-schema.sql) |
+| CA-52.6 La interfaz web funciona con UUID | — | — (lo hace cada entidad) | — |
+| CA-52.7 Crear entidades en simultáneo genera identificadores únicos, sin condiciones de carrera | — | [`TestCreate_CreacionesSimultaneasDeItemsConUUIDDistintos`](../../internal/backlog/public_id_test.go#L80); [`TestCreate_CreacionesSimultaneasDeSprintsConUUIDDistintos`](../../internal/sprint/public_id_test.go#L78); [`TestRegister_RegistrosSimultaneosConUUIDDistintos`](../../internal/member/public_id_test.go#L99) (member); [`TestRegister_RegistrosSimultaneosConUUIDDistintos`](../../internal/defect/public_id_test.go#L106) (defect); [`TestRegister_RegistrosSimultaneosConUUIDDistintos`](../../internal/effort/public_id_test.go#L103) (effort); [`TestOpenSession_AperturasSimultaneasConUUIDDistintos`](../../internal/poker/public_id_test.go#L108) (en `public_id_test.go` de cada paquete), con `-race` en la CI | Las 6 funciones de creación de CA-52.1, que generan el UUID dentro del lock que ya toman (en esfuerzos y defectos, dentro de `WithOpenSprint`) |
+
+### Ítems e integrantes (Cardozo Leandro)
+
+Pendiente de su responsable.
+
+### Sprints y Planning Poker (Buttini Cristobal)
+
+Pendiente de su responsable.
+
+### Defectos y esfuerzos (García Santiago)
+
+Pendiente de su responsable.
+
+### PDF del reporte (Peñalbé Hernán)
+
+Pendiente de su responsable.
+
+## Base compartida
+
+### Tests existentes adaptados
+
+**12 tests existentes se adaptaron** sin cambiar lo que verifican: 3 de `internal/backlog`, 8 de `internal/member` y 1 de `internal/report`. Además cambiaron funciones auxiliares de otros tests: los pasos de 3 runners de godog (HU-16, HU-26 y HU-29), `contractSave` y las comparaciones de los contratos de los 6 paquetes, las semillas de PostgreSQL de `defect` y `effort`, y `do` en `internal/httpapi/server_test.go` (la traducción, abajo). 13 repositorios falsos de los tests suman un `GetByPublicID` que no usan, para cumplir la interfaz. Las comparaciones copian el `PublicID` del valor obtenido, o lo ignoran en los contratos, porque es aleatorio.
+
+Conteos (corridos sobre `2bcd3c6`):
+
+```
+$ grep -c '^func Test' internal/{backlog,sprint,member,defect,effort,poker}/public_id*_test.go internal/httpapi/public_ids_internal_test.go internal/httpapi/uuid_base_features_test.go
+internal/backlog/public_id_repository_test.go:3
+internal/backlog/public_id_test.go:6
+internal/sprint/public_id_repository_test.go:3
+internal/sprint/public_id_test.go:6
+internal/member/public_id_repository_test.go:3
+internal/member/public_id_test.go:6
+internal/defect/public_id_repository_test.go:3
+internal/defect/public_id_test.go:6
+internal/effort/public_id_repository_test.go:3
+internal/effort/public_id_test.go:6
+internal/poker/public_id_repository_test.go:3
+internal/poker/public_id_test.go:6
+internal/httpapi/public_ids_internal_test.go:13
+internal/httpapi/uuid_base_features_test.go:1
+$ grep -cE '^\s*Esquema del escenario:' features/HU-52-base.feature
+6
+$ grep -cE '^\s*\| (un|una) ' features/HU-52-base.feature
+36
+```
+
+Los 12 tests adaptados se contaron comparando cada función `Test` de `2fb318d` con la de `e039429`.
+
+### Medición antes del RED (tarea 1.1)
+
+Antes del RED se aplicó, en una copia temporal de `e039429` (con `git worktree`), lo que el GREEN cambia en el dominio y en el esquema: el campo `PublicID`, `uuid.NewV4()` en las 6 creaciones, `public_id` en `Save` y en el `scan` de PostgreSQL y la columna `public_id UUID NOT NULL UNIQUE` en las 6 tablas (19 archivos, +90 −44). Se volvió a correr el 15/11/2026 para esta evidencia; la copia se borró después.
+
+| Corrida | Tests de primer nivel que fallan |
+|---|---|
+| En memoria | 14, más `TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra` por las líneas corridas |
+| Con PostgreSQL | 30, con 43 subtests, más `TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra` |
+
+- **En memoria (14):** comparan el struct completo, y el `PublicID` aleatorio no coincide.
+  - `internal/backlog`: `TestListItems_ModificarLaListaDevueltaNoAlteraLosItemsGuardados`, `TestListItemsByPriority_OrdenaAltaMediaBajaConTodosSusDatos` y `TestListItemsByPriority_ModificarLaListaDevueltaNoAlteraLosItemsGuardados`;
+  - `internal/member` (8): `TestList_DevuelveLosIntegrantesOrdenadosPorIDConSuRol`, `TestList_MuestraLosDatosModificados`, `TestRegister_GuardaElIntegranteConNombreYRol`, `TestRegister_AceptaLosTresRolesConIDsCorrelativos`, `TestRegister_DevuelveUnaCopia`, `TestUpdate_CambiaElNombreYElRol`, `TestUpdate_NormalizaElNombreYElRol` y el runner `TestFeatures_HU16ModificarIntegrante`;
+  - los runners `TestFeatures_HU29RegistrarDefecto` (`internal/defect`) y `TestFeatures_HU26RegistrarEsfuerzo` (`internal/effort`);
+  - `TestSprint_EjemploDeTEC03` (`internal/report`).
+- **Con PostgreSQL, además (16):** los contratos de los 6 repositorios (`TestPostgresRepository_Contrato` en los 6 paquetes, y `ContratoGetByIDYUpdate`, `ContratoList` y `ContratoUpdate`), y 7 tests propios de PostgreSQL de `effort`, `defect` y `member`. Guardan sin `PublicID`, así que el segundo `Save` choca con `UNIQUE`, o comparan el struct completo.
+
+Todos se adaptaron en el RED, así que el GREEN no toca tests.
+
+### Fase RED (`2fb318d`)
+
+Se escribieron los tests y el `.feature` antes del código. En producción, solo stubs sin lógica (31 archivos, +331 −16), para que compile y los tests fallen por aserción:
+
+- el campo `PublicID uuid.UUID` en los 6 structs;
+- `GetByPublicID` en la interfaz `Repository`, en los dos repositorios y en el `Manager` (`public_id.go`) de los 6 paquetes, que devuelven el error de no encontrado de su entidad;
+- en `internal/httpapi/server.go`: los 6 errores de formato, `missingInternalID`, y los stubs de `parsePublicID` (siempre el error), de los 6 `xIDFromPath` (siempre el error), de `sprintIDFromBody` (0 sin error), del resolvedor (`""`) y de `writeResolved` (sin el 500).
+
+El esquema no cambió en el RED (ver "Desviaciones").
+
+Las salidas son de una copia temporal de `2fb318d` con `git worktree`, corridas el 15/11/2026 en Windows con go1.27.1. Para PostgreSQL se levantó una base con el esquema del RED (sin `public_id` en las 6 tablas), con `POSTGRES_PORT=5434`.
+
+`go vet ./...`: sin errores.
+
+`go test -count=1 ./...` en memoria:
+
+```
+ok   seguimiento-medicion-gpc/cmd/server
+FAIL
+FAIL seguimiento-medicion-gpc/internal/backlog
+ok   seguimiento-medicion-gpc/internal/dashboard
+FAIL
+FAIL seguimiento-medicion-gpc/internal/defect
+FAIL
+FAIL seguimiento-medicion-gpc/internal/effort
+FAIL
+FAIL seguimiento-medicion-gpc/internal/httpapi
+FAIL
+FAIL seguimiento-medicion-gpc/internal/member
+ok   seguimiento-medicion-gpc/internal/metrics
+FAIL
+FAIL seguimiento-medicion-gpc/internal/poker
+ok   seguimiento-medicion-gpc/internal/postgres
+ok   seguimiento-medicion-gpc/internal/postgrestest
+ok   seguimiento-medicion-gpc/internal/project
+ok   seguimiento-medicion-gpc/internal/report
+FAIL
+FAIL seguimiento-medicion-gpc/internal/sprint
+ok   seguimiento-medicion-gpc/internal/trazabilidad
+?    seguimiento-medicion-gpc/internal/web [no test files]
+FAIL
+```
+
+Con `TEST_DATABASE_URL=postgres://gpc:gpc_dev@localhost:5434/gpc_test?sslmode=disable` y `-v`, los paquetes dan lo mismo.
+
+| Corrida del RED | Tests de primer nivel que fallan | Pasan | SKIP | Panics |
+|---|---|---|---|---|
+| En memoria (`-v`) | 47 | 1149 | 55 (los de PostgreSQL, sin `TEST_DATABASE_URL`) | 0 |
+| Con PostgreSQL (`-v`) | 59 | 1192 | 0 | 0 |
+| Escenarios de `HU-52-base.feature` | `36 scenarios (12 passed, 24 failed)` | `132 steps (102 passed, 24 failed, 6 skipped)` | — | — |
+
+- **Fallan solo tests nuevos de HU-52,** todos por aserción (por ejemplo, `PublicID = "00000000-0000-0000-0000-000000000000", se esperaba un UUID versión 4 en forma canónica`, `statusFor(error de ítem) = 500, se esperaba 400` o `Save con un PublicID repetido devolvió {…} sin error`). Ningún test existente falla: con la traducción en `do()`, tampoco los de `internal/httpapi`.
+- **Los 12 de más con PostgreSQL** son `TestPostgresRepository_ContratoPublicID` y `TestPostgresRepository_PublicIDRepetidoFalla` de los 6 paquetes, que en memoria se saltean.
+- **Pasan en el RED 9 tests nuevos** (los 6 de "inexistente", `TestParsePublicID_RechazaConElErrorDeLaEntidad`, `TestIDFromPath_FormatoInvalidoDaElErrorDeLaEntidad` y `TestMissingInternalID_EsElMaximoDeInteger`) **y 12 escenarios** (los de UUID nulo e inexistente), porque los stubs ya devuelven el error de no encontrado o de formato. Los 6 pasos "skipped" de godog son pasos que siguen a uno que falló.
+- **`internal/trazabilidad`:** ok, con el `-update` de los links en el mismo commit.
+
+### Fase GREEN (`2bcd3c6`)
+
+**Condición de SKIP:** 0 SKIP con PostgreSQL. En memoria, los tests de PostgreSQL se saltean siempre (`postgrestest.Pool` hace `t.Skip` sin `TEST_DATABASE_URL`): los 55 SKIP en memoria son esos tests.
+
+Código mínimo para que pasen los tests de la base, sin tocar tests ni `.feature` (35 archivos fuera de `docs/`, +318 −115):
+
+- **dominio de los 6 paquetes:** `uuid.NewV4()` al crear, dentro del lock que ya toma cada creación; `GetByPublicID` en el `Manager` y en los dos repositorios; `public_id` en `Save` y en el `scan` de PostgreSQL; `PublicID: current.PublicID` en `backlog/update.go` (el hallazgo de abajo);
+- **esquema:** `public_id UUID NOT NULL UNIQUE` en las 6 tablas de `db/init/01-schema.sql`;
+- **`internal/httpapi/server.go`:** `parsePublicID` (y `parseProjectID` la llama), `internalID`, los 6 `xIDFromPath`, `sprintIDFromBody`, el resolvedor con su cache, `writeResolved` y los 6 errores con su 400 en `statusFor`;
+- **funciones de respuesta:** las 8 de D3 (`toItemResponse`, `toSprintResponse`, `toEffortResponse`, `toEffortListResponse`, `toDefectResponse`, `toDefectListResponse`, `toSprintMetricsResponse` y `toStoryListResponse`) y las 3 que las componen (`toSummaryResponse`, `toProjectReportResponse` y `toSprintReportResponse`) reciben el resolvedor `ids`; los 19 handlers que las llaman lo crean y responden con `writeResolved`. Ninguna lo usa todavía, así que **las rutas y las salidas de la API no cambian**: no cambió ningún campo `json`, ningún handler usa los `xIDFromPath`, y los tests existentes de la API pasan con sus IDs enteros.
+
+Las salidas son de una copia temporal de `2bcd3c6` con `git worktree`, corridas el 15/11/2026. Para PostgreSQL se recreó la base con `docker compose down -v` y `up -d --wait` (esquema del GREEN).
+
+```
+$ gofmt -l .
+$ go vet ./...
+$ git diff --stat 2fb318d 2bcd3c6 -- '*_test.go' features/
+```
+
+Las tres salidas están vacías.
+
+`go test -count=1 ./...` en memoria:
+
+```
+ok   seguimiento-medicion-gpc/cmd/server
+ok   seguimiento-medicion-gpc/internal/backlog
+ok   seguimiento-medicion-gpc/internal/dashboard
+ok   seguimiento-medicion-gpc/internal/defect
+ok   seguimiento-medicion-gpc/internal/effort
+ok   seguimiento-medicion-gpc/internal/httpapi
+ok   seguimiento-medicion-gpc/internal/member
+ok   seguimiento-medicion-gpc/internal/metrics
+ok   seguimiento-medicion-gpc/internal/poker
+ok   seguimiento-medicion-gpc/internal/postgres
+ok   seguimiento-medicion-gpc/internal/postgrestest
+ok   seguimiento-medicion-gpc/internal/project
+ok   seguimiento-medicion-gpc/internal/report
+ok   seguimiento-medicion-gpc/internal/sprint
+ok   seguimiento-medicion-gpc/internal/trazabilidad
+?    seguimiento-medicion-gpc/internal/web [no test files]
+```
+
+| Corrida del GREEN | Resultado |
+|---|---|
+| `go test -count=1 ./...` en memoria | 15 paquetes `ok`, 0 FAIL |
+| `go test -count=1 -v ./...` en memoria | 1196 tests de primer nivel en PASS, 0 FAIL; 55 SKIP, que son los de PostgreSQL sin `TEST_DATABASE_URL` |
+| `go test -count=1 -p 1 -v ./...` con PostgreSQL | 15 paquetes `ok`, 1251 tests de primer nivel, los 1251 en PASS, 0 FAIL y 0 SKIP |
+| Escenarios de `HU-52-base.feature` | `36 scenarios (36 passed)` y `132 steps (132 passed)` |
+
+#### Cobertura
+
+`go test -cover` con PostgreSQL, sobre `main` `45d2c31` y sobre `2bcd3c6`:
+
+| Paquete | `main` `45d2c31` | Rama `2bcd3c6` |
+|---|---|---|
+| `internal/backlog` | 99.0% | 98.7% |
+| `internal/sprint` | 97.2% | 96.9% |
+| `internal/member` | 96.0% | 95.7% |
+| `internal/effort` | 96.9% | 96.7% |
+| `internal/poker` | 95.3% | 95.1% |
+| `internal/defect` | 95.6% | 95.6% |
+| `internal/httpapi` | 97.4% | 97.5% |
+| Los otros 8 paquetes con código | iguales | iguales |
+| Total del perfil (`-coverprofile`) | 95.0% | 95.0% |
+| Total con `-coverpkg=./...` | 95.9% | 95.9% |
+
+Las bajas son las ramas de error de PostgreSQL de `GetByPublicID` (un error de la base que no es "no encontrado"), que ningún test provoca, como en `GetByID`. `docs/reportes/cobertura.md` se actualiza con el cierre de HU-52.
+
+### Cambios respecto del diseño
+
+Aprobados por Sosa Ricardo el 15/11/2026 y anotados en `design.md`, para que el Agile Enabler los vea en el PR:
+
+1. **El resolvedor tiene solo `item(id)` y `sprint(id)`** (D5), y no un método por entidad. Los integrantes, los defectos, los esfuerzos y las sesiones nunca se nombran desde otra entidad: su `id` sale del propio struct. Además, el `Manager` de integrantes no tiene una búsqueda por ID interno.
+2. **El runner de `HU-52-base.feature` está en `internal/httpapi`** (D9), porque es el único paquete que ya usa los `Manager` de las 6 entidades. Los pasos llaman a los `Manager`, no a la API.
+3. **Los contratos de repositorio ignoran el `PublicID` en sus comparaciones generales** (D9), porque es aleatorio. Lo verifica el contrato nuevo `runRepositoryPublicIDContract`.
+
+**La traducción en `do()`** (D9, [`internal/httpapi/entity_ids_test.go`](../../internal/httpapi/entity_ids_test.go)). Los tests de la API tienen 279 (230 literales y 49 armadas con `fmt.Sprintf` o concatenación, en 15 archivos de `internal/httpapi`, contadas con `git grep` sobre `e039429`) rutas con IDs fijos de estas entidades. En lugar de reescribirlas, `do()` guarda, por handler y por entidad, el `id` que devolvió la API al crear cada entidad (`POST` con 201), y traduce el número N de `/api/{entidad}/N/…` (y el `{itemId}` de `/api/sprints/N/items/M/…`) al `id` de la N-ésima entidad creada por la API. Hoy es la identidad: la API devuelve enteros correlativos, y ningún test existente cambió de resultado. En `server_test.go` cambian 2 líneas de `do`. Los casos de "inexistente" (como `/api/items/999`), las entidades guardadas directo en el repositorio, los IDs de los cuerpos y las respuestas esperadas con enteros los adapta cada responsable para su entidad.
+
+**El PDF del reporte** quedó fuera de la base por decisión del Agile Enabler el 15/11/2026, y lo toma Peñalbé Hernán (HU-40 es suya), en paralelo con las entidades. Cambia una salida, los tests de `internal/report` verifican el texto con enteros, y depende solo de la base.
+
+### Hallazgo: `backlog.Update` perdía el `PublicID`
+
+`TestModificaciones_ConservanElUUIDDelItem` (CA-52.5) falló con el GREEN de prueba, antes del commit del RED: [`Manager.Update`](../../internal/backlog/update.go#L23) arma un `Item` nuevo campo por campo y no copiaba el `PublicID`, así que modificar un ítem lo dejaba con el UUID nulo, y el cambio de estado y la estimación siguientes heredaban ese UUID nulo. El GREEN suma `PublicID: current.PublicID`. Los otros 5 paquetes modifican la entidad leída, que ya trae el `PublicID`.
+
+### Desviaciones
+
+1. **El `-update` de los links va dentro del RED y del GREEN.** Los imports de `uuid`, el campo `PublicID` y las líneas agregadas a los tests adaptados corren de línea 446 links de las evidencias de otras historias, y `TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra` falla si no se corrige. Se pidió correrlo una sola vez antes del PR, pero eso dejaba `internal/trazabilidad` en rojo en el RED y en el GREEN. Sosa Ricardo decidió incluirlo en cada commit, para que `internal/trazabilidad` quede en ok en cada uno: en el RED cambia 446 links en 31 evidencias (192 líneas) y en el GREEN 194 links en 29 evidencias (107 líneas), y en los dos casos solo cambian números de línea. Se volverá a correr antes del PR.
+2. **Tests que pasan en el RED:** los de "inexistente" y "nulo" (6 de dominio, `TestParsePublicID_RechazaConElErrorDeLaEntidad`, `TestIDFromPath_FormatoInvalidoDaElErrorDeLaEntidad`, `TestMissingInternalID_EsElMaximoDeInteger`, y 12 de los 36 escenarios), porque los stubs ya devuelven el error de no encontrado o de formato.
+3. **El esquema no cambió en el RED:** con `public_id NOT NULL`, los tests de PostgreSQL habrían fallado por una causa ajena a los tests nuevos (como en HU-51).
+4. **`-race` lo corre la CI:** en Windows no anda (`-race requires cgo`), así que los 6 tests de CA-52.7 corrieron acá sin `-race`.
+
+### Commits
+
+| Fase | Commit | Mensaje |
+|---|---|---|
+| Propuesta (OpenSpec) | d49f3c8 | `docs(HU-52): agregar la propuesta de OpenSpec` |
+| Merge de `main` | e039429 | `chore(HU-52): traer main con la columna Código de las evidencias` |
+| Aprobación | 8b65300 | `docs(HU-52): registrar la aprobación de la propuesta` |
+| RED de la base | 2fb318d | `test(HU-52): agregar los tests de la base (RED)` |
+| GREEN de la base | 2bcd3c6 | `feat(HU-52): agregar el UUID público al dominio de las 6 entidades y los helpers compartidos (GREEN)` |
+| Refactor de la base | (propuesto) | — |
+| Evidencia de la base | (propuesto) | `docs(HU-52): agregar la evidencia de la base` |
