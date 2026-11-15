@@ -111,7 +111,7 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
   - «Sprint actual» y la sesión en la interfaz (CA-52.6).
 
   Adaptar las filas de sprints y sesiones de `server_test.go` y los tests de `sprints_test.go`, `poker_test.go`, `metrics_test.go`, `dashboard_test.go` y `sprint_reports_test.go` cuyo resultado cambia. Verificar el RED y proponer `git commit -m "test(HU-52): agregar tests de sprints y Planning Poker (RED)" -m "Refs #197"`.
-- [ ] 3.3 GREEN:
+- [x] 3.3 GREEN:
   - los handlers de `sprints.go` (`sprintItemIDs` y las rutas `/api/sprints/{id}/…`), `poker.go`, `metrics.go` (`sprintMetrics`) y `sprint_reports.go` (`sprintReport`) usan `sprintIDFromPath`, `itemIDFromPath` y `sessionIDFromPath`;
   - los cuerpos de `toSprintResponse` y `toSprintMetricsResponse`, y las respuestas de `poker.go`, usan el resolvedor;
   - «Sprint actual» y las secciones de Sprints y Planning Poker de `index.html` y `app.js`.
