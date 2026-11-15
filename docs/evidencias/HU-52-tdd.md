@@ -282,6 +282,10 @@ Aprobados por Sosa Ricardo el 15/11/2026 y anotados en `design.md`, para que el 
 
 `TestModificaciones_ConservanElUUIDDelItem` (CA-52.5) falló con el GREEN de prueba, antes del commit del RED: [`Manager.Update`](../../internal/backlog/update.go#L23) arma un `Item` nuevo campo por campo y no copiaba el `PublicID`, así que modificar un ítem lo dejaba con el UUID nulo, y el cambio de estado y la estimación siguientes heredaban ese UUID nulo. El GREEN suma `PublicID: current.PublicID`. Los otros 5 paquetes modifican la entidad leída, que ya trae el `PublicID`.
 
+### Mejora pendiente: el mapa `entityIDs` no se limpia
+
+Observación de Buttini Cristobal en la revisión del PR #201. `entityIDs` (`internal/httpapi/entity_ids_test.go`) es un mapa global, por handler, que `do()` llena y que nunca se vacía: cada test crea su handler, así que las entradas de los tests ya terminados quedan en memoria hasta el final de `go test`. No cambia ningún resultado, porque cada handler tiene su propia lista, pero crece con la cantidad de tests. Pasa lo mismo con `projectIDs` de HU-51 (`server_test.go`). Queda como mejora pendiente, sin cambiar en la base: por ejemplo, borrar la entrada del handler con `t.Cleanup` al crearlo, para los dos mapas a la vez.
+
 ### Desviaciones
 
 1. **El `-update` de los links va dentro del RED y del GREEN.** Los imports de `uuid`, el campo `PublicID` y las líneas agregadas a los tests adaptados corren de línea 446 links de las evidencias de otras historias, y `TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra` falla si no se corrige. Se pidió correrlo una sola vez antes del PR, pero eso dejaba `internal/trazabilidad` en rojo en el RED y en el GREEN. Sosa Ricardo decidió incluirlo en cada commit, para que `internal/trazabilidad` quede en ok en cada uno: en el RED cambia 446 links en 31 evidencias (192 líneas) y en el GREEN 194 links en 29 evidencias (107 líneas), y en los dos casos solo cambian números de línea. Se volverá a correr antes del PR.
@@ -304,3 +308,20 @@ Aprobados por Sosa Ricardo el 15/11/2026 y anotados en `design.md`, para que el 
 | PDF fuera de la base | 66a576c | `docs(HU-52): pasar el PDF del reporte a Peñalbé Hernán` |
 | Evidencia de la base | 235b781 | `docs(HU-52): agregar la evidencia de la base` |
 | Merge del PR #200 (PDF) | 0a6c513 | `Merge pull request #200 from Elwilsonic/feature/HU-52-uuid-pdf` |
+
+## Pendiente al corte
+
+Estado al 15/11/2026, antes del corte del lunes 16/11/2026 a las 14:00. La base (PR #201, con el PDF del PR #200 integrado en su rama) está aprobada y falta su merge en `main`. Las tres partes por entidad todavía no tienen rama ni PR en el repositorio (`git ls-remote --heads origin` muestra solo `feature/HU-52-uuid-base` y `feature/HU-52-uuid-pdf`): se crean desde la base. Según "Si no llega al corte" de `proposal.md`, lo que no esté en `main` con la CI en verde a esa hora queda así:
+
+| Parte | Responsable | Estado | Lo que queda en `main` si no llega | Pendiente que se documenta |
+|---|---|---|---|---|
+| Base compartida | Sosa Ricardo y Cardozo Leandro | PR #201 aprobado, falta el merge | IDs enteros en las 6 entidades, como en HU-51 | R1 de HU-51 sigue abierto completo, y las entidades no se pueden integrar |
+| PDF del reporte | Peñalbé Hernán | Hecho, integrado en la rama de la base (PR #200) | Entra con la base | — |
+| Ítems | Cardozo Leandro | Pendiente | Rutas y respuestas del ítem con ID entero | Las 10 rutas de ítems y el `id` del ítem, y que el `item_id` de otras respuestas no sirve todavía para `/api/items/{id}` |
+| Integrantes | Cardozo Leandro | Pendiente | `PUT /api/integrantes/{id}` y el `id` del integrante con entero | 1 ruta, 1 campo y el campo «ID del integrante» |
+| Sprints | Buttini Cristobal | Pendiente | Las 9 rutas de sprints, `id` y `sprint_id` con entero, y «Sprint actual» numérico | Lo mismo que en ítems, para los campos que nombran un sprint |
+| Planning Poker | Buttini Cristobal | Pendiente | Las 4 rutas de sesiones con entero | 4 rutas y el `id` de la sesión |
+| Defectos | García Santiago | Pendiente | `PATCH /api/defectos/{id}/estado`, el `id` y los sprints del cuerpo con entero | 1 ruta, 2 campos del cuerpo, 4 de respuesta y 4 de la interfaz |
+| Esfuerzos | García Santiago | Pendiente | `PATCH /api/esfuerzos/{id}/horas` y el `id` con entero | 1 ruta, 3 campos de respuesta y 3 de la interfaz |
+
+Al corte, esta tabla se actualiza con lo que haya llegado (tarea 6.1). Cada pendiente se avisa en la Review y queda como riesgo abierto en `design.md`.

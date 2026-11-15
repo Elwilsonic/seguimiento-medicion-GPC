@@ -4,29 +4,41 @@ Cobertura de los tests automatizados (en el CI, `go test -race -coverprofile=cov
 
 ## Cobertura actual
 
-- **Fecha:** 14/11/2026
-- **Última historia con cobertura medida:** HU-51, rama `feature/HU-51-uuid`, medida sobre el GREEN `1584a65` en Windows con go1.27.1 y PostgreSQL 17.11 (puerto 5434), comparada con `main` (`8bf9550`) en el mismo entorno, en una copia temporal con `git worktree` y con su esquema. La columna "Con base" de la tabla es la de esta medición; la columna "Sin base" sigue siendo la de HU-49 (ver el párrafo de HU-51).
-- **Historia anterior:** HU-50, rama `feature/HU-50-listar-proyectos`, medida sobre el GREEN `2386fb8` (rama creada desde `main` `b75e589`) en Windows con go1.27.2, sin base, comparada con `main` en el mismo entorno (ver el párrafo de HU-50). La tabla sigue siendo la de HU-49 (Linux, go1.27.1), porque las cifras de Windows con go1.27.2 no se comparan con ella.
+- **Fecha:** 15/11/2026
+- **Última historia con cobertura medida:** HU-52 (base compartida, con el PDF del PR #200), rama `feature/HU-52-uuid-base`, medida sobre `8cf3d22` en Windows con go1.27.1 y PostgreSQL 17.11 (puerto 5434), comparada con `main` (`45d2c31`) en el mismo entorno, en una copia temporal con `git worktree` y con su esquema. La columna "Con base" de la tabla es la de esta medición; la columna "Sin base" sigue siendo la de HU-49 (ver el párrafo de HU-52).
+- **Historia anterior:** HU-51, rama `feature/HU-51-uuid`, medida sobre el GREEN `1584a65` en Windows con go1.27.1 y PostgreSQL 17.11 (puerto 5434), comparada con `main` (`8bf9550`) en el mismo entorno, en una copia temporal con `git worktree` y con su esquema. La columna "Con base" de la tabla es la de esta medición; la columna "Sin base" sigue siendo la de HU-49 (ver el párrafo de HU-51).
+- **Historia anterior a HU-51:** HU-50, rama `feature/HU-50-listar-proyectos`, medida sobre el GREEN `2386fb8` (rama creada desde `main` `b75e589`) en Windows con go1.27.2, sin base, comparada con `main` en el mismo entorno (ver el párrafo de HU-50). La tabla sigue siendo la de HU-49 (Linux, go1.27.1), porque las cifras de Windows con go1.27.2 no se comparan con ella.
 - **Historia anterior con la tabla medida:** HU-49, rama `feature/HU-49-historias-en-reporte`, medida sobre el GREEN `e136df7` (rama creada desde `main` `9e85d72`) en Linux con go1.27.1, sin base y con PostgreSQL 16.15. La comparación con `main` (`9e85d72`) se hizo con el mismo Go y los mismos comandos, en una copia temporal con `git worktree`. La columna "Con base" es la de HU-16: HU-49 no cambia los repositorios ni el esquema, y con base el total queda igual.
-- **Comandos:** sin base, `go test -count=1 -p 1 -coverprofile=cover.out ./...` y `go tool cover -func=cover.out`; con base, los mismos con `TEST_DATABASE_URL` y `-coverpkg=./...` para el total. Total: 84.7% sin base (HU-49); con base y `-coverpkg=./...`, 96.2% en HU-49 y 95.9% en HU-51 (96.3% en `main` `8bf9550`, mismo entorno). El CI (Linux) corre los tests con `-race` y con un servicio PostgreSQL, y falla si se omite alguno.
+- **Comandos:** sin base, `go test -count=1 -p 1 -coverprofile=cover.out ./...` y `go tool cover -func=cover.out`; con base, los mismos con `TEST_DATABASE_URL` y `-coverpkg=./...` para el total. Total: 84.7% sin base (HU-49); con base y `-coverpkg=./...`, 96.2% en HU-49, 95.9% en HU-51 (96.3% en `main` `8bf9550`, mismo entorno) y 95.9% en HU-52 (95.9% en `main` `45d2c31`, mismo entorno). El CI (Linux) corre los tests con `-race` y con un servicio PostgreSQL, y falla si se omite alguno.
 
-| Paquete | Sin base (HU-49, Linux, go1.27.1) | Con base (HU-51, Windows, go1.27.1, PostgreSQL 17.11) |
+| Paquete | Sin base (HU-49, Linux, go1.27.1) | Con base (HU-52, Windows, go1.27.1, PostgreSQL 17.11) |
 |---|---|---|
 | `cmd/server` | 29.8% | 31.6% |
-| `internal/backlog` | 83.3% | 99.0% |
+| `internal/backlog` | 83.3% | 98.7% |
 | `internal/dashboard` | 100.0% | 100.0% |
 | `internal/defect` | 77.7% | 95.6% |
-| `internal/effort` | 74.2% | 96.9% |
-| `internal/httpapi` | 98.7% | 97.4% |
-| `internal/member` | 68.8% | 96.0% |
+| `internal/effort` | 74.2% | 96.7% |
+| `internal/httpapi` | 98.7% | 97.5% |
+| `internal/member` | 68.8% | 95.7% |
 | `internal/metrics` | 100.0% | 100.0% |
-| `internal/poker` | 75.5% | 95.3% |
+| `internal/poker` | 75.5% | 95.1% |
 | `internal/report` | 100.0% | 100.0% |
 | `internal/web` | 0.0% (cubierto por los tests de `internal/httpapi`) | — |
 | `internal/postgres` | 83.3% | 83.3% |
 | `internal/postgrestest` | 36.8% | 36.8% |
 | `internal/project` | 74.8% | 98.4% |
-| `internal/sprint` | 77.1% | 97.2% |
+| `internal/sprint` | 77.1% | 96.9% |
+
+Con HU-52 (base compartida y PDF del reporte), los `GetByPublicID` de los `Manager` y de los repositorios en memoria de las 6 entidades, y `parsePublicID`, los `xIDFromPath`, `sprintIDFromBody`, el resolvedor y `writeResolved` de `internal/httpapi`, quedan cubiertos por los tests de la base.
+
+- **Medición:** con PostgreSQL 17.11 (puerto 5434, base recreada con `docker compose down -v` y `up -d --wait`), sobre `8cf3d22` (la base, con el PDF del PR #200 integrado en su rama), en Windows con go1.27.1, con `go test -count=1 -p 1 -coverprofile=cover.out ./...` y `go tool cover -func=cover.out`, y el total con `-coverpkg=./...`. Los 1252 tests de primer nivel pasan, con 0 SKIP y 0 FAIL (`go test -count=1 -p 1 -v ./...`).
+- **Resultado:** comparado con `main` (`45d2c31`, mismo entorno y mismos comandos, con el esquema de `main`, 1183 tests de primer nivel en PASS):
+  - bajan entre 0.2 y 0.3 puntos `internal/backlog` (99.0% a **98.7%**), `internal/sprint` (97.2% a **96.9%**), `internal/member` (96.0% a **95.7%**), `internal/effort` (96.9% a **96.7%**) e `internal/poker` (95.3% a **95.1%**);
+  - `internal/httpapi` sube de 97.4% a **97.5%**;
+  - los demás paquetes conservan sus porcentajes, también `internal/report` (100.0%) con el PDF;
+  - el total del perfil sube de **95.0%** a **95.1%**, y con `-coverpkg=./...` queda en **95.9%**. Sobre el GREEN de la base solo (`2bcd3c6`, antes del PDF), el total del perfil daba 95.0%, igual que `main` (evidencia de HU-52).
+- **Por qué bajan los 5 paquetes:** las líneas sin cubrir son la rama de error genérico de la base en `PostgresRepository.GetByPublicID` (un error que no es "no encontrado"), que ningún test provoca, igual que en `GetByID`.
+- **Concurrencia:** `-race` no corre en Windows (sin cgo); lo ejecuta el CI, y lo necesitan los 6 tests de CA-52.7.
 
 Con HU-51, `parseProjectID`, `projectIDFromPath`, `toItemResponse` y `toSprintResponse` de `internal/httpapi`, y `Create` y los `GetByPublicID` del `Manager` y del repositorio en memoria de `internal/project`, quedan en 100.0%.
 
@@ -194,3 +206,4 @@ HU-13 agrega `Close` y `Update` en memoria y PostgreSQL. En el CI, `internal/spr
 | 30/10/2026 | HU-17 | `internal/member` e `internal/httpapi` | 68.8% y 98.7% (sin base); total 84.5% | Medido sobre `c112570` en Windows con go1.27.1 mediante `go test -count=1 -cover ./...` y `go test -count=1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out`, sin `TEST_DATABASE_URL` (41 tests de PostgreSQL omitidos; HU-17 no agrega ninguno); comparación con `main` (`3edc9e9`) con los mismos comandos en una copia temporal con `git worktree`: `internal/member` 65.5%, `internal/httpapi` 98.7%, total 84.3%. `List` y `listMembers` quedan en 100.0%. No se midió con PostgreSQL: HU-17 no cambia los repositorios ni el esquema. Sin `-race` (sin cgo); lo ejecuta el CI |
 | 30/10/2026 | HU-37 (corrección) | `internal/httpapi` | 98.7% (sin base); total 84.5% | Medido sobre `main` (`d82a93b`) con la corrección de la nota de desviación del gráfico de horas, en Linux con go1.27.1, mediante `go test -count=1 -cover ./...` y `go test -count=1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out`, sin `TEST_DATABASE_URL`. Sin cambios respecto de HU-17: la corrección está en `internal/web/app.js`, que no tiene cobertura de Go, y suma un test de contenido en `web_test.go` |
 | 09/11/2026 | HU-50 | `internal/project` e `internal/httpapi` | 73.1% y 98.6% (sin base); total 84.4% | Medido sobre `2386fb8` en Windows con go1.27.2 mediante `go test -count=1 -cover ./...` y `go test -count=1 -coverprofile=cover.out ./...` con `go tool cover -func=cover.out`, sin `TEST_DATABASE_URL`; comparación con `main` (`b75e589`) en el mismo entorno, con `git worktree`: `internal/project` 71.1% → 73.1% y total 84.1% → 84.4%. `List` y `listProjects` en 100.0%. Sin medición con base: no cambia repositorios ni esquema. `-race` lo corre el CI |
+| 15/11/2026 | HU-52 (base y PDF) | `internal/backlog`, `sprint`, `member`, `defect`, `effort`, `poker`, `httpapi` y `report` | 98.7%, 96.9%, 95.7%, 95.6%, 96.7%, 95.1%, 97.5% y 100.0% con PostgreSQL 17.11; total 95.1% (perfil) y 95.9% con `-coverpkg=./...` | Medido sobre `8cf3d22` en Windows con go1.27.1, comparado con `main` `45d2c31` (95.0% y 95.9%) en el mismo entorno; ver el párrafo de HU-52 |
