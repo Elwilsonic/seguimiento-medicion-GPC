@@ -13,7 +13,7 @@ import (
 // JSON y nunca un PDF a medias (RN-40.7). El proyecto lo valida
 // report.Manager.Project (RN-40.8).
 func (s *server) projectReportPDF(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -29,7 +29,8 @@ func (s *server) projectReportPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="reporte-proyecto-%d.pdf"`, id))
+	// HU-51: el nombre del archivo lleva el UUID del proyecto, no el ID interno.
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="reporte-proyecto-%s.pdf"`, publicID))
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(buf.Bytes())
 }

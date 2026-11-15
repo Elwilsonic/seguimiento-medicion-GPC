@@ -6,6 +6,7 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -155,10 +156,56 @@ func pathID(r *http.Request) (int, error) {
 }
 
 // parseProjectID lee el {id} de una ruta de proyecto como UUID en forma
-// canónica (HU-51, D2).
-// HU-51 (RED): stub sin lógica.
+// canónica (HU-51, D2): 36 caracteres con guiones en las posiciones 8, 13, 18
+// y 23. Acepta mayúsculas, y rechaza las llaves, el prefijo urn:uuid: y la
+// forma sin guiones, que uuid.Parse sí acepta, para que cada proyecto tenga
+// una sola URL. No exige la versión 4: un UUID de otra versión tiene la forma
+// correcta y simplemente no existe (404).
 func parseProjectID(s string) (uuid.UUID, error) {
-	return uuid.UUID{}, nil
+	if len(s) != 36 || s[8] != '-' || s[13] != '-' || s[18] != '-' || s[23] != '-' {
+		return uuid.UUID{}, errInvalidProjectID
+	}
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.UUID{}, errInvalidProjectID
+	}
+	return u, nil
+}
+
+// projectIDFromPath lee el {id} de una ruta de proyecto (HU-51, D4) y
+// devuelve el ID interno del proyecto y su UUID en minúsculas, para las
+// respuestas. Un {id} que no es un UUID da errInvalidProjectID (400). Un UUID
+// que no corresponde a ningún proyecto da el ID interno 0, que ningún
+// proyecto tiene (RN-01.5 y RN-03.2): así cada Manager informa
+// ErrProjectNotFound (404) en el mismo punto de su orden de validaciones que
+// con un ID entero (HU-18, línea 72 de su SDD). Otro error del repositorio se
+// devuelve tal cual (500).
+func (s *server) projectIDFromPath(r *http.Request) (int, string, error) {
+	u, err := parseProjectID(r.PathValue("id"))
+	if err != nil {
+		return 0, "", err
+	}
+	p, err := s.projects.GetByPublicID(u)
+	if errors.Is(err, project.ErrProjectNotFound) {
+		return 0, u.String(), nil
+	}
+	if err != nil {
+		return 0, "", err
+	}
+	return p.ID, u.String(), nil
+}
+
+// publicProjectID devuelve el UUID del proyecto con ese ID interno, para las
+// respuestas de las rutas por ID de otra entidad (ítem, sprint o integrante,
+// HU-51, D5). Esa entidad siempre es de un proyecto que existe, así que si no
+// se encuentra es un error interno (500) y no un 404: el error se informa sin
+// su cadena (%v).
+func (s *server) publicProjectID(projectID int) (string, error) {
+	p, err := s.projects.Get(projectID)
+	if err != nil {
+		return "", fmt.Errorf("leer el proyecto %d: %v", projectID, err)
+	}
+	return p.PublicID.String(), nil
 }
 
 // pathInt lee el parámetro name de la ruta como número entero.
@@ -174,7 +221,7 @@ func pathInt(r *http.Request, name string) (int, error) {
 // son errores internos.
 func statusFor(err error) int {
 	switch {
-	case errors.Is(err, errInvalidJSON), errors.Is(err, errInvalidID),
+	case errors.Is(err, errInvalidJSON), errors.Is(err, errInvalidID), errors.Is(err, errInvalidProjectID),
 		errors.Is(err, project.ErrEmptyName), errors.Is(err, project.ErrInvalidStatus),
 		errors.Is(err, project.ErrMissingStartDate), errors.Is(err, project.ErrMissingEndDate),
 		errors.Is(err, backlog.ErrEmptyTitle), errors.Is(err, backlog.ErrInvalidPriority),

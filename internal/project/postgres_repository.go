@@ -25,14 +25,16 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // projectColumns son las columnas de un proyecto, en el orden de scanProject.
-const projectColumns = "id, name, description, status, start_date, end_date"
+// public_id es el identificador público de HU-51.
+const projectColumns = "id, public_id, name, description, status, start_date, end_date"
 
-// Save guarda el proyecto; la base asigna el siguiente ID correlativo
-// (RN-01.5). Devuelve el proyecto tal como quedó guardado.
+// Save guarda el proyecto con su identificador público (HU-51); la base
+// asigna el siguiente ID correlativo (RN-01.5) y rechaza un public_id
+// repetido (UNIQUE). Devuelve el proyecto tal como quedó guardado.
 func (r *PostgresRepository) Save(p Project) (Project, error) {
 	row := r.pool.QueryRow(context.Background(),
-		"INSERT INTO projects (name, description, status, start_date, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING "+projectColumns,
-		p.Name, p.Description, p.Status, dateParam(p.StartDate), dateParam(p.EndDate))
+		"INSERT INTO projects (public_id, name, description, status, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING "+projectColumns,
+		p.PublicID, p.Name, p.Description, p.Status, dateParam(p.StartDate), dateParam(p.EndDate))
 	saved, err := scanProject(row)
 	if err != nil {
 		return Project{}, fmt.Errorf("guardar el proyecto: %w", err)
@@ -71,9 +73,16 @@ func (r *PostgresRepository) GetByID(id int) (Project, error) {
 
 // GetByPublicID devuelve el proyecto con ese identificador público, o
 // ErrProjectNotFound si no existe (HU-51).
-// HU-51 (RED): stub sin lógica.
 func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Project, error) {
-	return Project{}, ErrProjectNotFound
+	row := r.pool.QueryRow(context.Background(), "SELECT "+projectColumns+" FROM projects WHERE public_id = $1", id)
+	p, err := scanProject(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Project{}, ErrProjectNotFound
+	}
+	if err != nil {
+		return Project{}, fmt.Errorf("buscar el proyecto: %w", err)
+	}
+	return p, nil
 }
 
 // Update reemplaza el proyecto con ese ID y lo devuelve tal como quedó
@@ -100,7 +109,7 @@ func (r *PostgresRepository) Update(p Project) (Project, error) {
 func scanProject(row pgx.Row) (Project, error) {
 	var p Project
 	var startDate, endDate *time.Time
-	err := row.Scan(&p.ID, &p.Name, &p.Description, &p.Status, &startDate, &endDate)
+	err := row.Scan(&p.ID, &p.PublicID, &p.Name, &p.Description, &p.Status, &startDate, &endDate)
 	if startDate != nil {
 		p.StartDate = startDate.UTC()
 	}

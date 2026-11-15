@@ -43,8 +43,12 @@ func (r *MemoryRepository) GetByID(id int) (Project, error) {
 
 // GetByPublicID devuelve una copia del proyecto con ese identificador
 // público, o ErrProjectNotFound si no existe (HU-51).
-// HU-51 (RED): stub sin lógica.
 func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Project, error) {
+	for _, p := range r.projects {
+		if p.PublicID == id {
+			return p, nil
+		}
+	}
 	return Project{}, ErrProjectNotFound
 }
 

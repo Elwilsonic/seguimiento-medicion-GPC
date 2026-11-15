@@ -17,8 +17,9 @@ func (m *Manager) Get(id int) (Project, error) {
 }
 
 // GetByPublicID devuelve una copia del proyecto con ese identificador público
-// (HU-51, D4).
-// HU-51 (RED): stub sin lógica.
+// (HU-51, D4), o ErrProjectNotFound si no existe.
 func (m *Manager) GetByPublicID(id uuid.UUID) (Project, error) {
-	return Project{}, ErrProjectNotFound
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.repo.GetByPublicID(id)
 }

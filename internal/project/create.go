@@ -1,6 +1,9 @@
 package project
 
-import "strings"
+import (
+	"strings"
+	"uuid"
+)
 
 // Create crea un proyecto en estado PLANIFICADO (HU-01) y devuelve una copia.
 func (m *Manager) Create(name, description string) (Project, error) {
@@ -25,5 +28,7 @@ func (m *Manager) Create(name, description string) (Project, error) {
 		}
 	}
 
-	return m.repo.Save(Project{Name: name, Description: description, Status: StatusPlanned})
+	// HU-51 (D3): el identificador público es un UUID versión 4 aleatorio, que
+	// se genera con el mutex tomado (CA-51.7).
+	return m.repo.Save(Project{PublicID: uuid.NewV4(), Name: name, Description: description, Status: StatusPlanned})
 }

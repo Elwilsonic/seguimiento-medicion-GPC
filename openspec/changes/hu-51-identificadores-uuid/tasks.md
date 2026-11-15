@@ -50,16 +50,16 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 
 ## 3. Código en GREEN
 
-- [ ] 3.1 Dominio (`internal/project`):
+- [x] 3.1 Dominio (`internal/project`):
   - `PublicID uuid.UUID` en `Project` (`project.go`);
   - `GetByPublicID` en `Repository` (`repository.go`) y en `MemoryRepository` (`memory_repository.go`);
   - `uuid.NewV4()` en `Manager.Create`, con el mutex (`create.go`);
   - `Manager.GetByPublicID` (`get.go`).
 
   Verificar con `go test -race ./internal/project/` que pasan los tests de 2.1 y 2.2 con memoria.
-- [ ] 3.2 PostgreSQL: `public_id UUID NOT NULL UNIQUE` en `db/init/01-schema.sql`. En `postgres_repository.go`: `public_id` en `projectColumns`, en el `INSERT` y en `scanProject`, y `GetByPublicID`. Recrear la base local con `docker compose down -v` y `docker compose up -d`, y verificar con `go test ./internal/project/` (con `TEST_DATABASE_URL`) que pasa el contrato en PostgreSQL. Si pgx no escanea `uuid.UUID`, aplicar la mitigación de R3.
-- [ ] 3.3 API, entrada (`internal/httpapi/server.go`): `errInvalidProjectID` (400 en `statusFor`), `parseProjectID` y `projectIDFromPath` (D2, D4). Reemplazar `pathID(r)` por `s.projectIDFromPath(r)` en las 17 rutas de proyecto (`projects.go`, `items.go`, `members.go`, `members_list.go`, `sprints.go`, `defects.go`, `metrics.go`, `dashboard.go`, `reports.go` y `report_pdf.go`). Verificar que pasan los tests de 400 y 404 y de orden de 2.3. Volver a correr los comandos de verificación del proyecto 0 de D4 y comprobar que los comandos 1 a 3 siguen sin resultados.
-- [ ] 3.4 API, salida (D5):
+- [x] 3.2 PostgreSQL: `public_id UUID NOT NULL UNIQUE` en `db/init/01-schema.sql`. En `postgres_repository.go`: `public_id` en `projectColumns`, en el `INSERT` y en `scanProject`, y `GetByPublicID`. Recrear la base local con `docker compose down -v` y `docker compose up -d`, y verificar con `go test ./internal/project/` (con `TEST_DATABASE_URL`) que pasa el contrato en PostgreSQL. Si pgx no escanea `uuid.UUID`, aplicar la mitigación de R3.
+- [x] 3.3 API, entrada (`internal/httpapi/server.go`): `errInvalidProjectID` (400 en `statusFor`), `parseProjectID` y `projectIDFromPath` (D2, D4). Reemplazar `pathID(r)` por `s.projectIDFromPath(r)` en las 17 rutas de proyecto (`projects.go`, `items.go`, `members.go`, `members_list.go`, `sprints.go`, `defects.go`, `metrics.go`, `dashboard.go`, `reports.go` y `report_pdf.go`). Verificar que pasan los tests de 400 y 404 y de orden de 2.3. Volver a correr los comandos de verificación del proyecto 0 de D4 y comprobar que los comandos 1 a 3 siguen sin resultados.
+- [x] 3.4 API, salida (D5):
   - `projectResponse.ID` pasa a `string`;
   - `ProyectoID string` en `itemResponse`, `sprintResponse`, `memberResponse`, métricas y `summaryResponse`;
   - `toItemResponse` y `toSprintResponse` reciben el UUID;
@@ -73,6 +73,8 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
   - escribir "1" (error);
   - descargar el PDF (nombre con el UUID).
 - [ ] 3.6 Correr `go test ./...` y `go test -race ./...` y verificar que todo está en verde, incluidos los escenarios de HU-50 (el orden no cambia). Mostrar la salida y proponer `git commit -m "feat(HU-51): implementar identificadores UUID para proyectos (GREEN)" -m "Refs #193"`.
+
+**Desviación entre el RED y el GREEN (14/11/2026):** entre `test(HU-51): agregar tests (RED)` y el commit del GREEN hay un commit de tests, `test(HU-51): usar el id del proyecto en los JSON esperados de la lista y del reporte`, autorizado por el Agile Enabler. Motivo: al adaptar los tests en 2.5 se cambiaron los `proyecto_id`, pero quedaron 4 `"id"` del proyecto escritos a mano en los JSON esperados (`projects_list_test.go` y `reports_test.go`). En el RED pasaban porque el ID todavía era 1 y 2, y con el GREEN fallaban 3 tests que el GREEN no puede tocar. La corrección usa `jsonProjectID(t, h, n)`, como el resto de los tests adaptados. Con el estado del RED, esos 3 tests siguen pasando y fallan los mismos 62 tests que antes. Además, `go test -race` no se corre en Windows; queda para la CI.
 
 ## 4. Refactor
 

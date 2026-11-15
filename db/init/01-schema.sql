@@ -10,6 +10,7 @@
 -- la aplica el Manager (RN-41.5).
 CREATE TABLE IF NOT EXISTS projects (
     id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id   UUID NOT NULL UNIQUE,
     name        TEXT NOT NULL,
     description TEXT NOT NULL,
     status      TEXT NOT NULL,

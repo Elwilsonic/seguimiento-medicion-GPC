@@ -24,7 +24,12 @@ func (s *server) updateMember(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, memberResponse{ID: updated.ID, ProyectoID: updated.ProjectID, Nombre: updated.Name, Rol: updated.Role})
+	publicID, err := s.publicProjectID(updated.ProjectID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, memberResponse{ID: updated.ID, ProyectoID: publicID, Nombre: updated.Name, Rol: updated.Role})
 }
 
 // memberMethodNotAllowed responde 405 a GET /api/integrantes/{id}. Sin esta
