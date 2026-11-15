@@ -40,5 +40,10 @@ func (r *MemoryRepository) ListByProject(projectID int) ([]Member, error) {
 // GetByPublicID devuelve el integrante con ese identificador público, o ErrMemberNotFound
 // si no existe (HU-52).
 func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Member, error) {
+	for _, m := range r.members {
+		if m.PublicID == id {
+			return m, nil
+		}
+	}
 	return Member{}, ErrMemberNotFound
 }

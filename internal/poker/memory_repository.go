@@ -59,5 +59,10 @@ func (r *MemoryRepository) Update(session Session) (Session, error) {
 // GetByPublicID devuelve la sesión con ese identificador público, o ErrSessionNotFound
 // si no existe (HU-52).
 func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Session, error) {
+	for _, session := range r.sessions {
+		if session.PublicID == id {
+			return cloneSession(session), nil
+		}
+	}
 	return Session{}, ErrSessionNotFound
 }

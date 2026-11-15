@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS projects (
 -- (RN-11.4). No hay clave foránea porque el 0 no es un sprint.
 CREATE TABLE IF NOT EXISTS backlog_items (
     id                  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id           UUID NOT NULL UNIQUE,
     project_id          INTEGER NOT NULL REFERENCES projects (id),
     title               TEXT NOT NULL,
     description         TEXT NOT NULL,
@@ -40,6 +41,7 @@ CREATE INDEX IF NOT EXISTS backlog_items_project_id_idx ON backlog_items (projec
 -- Sprints (HU-10). El ID es correlativo y global (RN-10.6).
 CREATE TABLE IF NOT EXISTS sprints (
     id         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id  UUID NOT NULL UNIQUE,
     project_id INTEGER NOT NULL REFERENCES projects (id),
     name       TEXT NOT NULL,
     start_date TIMESTAMPTZ NOT NULL,
@@ -54,6 +56,7 @@ CREATE INDEX IF NOT EXISTS sprints_project_id_idx ON sprints (project_id);
 -- pertenencia del item al sprint la valida el Manager (RN-26.6).
 CREATE TABLE IF NOT EXISTS efforts (
     id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id   UUID NOT NULL UNIQUE,
     member      TEXT NOT NULL,
     effort_date TIMESTAMPTZ NOT NULL,
     activity    TEXT NOT NULL,
@@ -70,6 +73,7 @@ CREATE INDEX IF NOT EXISTS efforts_item_id_idx ON efforts (item_id);
 -- ese 0 no puede ser una clave foranea (RN-29.4).
 CREATE TABLE IF NOT EXISTS defects (
     id                   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id            UUID NOT NULL UNIQUE,
     description          TEXT NOT NULL,
     severity             TEXT NOT NULL,
     status               TEXT NOT NULL,
@@ -87,6 +91,7 @@ CREATE INDEX IF NOT EXISTS defects_resolution_sprint_id_idx ON defects (resoluti
 -- (RN-21.7).
 CREATE TABLE IF NOT EXISTS poker_sessions (
     id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id    UUID NOT NULL UNIQUE,
     item_id      INTEGER NOT NULL REFERENCES backlog_items (id),
     status       TEXT NOT NULL,
     round_number INTEGER NOT NULL,
@@ -101,6 +106,7 @@ CREATE INDEX IF NOT EXISTS poker_sessions_item_id_idx ON poker_sessions (item_id
 -- (RN-15.4, D6).
 CREATE TABLE IF NOT EXISTS members (
     id         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    public_id  UUID NOT NULL UNIQUE,
     project_id INTEGER NOT NULL REFERENCES projects (id),
     name       TEXT NOT NULL,
     role       TEXT NOT NULL

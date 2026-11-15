@@ -1,6 +1,9 @@
 package backlog
 
-import "strings"
+import (
+	"strings"
+	"uuid"
+)
 
 // Create crea un ítem en el backlog de un proyecto existente (HU-04) y
 // devuelve una copia. El ítem queda en estado PENDIENTE y con los story
@@ -37,6 +40,7 @@ func (m *Manager) Create(projectID int, title, description, priority string, cri
 	}
 
 	item := Item{
+		PublicID:           uuid.NewV4(),
 		ProjectID:          projectID,
 		Title:              title,
 		Description:        description,

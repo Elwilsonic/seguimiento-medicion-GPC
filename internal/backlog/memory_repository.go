@@ -82,5 +82,11 @@ func (r *MemoryRepository) ListByProject(projectID int) ([]Item, error) {
 // GetByPublicID devuelve el ítem con ese identificador público, o ErrItemNotFound
 // si no existe (HU-52).
 func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Item, error) {
+	for _, item := range r.items {
+		if item.PublicID == id {
+			item.AcceptanceCriteria = slices.Clone(item.AcceptanceCriteria)
+			return item, nil
+		}
+	}
 	return Item{}, ErrItemNotFound
 }

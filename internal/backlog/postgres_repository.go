@@ -25,17 +25,17 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // itemColumns son las columnas de un ítem, en el orden de scanItem.
-const itemColumns = "id, project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours, sprint_id"
+const itemColumns = "id, project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours, sprint_id, public_id"
 
 // Save guarda el ítem; la base asigna el siguiente ID correlativo global
 // (RN-04.6). Devuelve el ítem tal como quedó guardado, con una lista de
 // criterios propia (RN-04.9).
 func (r *PostgresRepository) Save(item Item) (Item, error) {
 	row := r.pool.QueryRow(context.Background(),
-		`INSERT INTO backlog_items (project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours, sprint_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING `+itemColumns,
+		`INSERT INTO backlog_items (project_id, title, description, priority, acceptance_criteria, status, story_points, estimated_hours, sprint_id, public_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING `+itemColumns,
 		item.ProjectID, item.Title, item.Description, item.Priority, criteriaParam(item.AcceptanceCriteria),
-		item.Status, item.StoryPoints, item.EstimatedHours, item.SprintID)
+		item.Status, item.StoryPoints, item.EstimatedHours, item.SprintID, item.PublicID)
 	saved, err := scanItem(row)
 	if err != nil {
 		return Item{}, fmt.Errorf("guardar el ítem: %w", err)
@@ -109,12 +109,21 @@ func criteriaParam(criteria []string) []string {
 func scanItem(row pgx.Row) (Item, error) {
 	var item Item
 	err := row.Scan(&item.ID, &item.ProjectID, &item.Title, &item.Description, &item.Priority,
-		&item.AcceptanceCriteria, &item.Status, &item.StoryPoints, &item.EstimatedHours, &item.SprintID)
+		&item.AcceptanceCriteria, &item.Status, &item.StoryPoints, &item.EstimatedHours, &item.SprintID, &item.PublicID)
 	return item, err
 }
 
 // GetByPublicID devuelve el ítem con ese identificador público, o ErrItemNotFound
 // si no existe (HU-52).
 func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Item, error) {
-	return Item{}, ErrItemNotFound
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+itemColumns+" FROM backlog_items WHERE public_id = $1", id)
+	item, err := scanItem(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Item{}, ErrItemNotFound
+	}
+	if err != nil {
+		return Item{}, fmt.Errorf("buscar el ítem: %w", err)
+	}
+	return item, nil
 }

@@ -45,6 +45,7 @@ type completionResponse struct {
 // sprintMetrics atiende GET /api/sprints/{id}/metricas (HU-32) con una sola
 // consulta de todas las métricas del sprint (HU-35, RN-35.1).
 func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	id, err := pathID(r)
 	if err != nil {
 		writeError(w, err)
@@ -55,13 +56,13 @@ func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toSprintMetricsResponse(m))
+	s.writeResolved(w, http.StatusOK, toSprintMetricsResponse(m, ids), ids)
 }
 
 // toSprintMetricsResponse arma la respuesta de las métricas de un sprint. La
 // usan GET /api/sprints/{id}/metricas (HU-35) y cada elemento de
 // GET /api/proyectos/{id}/metricas/sprints (HU-37).
-func toSprintMetricsResponse(m metrics.SprintMetrics) sprintMetricsResponse {
+func toSprintMetricsResponse(m metrics.SprintMetrics, ids *publicIDs) sprintMetricsResponse {
 	return sprintMetricsResponse{
 		SprintID:           m.SprintID,
 		SPPlanificados:     m.Points.Planned,
@@ -84,6 +85,7 @@ type sprintWithMetricsResponse struct {
 // projectSprintsMetrics atiende GET /api/proyectos/{id}/metricas/sprints
 // (HU-37, CA-37.4). Un proyecto sin sprints devuelve [], no null.
 func (s *server) projectSprintsMetrics(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	id, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
@@ -96,9 +98,9 @@ func (s *server) projectSprintsMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 	resp := make([]sprintWithMetricsResponse, 0, len(list))
 	for _, e := range list {
-		resp = append(resp, sprintWithMetricsResponse{Sprint: toSprintResponse(e.Sprint, publicID), Metricas: toSprintMetricsResponse(e.Metrics)})
+		resp = append(resp, sprintWithMetricsResponse{Sprint: toSprintResponse(e.Sprint, publicID, ids), Metricas: toSprintMetricsResponse(e.Metrics, ids)})
 	}
-	writeJSON(w, http.StatusOK, resp)
+	s.writeResolved(w, http.StatusOK, resp, ids)
 }
 
 // projectMetrics atiende GET /api/proyectos/{id}/metricas (HU-32) con una

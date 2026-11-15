@@ -73,5 +73,13 @@ func (r *MemoryRepository) Update(defect Defect) (Defect, error) {
 // GetByPublicID devuelve el defecto con ese identificador público, o ErrDefectNotFound
 // si no existe (HU-52).
 func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Defect, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, defect := range r.defects {
+		if defect.PublicID == id {
+			return defect, nil
+		}
+	}
 	return Defect{}, ErrDefectNotFound
 }

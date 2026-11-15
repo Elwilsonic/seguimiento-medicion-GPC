@@ -76,5 +76,10 @@ func (r *MemoryRepository) ListByProject(projectID int) ([]Sprint, error) {
 // GetByPublicID devuelve el sprint con ese identificador público, o ErrSprintNotFound
 // si no existe (HU-52).
 func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Sprint, error) {
+	for _, sprint := range r.sprints {
+		if sprint.PublicID == id {
+			return sprint, nil
+		}
+	}
 	return Sprint{}, ErrSprintNotFound
 }

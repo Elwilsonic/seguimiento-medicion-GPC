@@ -25,16 +25,16 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // effortColumns son las columnas de un esfuerzo, en el orden de scanEffort.
-const effortColumns = "id, member, effort_date, activity, item_id, sprint_id, hours"
+const effortColumns = "id, member, effort_date, activity, item_id, sprint_id, hours, public_id"
 
 // Save guarda el esfuerzo; la base asigna el siguiente ID correlativo global
 // (RN-26.8). Devuelve el esfuerzo tal como quedó guardado, con la fecha
 // normalizada a UTC como en los sprints.
 func (r *PostgresRepository) Save(effort Effort) (Effort, error) {
 	row := r.pool.QueryRow(context.Background(),
-		`INSERT INTO efforts (member, effort_date, activity, item_id, sprint_id, hours)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING `+effortColumns,
-		effort.Member, effort.Date, effort.Activity, effort.ItemID, effort.SprintID, effort.Hours)
+		`INSERT INTO efforts (member, effort_date, activity, item_id, sprint_id, hours, public_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING `+effortColumns,
+		effort.Member, effort.Date, effort.Activity, effort.ItemID, effort.SprintID, effort.Hours, effort.PublicID)
 	saved, err := scanEffort(row)
 	if err != nil {
 		return Effort{}, fmt.Errorf("guardar el esfuerzo: %w", err)
@@ -47,7 +47,7 @@ func (r *PostgresRepository) Save(effort Effort) (Effort, error) {
 func scanEffort(row pgx.Row) (Effort, error) {
 	var effort Effort
 	err := row.Scan(&effort.ID, &effort.Member, &effort.Date, &effort.Activity,
-		&effort.ItemID, &effort.SprintID, &effort.Hours)
+		&effort.ItemID, &effort.SprintID, &effort.Hours, &effort.PublicID)
 	effort.Date = effort.Date.UTC()
 	return effort, err
 }
@@ -123,5 +123,14 @@ func (r *PostgresRepository) Update(effort Effort) (Effort, error) {
 // GetByPublicID devuelve el esfuerzo con ese identificador público, o ErrEffortNotFound
 // si no existe (HU-52).
 func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Effort, error) {
-	return Effort{}, ErrEffortNotFound
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+effortColumns+" FROM efforts WHERE public_id = $1", id)
+	effort, err := scanEffort(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Effort{}, ErrEffortNotFound
+	}
+	if err != nil {
+		return Effort{}, fmt.Errorf("buscar el esfuerzo: %w", err)
+	}
+	return effort, nil
 }

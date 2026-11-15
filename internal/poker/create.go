@@ -1,6 +1,8 @@
 package poker
 
 import (
+	"uuid"
+
 	"seguimiento-medicion-gpc/internal/backlog"
 )
 
@@ -34,10 +36,11 @@ func (m *Manager) OpenSession(itemID int) (Session, error) {
 	}
 
 	return m.repo.Save(Session{
-		ItemID: itemID,
-		Status: StatusOpen,
-		Round:  1,
-		Votes:  []Vote{},
+		PublicID: uuid.NewV4(),
+		ItemID:   itemID,
+		Status:   StatusOpen,
+		Round:    1,
+		Votes:    []Vote{},
 	})
 }
 

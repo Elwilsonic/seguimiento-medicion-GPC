@@ -22,6 +22,7 @@ type summaryResponse struct {
 
 // projectSummary atiende GET /api/proyectos/{id}/resumen (HU-36).
 func (s *server) projectSummary(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	id, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
@@ -32,12 +33,12 @@ func (s *server) projectSummary(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toSummaryResponse(summary, publicID))
+	s.writeResolved(w, http.StatusOK, toSummaryResponse(summary, publicID, ids), ids)
 }
 
 // toSummaryResponse arma el resumen con publicID, el UUID del proyecto
 // (HU-51).
-func toSummaryResponse(summary dashboard.Summary, publicID string) summaryResponse {
+func toSummaryResponse(summary dashboard.Summary, publicID string, ids *publicIDs) summaryResponse {
 	resp := summaryResponse{
 		ProyectoID:      publicID,
 		Nombre:          summary.ProjectName,
@@ -47,7 +48,7 @@ func toSummaryResponse(summary dashboard.Summary, publicID string) summaryRespon
 		ItemsTerminados: summary.Finished,
 	}
 	if summary.HasCurrentSprint {
-		sp := toSprintResponse(summary.CurrentSprint, publicID)
+		sp := toSprintResponse(summary.CurrentSprint, publicID, ids)
 		resp.SprintActual = &sp
 	}
 	return resp

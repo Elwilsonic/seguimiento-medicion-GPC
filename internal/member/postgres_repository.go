@@ -1,6 +1,7 @@
 package member
 
 import (
+	"errors"
 	"uuid"
 
 	"context"
@@ -24,14 +25,14 @@ func NewPostgresRepository(pool *pgxpool.Pool) *PostgresRepository {
 }
 
 // memberColumns son las columnas de un integrante, en el orden de scanMember.
-const memberColumns = "id, project_id, name, role"
+const memberColumns = "id, project_id, name, role, public_id"
 
 // Save guarda el integrante; la base asigna el siguiente ID correlativo
 // global (RN-15.7). Devuelve el integrante tal como quedó guardado.
 func (r *PostgresRepository) Save(m Member) (Member, error) {
 	row := r.pool.QueryRow(context.Background(),
-		"INSERT INTO members (project_id, name, role) VALUES ($1, $2, $3) RETURNING "+memberColumns,
-		m.ProjectID, m.Name, m.Role)
+		"INSERT INTO members (project_id, name, role, public_id) VALUES ($1, $2, $3, $4) RETURNING "+memberColumns,
+		m.ProjectID, m.Name, m.Role, m.PublicID)
 	saved, err := scanMember(row)
 	if err != nil {
 		return Member{}, fmt.Errorf("guardar el integrante: %w", err)
@@ -66,12 +67,21 @@ func (r *PostgresRepository) ListByProject(projectID int) ([]Member, error) {
 // scanMember lee un integrante con las columnas de memberColumns.
 func scanMember(row pgx.Row) (Member, error) {
 	var m Member
-	err := row.Scan(&m.ID, &m.ProjectID, &m.Name, &m.Role)
+	err := row.Scan(&m.ID, &m.ProjectID, &m.Name, &m.Role, &m.PublicID)
 	return m, err
 }
 
 // GetByPublicID devuelve el integrante con ese identificador público, o ErrMemberNotFound
 // si no existe (HU-52).
 func (r *PostgresRepository) GetByPublicID(id uuid.UUID) (Member, error) {
-	return Member{}, ErrMemberNotFound
+	row := r.pool.QueryRow(context.Background(),
+		"SELECT "+memberColumns+" FROM members WHERE public_id = $1", id)
+	m, err := scanMember(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Member{}, ErrMemberNotFound
+	}
+	if err != nil {
+		return Member{}, fmt.Errorf("leer el integrante: %w", err)
+	}
+	return m, nil
 }

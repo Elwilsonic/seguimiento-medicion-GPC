@@ -48,6 +48,7 @@ type itemResponse struct {
 
 // HU-04
 func (s *server) createItem(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	projectID, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
@@ -63,12 +64,13 @@ func (s *server) createItem(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, toItemResponse(it, publicID))
+	s.writeResolved(w, http.StatusCreated, toItemResponse(it, publicID, ids), ids)
 }
 
 // HU-06 y, con ?orden=prioridad, HU-09. Otro valor o sin el parámetro, el
 // listado queda ordenado por ID.
 func (s *server) listItems(w http.ResponseWriter, r *http.Request) {
+	ids := s.newPublicIDs()
 	projectID, publicID, err := s.projectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
@@ -86,9 +88,9 @@ func (s *server) listItems(w http.ResponseWriter, r *http.Request) {
 	// La lista se arma siempre no nil, para que un backlog vacío sea [] y no null.
 	resp := make([]itemResponse, 0, len(items))
 	for _, it := range items {
-		resp = append(resp, toItemResponse(it, publicID))
+		resp = append(resp, toItemResponse(it, publicID, ids))
 	}
-	writeJSON(w, http.StatusOK, resp)
+	s.writeResolved(w, http.StatusOK, resp, ids)
 }
 
 // HU-05
@@ -175,18 +177,20 @@ func (s *server) assignStoryPoints(w http.ResponseWriter, r *http.Request) {
 // writeItem responde 200 con el ítem y el UUID de su proyecto, para las rutas
 // que reciben el ID del ítem (HU-51, D5).
 func (s *server) writeItem(w http.ResponseWriter, it backlog.Item) {
+	ids := s.newPublicIDs()
 	publicID, err := s.publicProjectID(it.ProjectID)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, toItemResponse(it, publicID))
+	s.writeResolved(w, http.StatusOK, toItemResponse(it, publicID, ids), ids)
 }
 
 // writeItems responde 200 con los ítems, todos del mismo proyecto, y el UUID
 // de ese proyecto, que se busca una sola vez (HU-51, D5). Sin ítems responde
 // [] sin buscarlo.
 func (s *server) writeItems(w http.ResponseWriter, items []backlog.Item) {
+	ids := s.newPublicIDs()
 	resp := make([]itemResponse, 0, len(items))
 	if len(items) > 0 {
 		publicID, err := s.publicProjectID(items[0].ProjectID)
@@ -195,15 +199,15 @@ func (s *server) writeItems(w http.ResponseWriter, items []backlog.Item) {
 			return
 		}
 		for _, it := range items {
-			resp = append(resp, toItemResponse(it, publicID))
+			resp = append(resp, toItemResponse(it, publicID, ids))
 		}
 	}
-	writeJSON(w, http.StatusOK, resp)
+	s.writeResolved(w, http.StatusOK, resp, ids)
 }
 
 // toItemResponse arma la respuesta del ítem con publicID, el UUID de su
 // proyecto (HU-51).
-func toItemResponse(it backlog.Item, publicID string) itemResponse {
+func toItemResponse(it backlog.Item, publicID string, ids *publicIDs) itemResponse {
 	return itemResponse{
 		ID:             it.ID,
 		ProyectoID:     publicID,

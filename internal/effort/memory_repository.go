@@ -90,5 +90,13 @@ func (r *MemoryRepository) Update(effort Effort) (Effort, error) {
 // GetByPublicID devuelve el esfuerzo con ese identificador público, o ErrEffortNotFound
 // si no existe (HU-52).
 func (r *MemoryRepository) GetByPublicID(id uuid.UUID) (Effort, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, effort := range r.efforts {
+		if effort.PublicID == id {
+			return effort, nil
+		}
+	}
 	return Effort{}, ErrEffortNotFound
 }
