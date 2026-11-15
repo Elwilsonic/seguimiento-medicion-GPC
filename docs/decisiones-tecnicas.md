@@ -190,6 +190,8 @@ Las decisiones técnicas del proyecto, cada una con su "por qué", las alternati
   6. archivo.
 
   Las 43 historias ya integradas no se rehacen: sus SDD (`docs/especificaciones/`) quedan como material de consulta del comportamiento actual.
+
+  Pasan por OpenSpec las historias nuevas y las tareas que cambian el comportamiento del sistema, porque OpenSpec describe requisitos ("el sistema SHALL…"). Las tareas que no lo cambian (documentación, comentarios de los tests, CI) se especifican con su Issue: por ejemplo, TEC-11.
 - **Por qué:** en la revisión del 05/11/2026, el profesor pidió aplicar SDD con una herramienta reconocida y tratar el proyecto como heredado. Las SDD anteriores seguían un formato propio (`AGENTS.md`, paso 2), sin las fases de una metodología estándar. OpenSpec está pensada para proyectos existentes:
   - cada cambio se escribe como diferencia (`ADDED`, `MODIFIED` y `REMOVED`) sobre el comportamiento actual;
   - las especificaciones de `openspec/specs/` crecen cambio a cambio, sin documentar todo el sistema de entrada, que es lo que recomienda su guía para proyectos existentes.
@@ -204,4 +206,5 @@ Las decisiones técnicas del proyecto, cada una con su "por qué", las alternati
   - cada requisito cita su historia y su criterio;
   - cada escenario se automatiza con godog;
   - cada test lleva un comentario con su historia y su criterio.
+- **Aplicación:** HU-50 y HU-51 recorrieron el ciclo completo y se archivaron (PR #189 y #196). `openspec/specs/proyectos/spec.md` quedó con 16 requisitos. Evidencia: [`docs/evidencias/TEC-10.md`](evidencias/TEC-10.md).
 - **Fuente:** revisión del profesor del 05/11/2026; TEC-10 (Issue #177).
