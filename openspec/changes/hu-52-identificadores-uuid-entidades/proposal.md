@@ -99,6 +99,7 @@ La base compartida (dominio, esquema y helpers, D3 de `design.md`) se integra pr
 | Planning Poker (Buttini Cristobal) | Las 4 rutas de sesiones con entero | 4 rutas y el `id` de la sesión |
 | Defectos (García Santiago) | `PATCH /api/defectos/{id}/estado`, el `id` y los sprints del cuerpo con entero | 1 ruta, 2 campos del cuerpo, 4 de respuesta y 4 de la interfaz |
 | Esfuerzos (García Santiago) | `PATCH /api/esfuerzos/{id}/horas` y el `id` con entero | 1 ruta, 3 campos de respuesta y 3 de la interfaz |
+| PDF del reporte (Peñalbé Hernán) | El texto del PDF (HU-40) con los IDs enteros de historias, esfuerzos, defectos y sprints | CA-52.3 en el PDF |
 
 Cada pendiente se escribe en la sección "Pendiente al corte" de `docs/evidencias/HU-52-tdd.md`, con lo que quedó de la tabla de arriba, se avisa en la Review y queda como riesgo abierto en `design.md`. El Issue #197 se cierra solo si todas las entidades están integradas; si no, el commit de cierre usa `Refs #197` y queda abierto con los pendientes.
 
@@ -117,7 +118,7 @@ Cantidades contadas con comandos (D10 de `design.md`):
 
 - **Dominio:** 6 paquetes (`backlog`, `sprint`, `member`, `defect`, `effort` y `poker`): el campo `PublicID`, la generación en `Create`, `Register` u `Open`, y `GetByPublicID` en el `Manager` y en los repositorios en memoria y en PostgreSQL.
 - **API:** `internal/httpapi`: `server.go` (helpers y errores) y los handlers de `items.go`, `members*.go`, `sprints.go`, `poker.go`, `metrics.go`, `sprint_reports.go`, `defects.go`, `efforts.go`, `reports.go` y `dashboard.go`.
-- **Reportes:** `internal/report/pdf.go`.
+- **Reportes:** `internal/report/pdf.go` (a cargo de Peñalbé Hernán, decidido por el Agile Enabler el 15/11/2026, D3).
 - **Esquema:** `db/init/01-schema.sql`, con 6 columnas.
 - **Interfaz:** `internal/web/index.html` (9 campos) y `internal/web/app.js` (2 `Number(...)` de sprints en defectos, y los mensajes que muestran IDs).
 - **Tests:** los IDs fijos de estas entidades están en 15 archivos de `internal/httpapi`, con 314 apariciones. Los tests de dominio no usan rutas, pero algunos comparan structs completos y se rompen con un `PublicID` aleatorio. Se miden con una prueba en la base, como en HU-51.

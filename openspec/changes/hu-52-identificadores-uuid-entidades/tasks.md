@@ -62,7 +62,7 @@ La base la hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo 
   Agregar el resolvedor como parámetro de las funciones de respuesta compartidas (`toItemResponse`, `toSprintResponse`, `toEffortResponse`, `toEffortListResponse`, `toDefectResponse`, `toDefectListResponse`, `toSprintMetricsResponse` y `toStoryListResponse`) sin cambiar su salida, y actualizar todas sus llamadas.
 
   Correr los comandos de D4 adaptados (ningún código compara un ID con `math.MaxInt32`).
-- [ ] 1.8 GREEN, PDF: los IDs de historias, esfuerzos, defectos y sprints del texto de `internal/report/pdf.go` pasan a ser sus UUID (CA-52.3). Verificar con los tests de `internal/report`.
+- [x] 1.8 GREEN, PDF: pasó a Peñalbé Hernán (sección 5, "PDF del reporte"), decidido por el Agile Enabler el 15/11/2026: cambia una salida, los tests de `internal/report` verifican el texto con enteros, y depende solo de la base (D3).
 - [ ] 1.9 Correr los comandos de cierre: todo en verde, en memoria y con PostgreSQL. Verificar con `git diff --stat` que el GREEN no toca tests ni `.feature`. Proponer `git commit -m "feat(HU-52): agregar la base de los identificadores UUID (GREEN)" -m "Refs #197"`.
 - [ ] 1.10 Refactor, si hay una mejora clara. Si no, anotar "no hubo refactor".
 - [ ] 1.11 Crear `docs/evidencias/HU-52-tdd.md`:
@@ -142,11 +142,20 @@ Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, y trae `main` ape
 - [ ] 4.4 Refactor, si aplica. Completar la sección de García en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de defectos y esfuerzos" -m "Refs #197"`.
 - [ ] 4.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
 
-## 5. Cierre (Sosa Ricardo)
+## 5. PDF del reporte (Peñalbé Hernán, rama `feature/HU-52-uuid-pdf`)
 
-- [ ] 5.1 Con las cuatro partes integradas, o a las 14:00 del 16/11 lo que haya, completar en la evidencia la sección "Pendiente al corte", según la tabla "Si no llega al corte" de `proposal.md`, y actualizar el riesgo R2 de `design.md`.
-- [ ] 5.2 Actualizar el manual de usuario y la documentación técnica (TEC-06 y TEC-07: los UUID de las 6 entidades y los errores nuevos), y la cobertura con PostgreSQL comparada con `main`.
-- [ ] 5.3 Agregar al Issue #197 la sección "## Trazabilidad", con los links a la propuesta, a los 7 `.feature` y a la evidencia. Proponer el commit de cierre: con `Closes #197` si llegaron todas las entidades, y con `Refs #197` si quedó algo pendiente.
+Decidido por el Agile Enabler el 15/11/2026 (D3). Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, trae `main` con `git merge main` apenas se integre la base, y va en paralelo con las entidades: depende solo de la base. Toca solo `internal/report` (su fila en D3).
+
+- [ ] 5.1 RED: adaptar los tests de `internal/report` que verifican el texto del PDF con enteros ("#1 … sprint 1") y agregar los que piden el UUID del ítem y del sprint en las líneas de historias, esfuerzos y defectos (HU-40, CA-52.3), con `// HU-52 · CA-52.3 · Verifica que …`. Verificar con `go test ./internal/report/` que fallan solo esos tests, por aserción. Proponer `git commit -m "test(HU-52): pedir los UUID en el PDF del reporte (RED)" -m "Refs #197"`.
+- [ ] 5.2 GREEN: los IDs de historias, esfuerzos, defectos y sprints del texto de `internal/report/pdf.go` pasan a ser sus UUID; el reporte trae los UUID del ítem y del sprint. Correr los comandos de cierre, en memoria y con PostgreSQL, y verificar con `git diff --stat` que el GREEN no toca tests. Proponer `git commit -m "feat(HU-52): mostrar los UUID en el PDF del reporte (GREEN)" -m "Refs #197"`.
+- [ ] 5.3 Refactor, si aplica. Completar la sección del PDF en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia del PDF del reporte" -m "Refs #197"`.
+- [ ] 5.4 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
+
+## 6. Cierre (Sosa Ricardo)
+
+- [ ] 6.1 Con las cinco partes integradas, o a las 14:00 del 16/11 lo que haya, completar en la evidencia la sección "Pendiente al corte", según la tabla "Si no llega al corte" de `proposal.md`, y actualizar el riesgo R2 de `design.md`.
+- [ ] 6.2 Actualizar el manual de usuario y la documentación técnica (TEC-06 y TEC-07: los UUID de las 6 entidades y los errores nuevos), y la cobertura con PostgreSQL comparada con `main`.
+- [ ] 6.3 Agregar al Issue #197 la sección "## Trazabilidad", con los links a la propuesta, a los 7 `.feature` y a la evidencia. Proponer el commit de cierre: con `Closes #197` si llegaron todas las entidades, y con `Refs #197` si quedó algo pendiente.
 
 ## Workflow follow-up
 

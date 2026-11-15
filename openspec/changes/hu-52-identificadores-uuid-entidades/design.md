@@ -75,7 +75,6 @@ La base (Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo Leandro 
 | Traducción de entrada: `itemIDFromPath(r, nombre)`, `sprintIDFromPath`, `memberIDFromPath`, `defectIDFromPath`, `effortIDFromPath`, `sessionIDFromPath` y `sprintIDFromBody(texto)` (D4) | `internal/httpapi/server.go` |
 | Traducción de salida: el resolvedor de UUID públicos (D5) | `internal/httpapi/server.go` |
 | Las funciones que arman respuestas reciben el resolvedor (D5), sin cambiar todavía su salida, y se actualizan sus llamadas en todos los archivos | `items.go`, `sprints.go`, `efforts.go`, `defects.go`, `metrics.go`, `reports.go`, `sprint_reports.go` y `dashboard.go`. Las respuestas de `poker.go` y `members*.go` se arman en el propio archivo y nadie más las llama, así que quedan para su responsable |
-| Los IDs del texto del PDF | `internal/report/pdf.go` |
 | Tests compartidos: el registro de IDs de `do` para las 6 entidades, las rutas armadas con el `id` que devuelve la API (sin depender del tipo, como en 2.5 de HU-51), las tablas de rutas de `server_test.go` y los tests de dominio que comparan structs completos | `internal/httpapi/*_test.go` y los tests de los 6 paquetes |
 | Esqueleto de la evidencia, con una sección por entidad | `docs/evidencias/HU-52-tdd.md` |
 
@@ -87,13 +86,14 @@ Cada entidad toca **solo** lo suyo:
 - sus tests nuevos, en archivos nuevos;
 - su sección de la evidencia y su `.feature`.
 
-Ninguna entidad toca `server.go`, el esquema, el dominio, `reports.go`, `sprint_reports.go`, `dashboard.go`, `pdf.go` ni las firmas de las funciones de respuesta.
+Ninguna entidad toca `server.go`, el esquema, el dominio, `reports.go`, `sprint_reports.go`, `dashboard.go` ni las firmas de las funciones de respuesta.
 
 | Responsable | Entidades | Archivos de producción que toca |
 |---|---|---|
 | Cardozo Leandro | Ítems e integrantes | `items.go` (handlers y cuerpo de `toItemResponse`), `members.go`, `members_list.go` y `members_update.go`; las secciones de Product Backlog e Integrantes de `index.html` y `app.js` |
 | Buttini Cristobal | Sprints y Planning Poker | `sprints.go` (handlers, `sprintItemIDs` y cuerpo de `toSprintResponse`), `poker.go`, `metrics.go` (`sprintMetrics` y cuerpo de `toSprintMetricsResponse`) y `sprint_reports.go` (solo el handler `sprintReport`); «Sprint actual» y las secciones de Sprints y Planning Poker de `index.html` y `app.js` |
 | García Santiago | Defectos y esfuerzos | `defects.go` y `efforts.go` (handlers y cuerpos de sus funciones de respuesta); las secciones de Esfuerzos y Defectos de `index.html` y `app.js`, incluidos los 2 `Number(...)` de los sprints |
+| Peñalbé Hernán | PDF del reporte (HU-40) | `internal/report/pdf.go` y lo que el reporte necesite para traer los UUID del ítem y del sprint, con sus tests de `internal/report` |
 
 **Rutas por responsable.** Cada responsable convierte y prueba las rutas cuyos handlers están en sus archivos, cualquiera sea la entidad del `{id}`. Las 23 rutas que reciben un `{id}` o un `{itemId}` de estas entidades (sin contar los `GET` que responden 405) quedan así:
 
@@ -104,6 +104,8 @@ Ninguna entidad toca `server.go`, el esquema, el dominio, `reports.go`, `sprint_
 | García Santiago | `POST /api/items/{id}/defectos`, `PATCH /api/defectos/{id}/estado` y `GET /api/sprints/{id}/defectos` (`defects.go`); `GET /api/items/{id}/esfuerzos`, `POST /api/sprints/{id}/items/{itemId}/esfuerzos`, `GET /api/sprints/{id}/esfuerzos` y `PATCH /api/esfuerzos/{id}/horas` (`efforts.go`) | 7 |
 
 Así, "las rutas de ítems aceptan el UUID" (spec `backlog`) se cumple recién cuando las tres partes están integradas. Cada `.feature` y cada test de entidad prueba solo las rutas de su responsable.
+
+**Decidido por el Agile Enabler el 15/11/2026: el PDF sale de la base y lo toma Peñalbé Hernán** (HU-40 es suya), en paralelo con las entidades. Pasar a UUID los IDs del texto del PDF cambia una salida, y la base no cambia rutas ni salidas. Además, los tests actuales de `internal/report` verifican el texto con enteros ("#1 … sprint 1"), así que hacerlo en el GREEN de la base obligaba a tocar tests. Depende solo de la base (los `PublicID` del dominio), no de ninguna entidad, así que puede ir en paralelo. `pdf.go` solo tiene los IDs internos: para imprimir los UUID del ítem y del sprint, el reporte tiene que traerlos, y eso lo decide Peñalbé Hernán en su parte. **CA-52.3 no se cumple del todo hasta que se integre el PDF:** mientras tanto, el PDF sigue mostrando enteros.
 
 *Alternativa descartada: que cada responsable haga el dominio de su entidad.* Defectos, esfuerzos y Planning Poker muestran el ítem, y defectos, esfuerzos, métricas e ítems muestran el sprint. Sin el dominio de ítems y sprints, García y Buttini no podrían terminar, así que el trabajo quedaría en serie (ítems y sprints primero), con un día de plazo. El dominio de las 6 entidades sigue el mismo patrón mecánico que el de proyectos en HU-51, y en un solo lugar se hace más rápido y sin choques.
 
@@ -230,7 +232,7 @@ Todos los IDs fijos de tests están en 15 archivos de `internal/httpapi`. Los `.
 | Únicos y no deducibles | CA-52.2 | `uuid.NewV4()`; `UNIQUE` en `01-schema.sql` | Base |
 | Creaciones simultáneas | CA-52.7 | La creación dentro del lock de cada `Manager` | Base |
 | Operar por UUID | CA-52.3 | `xIDFromPath` y `sprintIDFromBody` (base); su uso en los handlers (entidad) | Base y entidad |
-| Ninguna respuesta expone el entero | CA-52.3 | El resolvedor `publicIDs` y la firma de las funciones de respuesta (base); el cuerpo de esas funciones (entidad); `pdf.go` (base) | Base y entidad |
+| Ninguna respuesta expone el entero | CA-52.3 | El resolvedor `publicIDs` y la firma de las funciones de respuesta (base); el cuerpo de esas funciones (entidad); `pdf.go` (Peñalbé Hernán) | Base y entidad |
 | Formato inválido | CA-52.4 | `parsePublicID`, los 6 errores y `statusFor` | Base |
 | Inexistente y orden de errores | CA-52.4 | `missingInternalID` (D4) | Base |
 | Memoria y PostgreSQL | CA-52.5 | `Save`, `scan` y `GetByPublicID` de los repositorios | Base |
