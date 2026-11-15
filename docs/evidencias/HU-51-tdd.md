@@ -3,7 +3,7 @@
 > Issue del repositorio: #193 · Épica E1 · Vinculada a HU-01 (#14), HU-03 (#16) y HU-50 (#183) · Especificada con OpenSpec (TEC-10, #177)
 
 - **Historia:** como integrante del equipo, quiero que los proyectos se identifiquen con un UUID en lugar de un número correlativo, para que no se pueda adivinar el identificador de un proyecto ajeno ni deducir cuántos proyectos hay.
-- **Especificación (OpenSpec):** el cambio [`openspec/changes/hu-51-identificadores-uuid/`](../../openspec/changes/hu-51-identificadores-uuid/): [propuesta](../../openspec/changes/hu-51-identificadores-uuid/proposal.md), [spec delta](../../openspec/changes/hu-51-identificadores-uuid/specs/proyectos/spec.md) (9 requisitos `ADDED` sobre la capability `proyectos` de HU-50), [diseño](../../openspec/changes/hu-51-identificadores-uuid/design.md) y [tareas](../../openspec/changes/hu-51-identificadores-uuid/tasks.md). Se archiva con `/opsx:archive` cuando el Pull Request esté integrado en `main`.
+- **Especificación (OpenSpec):** la spec de la capability `proyectos`, [`openspec/specs/proyectos/spec.md`](../../openspec/specs/proyectos/spec.md), con los 7 requisitos de HU-50 y los 9 de HU-51. El cambio está archivado en [`openspec/changes/archive/2026-11-15-hu-51-identificadores-uuid/`](../../openspec/changes/archive/2026-11-15-hu-51-identificadores-uuid/): [propuesta](../../openspec/changes/archive/2026-11-15-hu-51-identificadores-uuid/proposal.md), [spec delta](../../openspec/changes/archive/2026-11-15-hu-51-identificadores-uuid/specs/proyectos/spec.md), [diseño](../../openspec/changes/archive/2026-11-15-hu-51-identificadores-uuid/design.md) y [tareas](../../openspec/changes/archive/2026-11-15-hu-51-identificadores-uuid/tasks.md). Se archivó con `/opsx:archive` el 15/11/2026, con el PR #195 integrado en `main`.
 - **Aprobación:** Peñalbé Hernán (Agile Enabler) aprobó la propuesta el 14/11/2026, con la alternativa B (D1: UUID público y ID entero interno), D4, el pendiente R1 y los criterios CA-51.1 a CA-51.7. Pidió dos arreglos, que se aplicaron en `64a59db`: los links a HU-50, que ya estaba archivada, y la capability `proyectos` como modificada. Fijó una prioridad: si no llegaba todo para la Review del 15/11, primero la API de proyectos con UUID (CA-51.1 a CA-51.4). Llegó todo.
 - **Escenarios BDD:** [`features/HU-51-identificadores-uuid.feature`](../../features/HU-51-identificadores-uuid.feature): 12 escenarios y un esquema con 3 ejemplos, que dan 15 ejecuciones y 67 pasos.
 - **Rama:** `feature/HU-51-uuid`, creada desde `main` `315fac5`, con `main` traído en `ce8caba` y `93bd16d` (`de928fa`, con el archivo de HU-50 y el control de TEC-11).
@@ -168,7 +168,7 @@ En el RED quedaron 4 `"id"` de proyecto escritos a mano en JSON esperados: `proj
 - `TestReporteProyecto_ContratoDelEjemploDeTEC03`;
 - `TestReporteProyecto_ContratoDelProyectoVacio`.
 
-Con la autorización del Agile Enabler, el GREEN se guardó aparte con `git stash` y los 4 literales pasaron a `jsonProjectID(t, h, n)`, como en el resto de los tests adaptados. En el estado del RED, los 3 tests siguieron pasando, fallaron los mismos 62 tests y `internal/trazabilidad` dio `ok`. Después se recuperó el GREEN.
+Con la autorización de Sosa Ricardo, el GREEN se guardó aparte con `git stash` y los 4 literales pasaron a `jsonProjectID(t, h, n)`, como en el resto de los tests adaptados. En el estado del RED, los 3 tests siguieron pasando, fallaron los mismos 62 tests y `internal/trazabilidad` dio `ok`. Después se recuperó el GREEN.
 
 ## Fase GREEN (`1584a65`)
 
