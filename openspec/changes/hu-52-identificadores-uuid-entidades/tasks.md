@@ -101,8 +101,8 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
 
 Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:30 (`c329a62`). Toca solo los archivos de su fila en D3.
 
-- [ ] 3.1 Escribir `features/HU-52-sprints.feature` y `features/HU-52-planning-poker.feature` (de API), según `specs/sprints/spec.md` y `specs/planning-poker/spec.md`, con los runners `TestFeatures_HU52Sprints` y `TestFeatures_HU52PlanningPoker`.
-- [ ] 3.2 Escribir los tests en RED en `internal/httpapi/sprints_uuid_test.go`, `poker_uuid_test.go` y `sprints_poker_uuid_web_test.go`:
+- [x] 3.1 Escribir `features/HU-52-sprints.feature` y `features/HU-52-planning-poker.feature` (de API), según `specs/sprints/spec.md` y `specs/planning-poker/spec.md`, con los runners `TestFeatures_HU52Sprints` y `TestFeatures_HU52PlanningPoker`.
+- [x] 3.2 Escribir los tests en RED en `internal/httpapi/sprints_uuid_test.go`, `poker_uuid_test.go` y `sprints_poker_uuid_web_test.go`:
   - el `id` es un UUID v4 al crear un sprint o abrir una sesión, y repetir la ronda lo conserva (CA-52.1);
   - sus 11 rutas (tabla "Rutas por responsable" de D3: Planning Poker, las de `sprints.go`, `GET /api/sprints/{id}/metricas` y `/reporte`) aceptan el UUID del sprint, del ítem o de la sesión, también en mayúsculas (CA-52.3);
   - 400 con su mensaje y 404 en cada ruta, y `{id}` antes que `{itemId}` (CA-52.4);
@@ -111,13 +111,13 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
   - «Sprint actual» y la sesión en la interfaz (CA-52.6).
 
   Adaptar las filas de sprints y sesiones de `server_test.go` y los tests de `sprints_test.go`, `poker_test.go`, `metrics_test.go`, `dashboard_test.go` y `sprint_reports_test.go` cuyo resultado cambia. Verificar el RED y proponer `git commit -m "test(HU-52): agregar tests de sprints y Planning Poker (RED)" -m "Refs #197"`.
-- [ ] 3.3 GREEN:
+- [x] 3.3 GREEN:
   - los handlers de `sprints.go` (`sprintItemIDs` y las rutas `/api/sprints/{id}/…`), `poker.go`, `metrics.go` (`sprintMetrics`) y `sprint_reports.go` (`sprintReport`) usan `sprintIDFromPath`, `itemIDFromPath` y `sessionIDFromPath`;
   - los cuerpos de `toSprintResponse` y `toSprintMetricsResponse`, y las respuestas de `poker.go`, usan el resolvedor;
   - «Sprint actual» y las secciones de Sprints y Planning Poker de `index.html` y `app.js`.
 
   Correr los comandos de cierre y proponer `git commit -m "feat(HU-52): identificar los sprints y las sesiones de Planning Poker con un UUID público (GREEN)" -m "Refs #197"`.
-- [ ] 3.4 Refactor, si aplica. Completar la sección de Buttini en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de sprints y Planning Poker" -m "Refs #197"`.
+- [x] 3.4 Refactor, si aplica. Completar la sección de Buttini en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de sprints y Planning Poker" -m "Refs #197"`.
 - [ ] 3.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
 
 ## 4. Defectos y esfuerzos (García Santiago, rama `feature/HU-52-uuid-defectos-esfuerzos`)

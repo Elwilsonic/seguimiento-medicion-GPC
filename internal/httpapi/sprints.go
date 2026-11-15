@@ -21,7 +21,7 @@ type sprintRequest struct {
 }
 
 type sprintResponse struct {
-	ID int `json:"id"`
+	ID string `json:"id"`
 	// ProyectoID es el UUID del proyecto (HU-51, CA-51.3).
 	ProyectoID  string `json:"proyecto_id"`
 	Nombre      string `json:"nombre"`
@@ -81,7 +81,7 @@ func (s *server) listProjectSprints(w http.ResponseWriter, r *http.Request) {
 
 // HU-11
 func (s *server) assignItem(w http.ResponseWriter, r *http.Request) {
-	sprintID, itemID, err := sprintItemIDs(r)
+	sprintID, itemID, err := s.sprintItemPublicIDs(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -96,7 +96,7 @@ func (s *server) assignItem(w http.ResponseWriter, r *http.Request) {
 
 // HU-12
 func (s *server) completeItem(w http.ResponseWriter, r *http.Request) {
-	sprintID, itemID, err := sprintItemIDs(r)
+	sprintID, itemID, err := s.sprintItemPublicIDs(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -111,7 +111,7 @@ func (s *server) completeItem(w http.ResponseWriter, r *http.Request) {
 
 // HU-12
 func (s *server) listCompletedItems(w http.ResponseWriter, r *http.Request) {
-	sprintID, err := pathID(r)
+	sprintID, err := s.sprintIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -127,7 +127,7 @@ func (s *server) listCompletedItems(w http.ResponseWriter, r *http.Request) {
 // HU-13
 func (s *server) closeSprint(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	sprintID, err := pathID(r)
+	sprintID, err := s.sprintIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -173,7 +173,7 @@ func parseDate(value string) (time.Time, error) {
 // proyecto (HU-51).
 func toSprintResponse(sp sprint.Sprint, publicID string, ids *publicIDs) sprintResponse {
 	return sprintResponse{
-		ID:          sp.ID,
+		ID:          sp.PublicID.String(),
 		ProyectoID:  publicID,
 		Nombre:      sp.Name,
 		FechaInicio: sp.StartDate.Format(dateLayout),
@@ -181,4 +181,17 @@ func toSprintResponse(sp sprint.Sprint, publicID string, ids *publicIDs) sprintR
 		Objetivo:    sp.Goal,
 		Estado:      string(sp.Status),
 	}
+}
+
+// sprintItemPublicIDs lee el {id} del sprint y el {itemId} del ítem de la
+// ruta como sus UUID y devuelve sus IDs internos (HU-52, CA-52.3). El {id}
+// se lee antes que el {itemId} (CA-52.4).
+func (s *server) sprintItemPublicIDs(r *http.Request) (sprintID, itemID int, err error) {
+	if sprintID, err = s.sprintIDFromPath(r); err != nil {
+		return 0, 0, err
+	}
+	if itemID, err = s.itemIDFromPath(r, "itemId"); err != nil {
+		return 0, 0, err
+	}
+	return sprintID, itemID, nil
 }

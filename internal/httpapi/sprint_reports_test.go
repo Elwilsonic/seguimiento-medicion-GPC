@@ -81,7 +81,7 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "sprint": {
-    "id": 1,
+    "id": `+jsonRef(sprintRef(t, h, 1))+`,
     "proyecto_id":`+jsonProjectID(t, h, 1)+`,
     "nombre": "Sprint 1",
     "fecha_inicio": "2026-10-05",
@@ -90,7 +90,7 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
     "estado": "CERRADO"
   },
   "metricas": {
-    "sprint_id": 1,
+    "sprint_id": `+jsonRef(sprintRef(t, h, 1))+`,
     "sp_planificados": 10,
     "sp_completados": 8,
     "items_sin_estimar": 1,
@@ -160,7 +160,7 @@ func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "sprint": {
-    "id": 2,
+    "id": `+jsonRef(sprintRef(t, h, 2))+`,
     "proyecto_id":`+jsonProjectID(t, h, 2)+`,
     "nombre": "Sprint vacío",
     "fecha_inicio": "2026-10-19",
@@ -169,7 +169,7 @@ func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
     "estado": "ABIERTO"
   },
   "metricas": {
-    "sprint_id": 2,
+    "sprint_id": `+jsonRef(sprintRef(t, h, 2))+`,
     "sp_planificados": 0,
     "sp_completados": 0,
     "items_sin_estimar": 0,
@@ -316,10 +316,10 @@ func TestReporteSprint_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 }
 
 // CA-39.3 y CA-39.8 · Un sprint inexistente, 0 o negativo devuelve 404.
-// HU-39 · CA-39.3 · Verifica que el reporte de un sprint inexistente, 0 o negativo responda 404.
+// HU-39 · CA-39.3 · Verifica que el reporte de un sprint inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
 func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingSprintID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/sprints/"+id+"/reporte", "")
 
 		expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
@@ -331,7 +331,7 @@ func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 func TestReporteSprint_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/abc/reporte", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del sprint debe ser un UUID")
 }
 
 // CA-39.8 · Una falla del repositorio devuelve 500 sin exponer el detalle.
