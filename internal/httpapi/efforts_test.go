@@ -25,9 +25,9 @@ import (
 // HU-52, CA-52.3: el esfuerzo, su sprint y su ítem se identifican con su
 // UUID, como texto.
 type effortJSON struct {
-	ID         string  `json:"id"`
-	SprintID   string  `json:"sprint_id"`
-	ItemID     string  `json:"item_id"`
+	ID         idRef   `json:"id"`
+	SprintID   idRef   `json:"sprint_id"`
+	ItemID     idRef   `json:"item_id"`
 	Integrante string  `json:"integrante"`
 	Fecha      string  `json:"fecha"`
 	Actividad  string  `json:"actividad"`
@@ -57,8 +57,8 @@ func TestRegistrarEsfuerzo_Devuelve201ConElEsfuerzo(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got effortJSON
 	decode(t, rec, &got)
-	expectUUIDv4(t, "id", got.ID)
-	want := effortJSON{ID: got.ID, SprintID: apiID(t, h, kindSprint, 1), ItemID: apiID(t, h, kindItem, 1), Integrante: "García Santiago",
+	expectUUIDv4(t, "id", string(got.ID))
+	want := effortJSON{ID: got.ID, SprintID: idRef(apiID(t, h, kindSprint, 1)), ItemID: idRef(apiID(t, h, kindItem, 1)), Integrante: "García Santiago",
 		Fecha: "2026-10-24", Actividad: "Implementar el registro", Horas: 2.5}
 	if got != want {
 		t.Errorf("esfuerzo = %+v, se esperaba %+v", got, want)

@@ -23,7 +23,7 @@ type sprintReportResponse struct {
 // sprintReport atiende GET /api/sprints/{id}/reporte (HU-39).
 func (s *server) sprintReport(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	id, err := pathID(r)
+	id, err := s.sprintIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return

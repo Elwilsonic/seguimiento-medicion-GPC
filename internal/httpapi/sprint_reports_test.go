@@ -49,25 +49,26 @@ func sprintReportTEC03(t *testing.T, h http.Handler) {
 	for _, spec := range specs {
 		it := createHoursItem(t, h, spec.item.title, spec.item.hours)
 		if spec.item.points > 0 {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/story-points", it.ID), fmt.Sprintf(`{"story_points":%d}`, spec.item.points)), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/story-points", string(it.ID)), fmt.Sprintf(`{"story_points":%d}`, spec.item.points)), http.StatusOK)
 		}
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sp.ID, it.ID), ""), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		if ef := spec.effort; ef != nil {
 			body := fmt.Sprintf(`{"integrante":%q,"fecha":%q,"actividad":%q,"horas":%v}`, ef.member, ef.date, ef.activity, ef.hours)
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/esfuerzos", sp.ID, it.ID), body), http.StatusCreated)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/esfuerzos", string(sp.ID), string(it.ID)), body), http.StatusCreated)
 		}
 		if spec.item.status != "PENDIENTE" {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/estado", it.ID), `{"estado":"EN_CURSO"}`), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/estado", string(it.ID)), `{"estado":"EN_CURSO"}`), http.StatusOK)
 		}
 		if spec.item.status == "TERMINADO" {
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/completar", sp.ID, it.ID), ""), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/completar", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		}
 	}
-	defectBody := fmt.Sprintf(`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":%d}`, sp.ID)
+	// García: cuando sprint pase a UUID, este id va entre comillas
+	defectBody := fmt.Sprintf(`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":%s}`, string(sp.ID))
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/defectos", defectBody), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%d}`, sp.ID)), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", sp.ID), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%s}`, string(sp.ID))), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(sp.ID)), ""), http.StatusOK)
 }
 
 // CA-39.1 y CA-39.8 · Contrato del reporte con el ejemplo 1 de la SDD.
@@ -80,7 +81,7 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "sprint": {
-    "id": 1,
+    "id": `+jsonRef(sprintRef(t, h, 1))+`,
     "proyecto_id":`+jsonProjectID(t, h, 1)+`,
     "nombre": "Sprint 1",
     "fecha_inicio": "2026-10-05",
@@ -89,7 +90,7 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
     "estado": "CERRADO"
   },
   "metricas": {
-    "sprint_id": 1,
+    "sprint_id": `+jsonRef(sprintRef(t, h, 1))+`,
     "sp_planificados": 10,
     "sp_completados": 8,
     "items_sin_estimar": 1,
@@ -159,7 +160,7 @@ func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "sprint": {
-    "id": 2,
+    "id": `+jsonRef(sprintRef(t, h, 2))+`,
     "proyecto_id":`+jsonProjectID(t, h, 2)+`,
     "nombre": "Sprint vacío",
     "fecha_inicio": "2026-10-19",
@@ -168,7 +169,7 @@ func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
     "estado": "ABIERTO"
   },
   "metricas": {
-    "sprint_id": 2,
+    "sprint_id": `+jsonRef(sprintRef(t, h, 2))+`,
     "sp_planificados": 0,
     "sp_completados": 0,
     "items_sin_estimar": 0,
@@ -262,8 +263,8 @@ func TestReporteSprint_DefectoResueltoEnElSprintYDetectadoEnOtro(t *testing.T) {
 	createProject(t, h, "Software Metrics")
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", tec03SprintBody), http.StatusCreated)
 	it := createHoursItem(t, h, "A", 10)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%d", it.ID), ""), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%d/defectos", it.ID),
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%s", string(it.ID)), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%s/defectos", string(it.ID)),
 		`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":1}`), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
@@ -300,10 +301,10 @@ func TestReporteSprint_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	it := createHoursItem(t, h, "A", 1)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%d", it.ID), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%s", string(it.ID)), ""), http.StatusOK)
 	for _, hours := range []string{"0.1", "0.2"} {
 		body := `{"integrante":"Ana","fecha":"2026-10-06","actividad":"Desarrollo","horas":` + hours + `}`
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%d/esfuerzos", it.ID), body), http.StatusCreated)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%s/esfuerzos", string(it.ID)), body), http.StatusCreated)
 	}
 
 	rec := do(t, h, http.MethodGet, "/api/sprints/1/reporte", "")
@@ -315,10 +316,10 @@ func TestReporteSprint_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 }
 
 // CA-39.3 y CA-39.8 · Un sprint inexistente, 0 o negativo devuelve 404.
-// HU-39 · CA-39.3 · Verifica que el reporte de un sprint inexistente, 0 o negativo responda 404.
+// HU-39 · CA-39.3 · Verifica que el reporte de un sprint inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
 func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingSprintID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/sprints/"+id+"/reporte", "")
 
 		expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
@@ -330,7 +331,7 @@ func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 func TestReporteSprint_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/abc/reporte", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del sprint debe ser un UUID")
 }
 
 // CA-39.8 · Una falla del repositorio devuelve 500 sin exponer el detalle.

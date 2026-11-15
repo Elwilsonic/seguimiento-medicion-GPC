@@ -43,7 +43,7 @@ func TestCorregirEsfuerzo_Devuelve200ConElEsfuerzoCorregido(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got effortJSON
 	decode(t, rec, &got)
-	want := effortJSON{ID: apiID(t, h, kindEffort, 1), SprintID: apiID(t, h, kindSprint, 1), ItemID: apiID(t, h, kindItem, 1),
+	want := effortJSON{ID: idRef(apiID(t, h, kindEffort, 1)), SprintID: idRef(apiID(t, h, kindSprint, 1)), ItemID: idRef(apiID(t, h, kindItem, 1)),
 		Integrante: "García Santiago", Fecha: "2026-10-24", Actividad: "Implementar el registro", Horas: 10}
 	if got != want {
 		t.Errorf("esfuerzo = %+v, se esperaba %+v", got, want)

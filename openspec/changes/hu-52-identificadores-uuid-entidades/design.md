@@ -123,6 +123,34 @@ orden de integración
         +----> PR ----+----> PR ---------+----> PR   (cualquier orden)
 ```
 
+**Cambio en D3, aprobado por el Agile Enabler el 15/11/2026: una rama de integración.** Al medir la parte de sprints y Planning Poker antes del RED (aplicar el GREEN, correr `go test -count=1 ./...` y revertir), fallaron 123 tests, y la mayoría no eran de esa parte. Las partes no son independientes, porque cada una cambia la respuesta de una entidad que reciben las rutas de otra:
+
+- las rutas de sprints y Planning Poker reciben ítems (`POST /api/sprints/{id}/items/{itemId}`, `…/completar` y `POST /api/items/{id}/poker-sessions`): al exigir el UUID del ítem, fallan mientras la API devuelva el ítem con su entero, que es la parte de ítems. Fueron 81 fallos "el id del ítem debe ser un UUID", también en tests de esfuerzos y de reportes;
+- las rutas de defectos y esfuerzos reciben sprints: cuando la creación de un sprint devuelve su UUID, esas rutas siguen esperando un entero. Fueron 37 fallos "el id debe ser un número entero".
+
+Así, ninguna parte puede integrarse sola en `main` con la CI en verde, y "cualquier orden" no se cumple. El reparto de D3 no cambia (quién hace qué y qué archivos toca); cambia el destino de los PR:
+
+- **Rama de integración:** `feature/HU-52-uuid-entidades`, creada por Buttini Cristobal desde `main` (`29051da`, con la base).
+- **Todos los PR de HU-52 van a esa rama, no a `main`,** en el mismo orden de antes: el ajuste de la base de Cardozo Leandro, ítems e integrantes, sprints y Planning Poker, y defectos y esfuerzos.
+- **Sin CI en esos PR:** la CI corre solo hacia `main`. Cada responsable corre `go test ./...` en su máquina, en memoria y con PostgreSQL, y pega la salida en el PR. Se esperan fallos entre una parte y otra (por ejemplo, "el id del ítem debe ser un UUID" antes de que entre la parte de ítems): el PR dice cuántos quedan y de qué parte dependen, y fuera de esos no puede haber ningún otro.
+- **Revisión:** cada PR a la rama de integración lo revisa otro integrante y se integra con "Create a merge commit".
+- **Un solo PR a `main`,** cuando estén las tres partes. Ese corre la CI (con `-race`), tiene que dar verde con 0 fallos y cierra HU-52 con `Closes #197`.
+- **Horario:** las tres partes integradas en la rama de integración a las 12:00 del lunes 16/11/2026, y el PR a `main` aprobado e integrado antes de las 14:00. Si a las 12:00 falta alguna, se decide en ese momento con el Agile Enabler.
+
+```
+orden de integración (desde el 15/11/2026)
+
+  main (con la base) --> feature/HU-52-uuid-entidades
+                                  ^
+        +-------------------------+-------------------------+
+        |                         |                         |
+  items+integrantes          sprints+poker            defectos+esfuerzos
+   (Cardozo)                  (Buttini)                 (Garcia)
+        PR ------------------>    PR ------------------>    PR    (sin CI; go test local en el PR)
+
+  feature/HU-52-uuid-entidades --> PR a main (CI con -race, 0 fallos, Closes #197)
+```
+
 ### D4. Un UUID inexistente se traduce a un ID interno que nunca se asigna, y no al 0
 
 `xIDFromPath` sigue el patrón de `projectIDFromPath`:
@@ -194,6 +222,14 @@ El esquema se recrea con `docker compose down -v` y `docker compose up -d --wait
 - **El runner de `HU-52-base.feature` está en `internal/httpapi`** (`uuid_base_features_test.go`) y no en un paquete de dominio: es el único paquete que ya usa los `Manager` de las 6 entidades, y ningún paquete de dominio los importa a todos. Los pasos llaman a los `Manager`, no a la API, así que el `.feature` sigue siendo de dominio.
 - **Los contratos de repositorio ignoran el `PublicID` en sus comparaciones generales** (`contractAssert*` y los `want` armados a mano), porque el `PublicID` es aleatorio. Lo verifica el contrato nuevo `runRepositoryPublicIDContract` (`public_id_repository_test.go`): guardar y buscar por UUID, un UUID inexistente o el nulo, y que `Update` lo conserve. `contractSave` y las semillas de PostgreSQL asignan un UUID nuevo si el test no lo fija, porque la columna es `UNIQUE`.
 - **`do()` traduce las rutas fijas de los tests de `internal/httpapi`** (`entity_ids_test.go`), en lugar de reescribir las 230 rutas literales y las 49 armadas con `%d` de los 15 archivos. `do()` guarda, por handler y por entidad, el `id` que devolvió la API al crear cada ítem, sprint, integrante, defecto, esfuerzo y sesión (`POST` con 201), en el orden de creación, y en la ruta reemplaza el número N de `/api/{entidad}/N/…` (y el `{itemId}` de `/api/sprints/N/items/M/…`) por el `id` de la N-ésima entidad de ese tipo creada por la API. **Hoy es la identidad:** la API todavía devuelve enteros correlativos, así que la N-ésima entidad creada tiene el ID N, y ningún test existente cambia de resultado. Cuando una entidad pasa a responder su UUID, las rutas de los tests siguen funcionando sin tocar los archivos. **Lo que no traduce, y adapta cada responsable para su entidad:** los números que no corresponden a una entidad creada por la API, como los casos de "inexistente" (`/api/items/999`), las entidades guardadas directo en el repositorio (semillas que no pasan por la API), los IDs de los cuerpos (`sprint_deteccion_id`), y las respuestas esperadas y los structs de los tests que hoy decodifican el `id` como entero.
+
+**Desviación de la base (15/11/2026).** Cardozo Leandro la encontró al empezar la sección 2 (ítems e integrantes), y el Agile Enabler (Peñalbé Hernán) decidió el 15/11/2026 resolverla con un ajuste de tests en una rama aparte (`feature/HU-52-ajuste-base`), antes de las entidades. A la base le faltaban tres cosas:
+
+1. **Structs de los tests con el id como `int`.** `itemJSON`, `sprintJSON`, `defectJSON`, `effortJSON`, `pokerSessionJSON`, `sprintMetricsJSON` y una struct anónima de `reports_test.go` leían como entero el `id`, `sprint_id`, `item_id`, `sprint_deteccion_id` o `sprint_resolucion_id`. Se usan en archivos de varios responsables (por ejemplo, `itemJSON` en `metrics_test.go`, `reports_test.go` y `sprints_test.go`), así que el GREEN de una entidad rompía los tests de las demás al decodificar. **Se resolvió** con el tipo `idRef` (`ids_ref_test.go`), que acepta un número o un texto, como `projectRef` en HU-51, y con una adaptación mecánica de sus usos: comparaciones con el texto (`"1"`), `%d` a `%s` con `string(x)` y `strconv.Itoa(x)` a `string(x)`. Donde un test compara IDs correlativos se usa `idInt`, que hoy verifica lo mismo que antes. Los JSON que los tests le mandan a la API no cambian. Las respuestas de integrantes, que se comparan como texto JSON con el id escrito a mano, las adapta Cardozo Leandro en su GREEN.
+2. **`do()` traducía todas las rutas.** Con la traducción de D9, apenas una entidad respondía su UUID, `do()` lo ponía también en las rutas de otros responsables cuyos handlers todavía leen un entero (por ejemplo, el `{itemId}` de `POST /api/sprints/{id}/items/{itemId}`, de Buttini Cristobal), y sus tests daban 400. **Se resolvió** con la tabla `uuidRoutes` (`entity_ids_test.go`): `do()` traduce solo las rutas que están en la tabla. Empieza vacía, con un bloque comentado por responsable con sus rutas de la tabla "Rutas por responsable" de D3, y cada responsable activa las suyas en su GREEN. Con la tabla vacía, `do()` no traduce nada, y la API sigue devolviendo enteros.
+3. **La tabla de `TestRutasConID_IDNoNumericoDevuelve400` no estaba separada por entidad**, como pedía este mismo D9. **Se resolvió** ordenándola en bloques (proyectos, integrantes, ítems, Planning Poker, sprints, defectos, esfuerzos, y métricas y reportes), separados por líneas en blanco, sin cambiar ningún caso ni mensaje.
+
+Es un ajuste de tests, sin ciclo RED/GREEN: no cambia el comportamiento ni lo que verifica ningún test, y no toca código de producción.
 
 ### D10. Cantidades, contadas con comandos sobre `main` `a56b052`
 

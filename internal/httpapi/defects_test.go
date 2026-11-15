@@ -27,13 +27,13 @@ import (
 // UUID, como texto, y un defecto sin resolver tiene "" en
 // sprint_resolucion_id (D7).
 type defectJSON struct {
-	ID                 string          `json:"id"`
+	ID                 idRef           `json:"id"`
 	Descripcion        string          `json:"descripcion"`
 	Severidad          defect.Severity `json:"severidad"`
 	Estado             defect.Status   `json:"estado"`
-	ItemID             string          `json:"item_id"`
-	SprintDeteccionID  string          `json:"sprint_deteccion_id"`
-	SprintResolucionID string          `json:"sprint_resolucion_id"`
+	ItemID             idRef           `json:"item_id"`
+	SprintDeteccionID  idRef           `json:"sprint_deteccion_id"`
+	SprintResolucionID idRef           `json:"sprint_resolucion_id"`
 }
 
 // validDefect tiene el sprint de detección como número, la forma anterior a
@@ -116,14 +116,14 @@ func TestRegistrarDefecto_Devuelve201ConElDefecto(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got defectJSON
 	decode(t, rec, &got)
-	expectUUIDv4(t, "id", got.ID)
+	expectUUIDv4(t, "id", string(got.ID))
 	want := defectJSON{
 		ID:                 got.ID,
 		Descripcion:        "El total no descuenta el descuento",
 		Severidad:          defect.SeverityHigh,
 		Estado:             defect.StatusOpen,
-		ItemID:             apiID(t, h, kindItem, 1),
-		SprintDeteccionID:  apiID(t, h, kindSprint, 1),
+		ItemID:             idRef(apiID(t, h, kindItem, 1)),
+		SprintDeteccionID:  idRef(apiID(t, h, kindSprint, 1)),
 		SprintResolucionID: "",
 	}
 	if got != want {
@@ -406,12 +406,12 @@ func TestCambiarEstadoDefecto_Devuelve200ConElDefecto(t *testing.T) {
 
 	got := changeDefectStatus(t, h, `{"estado":" en_correccion "}`)
 	want := defectJSON{
-		ID:                 apiID(t, h, kindDefect, 1),
+		ID:                 idRef(apiID(t, h, kindDefect, 1)),
 		Descripcion:        "El total no descuenta el descuento",
 		Severidad:          defect.SeverityHigh,
 		Estado:             defect.StatusInCorrection,
-		ItemID:             apiID(t, h, kindItem, 1),
-		SprintDeteccionID:  sprintID,
+		ItemID:             idRef(apiID(t, h, kindItem, 1)),
+		SprintDeteccionID:  idRef(sprintID),
 		SprintResolucionID: "",
 	}
 	if got != want {
@@ -420,7 +420,7 @@ func TestCambiarEstadoDefecto_Devuelve200ConElDefecto(t *testing.T) {
 
 	got = changeDefectStatus(t, h, resolveIn(sprintID))
 	want.Estado = defect.StatusResolved
-	want.SprintResolucionID = sprintID
+	want.SprintResolucionID = idRef(sprintID)
 	if got != want {
 		t.Errorf("defecto = %+v, se esperaba %+v", got, want)
 	}

@@ -315,7 +315,7 @@ func TestRespuestas_IdentificanElProyectoConSuUUID(t *testing.T) {
 		{"sprint cerrado", http.MethodPost, "/api/sprints/1/cerrar", "", 1},
 	}
 	for _, s := range steps {
-		rec := serveRaw(h, s.method, s.path, s.body)
+		rec := do(t, h, s.method, s.path, s.body)
 		if rec.Code != http.StatusOK && rec.Code != http.StatusCreated {
 			t.Errorf("%s (%s %s): código = %d; cuerpo: %s", s.what, s.method, s.path, rec.Code, rec.Body.String())
 			continue

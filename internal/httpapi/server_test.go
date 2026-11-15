@@ -48,7 +48,7 @@ type projectJSON struct {
 }
 
 type itemJSON struct {
-	ID          int        `json:"id"`
+	ID          idRef      `json:"id"`
 	ProyectoID  projectRef `json:"proyecto_id"`
 	Titulo      string     `json:"titulo"`
 	Descripcion string     `json:"descripcion"`
@@ -59,7 +59,7 @@ type itemJSON struct {
 	// TEC-04, CA-TEC04.9: la respuesta suma las horas estimadas (HU-07) y el
 	// sprint asignado (HU-11).
 	HorasEstimadas float64 `json:"horas_estimadas"`
-	SprintID       int     `json:"sprint_id"`
+	SprintID       idRef   `json:"sprint_id"`
 }
 
 type errorJSON struct {
@@ -88,7 +88,7 @@ func newMembers(projects *project.Manager) *member.Manager {
 // reemplaza "{proyecto}" y "{proyecto2}" con withProject (HU-51).
 func do(t *testing.T, h http.Handler, method, path, body string) *httptest.ResponseRecorder {
 	t.Helper()
-	path = withEntityIDs(h, withProject(t, h, path))
+	path = withEntityIDs(h, method, withProject(t, h, path))
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	rec := httptest.NewRecorder()
 	serveRecording(t, h, rec, req)
@@ -329,12 +329,16 @@ func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
-// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id inválido: las de proyecto con el mensaje de UUID (HU-51) y las demás con el de número entero.
+// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id inválido: las de proyecto (HU-51) y las que ya pasaron a UUID en HU-52 con el mensaje de UUID de su entidad, y las demás con el de número entero.
 // CA-TEC01.2 · Las demás rutas con {id} también rechazan un id no numérico.
 func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 	casos := []struct {
 		nombre, method, path, body string
 	}{
+		// HU-52, D9: un bloque por entidad, separados por una línea en
+		// blanco, para que los merges de cada responsable no choquen.
+
+		// Proyectos.
 		{"modificar proyecto", http.MethodPut, "/api/proyectos/abc", `{"nombre":"Sistema de ventas","estado":"PLANIFICADO"}`},
 		// HU-18, CA-18.10: registrar la fecha de inicio del proyecto.
 		{"registrar fecha de inicio", http.MethodPatch, "/api/proyectos/abc/fecha-inicio", `{"fecha_inicio":"2026-10-23"}`},
@@ -342,17 +346,23 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"registrar fecha de fin", http.MethodPatch, "/api/proyectos/abc/fecha-fin", `{"fecha_fin":"2026-12-18"}`},
 		// HU-19, CA-19.8: modificar las fechas del proyecto.
 		{"modificar fechas", http.MethodPatch, "/api/proyectos/abc/fechas", `{"fecha_inicio":"2027-01-11","fecha_fin":"2027-03-19"}`},
+
+		// Integrantes.
 		// HU-15, CA-15.7: registrar un integrante del proyecto.
 		{"registrar integrante", http.MethodPost, "/api/proyectos/abc/integrantes", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},
 		// HU-17, CA-17.4: listar los integrantes del proyecto.
 		{"listar integrantes", http.MethodGet, "/api/proyectos/abc/integrantes", ""},
+		{"modificar integrante", http.MethodPut, "/api/integrantes/abc", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},
+
+		// Ítems.
 		{"crear ítem", http.MethodPost, "/api/proyectos/abc/backlog", validItem},
 		{"listar backlog", http.MethodGet, "/api/proyectos/abc/backlog", ""},
 		// TEC-04, CA-TEC04.9: endpoints de ítems.
 		{"consultar ítem", http.MethodGet, "/api/items/abc", ""},
 		{"modificar ítem", http.MethodPut, "/api/items/abc", validItem},
-		{"modificar integrante", http.MethodPut, "/api/integrantes/abc", `{"nombre":"Ana","rol":"PRODUCT_BUILDER"}`},
 		{"cambiar estado", http.MethodPatch, "/api/items/abc/estado", `{"estado":"EN_CURSO"}`},
+
+		// Planning Poker.
 		{"votar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/votes", `{"integrante":"Ana","puntos":5}`},
 		// HU-23, CA-23.8: revelar los votos.
 		{"revelar Planning Poker", http.MethodPost, "/api/poker-sessions/abc/reveal", ""},
@@ -360,16 +370,34 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"registrar estimación Planning Poker", http.MethodPost, "/api/poker-sessions/abc/estimate", `{"puntos":5}`},
 		// HU-24, CA-24.12: repetir la ronda.
 		{"repetir ronda Planning Poker", http.MethodPost, "/api/poker-sessions/abc/rounds", ""},
+
+		// Sprints.
 		// TEC-04, CA-TEC04.9: endpoints de sprints.
 		{"crear sprint", http.MethodPost, "/api/proyectos/abc/sprints", validSprint},
 		// HU-14, CA-14.4: listar los sprints del proyecto.
 		{"listar sprints del proyecto", http.MethodGet, "/api/proyectos/abc/sprints", ""},
 		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
-		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc", ""},
+		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/" + missingSprintID + "/items/abc", ""},
 		{"completar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1/completar", ""},
-		{"completar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc/completar", ""},
+		{"completar ítem: ítem", http.MethodPost, "/api/sprints/" + missingSprintID + "/items/abc/completar", ""},
 		{"listar completados", http.MethodGet, "/api/sprints/abc/completados", ""},
 		{"cerrar sprint", http.MethodPost, "/api/sprints/abc/cerrar", ""},
+
+		// Defectos.
+		// HU-30, CA-30.9: cambiar el estado de un defecto.
+		{"cambiar estado de defecto", http.MethodPatch, "/api/defectos/abc/estado", `{"estado":"EN_CORRECCION"}`},
+		// HU-31, CA-31.9: consultar los defectos de un proyecto y de un sprint.
+		{"listar defectos del proyecto", http.MethodGet, "/api/proyectos/abc/defectos", ""},
+		{"listar defectos del sprint", http.MethodGet, "/api/sprints/abc/defectos?estado=ABIERTO", ""},
+
+		// Esfuerzos.
+		// HU-27, CA-27.10: listado de esfuerzos por historia y por sprint.
+		{"listar esfuerzos del ítem", http.MethodGet, "/api/items/abc/esfuerzos", ""},
+		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},
+		// HU-28, CA-28.7: corregir las horas de un esfuerzo.
+		{"corregir esfuerzo", http.MethodPatch, "/api/esfuerzos/abc/horas", `{"horas":10}`},
+
+		// Métricas y reportes.
 		// HU-32, CA-32.9: métricas de un sprint y de un proyecto.
 		{"métricas del sprint", http.MethodGet, "/api/sprints/abc/metricas", ""},
 		{"métricas del proyecto", http.MethodGet, "/api/proyectos/abc/metricas", ""},
@@ -383,16 +411,6 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		{"reporte del sprint", http.MethodGet, "/api/sprints/abc/reporte", ""},
 		// HU-40, CA-40.1: PDF del reporte del proyecto.
 		{"PDF del reporte del proyecto", http.MethodGet, "/api/proyectos/abc/reporte/pdf", ""},
-		// HU-27, CA-27.10: listado de esfuerzos por historia y por sprint.
-		{"listar esfuerzos del ítem", http.MethodGet, "/api/items/abc/esfuerzos", ""},
-		{"listar esfuerzos del sprint", http.MethodGet, "/api/sprints/abc/esfuerzos", ""},
-		// HU-28, CA-28.7: corregir las horas de un esfuerzo.
-		{"corregir esfuerzo", http.MethodPatch, "/api/esfuerzos/abc/horas", `{"horas":10}`},
-		// HU-30, CA-30.9: cambiar el estado de un defecto.
-		{"cambiar estado de defecto", http.MethodPatch, "/api/defectos/abc/estado", `{"estado":"EN_CORRECCION"}`},
-		// HU-31, CA-31.9: consultar los defectos de un proyecto y de un sprint.
-		{"listar defectos del proyecto", http.MethodGet, "/api/proyectos/abc/defectos", ""},
-		{"listar defectos del sprint", http.MethodGet, "/api/sprints/abc/defectos?estado=ABIERTO", ""},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
@@ -403,6 +421,12 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 			want := "el id debe ser un número entero"
 			if strings.HasPrefix(c.path, "/api/proyectos/") {
 				want = "el id del proyecto debe ser un UUID"
+			}
+
+			// HU-52, CA-52.4 · Sprints y Planning Poker (Buttini Cristobal):
+			// las rutas de sprints.go, poker.go, metrics.go y sprint_reports.go.
+			if m, ok := sprintsPokerInvalidIDMessages[c.nombre]; ok {
+				want = m
 			}
 			expectError(t, rec, http.StatusBadRequest, want)
 		})
@@ -664,7 +688,7 @@ func TestCrearItem_Devuelve201ConElItemCreado(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != 1 || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
+	if it.ID != "1" || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
 		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.StoryPoints != 0 ||
 		len(it.Criterios) != 1 || it.Criterios[0] != "Credenciales válidas" {
 		t.Errorf("ítem = %+v", it)
@@ -725,7 +749,7 @@ func TestListarBacklog_Devuelve200ConLosItemsDelProyecto(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
 	decode(t, rec, &items)
-	if len(items) != 2 || items[0].ID != 1 || items[1].ID != 3 {
+	if len(items) != 2 || items[0].ID != "1" || items[1].ID != "3" {
 		t.Errorf("ítems = %+v, se esperaban los ítems 1 y 3 del proyecto 1", items)
 	}
 }
@@ -920,7 +944,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "votar Planning Poker",
 		method: http.MethodPost,
-		path:   "/api/poker-sessions/1/votes",
+		path:   "/api/poker-sessions/" + missingSessionID + "/votes",
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
 		},
@@ -930,7 +954,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:      "registrar estimación Planning Poker",
 		method:    http.MethodPost,
-		path:      "/api/poker-sessions/1/estimate",
+		path:      "/api/poker-sessions/" + missingSessionID + "/estimate",
 		untouched: expectItemWithoutStoryPoints,
 	},
 	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
@@ -939,8 +963,8 @@ var bodyEndpoints = []bodyEndpoint{
 		method: http.MethodPost,
 		path:   "{proyecto}/sprints",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
-			expectStatus(t, rec, http.StatusNotFound)
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/sprints", "")
+			expectRawJSON(t, rec, `[]`)
 		},
 	},
 	// HU-30, CA-30.9: el cuerpo se rechaza antes de llegar al Manager. No

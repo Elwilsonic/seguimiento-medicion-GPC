@@ -48,8 +48,8 @@ func TestConsultarItem_Devuelve200ConElItem(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != 1 || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
-		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.HorasEstimadas != 0 || it.SprintID != 0 ||
+	if it.ID != "1" || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
+		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.HorasEstimadas != 0 || it.SprintID != "0" ||
 		len(it.Criterios) != 1 || it.Criterios[0] != "Credenciales válidas" {
 		t.Errorf("ítem = %+v", it)
 	}
@@ -73,7 +73,7 @@ func TestModificarItem_Devuelve200ConElItemModificado(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != 1 || it.Titulo != "Login con Google" || it.Descripcion != "OAuth" || it.Prioridad != "MEDIA" ||
+	if it.ID != "1" || it.Titulo != "Login con Google" || it.Descripcion != "OAuth" || it.Prioridad != "MEDIA" ||
 		it.HorasEstimadas != 6.5 || len(it.Criterios) != 1 || it.Criterios[0] != "Redirige a Google" {
 		t.Errorf("ítem = %+v", it)
 	}
@@ -126,7 +126,7 @@ func TestCambiarEstadoItem_Devuelve200ConElEstadoNuevo(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != 1 || it.Estado != "EN_CURSO" {
+	if it.ID != "1" || it.Estado != "EN_CURSO" {
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 EN_CURSO", it)
 	}
 }
@@ -172,7 +172,7 @@ func TestListarBacklogPorPrioridad_Devuelve200OrdenadoPorPrioridad(t *testing.T)
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
 	decode(t, rec, &items)
-	if len(items) != 3 || items[0].ID != 3 || items[1].ID != 2 || items[2].ID != 1 {
+	if len(items) != 3 || items[0].ID != "3" || items[1].ID != "2" || items[2].ID != "1" {
 		t.Errorf("ítems = %+v, se esperaban los ítems 3 (ALTA), 2 (MEDIA) y 1 (BAJA)", items)
 	}
 }
@@ -200,7 +200,7 @@ func TestAsignarStoryPoints_Devuelve200ConLosStoryPointsAsignados(t *testing.T) 
 	expectStatus(t, rec, http.StatusOK)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != 1 || it.StoryPoints != 5 || it.Titulo != "Login de usuarios" || it.Estado != "PENDIENTE" {
+	if it.ID != "1" || it.StoryPoints != 5 || it.Titulo != "Login de usuarios" || it.Estado != "PENDIENTE" {
 		t.Errorf("ítem = %+v, se esperaba el ítem 1 con 5 story points", it)
 	}
 

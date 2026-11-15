@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -29,10 +28,10 @@ import (
 // TestRutasConID_IDNoNumericoDevuelve400.
 
 type sprintMetricsJSON struct {
-	SprintID        int `json:"sprint_id"`
-	SPPlanificados  int `json:"sp_planificados"`
-	SPCompletados   int `json:"sp_completados"`
-	ItemsSinEstimar int `json:"items_sin_estimar"`
+	SprintID        idRef `json:"sprint_id"`
+	SPPlanificados  int   `json:"sp_planificados"`
+	SPCompletados   int   `json:"sp_completados"`
+	ItemsSinEstimar int   `json:"items_sin_estimar"`
 	// HU-33: M4 a M7 y la cantidad de ítems sin horas estimadas.
 	HorasEstimadas         float64  `json:"horas_estimadas"`
 	HorasReales            float64  `json:"horas_reales"`
@@ -59,7 +58,7 @@ type projectMetricsJSON struct {
 // metricsSprint crea por la API un sprint del proyecto 1 con un ítem por cada
 // valor de points (0 = sin estimar), en el estado de states, y lo cierra si
 // closeIt es true. Devuelve el ID del sprint.
-func metricsSprint(t *testing.T, h http.Handler, name string, points []int, states []string, closeIt bool) int {
+func metricsSprint(t *testing.T, h http.Handler, name string, points []int, states []string, closeIt bool) idRef {
 	t.Helper()
 	var sp sprintJSON
 	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints",
@@ -73,18 +72,18 @@ func metricsSprint(t *testing.T, h http.Handler, name string, points []int, stat
 		expectStatus(t, rec, http.StatusCreated)
 		decode(t, rec, &it)
 		if p > 0 {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/story-points", it.ID), fmt.Sprintf(`{"story_points":%d}`, p)), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/story-points", string(it.ID)), fmt.Sprintf(`{"story_points":%d}`, p)), http.StatusOK)
 		}
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sp.ID, it.ID), ""), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		if states[i] != "PENDIENTE" {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/estado", it.ID), `{"estado":"EN_CURSO"}`), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/estado", string(it.ID)), `{"estado":"EN_CURSO"}`), http.StatusOK)
 		}
 		if states[i] == "TERMINADO" {
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/completar", sp.ID, it.ID), ""), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/completar", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		}
 	}
 	if closeIt {
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", sp.ID), ""), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(sp.ID)), ""), http.StatusOK)
 	}
 	return sp.ID
 }
@@ -104,7 +103,7 @@ func TestMetricasSprint_Devuelve200ConLosStoryPoints(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	id := metricsSprint(t, h, "Sprint 1", []int{5, 3, 2, 0}, []string{"TERMINADO", "TERMINADO", "EN_CURSO", "PENDIENTE"}, false)
 
-	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var got sprintMetricsJSON
@@ -158,7 +157,7 @@ func TestMetricasProyecto_SinSprintsCerradosLaVelocidadEsNull(t *testing.T) {
 // HU-32 · CA-32.9 · Verifica que las métricas de un sprint inexistente respondan 404.
 // CA-32.9 · Un sprint inexistente devuelve 404.
 func TestMetricasSprint_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/99/metricas", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/"+missingSprintID+"/metricas", "")
 
 	expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
 }
@@ -219,7 +218,7 @@ func TestMetricasSprint_IncluyeElPorcentajeDeHistoriasCompletadas(t *testing.T) 
 	createProject(t, h, "Sistema de ventas")
 	id := metricsSprint(t, h, "Sprint 1", []int{5, 3, 2, 0}, []string{"TERMINADO", "TERMINADO", "EN_CURSO", "PENDIENTE"}, false)
 
-	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var got completionJSON
@@ -250,7 +249,7 @@ func TestMetricas_SinItemsElPorcentajeEsNull(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	id := metricsSprint(t, h, "Sprint 1", nil, nil, false)
 
-	for _, path := range []string{fmt.Sprintf("/api/sprints/%d/metricas", id), "{proyecto}/metricas"} {
+	for _, path := range []string{fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "{proyecto}/metricas"} {
 		rec := do(t, h, http.MethodGet, path, "")
 
 		expectStatus(t, rec, http.StatusOK)
@@ -287,7 +286,7 @@ func createHoursItem(t *testing.T, h http.Handler, title string, hours float64) 
 		fmt.Sprintf(`{"titulo":%q,"descripcion":"","prioridad":"MEDIA","criterios":["Criterio"]}`, title))
 	expectStatus(t, rec, http.StatusCreated)
 	decode(t, rec, &it)
-	rec = do(t, h, http.MethodPut, fmt.Sprintf("/api/items/%d", it.ID),
+	rec = do(t, h, http.MethodPut, fmt.Sprintf("/api/items/%s", string(it.ID)),
 		fmt.Sprintf(`{"titulo":%q,"descripcion":"","prioridad":"MEDIA","criterios":["Criterio"],"horas_estimadas":%v}`, title, hours))
 	expectStatus(t, rec, http.StatusOK)
 	decode(t, rec, &it)
@@ -296,7 +295,7 @@ func createHoursItem(t *testing.T, h http.Handler, title string, hours float64) 
 
 // hoursSprint crea un sprint del proyecto 1 con los ítems de specs, los asigna
 // y registra el esfuerzo indicado (0 = sin esfuerzo). Devuelve el ID del sprint.
-func hoursSprint(t *testing.T, h http.Handler, name string, specs []hoursItemSpec) int {
+func hoursSprint(t *testing.T, h http.Handler, name string, specs []hoursItemSpec) idRef {
 	t.Helper()
 	var sp sprintJSON
 	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints",
@@ -305,10 +304,10 @@ func hoursSprint(t *testing.T, h http.Handler, name string, specs []hoursItemSpe
 	decode(t, rec, &sp)
 	for _, spec := range specs {
 		it := createHoursItem(t, h, spec.title, spec.hours)
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sp.ID, it.ID), ""), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		if spec.effort > 0 {
 			body := fmt.Sprintf(`{"integrante":"García Santiago","fecha":"2026-10-10","actividad":"Implementación","horas":%v}`, spec.effort)
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/esfuerzos", sp.ID, it.ID), body), http.StatusCreated)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/esfuerzos", string(sp.ID), string(it.ID)), body), http.StatusCreated)
 		}
 	}
 	return sp.ID
@@ -341,7 +340,7 @@ func TestMetricasSprint_IncluyeHorasYDesviacion(t *testing.T) {
 		{"D", 4, 0},
 	})
 
-	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var got sprintMetricsJSON
@@ -389,7 +388,7 @@ func TestMetricas_SinDatosLaDesviacionEsNull(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	id := hoursSprint(t, h, "Sprint 1", nil)
 
-	for _, path := range []string{fmt.Sprintf("/api/sprints/%d/metricas", id), "{proyecto}/metricas"} {
+	for _, path := range []string{fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "{proyecto}/metricas"} {
 		rec := do(t, h, http.MethodGet, path, "")
 
 		expectStatus(t, rec, http.StatusOK)
@@ -415,7 +414,7 @@ func TestMetricas_RedondeaHorasYDesviacionAUnDecimal(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	id := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{{"A", 20, 21.25}})
 
-	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var got sprintMetricsJSON
@@ -435,7 +434,7 @@ func TestMetricas_NormalizaElCeroNegativo(t *testing.T) {
 		{"B", 0.2, 0},
 	})
 
-	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "")
 
 	expectStatus(t, rec, http.StatusOK)
 	var got struct {
@@ -478,7 +477,7 @@ func TestMetricas_ErrorDelRepositorioDeEsfuerzosDevuelve500(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	it := createHoursItem(t, h, "A", 10)
-	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/items/"+strconv.Itoa(it.ID), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/items/"+string(it.ID), ""), http.StatusOK)
 
 	for _, path := range []string{"/api/sprints/1/metricas", "{proyecto}/metricas"} {
 		rec := do(t, h, http.MethodGet, path, "")
@@ -570,7 +569,7 @@ type contractItemSpec struct {
 // contractTEC03 crea por la API el proyecto 1 con el sprint 1 abierto, los
 // ítems del ejemplo de TEC-03 y un defecto detectado y resuelto en el sprint.
 // Devuelve el ID del sprint.
-func contractTEC03(t *testing.T, h http.Handler) int {
+func contractTEC03(t *testing.T, h http.Handler) idRef {
 	t.Helper()
 	createProject(t, h, "Sistema de ventas")
 	var sp sprintJSON
@@ -590,24 +589,25 @@ func contractTEC03(t *testing.T, h http.Handler) int {
 			first = it
 		}
 		if spec.points > 0 {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/story-points", it.ID), fmt.Sprintf(`{"story_points":%d}`, spec.points)), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/story-points", string(it.ID)), fmt.Sprintf(`{"story_points":%d}`, spec.points)), http.StatusOK)
 		}
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sp.ID, it.ID), ""), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		if spec.effort > 0 {
 			body := fmt.Sprintf(`{"integrante":"García Santiago","fecha":"2026-10-10","actividad":"Implementación","horas":%v}`, spec.effort)
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/esfuerzos", sp.ID, it.ID), body), http.StatusCreated)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/esfuerzos", string(sp.ID), string(it.ID)), body), http.StatusCreated)
 		}
 		if spec.status != "PENDIENTE" {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/estado", it.ID), `{"estado":"EN_CURSO"}`), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/estado", string(it.ID)), `{"estado":"EN_CURSO"}`), http.StatusOK)
 		}
 		if spec.status == "TERMINADO" {
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/completar", sp.ID, it.ID), ""), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/completar", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		}
 	}
-	defectBody := fmt.Sprintf(`{"descripcion":"El total no descuenta el descuento","severidad":"alta","sprint_deteccion_id":%d}`, sp.ID)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%d/defectos", first.ID), defectBody), http.StatusCreated)
+	// García: cuando sprint pase a UUID, este id va entre comillas
+	defectBody := fmt.Sprintf(`{"descripcion":"El total no descuenta el descuento","severidad":"alta","sprint_deteccion_id":%s}`, string(sp.ID))
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%s/defectos", string(first.ID)), defectBody), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%d}`, sp.ID)), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%s}`, string(sp.ID))), http.StatusOK)
 	return sp.ID
 }
 
@@ -635,10 +635,10 @@ func TestConsultaMetricas_ContratoDelSprint(t *testing.T) {
 	h := newHandler()
 	id := contractTEC03(t, h)
 
-	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", id), "")
+	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "")
 
 	expectRawJSON(t, rec, `{
-  "sprint_id": 1,
+  "sprint_id": `+jsonRef(sprintRef(t, h, 1))+`,
   "sp_planificados": 10,
   "sp_completados": 8,
   "items_sin_estimar": 1,
@@ -660,7 +660,7 @@ func TestConsultaMetricas_ContratoDelSprint(t *testing.T) {
 func TestConsultaMetricas_ContratoDelProyecto(t *testing.T) {
 	h := newHandler()
 	id := contractTEC03(t, h)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", id), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(id)), ""), http.StatusOK)
 
 	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/metricas", "")
 
@@ -718,18 +718,18 @@ func TestConsultaMetricas_ContratoDelProyectoVacio(t *testing.T) {
 // CA-35.3 · Un {id} no numérico devuelve 400 en las dos rutas.
 func TestConsultaMetricas_IDNoNumericoDevuelve400(t *testing.T) {
 	h := newHandler()
-	for path, want := range map[string]string{"/api/sprints/abc/metricas": "el id debe ser un número entero", "/api/proyectos/abc/metricas": "el id del proyecto debe ser un UUID"} {
+	for path, want := range map[string]string{"/api/sprints/abc/metricas": "el id del sprint debe ser un UUID", "/api/proyectos/abc/metricas": "el id del proyecto debe ser un UUID"} {
 		rec := do(t, h, http.MethodGet, path, "")
 
 		expectError(t, rec, http.StatusBadRequest, want)
 	}
 }
 
-// HU-35 · CA-35.3 · Verifica que un sprint inexistente, 0 o negativo responda 404.
-// CA-35.3 · Un sprint inexistente, 0 o negativo devuelve 404.
+// HU-35 · CA-35.3 · Verifica que un sprint inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
+// CA-35.3 · Un sprint inexistente devuelve 404.
 func TestConsultaMetricas_SprintInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingSprintID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/sprints/"+id+"/metricas", "")
 
 		expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
@@ -800,10 +800,10 @@ func TestConsultaMetricas_LeeLosItemsUnaSolaVez(t *testing.T) {
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 	first := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{{"A", 10, 12}, {"B", 6, 5}})
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", first), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(first)), ""), http.StatusOK)
 	second := hoursSprint(t, h, "Sprint 2", []hoursItemSpec{{"C", 4, 3}})
 
-	for _, path := range []string{fmt.Sprintf("/api/sprints/%d/metricas", second), "{proyecto}/metricas"} {
+	for _, path := range []string{fmt.Sprintf("/api/sprints/%s/metricas", string(second)), "{proyecto}/metricas"} {
 		itemRepo.listCalls = 0
 
 		expectStatus(t, do(t, h, http.MethodGet, path, ""), http.StatusOK)
@@ -833,7 +833,7 @@ const secondSprint = `{"nombre":"Sprint 2","fecha_inicio":"2026-10-15","fecha_fi
 func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) {
 	h := newHandler()
 	id := contractTEC03(t, h)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", id), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(id)), ""), http.StatusOK)
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", secondSprint), http.StatusCreated)
 
 	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/metricas/sprints", "")
@@ -841,7 +841,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
 	expectRawJSON(t, rec, `[
   {
     "sprint": {
-      "id": 1,
+      "id": `+jsonRef(sprintRef(t, h, 1))+`,
       "proyecto_id":`+jsonProjectID(t, h, 1)+`,
       "nombre": "Sprint 1",
       "fecha_inicio": "2026-10-01",
@@ -850,7 +850,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
       "estado": "CERRADO"
     },
     "metricas": {
-      "sprint_id": 1,
+      "sprint_id": `+jsonRef(sprintRef(t, h, 1))+`,
       "sp_planificados": 10,
       "sp_completados": 8,
       "items_sin_estimar": 1,
@@ -868,7 +868,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
   },
   {
     "sprint": {
-      "id": 2,
+      "id": `+jsonRef(sprintRef(t, h, 2))+`,
       "proyecto_id":`+jsonProjectID(t, h, 1)+`,
       "nombre": "Sprint 2",
       "fecha_inicio": "2026-10-15",
@@ -877,7 +877,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
       "estado": "ABIERTO"
     },
     "metricas": {
-      "sprint_id": 2,
+      "sprint_id": `+jsonRef(sprintRef(t, h, 2))+`,
       "sp_planificados": 0,
       "sp_completados": 0,
       "items_sin_estimar": 0,
@@ -903,7 +903,7 @@ func TestMetricasPorSprint_ValoresIgualesALaConsultaDeCadaSprint(t *testing.T) {
 	h := newHandler()
 	createProject(t, h, "Sistema de ventas")
 	first := hoursSprint(t, h, "Sprint 1", []hoursItemSpec{{"A", 10, 12}, {"B", 6, 5}})
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", first), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(first)), ""), http.StatusOK)
 	second := hoursSprint(t, h, "Sprint 2", []hoursItemSpec{{"C", 4, 3}})
 
 	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/metricas/sprints", "")
@@ -914,24 +914,24 @@ func TestMetricasPorSprint_ValoresIgualesALaConsultaDeCadaSprint(t *testing.T) {
 		Metricas json.RawMessage `json:"metricas"`
 	}
 	decode(t, rec, &got)
-	ids := []int{first, second}
+	ids := []idRef{first, second}
 	if len(got) != len(ids) {
 		t.Fatalf("la lista tiene %d sprints, se esperaba %d", len(got), len(ids))
 	}
 	for i, entry := range got {
 		if entry.Sprint.ID != ids[i] {
-			t.Errorf("posición %d: sprint %d, se esperaba %d", i, entry.Sprint.ID, ids[i])
+			t.Errorf("posición %d: sprint %s, se esperaba %s", i, string(entry.Sprint.ID), string(ids[i]))
 		}
-		single := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%d/metricas", ids[i]), "")
+		single := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(ids[i])), "")
 		var want, compact bytes.Buffer
 		if err := json.Compact(&want, single.Body.Bytes()); err != nil {
-			t.Fatalf("métricas del sprint %d: %v", ids[i], err)
+			t.Fatalf("métricas del sprint %s: %v", string(ids[i]), err)
 		}
 		if err := json.Compact(&compact, entry.Metricas); err != nil {
 			t.Fatalf("métricas de la lista: %v", err)
 		}
 		if !bytes.Equal(compact.Bytes(), want.Bytes()) {
-			t.Errorf("sprint %d: métricas de la lista =\n%s\nGET /api/sprints/%d/metricas =\n%s", ids[i], compact.String(), ids[i], want.String())
+			t.Errorf("sprint %s: métricas de la lista =\n%s\nGET /api/sprints/%s/metricas =\n%s", string(ids[i]), compact.String(), string(ids[i]), want.String())
 		}
 	}
 }

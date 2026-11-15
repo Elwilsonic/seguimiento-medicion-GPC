@@ -41,7 +41,7 @@ func TestListarEsfuerzosPorSprint_Devuelve200ConLosEsfuerzosYElTotal(t *testing.
 		t.Fatalf("esfuerzos = %d, se esperaban 2", len(got.Esfuerzos))
 	}
 	// HU-52, CA-52.3: cada esfuerzo tiene el UUID que devolvió su registro.
-	if first, second := apiID(t, h, kindEffort, 1), apiID(t, h, kindEffort, 2); got.Esfuerzos[0].ID != first || got.Esfuerzos[1].ID != second {
+	if first, second := apiID(t, h, kindEffort, 1), apiID(t, h, kindEffort, 2); string(got.Esfuerzos[0].ID) != first || string(got.Esfuerzos[1].ID) != second {
 		t.Errorf("IDs = %s y %s, se esperaban %s y %s", got.Esfuerzos[0].ID, got.Esfuerzos[1].ID, first, second)
 	}
 	if got.Esfuerzos[0].Integrante != "García Santiago" || got.Esfuerzos[0].Actividad != "Implementar el registro" {
@@ -62,7 +62,7 @@ func TestListarEsfuerzosPorItem_Devuelve200ConLosEsfuerzosYElTotal(t *testing.T)
 	expectStatus(t, rec, http.StatusOK)
 	var got effortListJSON
 	decode(t, rec, &got)
-	if len(got.Esfuerzos) != 1 || got.Esfuerzos[0].ID != apiID(t, h, kindEffort, 1) {
+	if len(got.Esfuerzos) != 1 || string(got.Esfuerzos[0].ID) != apiID(t, h, kindEffort, 1) {
 		t.Fatalf("esfuerzos = %+v, se esperaba el esfuerzo 1", got.Esfuerzos)
 	}
 	if got.TotalHoras != 2.5 {
