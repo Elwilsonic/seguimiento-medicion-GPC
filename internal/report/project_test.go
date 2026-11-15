@@ -257,6 +257,7 @@ func (e *reportEnv) effort(t *testing.T, sprintID, itemID int, member string, ho
 func (e *reportEnv) saveDefect(t *testing.T, itemID, detectionSprintID int, status defect.Status, resolutionSprintID int) defect.Defect {
 	t.Helper()
 	d, err := e.defectSpy.Repository.Save(defect.Defect{
+		PublicID:           uuid.NewV4(),
 		Description:        "Defecto",
 		Severity:           defect.SeverityHigh,
 		Status:             status,

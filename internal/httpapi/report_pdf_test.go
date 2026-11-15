@@ -74,9 +74,9 @@ func TestReportePDF_Devuelve200ConElArchivo(t *testing.T) {
 		"Reporte del proyecto «Software Metrics»",
 		"Inicio: 2026-10-05",
 		// HU-52: las líneas de esfuerzos y defectos empiezan con el UUID y
-		// pueden seguir en la línea siguiente: se verifica el texto del medio.
-		" · 2026-10-08 · Ana · Pruebas · ítem ",
-		" · ALTA · RESUELTO · ítem ",
+		// siguen en la línea siguiente: se verifica el comienzo de su texto.
+		" · 2026-10-08 · Ana · Pruebas · ",
+		" · ALTA · RESUELTO · ",
 		"Integrantes que registraron esfuerzo: Ana, Luis",
 	)
 	// HU-52 (CA-52.3): ya no aparecen los IDs enteros.

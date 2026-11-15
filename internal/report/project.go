@@ -6,15 +6,18 @@ import (
 	"seguimiento-medicion-gpc/internal/effort"
 	"seguimiento-medicion-gpc/internal/metrics"
 	"seguimiento-medicion-gpc/internal/project"
+	"seguimiento-medicion-gpc/internal/sprint"
 )
 
 // ProjectReport es el reporte de un proyecto (HU-38): sus datos, sus
 // métricas M1 a M10, sus esfuerzos, sus defectos, los integrantes que
 // registraron esfuerzo y las historias del backlog (HU-49), cada parte en su
-// propio tipo (RN-38.1).
+// propio tipo (RN-38.1). Sprints son los sprints del proyecto, que el PDF usa
+// para mostrar el UUID de cada sprint (HU-52, CA-52.3).
 type ProjectReport struct {
 	Project project.Project
 	Metrics metrics.ProjectMetrics
+	Sprints []sprint.Sprint
 	Efforts Efforts
 	Defects Defects
 	Members Members
@@ -83,6 +86,7 @@ func (m *Manager) Project(projectID int) (ProjectReport, error) {
 	return ProjectReport{
 		Project: p,
 		Metrics: projectMetrics,
+		Sprints: sprints,
 		Efforts: efforts,
 		Defects: Defects{Defects: defects},
 		Members: membersOf(efforts.Efforts),

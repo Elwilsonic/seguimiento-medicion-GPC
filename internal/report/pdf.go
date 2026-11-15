@@ -27,6 +27,7 @@ type pdfLine struct {
 // calcula nada: solo da formato a los valores del reporte (RN-40.2).
 func projectReportLines(rep ProjectReport) []pdfLine {
 	p, m := rep.Project, rep.Metrics
+	ids := publicIDsOf(rep)
 	lines := []pdfLine{
 		{Text: "Reporte del proyecto «" + p.Name + "»", Heading: true},
 		{Text: "Proyecto", Heading: true},
@@ -68,7 +69,7 @@ func projectReportLines(rep ProjectReport) []pdfLine {
 
 	// HU-49: entre las métricas y los esfuerzos, en el orden del reporte.
 	for _, it := range rep.Stories.Stories {
-		lines = append(lines, pdfLine{Text: storyText(it)})
+		lines = append(lines, pdfLine{Text: storyText(it, ids)})
 	}
 	if len(rep.Stories.Stories) == 0 {
 		lines = append(lines, pdfLine{Text: "Sin historias en el backlog."})
@@ -80,7 +81,7 @@ func projectReportLines(rep ProjectReport) []pdfLine {
 
 	// RN-40.5: en el orden del reporte.
 	for _, ef := range rep.Efforts.Efforts {
-		lines = append(lines, pdfLine{Text: effortText(ef)})
+		lines = append(lines, pdfLine{Text: effortText(ef, ids)})
 	}
 	if len(rep.Efforts.Efforts) == 0 {
 		lines = append(lines, pdfLine{Text: "Sin esfuerzos registrados."})
@@ -90,7 +91,7 @@ func projectReportLines(rep ProjectReport) []pdfLine {
 		pdfLine{Text: "Defectos", Heading: true},
 	)
 	for _, d := range rep.Defects.Defects {
-		lines = append(lines, pdfLine{Text: defectText(d)})
+		lines = append(lines, pdfLine{Text: defectText(d, ids)})
 	}
 	if len(rep.Defects.Defects) == 0 {
 		lines = append(lines, pdfLine{Text: "Sin defectos registrados."})
@@ -118,16 +119,16 @@ func dateOrNotRegistered(date time.Time) string {
 
 // effortText escribe un esfuerzo con sus horas tal como están guardadas
 // (RN-40.3).
-func effortText(ef effort.Effort) string {
-	return fmt.Sprintf("#%d · %s · %s · %s · ítem %d · sprint %d · %s h",
-		ef.ID, ef.Date.Format(time.DateOnly), ef.Member, ef.Activity, ef.ItemID, ef.SprintID,
+func effortText(ef effort.Effort, ids publicIDs) string {
+	return fmt.Sprintf("#%s · %s · %s · %s · ítem %s · sprint %s · %s h",
+		ef.PublicID, ef.Date.Format(time.DateOnly), ef.Member, ef.Activity, ids.items[ef.ItemID], ids.sprints[ef.SprintID],
 		strconv.FormatFloat(ef.Hours, 'f', -1, 64))
 }
 
 // storyText escribe una historia con su estimación (HU-49). 0 Story Points
 // es "sin estimar", 0 horas es "sin horas estimadas" y 0 en el sprint es
 // "sin sprint" (RN-49.3); las horas van con un decimal, como las métricas.
-func storyText(it backlog.Item) string {
+func storyText(it backlog.Item, ids publicIDs) string {
 	points := "sin estimar"
 	if it.StoryPoints != 0 {
 		points = fmt.Sprintf("%d SP", it.StoryPoints)
@@ -138,20 +139,40 @@ func storyText(it backlog.Item) string {
 	}
 	sprintText := "sin sprint"
 	if it.SprintID != 0 {
-		sprintText = fmt.Sprintf("sprint %d", it.SprintID)
+		sprintText = "sprint " + ids.sprints[it.SprintID]
 	}
-	return fmt.Sprintf("#%d · %s · %s · %s · %s · %s · %s",
-		it.ID, it.Title, it.Priority, it.Status, points, hours, sprintText)
+	return fmt.Sprintf("#%s · %s · %s · %s · %s · %s · %s",
+		it.PublicID, it.Title, it.Priority, it.Status, points, hours, sprintText)
 }
 
 // defectText escribe un defecto; 0 en el sprint de resolución es ninguno.
-func defectText(d defect.Defect) string {
+func defectText(d defect.Defect, ids publicIDs) string {
 	resolution := "sin sprint de resolución"
 	if d.ResolutionSprintID != 0 {
-		resolution = fmt.Sprintf("resuelto en sprint %d", d.ResolutionSprintID)
+		resolution = "resuelto en sprint " + ids.sprints[d.ResolutionSprintID]
 	}
-	return fmt.Sprintf("#%d · %s · %s · ítem %d · detectado en sprint %d · %s · %s",
-		d.ID, d.Severity, d.Status, d.ItemID, d.DetectionSprintID, resolution, d.Description)
+	return fmt.Sprintf("#%s · %s · %s · ítem %s · detectado en sprint %s · %s · %s",
+		d.PublicID, d.Severity, d.Status, ids.items[d.ItemID], ids.sprints[d.DetectionSprintID], resolution, d.Description)
+}
+
+// publicIDs traduce el ID interno de las historias y los sprints del reporte
+// a su UUID, para que el PDF no muestre ningún ID entero (HU-52, CA-52.3).
+type publicIDs struct {
+	items   map[int]string
+	sprints map[int]string
+}
+
+// publicIDsOf arma la traducción con las historias y los sprints que el
+// reporte ya leyó, sin lecturas nuevas (RN-38.3).
+func publicIDsOf(rep ProjectReport) publicIDs {
+	ids := publicIDs{items: map[int]string{}, sprints: map[int]string{}}
+	for _, it := range rep.Stories.Stories {
+		ids.items[it.ID] = it.PublicID.String()
+	}
+	for _, sp := range rep.Sprints {
+		ids.sprints[sp.ID] = sp.PublicID.String()
+	}
+	return ids
 }
 
 // oneDecimal redondea a un decimal como la API (TEC-03, roundOneDecimal de

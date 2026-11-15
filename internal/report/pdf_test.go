@@ -24,8 +24,8 @@ import (
 // en los bytes del PDF, que se escribe sin comprimir (decisión 6 de la SDD).
 
 // tec03Lines son las 24 líneas del ejemplo de TEC-03 de la SDD, más las 6 de
-// la sección "Historias" de HU-49. Los IDs van como marcadores ({item1},
-// {sprint1}, {effort1}, {defect1}…) que withPublicIDs reemplaza por los UUID
+// la sección "Historias" de HU-49. Los IDs van como marcadores ({historia1},
+// {sprint1}, {esfuerzo1}, {defecto1}…) que withPublicIDs reemplaza por los UUID
 // del reporte (CA-49.6 y HU-52, CA-52.3).
 var tec03Lines = []pdfLine{
 	{Text: "Reporte del proyecto «Software Metrics»", Heading: true},
@@ -43,18 +43,18 @@ var tec03Lines = []pdfLine{
 	{Text: "Desviación: 0.0 h (0.0 %)."},
 	{Text: "Defectos: 1 detectados, 1 resuelto(s)."},
 	{Text: "Historias", Heading: true},
-	{Text: "#{item1} · A · MEDIA · TERMINADO · 5 SP · 10.0 h estimadas · sprint {sprint1}"},
-	{Text: "#{item2} · B · MEDIA · TERMINADO · 3 SP · 6.0 h estimadas · sprint {sprint1}"},
-	{Text: "#{item3} · C · MEDIA · EN_CURSO · 2 SP · sin horas estimadas · sprint {sprint1}"},
-	{Text: "#{item4} · D · MEDIA · PENDIENTE · sin estimar · 4.0 h estimadas · sprint {sprint1}"},
+	{Text: "#{historia1} · A · MEDIA · TERMINADO · 5 SP · 10.0 h estimadas · sprint {sprint1}"},
+	{Text: "#{historia2} · B · MEDIA · TERMINADO · 3 SP · 6.0 h estimadas · sprint {sprint1}"},
+	{Text: "#{historia3} · C · MEDIA · EN_CURSO · 2 SP · sin horas estimadas · sprint {sprint1}"},
+	{Text: "#{historia4} · D · MEDIA · PENDIENTE · sin estimar · 4.0 h estimadas · sprint {sprint1}"},
 	{Text: "Cantidad: 4 historia(s), 2 completada(s)"},
 	{Text: "Esfuerzos", Heading: true},
-	{Text: "#{effort1} · 2026-10-06 · Ana · Desarrollo · ítem {item1} · sprint {sprint1} · 12 h"},
-	{Text: "#{effort2} · 2026-10-06 · Luis · Desarrollo · ítem {item2} · sprint {sprint1} · 5 h"},
-	{Text: "#{effort3} · 2026-10-06 · Ana · Desarrollo · ítem {item3} · sprint {sprint1} · 3 h"},
+	{Text: "#{esfuerzo1} · 2026-10-06 · Ana · Desarrollo · ítem {historia1} · sprint {sprint1} · 12 h"},
+	{Text: "#{esfuerzo2} · 2026-10-06 · Luis · Desarrollo · ítem {historia2} · sprint {sprint1} · 5 h"},
+	{Text: "#{esfuerzo3} · 2026-10-06 · Ana · Desarrollo · ítem {historia3} · sprint {sprint1} · 3 h"},
 	{Text: "Total: 20.0 horas"},
 	{Text: "Defectos", Heading: true},
-	{Text: "#{defect1} · ALTA · RESUELTO · ítem {item1} · detectado en sprint {sprint1} · resuelto en sprint {sprint1} · Defecto"},
+	{Text: "#{defecto1} · ALTA · RESUELTO · ítem {historia1} · detectado en sprint {sprint1} · resuelto en sprint {sprint1} · Defecto"},
 	{Text: "Cantidad: 1 defecto(s)"},
 	{Text: "Integrantes", Heading: true},
 	{Text: "Integrantes que registraron esfuerzo: Ana, Luis"},
@@ -127,11 +127,27 @@ func firstBytes(b []byte) []byte {
 	return b
 }
 
+// pdfTextObject es el texto de una línea escrita en el PDF: BT x y Td (…)Tj ET.
+var pdfTextObject = regexp.MustCompile(`Td \(((?:\\.|[^\\)])*)\)Tj`)
+
+// pdfContent devuelve el texto de las líneas del PDF unidas por un espacio.
+// Una línea más larga que el ancho de la página sigue en la siguiente, cortada
+// en un espacio, así que unirlas así devuelve la línea original (HU-52: los
+// UUID alargan las líneas).
+func pdfContent(pdf []byte) []byte {
+	var parts [][]byte
+	for _, m := range pdfTextObject.FindAllSubmatch(pdf, -1) {
+		parts = append(parts, m[1])
+	}
+	return bytes.Join(parts, []byte(" "))
+}
+
 // expectPDFContains falla si el PDF no contiene alguno de los textos.
 func expectPDFContains(t *testing.T, pdf []byte, texts ...string) {
 	t.Helper()
+	content := pdfContent(pdf)
 	for _, text := range texts {
-		if !bytes.Contains(pdf, pdfText(text)) {
+		if !bytes.Contains(content, pdfText(text)) {
 			t.Errorf("el PDF no contiene %q", text)
 		}
 	}
@@ -166,13 +182,13 @@ func TestProjectReportLines_EjemploDeTEC03(t *testing.T) {
 	}
 }
 
-// placeholder es un marcador de las líneas esperadas: {item1}, {sprint2}…
-var placeholder = regexp.MustCompile(`\{(item|sprint|effort|defect)(\d+)\}`)
+// placeholder es un marcador de las líneas esperadas: {historia1}, {sprint2}…
+var placeholder = regexp.MustCompile(`\{(historia|sprint|esfuerzo|defecto)(\d+)\}`)
 
 // withPublicIDs devuelve una copia de lines con cada marcador reemplazado por
-// el UUID de esa entidad en el reporte: {itemN} es la historia N, {sprintN}
-// el sprint N, {effortN} el esfuerzo N y {defectN} el defecto N, en el orden
-// del reporte (HU-52, CA-52.3).
+// el UUID de esa entidad en el reporte: {historiaN} es la historia N,
+// {sprintN} el sprint N, {esfuerzoN} el esfuerzo N y {defectoN} el defecto N,
+// en el orden del reporte (HU-52, CA-52.3).
 func withPublicIDs(rep ProjectReport, lines []pdfLine) []pdfLine {
 	out := make([]pdfLine, len(lines))
 	for i, l := range lines {
@@ -180,11 +196,11 @@ func withPublicIDs(rep ProjectReport, lines []pdfLine) []pdfLine {
 			g := placeholder.FindStringSubmatch(m)
 			n, _ := strconv.Atoi(g[2])
 			switch g[1] {
-			case "item":
+			case "historia":
 				return rep.Stories.Stories[n-1].PublicID.String()
 			case "sprint":
 				return rep.Sprints[n-1].PublicID.String()
-			case "effort":
+			case "esfuerzo":
 				return rep.Efforts.Efforts[n-1].PublicID.String()
 			default:
 				return rep.Defects.Defects[n-1].PublicID.String()
@@ -237,9 +253,9 @@ func TestProjectReportLines_HistoriasConYSinEstimacion(t *testing.T) {
 	got := projectReportLines(rep)
 
 	expectLines(t, got, texts(withPublicIDs(rep, []pdfLine{
-		{Text: "#{item1} · Registrar venta · ALTA · TERMINADO · 3 SP · 8.0 h estimadas · sprint {sprint1}"},
-		{Text: "#{item2} · Consultar stock · MEDIA · PENDIENTE · sin estimar · sin horas estimadas · sin sprint"},
-		{Text: "#{item3} · Emitir factura · BAJA · EN_CURSO · sin estimar · 2.3 h estimadas · sin sprint"},
+		{Text: "#{historia1} · Registrar venta · ALTA · TERMINADO · 3 SP · 8.0 h estimadas · sprint {sprint1}"},
+		{Text: "#{historia2} · Consultar stock · MEDIA · PENDIENTE · sin estimar · sin horas estimadas · sin sprint"},
+		{Text: "#{historia3} · Emitir factura · BAJA · EN_CURSO · sin estimar · 2.3 h estimadas · sin sprint"},
 		{Text: "Cantidad: 3 historia(s), 1 completada(s)"},
 	}))...)
 }
@@ -327,8 +343,8 @@ func TestProjectReportLines_HorasDeCadaEsfuerzoTalCual(t *testing.T) {
 	got := projectReportLines(rep)
 
 	expectLines(t, got, texts(withPublicIDs(rep, []pdfLine{
-		{Text: "#{effort1} · 2026-10-06 · Ana · Desarrollo · ítem {item1} · sprint {sprint1} · 1.5 h"},
-		{Text: "#{effort2} · 2026-10-06 · Luis · Desarrollo · ítem {item1} · sprint {sprint1} · 0.25 h"},
+		{Text: "#{esfuerzo1} · 2026-10-06 · Ana · Desarrollo · ítem {historia1} · sprint {sprint1} · 1.5 h"},
+		{Text: "#{esfuerzo2} · 2026-10-06 · Luis · Desarrollo · ítem {historia1} · sprint {sprint1} · 0.25 h"},
 		{Text: "Total: 1.8 horas"},
 	}))...)
 }
@@ -346,7 +362,7 @@ func TestProjectReportLines_DefectoSinSprintDeResolucion(t *testing.T) {
 	got := projectReportLines(rep)
 
 	expectLines(t, got, texts(withPublicIDs(rep, []pdfLine{
-		{Text: "#{defect1} · ALTA · ABIERTO · ítem {item1} · detectado en sprint {sprint1} · sin sprint de resolución · Defecto"},
+		{Text: "#{defecto1} · ALTA · ABIERTO · ítem {historia1} · detectado en sprint {sprint1} · sin sprint de resolución · Defecto"},
 		{Text: "Cantidad: 1 defecto(s)"},
 	}))...)
 }
@@ -364,7 +380,11 @@ func TestWriteProjectPDF_GeneraUnPDFConCadaLineaDelReporte(t *testing.T) {
 	for _, l := range withPublicIDs(rep, tec03Lines) {
 		expectPDFContains(t, pdf, l.Text)
 	}
-	expectPDFContains(t, pdf, "/BaseFont /Helvetica-Bold", "/BaseFont /Helvetica")
+	for _, font := range []string{"/BaseFont /Helvetica-Bold", "/BaseFont /Helvetica"} {
+		if !bytes.Contains(pdf, []byte(font)) {
+			t.Errorf("el PDF no usa la fuente %q", font)
+		}
+	}
 }
 
 // HU-40 · CA-40.5 · Verifica que un proyecto sin datos genere un PDF, no un error.
