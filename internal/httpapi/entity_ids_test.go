@@ -93,11 +93,71 @@ func serveRecording(t *testing.T, h http.Handler, rec *httptest.ResponseRecorder
 	}
 }
 
+// uuidRoutes son las rutas cuyo handler ya recibe el UUID de sus entidades.
+// do() traduce los números de una ruta solo si la ruta está en esta tabla:
+// así, cuando un responsable pasa sus handlers a UUID, sus tests siguen
+// funcionando con las rutas fijas, y las rutas de los demás, que todavía
+// leen un entero, no se traducen (desviación de la base, D9 de design.md).
+//
+// Cada responsable agrega, en el GREEN de su entidad, las rutas cuyos
+// handlers están en sus archivos (tabla "Rutas por responsable" de D3), con
+// el método y el patrón de http.ServeMux, por ejemplo "GET /api/items/{id}".
+// En una ruta de la tabla se traducen todos los números que nombran una
+// entidad (también el {itemId} de /api/sprints/{id}/items/{itemId}), porque
+// el handler de esa ruta es del mismo responsable. Cada uno escribe solo en
+// su bloque, para que los merges no choquen.
+var uuidRoutes = []string{
+	// Cardozo Leandro (5): GET y PUT /api/items/{id},
+	// PATCH /api/items/{id}/estado y /api/items/{id}/story-points (items.go),
+	// y PUT /api/integrantes/{id} (members_update.go).
+
+	// Buttini Cristobal (11): POST /api/items/{id}/poker-sessions y
+	// POST /api/poker-sessions/{id}/votes, /reveal, /estimate y /rounds
+	// (poker.go); POST /api/sprints/{id}/items/{itemId} y
+	// /api/sprints/{id}/items/{itemId}/completar, GET /api/sprints/{id}/completados
+	// y POST /api/sprints/{id}/cerrar (sprints.go); GET /api/sprints/{id}/metricas
+	// (metrics.go); GET /api/sprints/{id}/reporte (sprint_reports.go).
+
+	// García Santiago (7): POST /api/items/{id}/defectos,
+	// PATCH /api/defectos/{id}/estado y GET /api/sprints/{id}/defectos
+	// (defects.go); GET /api/items/{id}/esfuerzos,
+	// POST /api/sprints/{id}/items/{itemId}/esfuerzos, GET /api/sprints/{id}/esfuerzos
+	// y PATCH /api/esfuerzos/{id}/horas (efforts.go).
+}
+
+// inUUIDRoutes dice si el pedido method path (sin la query) corresponde a
+// una ruta de uuidRoutes. Un segmento {…} del patrón acepta cualquier valor.
+func inUUIDRoutes(method, path string) bool {
+	parts := strings.Split(path, "/")
+	for _, route := range uuidRoutes {
+		routeMethod, pattern, _ := strings.Cut(route, " ")
+		want := strings.Split(pattern, "/")
+		if routeMethod != method || len(want) != len(parts) {
+			continue
+		}
+		match := true
+		for i := range want {
+			if !strings.HasPrefix(want[i], "{") && want[i] != parts[i] {
+				match = false
+				break
+			}
+		}
+		if match {
+			return true
+		}
+	}
+	return false
+}
+
 // withEntityIDs traduce en path cada número que nombra una entidad al "id"
-// de la N-ésima entidad de ese tipo creada por la API en h. Entiende
-// /api/{entidad}/{N}/... y el {itemId} de /api/sprints/{N}/items/{M}/...
-func withEntityIDs(h http.Handler, path string) string {
+// de la N-ésima entidad de ese tipo creada por la API en h, si la ruta del
+// pedido está en uuidRoutes. Entiende /api/{entidad}/{N}/... y el {itemId}
+// de /api/sprints/{N}/items/{M}/...
+func withEntityIDs(h http.Handler, method, path string) string {
 	if !strings.HasPrefix(path, "/api/") {
+		return path
+	}
+	if rest, _, _ := strings.Cut(path, "?"); !inUUIDRoutes(method, rest) {
 		return path
 	}
 	rest, query, _ := strings.Cut(path, "?")

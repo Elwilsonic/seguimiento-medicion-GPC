@@ -65,17 +65,17 @@ func listDefects(t *testing.T, h http.Handler, path string) defectListJSON {
 	return got
 }
 
-func defectIDs(list defectListJSON) []int {
+func defectIDs(t *testing.T, list defectListJSON) []int {
 	ids := make([]int, 0, len(list.Defectos))
 	for _, d := range list.Defectos {
-		ids = append(ids, d.ID)
+		ids = append(ids, idInt(t, d.ID))
 	}
 	return ids
 }
 
 func assertDefectIDs(t *testing.T, path string, got defectListJSON, want []int) {
 	t.Helper()
-	if ids := defectIDs(got); !slices.Equal(ids, want) {
+	if ids := defectIDs(t, got); !slices.Equal(ids, want) {
 		t.Errorf("%s: IDs = %v, se esperaban %v", path, ids, want)
 	}
 	if got.Cantidad != len(want) {
@@ -96,17 +96,17 @@ func TestListarDefectosDelProyecto_Devuelve200ConLosDefectosYLaCantidad(t *testi
 	wantStates := []defect.Status{defect.StatusOpen, defect.StatusInCorrection, defect.StatusResolved}
 	for i, want := range wantStates {
 		if got.Defectos[i].Estado != want {
-			t.Errorf("estado del defecto %d = %q, se esperaba %q", got.Defectos[i].ID, got.Defectos[i].Estado, want)
+			t.Errorf("estado del defecto %s = %q, se esperaba %q", string(got.Defectos[i].ID), got.Defectos[i].Estado, want)
 		}
 	}
 	wantResolved := defectJSON{
-		ID:                 3,
+		ID:                 "3",
 		Descripcion:        "El total no descuenta el descuento",
 		Severidad:          defect.SeverityHigh,
 		Estado:             defect.StatusResolved,
-		ItemID:             1,
-		SprintDeteccionID:  1,
-		SprintResolucionID: 1,
+		ItemID:             "1",
+		SprintDeteccionID:  "1",
+		SprintResolucionID: "1",
 	}
 	if got.Defectos[2] != wantResolved {
 		t.Errorf("defecto 3 = %+v, se esperaba %+v", got.Defectos[2], wantResolved)

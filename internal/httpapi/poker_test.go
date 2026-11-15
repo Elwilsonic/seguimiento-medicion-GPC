@@ -22,8 +22,8 @@ import (
 // cada código de error.
 
 type pokerSessionJSON struct {
-	ID     int             `json:"id"`
-	ItemID int             `json:"item_id"`
+	ID     idRef           `json:"id"`
+	ItemID idRef           `json:"item_id"`
 	Estado string          `json:"estado"`
 	Ronda  int             `json:"ronda"`
 	Votos  []pokerVoteJSON `json:"votos"`
@@ -44,7 +44,7 @@ func TestAbrirSesionPoker_Devuelve201ConLaSesionAbierta(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != 1 || got.ItemID != 1 || got.Estado != "ABIERTA" || got.Ronda != 1 {
+	if got.ID != "1" || got.ItemID != "1" || got.Estado != "ABIERTA" || got.Ronda != 1 {
 		t.Errorf("sesión = %+v, se esperaba ID 1, ítem 1, ABIERTA y ronda 1", got)
 	}
 	if got.Votos == nil {
@@ -275,7 +275,7 @@ func TestRevelarPoker_Devuelve200ConTodosLosVotos(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != 1 || got.ItemID != 1 || got.Estado != "REVELADA" || got.Ronda != 1 {
+	if got.ID != "1" || got.ItemID != "1" || got.Estado != "REVELADA" || got.Ronda != 1 {
 		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, REVELADA, en la ronda 1", got)
 	}
 	want := []pokerVoteJSON{{Integrante: "Ana", Puntos: 5}, {Integrante: "Bruno", Puntos: 8}}
@@ -427,7 +427,7 @@ func TestRegistrarEstimacionPoker_Devuelve200ConSesionCerradaYStoryPointsEnElIte
 	expectStatus(t, rec, http.StatusOK)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != 1 || got.ItemID != 1 || got.Estado != "CERRADA" || got.Ronda != 1 {
+	if got.ID != "1" || got.ItemID != "1" || got.Estado != "CERRADA" || got.Ronda != 1 {
 		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, CERRADA, en la ronda 1", got)
 	}
 	want := []pokerVoteJSON{{Integrante: "Ana", Puntos: 5}, {Integrante: "Bruno", Puntos: 8}}
@@ -713,7 +713,7 @@ func TestRepetirRondaPoker_Devuelve200ConRondaSiguienteYSinVotos(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var got pokerSessionJSON
 	decode(t, rec, &got)
-	if got.ID != 1 || got.ItemID != 1 || got.Estado != "ABIERTA" || got.Ronda != 2 {
+	if got.ID != "1" || got.ItemID != "1" || got.Estado != "ABIERTA" || got.Ronda != 2 {
 		t.Errorf("sesión = %+v, se esperaba la sesión 1 del ítem 1, ABIERTA, en la ronda 2", got)
 	}
 	if got.Votos == nil || len(got.Votos) != 0 {
