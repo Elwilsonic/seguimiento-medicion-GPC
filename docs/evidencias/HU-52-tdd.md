@@ -85,6 +85,8 @@ Al traer la rama de integración también se resolvió que `itemRef` estaba decl
 
 **Limitación de `jsonItemSprintID`.** Los contratos de los reportes leen el `sprint_id` esperado de cada historia con `GET /api/items/{id}`, así que lo comparan contra la propia API. Que sea el UUID correcto del sprint lo verifica, contra el dominio, [`TestConsultarItem_SprintIDEsElUUIDDelSprint`](../../internal/httpapi/items_uuid_test.go#L319).
 
+**Desvío · El GREEN también cambia tests.** El commit `ca39108` toca 7 archivos de tests además de la producción: `entity_ids_test.go` (mis 5 rutas en `uuidRoutes` y la traducción inversa de `withEntityIDs`, segunda desviación de la base), `entity_ids_helper_test.go` (el test de esa traducción), `items_uuid_test.go` (los helpers `jsonItemID`, `jsonItemSprintID` e `itemNumber`), `sprints_test.go` (líneas 124, 204 y 281), `reports_test.go`, `sprint_reports_test.go` y `web_test.go` (`filaHistoriaReporte`), y corre los `#Lnn` de 12 evidencias. Esos tests de otros responsables fallan recién cuando el ítem responde con UUID, es decir, con el GREEN: se anticiparon como riesgo al terminar el RED (21 rutas y 4 comparaciones) y se resolvieron en el GREEN, no en un commit aparte. Lo correcto era un commit de tests aparte antes del GREEN, como `20f2bf1` en HU-51. El detalle de cada cambio está en "Tests de otros responsables que se tocaron".
+
 #### Commits
 
 | Fase | Commit | Mensaje |
