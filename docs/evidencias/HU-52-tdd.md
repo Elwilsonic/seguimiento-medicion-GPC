@@ -124,6 +124,7 @@ Como referencia, la rama de integración sola (`041889c`, copiada con `git archi
 
 **No verificado:**
 
+- No se verificó con curl ni en el navegador. Las rutas las cubren solo los tests de la API (`httptest`), sin un servidor levantado.
 - En el navegador: que el campo «ID del integrante» acepte el UUID como texto y que el backlog muestre "—" para un ítem sin sprint. Lo cubren solo los tests del contenido de `index.html` y `app.js`, sin un motor de JavaScript.
 - `-race` (CA-52.7): en Windows no anda; lo corre la CI.
 
