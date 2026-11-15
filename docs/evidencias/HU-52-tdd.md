@@ -308,15 +308,16 @@ Observación de Buttini Cristobal en la revisión del PR #201. `entityIDs` (`int
 | PDF fuera de la base | 66a576c | `docs(HU-52): pasar el PDF del reporte a Peñalbé Hernán` |
 | Evidencia de la base | 235b781 | `docs(HU-52): agregar la evidencia de la base` |
 | Merge del PR #200 (PDF) | 0a6c513 | `Merge pull request #200 from Elwilsonic/feature/HU-52-uuid-pdf` |
+| Merge del PR #201 (base en `main`, Cardozo Leandro) | c329a62 | `Merge pull request #201 from Elwilsonic/feature/HU-52-uuid-base` |
 
 ## Pendiente al corte
 
-Estado al 15/11/2026, antes del corte del lunes 16/11/2026 a las 14:00. La base (PR #201, con el PDF del PR #200 integrado en su rama) está aprobada y falta su merge en `main`. Las tres partes por entidad todavía no tienen rama ni PR en el repositorio (`git ls-remote --heads origin` muestra solo `feature/HU-52-uuid-base` y `feature/HU-52-uuid-pdf`): se crean desde la base. Según "Si no llega al corte" de `proposal.md`, lo que no esté en `main` con la CI en verde a esa hora queda así:
+Estado al 15/11/2026, antes del corte del lunes 16/11/2026 a las 14:00. La base (PR #201, con el PDF del PR #200 integrado en su rama) está integrada en `main` el 15/11/2026 a las 18:30 (`c329a62`), por Cardozo Leandro. Las tres partes por entidad todavía no tienen rama ni PR en el repositorio (`git ls-remote --heads origin` muestra solo `feature/HU-52-uuid-base` y `feature/HU-52-uuid-pdf`): se crean desde `main`, que ya tiene la base. Según "Si no llega al corte" de `proposal.md`, lo que no esté en `main` con la CI en verde a esa hora queda así:
 
 | Parte | Responsable | Estado | Lo que queda en `main` si no llega | Pendiente que se documenta |
 |---|---|---|---|---|
-| Base compartida | Sosa Ricardo y Cardozo Leandro | PR #201 aprobado, falta el merge | IDs enteros en las 6 entidades, como en HU-51 | R1 de HU-51 sigue abierto completo, y las entidades no se pueden integrar |
-| PDF del reporte | Peñalbé Hernán | Hecho, integrado en la rama de la base (PR #200) | Entra con la base | — |
+| Base compartida | Sosa Ricardo y Cardozo Leandro | PR #201, integrada en `main` el 15/11/2026 a las 18:30 (`c329a62`) | Ya está en `main` | — |
+| PDF del reporte | Peñalbé Hernán | Hecho, integrado en la rama de la base (PR #200) y en `main` con el PR #201 | Ya está en `main` | — |
 | Ítems | Cardozo Leandro | Pendiente | Rutas y respuestas del ítem con ID entero | Las 10 rutas de ítems y el `id` del ítem, y que el `item_id` de otras respuestas no sirve todavía para `/api/items/{id}` |
 | Integrantes | Cardozo Leandro | Pendiente | `PUT /api/integrantes/{id}` y el `id` del integrante con entero | 1 ruta, 1 campo y el campo «ID del integrante» |
 | Sprints | Buttini Cristobal | Pendiente | Las 9 rutas de sprints, `id` y `sprint_id` con entero, y «Sprint actual» numérico | Lo mismo que en ítems, para los campos que nombran un sprint |

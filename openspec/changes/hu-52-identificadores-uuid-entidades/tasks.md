@@ -71,11 +71,11 @@ La base la hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo 
   - la sección "Pendiente al corte".
 
   Agregar la fila de HU-52 al README y actualizar `docs/reportes/cobertura.md` y `docs/ia/registro.md`. Proponer `git commit -m "docs(HU-52): agregar la evidencia de la base" -m "Refs #197"`.
-- [x] 1.12 Push, PR de la base hacia `main` y revisión de otro integrante, para integrarla el domingo 15/11/2026 a las 21:00. Antes del PR, traer `main` y correr `go test ./internal/trazabilidad/ -run TestEnlaces -args -update`. Avisar a los tres responsables cuando esté integrada. Si a esa hora no está, avisar al Agile Enabler y aplicar R1 de `design.md`. PR #201 hacia `main`, aprobado por Buttini Cristobal; `main` no avanzó desde `45d2c31`, así que no hizo falta el merge ni el `-update`. El merge lo hace el equipo, y después se avisa a los responsables.
+- [x] 1.12 Push, PR de la base hacia `main` y revisión de otro integrante, para integrarla el domingo 15/11/2026 a las 21:00. Antes del PR, traer `main` y correr `go test ./internal/trazabilidad/ -run TestEnlaces -args -update`. Avisar a los tres responsables cuando esté integrada. Si a esa hora no está, avisar al Agile Enabler y aplicar R1 de `design.md`. PR #201 hacia `main`: lo aprobó Buttini Cristobal y lo integró Cardozo Leandro el 15/11/2026 a las 18:30 (`c329a62`). Antes del PR, `main` no había avanzado desde `45d2c31`, así que no hizo falta el merge ni el `-update`. El commit de las tareas y la documentación de la base (`26afddc`) quedó fuera de ese merge y va en el PR #202, junto con este commit.
 
 ## 2. Ítems e integrantes (Cardozo Leandro, rama `feature/HU-52-uuid-items-integrantes`)
 
-Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, y trae `main` con `git merge main` apenas se integre la base. Toca solo los archivos de su fila en D3.
+Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:30 (`c329a62`). Toca solo los archivos de su fila en D3.
 
 - [ ] 2.1 Escribir `features/HU-52-items.feature` y `features/HU-52-integrantes.feature` (de API, en español), con casos normal, alternativo, límite y de error por entidad, según `specs/backlog/spec.md` y `specs/integrantes/spec.md`. Escribir los pasos y los runners `TestFeatures_HU52Items` y `TestFeatures_HU52Integrantes`.
 - [ ] 2.2 Escribir los tests en RED en `internal/httpapi/items_uuid_test.go`, `members_uuid_test.go` y `items_members_uuid_web_test.go`:
@@ -99,7 +99,7 @@ Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, y trae `main` con
 
 ## 3. Sprints y Planning Poker (Buttini Cristobal, rama `feature/HU-52-uuid-sprints-poker`)
 
-Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, y trae `main` apenas se integre la base. Toca solo los archivos de su fila en D3.
+Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:30 (`c329a62`). Toca solo los archivos de su fila en D3.
 
 - [ ] 3.1 Escribir `features/HU-52-sprints.feature` y `features/HU-52-planning-poker.feature` (de API), según `specs/sprints/spec.md` y `specs/planning-poker/spec.md`, con los runners `TestFeatures_HU52Sprints` y `TestFeatures_HU52PlanningPoker`.
 - [ ] 3.2 Escribir los tests en RED en `internal/httpapi/sprints_uuid_test.go`, `poker_uuid_test.go` y `sprints_poker_uuid_web_test.go`:
@@ -122,7 +122,7 @@ Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, y trae `main` ape
 
 ## 4. Defectos y esfuerzos (García Santiago, rama `feature/HU-52-uuid-defectos-esfuerzos`)
 
-Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, y trae `main` apenas se integre la base. Toca solo los archivos de su fila en D3.
+Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:30 (`c329a62`). Toca solo los archivos de su fila en D3.
 
 - [ ] 4.1 Escribir `features/HU-52-defectos.feature` y `features/HU-52-esfuerzos.feature` (de API), según `specs/defectos/spec.md` y `specs/esfuerzos/spec.md`, con los runners `TestFeatures_HU52Defectos` y `TestFeatures_HU52Esfuerzos`.
 - [ ] 4.2 Escribir los tests en RED en `internal/httpapi/defects_uuid_test.go`, `efforts_uuid_test.go` y `defects_efforts_uuid_web_test.go`:
@@ -144,7 +144,7 @@ Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, y trae `main` ape
 
 ## 5. PDF del reporte (Peñalbé Hernán, rama `feature/HU-52-uuid-pdf`)
 
-Decidido por el Agile Enabler el 15/11/2026 (D3). Se crea desde `feature/HU-52-uuid-base` con su GREEN pusheado, trae `main` con `git merge main` apenas se integre la base, y va en paralelo con las entidades: depende solo de la base. Toca solo `internal/report` (su fila en D3).
+Decidido por el Agile Enabler el 15/11/2026 (D3). Se creó desde `feature/HU-52-uuid-base` con su GREEN pusheado y se integró en esa rama (PR #200), que entró en `main` con el PR #201 (`c329a62`). Fue en paralelo con las entidades: depende solo de la base. Toca solo `internal/report` (su fila en D3).
 
 - [x] 5.1 RED: adaptar los tests de `internal/report` que verifican el texto del PDF con enteros ("#1 … sprint 1") y agregar los que piden el UUID del ítem y del sprint en las líneas de historias, esfuerzos y defectos (HU-40, CA-52.3), con `// HU-52 · CA-52.3 · Verifica que …`. Verificar con `go test ./internal/report/` que fallan solo esos tests, por aserción. Proponer `git commit -m "test(HU-52): pedir los UUID en el PDF del reporte (RED)" -m "Refs #197"`. Hecho en `3229e3f`.
 - [x] 5.2 GREEN: los IDs de historias, esfuerzos, defectos y sprints del texto de `internal/report/pdf.go` pasan a ser sus UUID; el reporte trae los UUID del ítem y del sprint. Correr los comandos de cierre, en memoria y con PostgreSQL, y verificar con `git diff --stat` que el GREEN no toca tests. Proponer `git commit -m "feat(HU-52): mostrar los UUID en el PDF del reporte (GREEN)" -m "Refs #197"`. Hecho en `4461a88`. El GREEN tocó tests y dos `.feature` (las líneas largas del PDF, los marcadores de UUID en HU-40 y HU-49, y `saveDefect`), como explica el PR #200.
