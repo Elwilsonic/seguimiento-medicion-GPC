@@ -21,7 +21,7 @@
 
 Las cuentas de tests de la tabla no suman 68 porque un test puede cubrir más de un criterio, y la correspondencia con los escenarios no es 1 a 1: los 1000 identificadores (CA-52.2), PostgreSQL (CA-52.5) y la concurrencia (CA-52.7) se cubren solo con tests de Go.
 
-La base no cambia rutas ni salidas de la API: los helpers y el resolvedor quedan listos, y cada entidad los usa en su parte. Por eso CA-52.3 y CA-52.4 se cumplen recién con las partes integradas, y CA-52.6 (la interfaz) es solo de las partes de cada entidad. **El PDF del reporte quedó fuera de la base por decisión del Agile Enabler** (15/11/2026): lo toma Peñalbé Hernán, en paralelo con las entidades (D3 y sección 5 de `tasks.md`). Hasta que se integre, el PDF sigue mostrando IDs enteros, y CA-52.3 no se cumple del todo.
+La base no cambia rutas ni salidas de la API: los helpers y el resolvedor quedan listos, y cada entidad los usa en su parte. Por eso CA-52.3 y CA-52.4 se cumplen recién con las partes integradas, y CA-52.6 (la interfaz) es solo de las partes de cada entidad. **El PDF del reporte quedó fuera de la base por decisión del Agile Enabler** (15/11/2026): lo toma Peñalbé Hernán, en paralelo con las entidades (D3 y sección 5 de `tasks.md`). El PDF lo hizo Peñalbé Hernán en el PR #200, integrado en esta rama (ver su sección).
 
 #### Criterio → test → código
 
@@ -47,9 +47,50 @@ Pendiente de su responsable.
 
 Pendiente de su responsable.
 
-### PDF del reporte (Peñalbé Hernán)
+### PDF del reporte (tarea 1.8) · Peñalbé Hernán
 
-Pendiente de su responsable.
+Rama `feature/HU-52-uuid-pdf`, sobre `feature/HU-52-uuid-base`.
+
+#### Commits
+
+| Fase | Commit | Qué hace |
+|---|---|---|
+| RED | `3229e3f` | Las líneas esperadas del PDF usan marcadores (`{historia1}`, `{sprint1}`, `{esfuerzo1}`, `{defecto1}`) que se reemplazan por los UUID, y un test nuevo verifica que no quede ningún ID entero |
+| GREEN | `4461a88` | `pdf.go` imprime los UUID; el reporte guarda los sprints que ya leía; los tests unen las líneas cortadas por el ancho de la página y los dos escenarios BDD de HU-40 y HU-49 usan los marcadores |
+| Refactor | — | No hubo refactor |
+
+#### RED
+
+```
+internal/report:  pdf_test.go:186:16: rep.Sprints undefined (type ProjectReport has no field or method Sprints)  [build failed]
+internal/httpapi: --- FAIL: TestReportePDF_Devuelve200ConElArchivo
+                  el PDF todavía muestra el ID entero en "#3 · 2026-10-08" / "#1 · ALTA" / "ítem 1 ·" / "sprint 1 ·"
+```
+
+Sin los tests nuevos, `internal/report` e `internal/httpapi` estaban en verde: el fallo es de HU-52.
+
+**Desvío 1 · El RED de `internal/report` no compila.** Falla por "build failed" (`rep.Sprints` no existe todavía), no por una aserción. En los demás PR se agregó primero la firma vacía para que el RED falle por aserción. Por el corte del sprint no se rehízo el commit; el fallo sí corresponde a la funcionalidad nueva (el campo que agrega HU-52). Observado por García Santiago en la revisión del PR #200.
+
+#### GREEN
+
+```
+$ go test -count=1 ./...
+15 paquetes ok, 0 fallos
+
+$ go test -cover ./internal/report/ ./internal/httpapi/
+ok  seguimiento-medicion-gpc/internal/report   coverage: 100.0% of statements
+ok  seguimiento-medicion-gpc/internal/httpapi  coverage: 97.5% of statements
+```
+
+**Desvío 2 · El GREEN cambia tests y `.feature`.** El commit `4461a88` toca 5 archivos de tests y 2 `.feature`. Lo correcto era un commit aparte antes del GREEN, como `20f2bf1` en HU-51; por el corte del sprint no se rehízo (observado por García Santiago en el PR #200). Los ajustes: con los UUID, las líneas de historias, esfuerzos y defectos superan el ancho de la página y siguen en la línea siguiente. Los tests que buscaban la línea entera en los bytes del PDF ahora buscan en `pdfContent`, que une las líneas del PDF con un espacio. El helper `saveDefect` guarda directo en el repositorio y ahora le asigna un UUID, como hace `defect.Register`.
+
+#### Trazabilidad
+
+1 test nuevo y 7 tests y 2 escenarios BDD adaptados, que cubren CA-52.3 en el PDF.
+
+| Criterio | Tests | Código |
+|---|---|---|
+| CA-52.3 (el PDF no muestra IDs enteros de historias, esfuerzos, defectos ni sprints) | [`TestProjectReportLines_SinIDsEnteros`](../../internal/report/pdf_test.go#L215), [`TestProjectReportLines_EjemploDeTEC03`](../../internal/report/pdf_test.go#L173), [`TestProjectReportLines_HistoriasConYSinEstimacion`](../../internal/report/pdf_test.go#L244), [`TestProjectReportLines_HorasDeCadaEsfuerzoTalCual`](../../internal/report/pdf_test.go#L334), [`TestProjectReportLines_DefectoSinSprintDeResolucion`](../../internal/report/pdf_test.go#L354), [`TestWriteProjectPDF_GeneraUnPDFConCadaLineaDelReporte`](../../internal/report/pdf_test.go#L373), [`TestWriteProjectPDF_TextoLargoYVariasPaginas`](../../internal/report/pdf_test.go#L423), [`TestReportePDF_Devuelve200ConElArchivo`](../../internal/httpapi/report_pdf_test.go#L54), [`TestFeatures_HU40ExportarReportePDF`](../../internal/report/pdf_features_test.go#L23), [`TestFeatures_HU49HistoriasEnReporte`](../../internal/report/stories_features_test.go#L21) | [`pdf.go`](../../internal/report/pdf.go) ([`publicIDsOf`](../../internal/report/pdf.go#L167), [`effortText`](../../internal/report/pdf.go#L122), [`storyText`](../../internal/report/pdf.go#L131), [`defectText`](../../internal/report/pdf.go#L149)), [`project.go`](../../internal/report/project.go) ([`Project`](../../internal/report/project.go#L52)) |
 
 ## Base compartida
 
@@ -257,5 +298,9 @@ Aprobados por Sosa Ricardo el 15/11/2026 y anotados en `design.md`, para que el 
 | Aprobación | 8b65300 | `docs(HU-52): registrar la aprobación de la propuesta` |
 | RED de la base | 2fb318d | `test(HU-52): agregar los tests de la base (RED)` |
 | GREEN de la base | 2bcd3c6 | `feat(HU-52): agregar el UUID público al dominio de las 6 entidades y los helpers compartidos (GREEN)` |
+| RED del PDF (Peñalbé Hernán) | 3229e3f | `test(HU-52): agregar tests del PDF con UUID (RED)` |
+| GREEN del PDF (Peñalbé Hernán) | 4461a88 | `feat(HU-52): mostrar los UUID en el texto del PDF (GREEN)` |
 | Refactor de la base | (propuesto) | — |
-| Evidencia de la base | (propuesto) | `docs(HU-52): agregar la evidencia de la base` |
+| PDF fuera de la base | 66a576c | `docs(HU-52): pasar el PDF del reporte a Peñalbé Hernán` |
+| Evidencia de la base | 235b781 | `docs(HU-52): agregar la evidencia de la base` |
+| Merge del PR #200 (PDF) | 0a6c513 | `Merge pull request #200 from Elwilsonic/feature/HU-52-uuid-pdf` |
