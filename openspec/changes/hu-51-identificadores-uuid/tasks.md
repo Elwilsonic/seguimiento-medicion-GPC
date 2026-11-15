@@ -78,20 +78,21 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
 
 ## 4. Refactor
 
-- [ ] 4.1 Revisar si hay una mejora clara, por ejemplo un helper único para "UUID de la ruta o del ítem" si `publicProjectID` se repite en muchos handlers. Si se aplica, verificar con `go test ./...` que sigue en verde y proponer `git commit -m "refactor(HU-51): <qué se mejoró>" -m "Refs #193"`. Si no, dejar asentado en la evidencia que no hizo falta.
+- [x] 4.1 Revisar si hay una mejora clara, por ejemplo un helper único para "UUID de la ruta o del ítem" si `publicProjectID` se repite en muchos handlers. Si se aplica, verificar con `go test ./...` que sigue en verde y proponer `git commit -m "refactor(HU-51): <qué se mejoró>" -m "Refs #193"`. Si no, dejar asentado en la evidencia que no hizo falta.
+  - **No hubo refactor (14/11/2026):** `publicProjectID` ya está en un solo lugar (`server.go`) y las listas usan `writeItems`; otra extracción movería código sin ganar legibilidad. Queda asentado en la evidencia.
 
 ## 5. Evidencia, cobertura y documentación
 
-- [ ] 5.1 Correr `gofmt -w` sobre los archivos Go modificados, `go test ./...` y `go test -cover ./...`, y verificar que `gofmt -l .` no lista archivos.
-- [ ] 5.2 Escribir `docs/evidencias/HU-51-tdd.md` con:
+- [x] 5.1 Correr `gofmt -w` sobre los archivos Go modificados, `go test ./...` y `go test -cover ./...`, y verificar que `gofmt -l .` no lista archivos.
+- [x] 5.2 Escribir `docs/evidencias/HU-51-tdd.md` con:
   - las salidas de RED, GREEN y de los comandos de 5.1;
   - la cantidad exacta de tests nuevos, de tests adaptados y de escenarios BDD, por separado;
   - la tabla de commits con "(propuesto)";
   - la tabla de trazabilidad con las columnas Criterio (CA-51.N), Test (nombre y archivo) y Código que lo implementa (función y archivo).
 
   Verificar que cada CA-51.1 a CA-51.7 tiene al menos una fila.
-- [ ] 5.3 Actualizar `docs/reportes/cobertura.md` con la cobertura nueva y verificar que coincide con la salida de `go test -cover ./...`.
-- [ ] 5.4 Actualizar la documentación:
+- [x] 5.3 Actualizar `docs/reportes/cobertura.md` con la cobertura nueva y verificar que coincide con la salida de `go test -cover ./...`.
+- [x] 5.4 Actualizar la documentación:
   - `README.md`:
     - manual: «Proyecto actual» con UUID;
     - tabla de la API: `{id}` de proyecto como UUID, con 400 y 404;
@@ -100,7 +101,7 @@ Rama: `feature/HU-51-uuid`. Cada commit y cada push necesitan la autorización e
   - `docs/manual-de-usuario.md`: el UUID en «Proyecto actual».
 
   Verificar que los links abren en la rama.
-- [ ] 5.5 Registrar el uso de la IA en `docs/ia/registro.md` y proponer `git commit -m "docs(HU-51): agregar evidencia TDD y cobertura" -m "Refs #193"`. Reemplazar "(propuesto)" por el hash real de cada commit apenas se ejecute.
+- [x] 5.5 Registrar el uso de la IA en `docs/ia/registro.md` y proponer `git commit -m "docs(HU-51): agregar evidencia TDD y cobertura" -m "Refs #193"`. Reemplazar "(propuesto)" por el hash real de cada commit apenas se ejecute.
 
 ## 6. Pull Request y trazabilidad
 
