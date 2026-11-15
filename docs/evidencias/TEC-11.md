@@ -30,7 +30,8 @@ El orden para elegir es: primero un `CA`; si no hay, una `RN`; si no, `Error`. S
 | CA-TEC11.3 Solo cambian comentarios: el diff no modifica código y `go test ./...` da el mismo resultado | Los cinco Pull Request por responsable solo agregan o corrigen líneas `//`; los 1127 tests del relevamiento siguen siendo 1127 (ver "Conteos") |
 | CA-TEC11.4 Un test automático falla si una función `Test` no tiene el comentario | `internal/trazabilidad/comentarios_test.go`, que corre con `go test ./...` y en la CI (ver "Test de control") |
 | CA-TEC11.5 Los comentarios se revisan por responsable, cada uno en su Pull Request, aprobados por otro integrante | PR #185, #186, #187, #190 y #191 (ver "Pull Request") |
-| CA-TEC11.6 La evidencia tiene los conteos de antes y después; la Definition of Done y `AGENTS.md` incluyen la regla | Este archivo; `docs/definition-of-ready-done.md` y `AGENTS.md` (este Pull Request) |
+| CA-TEC11.6 La evidencia tiene los conteos de antes y después; la Definition of Done y `AGENTS.md` incluyen la regla | Este archivo; `docs/definition-of-ready-done.md` y `AGENTS.md` (PR #192) |
+| CA-TEC11.7 Las tablas de trazabilidad de las evidencias TDD enlazan cada test y el código con su línea, y un test verifica que los links no queden desactualizados | Agregado después del cierre (#192), a pedido del Agile Enabler el 09/11/2026: ver "Links en las tablas de trazabilidad" |
 
 ## Pull Request
 
@@ -155,7 +156,75 @@ ok  	seguimiento-medicion-gpc/internal/trazabilidad
 ?   	seguimiento-medicion-gpc/internal/web	[no test files]
 ```
 
-## Commits de este Pull Request
+## Links en las tablas de trazabilidad (CA-TEC11.7)
+
+Las tablas "Trazabilidad" de las 44 evidencias TDD (`docs/evidencias/HU-XX-tdd.md`) dicen, para cada criterio, qué tests y qué código lo cubren. Ahora cada nombre es un link que abre el archivo en GitHub, y los tests y las funciones abren en su línea: [`TestRegister_Exitoso`](../../internal/defect/register_test.go#L207) abre `register_test.go` en la línea del test, con su comentario `// HU-29 · CA-29.1 · …` arriba.
+
+| Link | Cantidad |
+|---|---|
+| Tests, a la línea de su `func` | 1060 |
+| Archivos de código | 345 |
+| Funciones, tipos y errores, a la línea de su declaración | 276 |
+| **Total** | **1681** |
+
+Cómo se armaron:
+
+- **Tests:** cada nombre de test de las tablas. Si el mismo nombre existe en varios paquetes (por ejemplo, `TestMemoryRepository_Contrato`), se eligió el de los archivos que tocaron los commits de la historia o, si no alcanzaba, el del paquete de los demás tests de la evidencia.
+- **Código:** los archivos y las funciones que ya nombraba la columna "Código", con el mismo criterio para los nombres repetidos (por ejemplo, `manager.go`).
+- **La columna "Código" que faltaba** en HU-21, HU-22, HU-33 y HU-49 se armó con datos, no a mano: para cada fila, las funciones que la historia agregó o cambió en sus commits y que ejecutan los tests de esa fila (cobertura de cada test con `go test -run '^Test…$' -coverprofile`). En las filas de interfaz se suman `index.html` y las funciones de `app.js` de la historia, y en las de "memoria y PostgreSQL", las del repositorio de PostgreSQL, porque sus tests se omiten sin base.
+- **HU-01:** su tabla nombraba `TestCreate_NombreVacioSeInformaAntesQueRepetido`, que se reemplazó en la revisión del PR #68 (ver "Ajustes por la revisión del PR #68" de esa evidencia). Se dejó como texto, sin link, aclarando que se quitó.
+
+`internal/trazabilidad/enlaces_test.go` verifica que:
+
+- cada test nombrado en una tabla de trazabilidad tenga su link (`TestEnlaces_CadaTestDeLasTablasTieneSuLink`);
+- cada link abra un archivo que existe y, si lleva línea, que esa línea declare lo que el link nombra (`TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra`). Un campo de un struct no cuenta como declaración.
+
+**Cuando un cambio mueve líneas** (por ejemplo, HU-51 en los tests de proyectos), el error dice en qué línea está ahora el test y qué comando corregirlo:
+
+```
+go test ./internal/trazabilidad/ -run TestEnlaces -args -update
+```
+
+Ese comando corrige el número de línea de cada link corrido y agrega el link a los tests nuevos de nombre único; los links que siguen bien no se tocan. Si un nombre se repite en varios paquetes, el link se agrega a mano. `TestEnlaces_ActualizarCorrigeLineasYAgregaLinks` lo verifica. Se probó moviendo dos líneas en `internal/project/get_test.go` y `get.go`: el test marcó 12 links corridos, `-update` corrigió solo los de HU-03 y el test volvió a pasar (la observación de García Santiago en la revisión del #194).
+
+### RED
+
+```
+$ go test -count=1 ./internal/trazabilidad/
+--- FAIL: TestComentarios_ElCriterioExisteYEsDeSuHistoria (0.01s)
+    … (los 3 tests nuevos citan CA-TEC11.7, que todavía no estaba en esta evidencia)
+--- FAIL: TestEnlaces_CadaTestDeLasTablasTieneSuLink (0.01s)
+    enlaces_test.go:78: docs/evidencias/HU-01-tdd.md:20: TestCreate_ProyectoValidoQuedaConIDNombreDescripcionYEstadoInicial no tiene link a su test
+    enlaces_test.go:78: docs/evidencias/HU-01-tdd.md:20: TestCreate_IDsCorrelativosEmpiezanEnUno no tiene link a su test
+    … (1061 nombres de test sin link)
+--- FAIL: TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra (0.00s)
+    enlaces_test.go:121: las tablas de trazabilidad no tienen ningún link
+FAIL
+```
+
+### GREEN
+
+```
+$ go test -count=1 -v -run 'TestEnlaces|TestComentarios' ./internal/trazabilidad/
+--- PASS: TestComentarios_CadaTestTieneLaLineaConElFormato
+--- PASS: TestComentarios_LaHistoriaTieneSuEspecificacion
+--- PASS: TestComentarios_ElCriterioExisteYEsDeSuHistoria
+--- PASS: TestComentarios_BDDTieneSuFeature
+--- PASS: TestComentarios_FormatoAceptaSoloLasFormasAcordadas
+--- PASS: TestComentarios_ReferenciaExactaDelCriterio
+--- PASS: TestEnlaces_CadaTestDeLasTablasTieneSuLink
+--- PASS: TestEnlaces_CadaLinkApuntaALaLineaDeLoQueNombra
+--- PASS: TestEnlaces_ReconoceLasDeclaraciones
+PASS
+ok  	seguimiento-medicion-gpc/internal/trazabilidad
+```
+
+| Fase | Commit |
+|---|---|
+| Test de los links (RED) | `3373ce4` |
+| Links en las 44 evidencias y columna "Código" en 4 (GREEN) | `04be497` |
+
+## Commits del Pull Request de cierre (#192)
 
 | Fase | Commit |
 |---|---|
