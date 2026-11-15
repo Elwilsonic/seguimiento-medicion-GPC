@@ -58,25 +58,26 @@ func reportTEC03(t *testing.T, h http.Handler) {
 	for _, spec := range specs {
 		it := createHoursItem(t, h, spec.item.title, spec.item.hours)
 		if spec.item.points > 0 {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/story-points", it.ID), fmt.Sprintf(`{"story_points":%d}`, spec.item.points)), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/story-points", string(it.ID)), fmt.Sprintf(`{"story_points":%d}`, spec.item.points)), http.StatusOK)
 		}
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d", sp.ID, it.ID), ""), http.StatusOK)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		if ef := spec.effort; ef != nil {
 			body := fmt.Sprintf(`{"integrante":%q,"fecha":%q,"actividad":%q,"horas":%v}`, ef.member, ef.date, ef.activity, ef.hours)
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/esfuerzos", sp.ID, it.ID), body), http.StatusCreated)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/esfuerzos", string(sp.ID), string(it.ID)), body), http.StatusCreated)
 		}
 		if spec.item.status != "PENDIENTE" {
-			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%d/estado", it.ID), `{"estado":"EN_CURSO"}`), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPatch, fmt.Sprintf("/api/items/%s/estado", string(it.ID)), `{"estado":"EN_CURSO"}`), http.StatusOK)
 		}
 		if spec.item.status == "TERMINADO" {
-			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/items/%d/completar", sp.ID, it.ID), ""), http.StatusOK)
+			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/completar", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		}
 	}
-	defectBody := fmt.Sprintf(`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":%d}`, sp.ID)
+	// García: cuando sprint pase a UUID, este id va entre comillas
+	defectBody := fmt.Sprintf(`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":%s}`, string(sp.ID))
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/defectos", defectBody), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%d}`, sp.ID)), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%d/cerrar", sp.ID), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%s}`, string(sp.ID))), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(sp.ID)), ""), http.StatusOK)
 }
 
 // CA-38.1 y CA-38.7 · Contrato del reporte con el ejemplo 1 de la SDD.
@@ -287,10 +288,10 @@ func TestReporteProyecto_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints", validSprint), http.StatusCreated)
 	it := createHoursItem(t, h, "A", 1)
-	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%d", it.ID), ""), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%s", string(it.ID)), ""), http.StatusOK)
 	for _, hours := range []string{"0.1", "0.2"} {
 		body := `{"integrante":"Ana","fecha":"2026-10-06","actividad":"Desarrollo","horas":` + hours + `}`
-		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%d/esfuerzos", it.ID), body), http.StatusCreated)
+		expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%s/esfuerzos", string(it.ID)), body), http.StatusCreated)
 	}
 
 	rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/reporte", "")
@@ -375,17 +376,17 @@ func expectStoriesMatchSources(t *testing.T, h http.Handler, parts map[string]js
 	ids := []int{}
 	for _, story := range stories.Historias {
 		var it struct {
-			ID int `json:"id"`
+			ID idRef `json:"id"`
 		}
 		if err := json.Unmarshal(story, &it); err != nil {
 			t.Fatalf("historia inválida (%v): %s", err, story)
 		}
-		ids = append(ids, it.ID)
-		path := fmt.Sprintf("/api/items/%d", it.ID)
+		ids = append(ids, idInt(t, it.ID))
+		path := fmt.Sprintf("/api/items/%s", string(it.ID))
 		source := do(t, h, http.MethodGet, path, "")
 		expectStatus(t, source, http.StatusOK)
 		if got, want := compactJSON(t, story), compactJSON(t, source.Body.Bytes()); got != want {
-			t.Errorf("historia %d =\n%s\nse esperaba la respuesta de %s\n%s", it.ID, got, path, want)
+			t.Errorf("historia %s =\n%s\nse esperaba la respuesta de %s\n%s", string(it.ID), got, path, want)
 		}
 	}
 	return ids

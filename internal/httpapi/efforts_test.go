@@ -23,9 +23,9 @@ import (
 // error de la tabla HTTP de la SDD (400, 404, 409, 413 y 500).
 
 type effortJSON struct {
-	ID         int     `json:"id"`
-	SprintID   int     `json:"sprint_id"`
-	ItemID     int     `json:"item_id"`
+	ID         idRef   `json:"id"`
+	SprintID   idRef   `json:"sprint_id"`
+	ItemID     idRef   `json:"item_id"`
 	Integrante string  `json:"integrante"`
 	Fecha      string  `json:"fecha"`
 	Actividad  string  `json:"actividad"`
@@ -54,7 +54,7 @@ func TestRegistrarEsfuerzo_Devuelve201ConElEsfuerzo(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got effortJSON
 	decode(t, rec, &got)
-	want := effortJSON{ID: 1, SprintID: 1, ItemID: 1, Integrante: "García Santiago",
+	want := effortJSON{ID: "1", SprintID: "1", ItemID: "1", Integrante: "García Santiago",
 		Fecha: "2026-10-24", Actividad: "Implementar el registro", Horas: 2.5}
 	if got != want {
 		t.Errorf("esfuerzo = %+v, se esperaba %+v", got, want)
@@ -224,8 +224,8 @@ func TestRegistrarEsfuerzo_CuerpoMayorA1MiBDa413(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var got effortJSON
 	decode(t, rec, &got)
-	if got.ID != 1 {
-		t.Errorf("ID = %d, se esperaba 1", got.ID)
+	if got.ID != "1" {
+		t.Errorf("ID = %s, se esperaba 1", string(got.ID))
 	}
 }
 
