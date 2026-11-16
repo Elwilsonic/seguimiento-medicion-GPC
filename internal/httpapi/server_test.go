@@ -997,7 +997,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "cambiar estado de defecto",
 		method: http.MethodPatch,
-		path:   "/api/defectos/1/estado",
+		path:   "/api/defectos/" + neverAssignedUUID + "/estado",
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
 		},
