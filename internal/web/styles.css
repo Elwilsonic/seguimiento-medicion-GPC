@@ -276,3 +276,70 @@ th {
   border-top: 2px dashed var(--referencia);
   vertical-align: 0.2rem;
 }
+
+/* HU-53 · Menú al costado y una sección por vez (CA-53.1). Los colores no
+   cambian: son de TEC-12. */
+.app {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+}
+
+#menu {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+}
+
+#menu a {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: var(--texto);
+  text-decoration: none;
+}
+
+#menu a:hover {
+  background: var(--panel);
+}
+
+#menu a[aria-current="page"] {
+  background: var(--primario);
+  color: #fff;
+}
+
+main {
+  min-width: 0;
+  width: 100%;
+}
+
+/* El proyecto y el sprint actuales quedan a la vista al desplazarse (CA-53.2). */
+.contexto {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Las tablas anchas se desplazan dentro de su recuadro (CA-53.6). */
+.tabla table {
+  min-width: 640px;
+}
+
+/* HU-53 · Pantallas chicas (CA-53.6): el menú pasa arriba del contenido. */
+@media (max-width: 700px) {
+  .app {
+    display: block;
+  }
+
+  #menu {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .contexto {
+    position: static;
+  }
+}

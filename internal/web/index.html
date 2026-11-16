@@ -12,17 +12,30 @@
     <p>Gestión de proyectos, Product Backlog y sprints.</p>
   </header>
 
+  <div class="app">
+  <!-- HU-53 · Una sección por vez: el menú cambia el fragmento de la dirección (#backlog, #sprints, …) y app.js muestra esa sección (CA-53.1). -->
+  <nav id="menu" aria-label="Secciones">
+    <a href="#proyectos">Proyectos</a>
+    <a href="#integrantes">Integrantes</a>
+    <a href="#backlog">Backlog</a>
+    <a href="#sprints">Sprints</a>
+    <a href="#poker">Planning Poker</a>
+    <a href="#esfuerzo">Esfuerzo</a>
+    <a href="#defectos">Defectos</a>
+    <a href="#metricas">Métricas y dashboard</a>
+    <a href="#reportes">Reportes</a>
+  </nav>
+
   <main>
-    <!-- Proyecto y sprint actuales: se eligen por su ID, que es su UUID (HU-51 y HU-52). El proyecto también se elige desde "Ver proyectos" (HU-50), y el sprint, desde "Ver sprints del proyecto" (HU-14). -->
+    <!-- Proyecto y sprint actuales: se eligen de un desplegable con sus nombres; el valor de cada opción es el UUID (HU-51, HU-52 y HU-53, CA-53.2). El proyecto también se elige desde "Ver proyectos" (HU-50), y el sprint, desde "Ver sprints del proyecto" (HU-14). -->
     <section class="contexto" aria-label="Proyecto y sprint actuales">
       <form id="form-contexto">
-        <label>Proyecto actual (ID)
-          <input id="proyecto-actual" type="text" placeholder="UUID del proyecto" autocomplete="off" spellcheck="false">
+        <label>Proyecto actual
+          <select id="proyecto-actual"></select>
         </label>
-        <label>Sprint actual (ID)
-          <input id="sprint-actual" type="text" placeholder="UUID del sprint" autocomplete="off" spellcheck="false">
+        <label>Sprint actual
+          <select id="sprint-actual"></select>
         </label>
-        <button type="submit">Cargar proyecto</button>
       </form>
       <div class="barra">
         <button type="button" id="ver-proyectos" class="secundario">Ver proyectos</button>
@@ -110,7 +123,7 @@
       </form>
       <form id="form-modificar-integrante">
         <h3>Modificar integrante</h3>
-        <label>ID del integrante <input name="id" type="text" required placeholder="UUID del integrante" autocomplete="off" spellcheck="false"></label>
+        <label>Integrante <select name="id" required></select></label>
         <label>Nombre <input name="nombre" required></label>
         <label>Rol
           <select name="rol">
@@ -128,7 +141,7 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th><th>Nombre</th><th>Rol</th>
+              <th>ID</th><th>Nombre</th><th>Rol</th><th>Acciones</th>
             </tr>
           </thead>
           <tbody id="lista-integrantes"></tbody>
@@ -356,9 +369,14 @@
         </table>
       </div>
 
+      <p class="mensaje" id="msg-sprints" role="alert" hidden></p>
+    </section>
+
+    <section id="esfuerzo">
+      <h2>Esfuerzo</h2>
       <form id="form-registrar-esfuerzo">
         <h3>Registrar esfuerzo</h3>
-        <label>Ítem (ID) <input name="item_id" type="text" placeholder="UUID del ítem" autocomplete="off" spellcheck="false"></label>
+        <label>Ítem <select name="item_id"></select></label>
         <label>Integrante <input name="integrante"></label>
         <label>Fecha <input name="fecha" type="date"></label>
         <label>Actividad <input name="actividad"></label>
@@ -368,7 +386,7 @@
 
       <form id="form-corregir-esfuerzo">
         <h3>Corregir esfuerzo</h3>
-        <label>Esfuerzo (ID) <input name="esfuerzo_id" type="text" placeholder="UUID del esfuerzo" autocomplete="off" spellcheck="false"></label>
+        <label>Esfuerzo <select name="esfuerzo_id"></select></label>
         <label>Horas <input name="horas" type="number" step="any" placeholder="Ej.: 2.5"></label>
         <button type="submit">Corregir esfuerzo</button>
       </form>
@@ -381,7 +399,7 @@
             <option value="item">Historia</option>
           </select>
         </label>
-        <label>ID <input name="referencia" type="text" required placeholder="UUID del sprint o de la historia" autocomplete="off" spellcheck="false"></label>
+        <label>Ítem <select name="referencia" required></select></label>
         <button type="submit">Consultar</button>
       </form>
 
@@ -389,7 +407,7 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th><th>Fecha</th><th>Integrante</th><th>Actividad</th><th>Ítem</th><th>Sprint</th><th>Horas</th>
+              <th>ID</th><th>Fecha</th><th>Integrante</th><th>Actividad</th><th>Ítem</th><th>Sprint</th><th>Horas</th><th>Acciones</th>
             </tr>
           </thead>
           <tbody id="esfuerzos"></tbody>
@@ -397,29 +415,27 @@
       </div>
       <p id="total-esfuerzos" class="vacio">Total: 0.0 horas</p>
       <p class="mensaje" id="msg-esfuerzos" role="alert" hidden></p>
-
-      <p class="mensaje" id="msg-sprints" role="alert" hidden></p>
     </section>
 
     <section id="defectos">
       <h2>Defectos</h2>
       <form id="form-registrar-defecto">
         <h3>Registrar defecto</h3>
-        <label>Ítem (ID) <input name="item_id" type="text" placeholder="UUID del ítem" autocomplete="off" spellcheck="false"></label>
+        <label>Ítem <select name="item_id"></select></label>
         <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
         <label>Severidad
           <select name="severidad" required></select>
         </label>
-        <label>Sprint de detección (ID) <input name="sprint_deteccion_id" type="text" required placeholder="UUID del sprint" autocomplete="off" spellcheck="false"></label>
+        <label>Sprint de detección <select name="sprint_deteccion_id" required></select></label>
         <button type="submit">Registrar defecto</button>
       </form>
       <form id="form-cambiar-estado-defecto">
         <h3>Cambiar estado de defecto</h3>
-        <label>Defecto (ID) <input name="defecto_id" type="text" required placeholder="UUID del defecto" autocomplete="off" spellcheck="false"></label>
+        <label>Defecto <select name="defecto_id" required></select></label>
         <label>Estado
           <select name="estado" required></select>
         </label>
-        <label>Sprint de resolución (ID) <input name="sprint_resolucion_id" type="text" placeholder="UUID del sprint, solo para RESUELTO" autocomplete="off" spellcheck="false"></label>
+        <label>Sprint de resolución <select name="sprint_resolucion_id"></select></label>
         <button type="submit">Cambiar estado</button>
       </form>
       <p class="mensaje" id="msg-defectos" role="alert" hidden></p>
@@ -444,7 +460,7 @@
         <table>
           <thead>
             <tr>
-              <th>ID</th><th>Descripción</th><th>Severidad</th><th>Estado</th><th>Ítem</th><th>Sprint de detección</th><th>Sprint de resolución</th>
+              <th>ID</th><th>Descripción</th><th>Severidad</th><th>Estado</th><th>Ítem</th><th>Sprint de detección</th><th>Sprint de resolución</th><th>Acciones</th>
             </tr>
           </thead>
           <tbody id="lista-defectos"></tbody>
@@ -454,6 +470,7 @@
       <p class="mensaje" id="msg-consultar-defectos" role="alert" hidden></p>
     </section>
   </main>
+  </div>
 
   <script src="app.js"></script>
 </body>

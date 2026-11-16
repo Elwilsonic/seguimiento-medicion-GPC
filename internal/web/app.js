@@ -61,9 +61,9 @@ function idActual(inputId, falta) {
 }
 
 const proyectoActual = () =>
-  idActual("proyecto-actual", "Elegí un proyecto: creá uno o escribí su ID en «Proyecto actual».");
+  idActual("proyecto-actual", "Elegí un proyecto: creá uno o elegilo en «Proyecto actual».");
 const sprintActual = () =>
-  idActual("sprint-actual", "Elegí un sprint: creá uno o escribí su ID en «Sprint actual».");
+  idActual("sprint-actual", "Elegí un sprint: creá uno o elegilo en «Sprint actual».");
 
 // criterios convierte el texto de un textarea en una lista, una línea por
 // criterio, sin líneas vacías.
@@ -71,9 +71,187 @@ function criterios(texto) {
   return texto.split("\n").map((c) => c.trim()).filter((c) => c !== "");
 }
 
+// --- HU-53 · Navegación por secciones (CA-53.1) ---
+
+// secciones dice qué <section> muestra cada entrada del menú; "Métricas y
+// dashboard" muestra las dos secciones (D2 del diseño de HU-53).
+const secciones = {
+  proyectos: ["proyectos"],
+  integrantes: ["integrantes"],
+  backlog: ["backlog"],
+  sprints: ["sprints"],
+  poker: ["poker"],
+  esfuerzo: ["esfuerzo"],
+  defectos: ["defectos"],
+  metricas: ["metricas", "dashboard"],
+  reportes: ["reportes"],
+};
+
+// mostrarSeccion muestra la sección del fragmento de la dirección y oculta
+// las demás; un fragmento que no es una sección muestra Proyectos.
+function mostrarSeccion() {
+  const pedida = location.hash.slice(1);
+  const actual = Object.hasOwn(secciones, pedida) ? pedida : "proyectos";
+  const visibles = secciones[actual];
+  for (const s of document.querySelectorAll("main > section[id]")) {
+    s.hidden = !visibles.includes(s.id);
+  }
+  for (const a of document.querySelectorAll("#menu a")) {
+    if (a.getAttribute("href") === "#" + actual) {
+      a.setAttribute("aria-current", "page");
+    } else {
+      a.removeAttribute("aria-current");
+    }
+  }
+}
+
+// irA muestra la sección del menú (cambia el fragmento, así funciona "Atrás").
+function irA(seccion) {
+  if (location.hash === "#" + seccion) {
+    mostrarSeccion();
+  } else {
+    location.hash = seccion;
+  }
+}
+
+window.addEventListener("hashchange", mostrarSeccion);
+mostrarSeccion();
+
+// --- HU-53 · Desplegables (CA-53.2 y CA-53.3) ---
+
+// datos guarda las últimas listas leídas de la API, para armar los
+// desplegables y los mensajes con nombres.
+const datos = { sprints: [], items: [], integrantes: [], defectos: [], esfuerzos: [] };
+
+// llenarDesplegable arma las opciones de select: el valor es el id (UUID) y
+// el texto lo arma texto(entidad). Con placeholder, la primera opción no
+// elige nada. Sin entidades, deja una sola opción vacía con el aviso vacio.
+// Conserva lo elegido si sigue en la lista.
+function llenarDesplegable(select, lista, texto, vacio, placeholder) {
+  const elegido = select.value;
+  const opciones = [];
+  if (lista.length === 0) {
+    opciones.push(new Option(vacio, ""));
+  } else if (placeholder) {
+    opciones.push(new Option(placeholder, ""));
+  }
+  for (const e of lista) {
+    opciones.push(new Option(texto(e), e.id));
+  }
+  select.replaceChildren(...opciones);
+  if (lista.some((e) => e.id === elegido)) {
+    select.value = elegido;
+  }
+}
+
+// asegurarOpcion agrega la opción si el desplegable todavía no la tiene, para
+// poder elegir una entidad recién creada antes de recargar la lista.
+function asegurarOpcion(select, id, texto) {
+  if (![...select.options].some((o) => o.value === id)) {
+    select.append(new Option(texto, id));
+  }
+}
+
+const porTitulo = (a, b) => a.titulo.localeCompare(b.titulo, "es");
+const textoSprint = (s) => s.nombre + " (" + s.estado + ")";
+
+// tituloDe y nombreDeSprint dan el nombre de un ítem o de un sprint por su id.
+const tituloDe = (id) => (datos.items.find((it) => it.id === id) || { titulo: id }).titulo;
+
+// cargarProyectos llena «Proyecto actual» con los proyectos, en el orden de
+// la API (HU-50, CA-50.6). Si la lectura falla, deja el desplegable vacío y
+// muestra el error en el encabezado.
+async function cargarProyectos() {
+  const select = $("proyecto-actual");
+  try {
+    const proyectos = await api("GET", "/proyectos");
+    llenarDesplegable(select, proyectos, (p) => p.nombre, "Sin proyectos: creá uno en Proyectos", "Elegí un proyecto");
+  } catch (err) {
+    select.replaceChildren();
+    mostrar("msg-contexto", err.message, true);
+  }
+}
+
+// cargarSprints llena «Sprint actual» con los sprints del proyecto actual,
+// por nombre y estado.
+async function cargarSprints() {
+  const select = $("sprint-actual");
+  if ($("proyecto-actual").value === "") {
+    datos.sprints = [];
+  } else {
+    datos.sprints = await api("GET", "/proyectos/" + proyectoActual() + "/sprints");
+  }
+  llenarDesplegable(select, datos.sprints, textoSprint, "Sin sprints: creá uno en Sprints", "Elegí un sprint");
+}
+
+// recargarListas lee las listas del proyecto y del sprint actuales y llena
+// los desplegables de los formularios (D4 del diseño de HU-53).
+async function recargarListas() {
+  const proyecto = $("proyecto-actual").value;
+  const sprint = $("sprint-actual").value;
+  if (proyecto === "") {
+    Object.assign(datos, { items: [], integrantes: [], defectos: [], esfuerzos: [] });
+  } else {
+    const [items, integrantes, defectos] = await Promise.all([
+      api("GET", "/proyectos/" + proyecto + "/backlog"),
+      api("GET", "/proyectos/" + proyecto + "/integrantes"),
+      api("GET", "/proyectos/" + proyecto + "/defectos"),
+    ]);
+    datos.items = items.sort(porTitulo);
+    datos.integrantes = integrantes;
+    datos.defectos = defectos.defectos;
+    datos.esfuerzos = sprint === "" ? [] : (await api("GET", "/sprints/" + sprint + "/esfuerzos")).esfuerzos;
+  }
+  // D5: el esfuerzo se registra sobre un ítem del sprint actual (RN-26.6).
+  const delSprint = datos.items.filter((it) => sprint !== "" && it.sprint_id === sprint);
+  const titulo = (it) => it.titulo;
+  llenarDesplegable($("form-registrar-esfuerzo").item_id, delSprint, titulo,
+    sprint === "" ? "Elegí un sprint en «Sprint actual»" : "Sin ítems en el sprint actual", "Elegí un ítem");
+  llenarDesplegable($("form-registrar-defecto").item_id, datos.items, titulo, "Sin ítems en el backlog", "Elegí un ítem");
+  llenarDesplegable($("form-consultar-esfuerzos").referencia, datos.items, titulo, "Sin ítems en el backlog");
+  llenarDesplegable($("form-registrar-defecto").sprint_deteccion_id, datos.sprints, textoSprint, "Sin sprints en el proyecto");
+  if (sprint !== "" && datos.sprints.some((s) => s.id === sprint)) {
+    $("form-registrar-defecto").sprint_deteccion_id.value = sprint;
+  }
+  llenarDesplegable($("form-cambiar-estado-defecto").sprint_resolucion_id, datos.sprints, textoSprint,
+    "Sin sprint de resolución", "Sin sprint de resolución");
+  llenarDesplegable($("form-modificar-integrante").id, datos.integrantes,
+    (m) => m.nombre + " (" + nombresDeRoles[m.rol] + ")", "Sin integrantes en el proyecto", "Elegí un integrante");
+  llenarDesplegable($("form-cambiar-estado-defecto").defecto_id, datos.defectos,
+    (d) => d.descripcion + " (" + d.estado + ")", "Sin defectos en el proyecto", "Elegí un defecto");
+  llenarDesplegable($("form-corregir-esfuerzo").esfuerzo_id, datos.esfuerzos,
+    (e) => e.fecha + " · " + e.integrante + " · " + e.actividad + " · " + e.horas + " h",
+    "Sin esfuerzos en el sprint actual", "Elegí un esfuerzo");
+}
+
+// elegirProyecto carga el proyecto elegido en «Proyecto actual», sus sprints
+// y sus listas.
+async function elegirProyecto() {
+  $("sprint-actual").value = "";
+  if ($("proyecto-actual").value === "") {
+    await cargarSprints();
+    await recargarListas();
+    return;
+  }
+  await cargarProyecto();
+}
+
+$("proyecto-actual").addEventListener("change", () => accion("msg-contexto", elegirProyecto));
+
+$("sprint-actual").addEventListener("change", () =>
+  accion("msg-contexto", async () => {
+    const s = datos.sprints.find((sp) => sp.id === $("sprint-actual").value);
+    if (s) {
+      mostrarSprint(s);
+    }
+    await recargarListas();
+  }),
+);
+
 // --- Proyectos (HU-01, HU-02, HU-03 y HU-18) ---
 
 function mostrarProyecto(p) {
+  asegurarOpcion($("proyecto-actual"), p.id, p.nombre);
   $("proyecto-actual").value = p.id;
   const form = $("form-modificar-proyecto");
   form.nombre.value = p.nombre;
@@ -91,16 +269,15 @@ function mostrarProyecto(p) {
   $("sin-proyecto").textContent = "Proyecto " + p.id + ": " + p.nombre + " (" + p.estado + "), " + inicio + ", " + fin;
 }
 
+// cargarProyecto carga el proyecto actual, su backlog, sus sprints y las
+// listas de los formularios (HU-53).
 async function cargarProyecto() {
   const p = await api("GET", "/proyectos/" + proyectoActual());
   mostrarProyecto(p);
   await cargarBacklog();
+  await cargarSprints();
+  await recargarListas();
 }
-
-$("form-contexto").addEventListener("submit", (e) => {
-  e.preventDefault();
-  accion("msg-contexto", cargarProyecto);
-});
 
 // HU-50 · Lista de proyectos. El botón «Elegir» de cada fila deja ese
 // proyecto como proyecto actual y lo carga como «Cargar proyecto», sin
@@ -117,6 +294,7 @@ $("ver-proyectos").addEventListener("click", () =>
           boton(
             "Elegir",
             async () => {
+              asegurarOpcion($("proyecto-actual"), p.id, p.nombre);
               $("proyecto-actual").value = p.id;
               await cargarProyecto();
               mostrar("msg-contexto", "Proyecto " + p.id + " elegido: " + p.nombre + ".", false);
@@ -150,9 +328,11 @@ $("form-crear-proyecto").addEventListener("submit", (e) => {
       descripcion: form.descripcion.value,
     });
     form.reset();
+    // HU-53: el proyecto nuevo queda elegido en «Proyecto actual» (CA-53.2).
+    await cargarProyectos();
     mostrarProyecto(p);
-    mostrar("msg-proyectos", "Proyecto " + p.id + " creado.", false);
-    await cargarBacklog();
+    await cargarProyecto();
+    mostrar("msg-proyectos", "Proyecto «" + p.nombre + "» creado.", false);
   });
 });
 
@@ -233,6 +413,7 @@ $("form-registrar-integrante").addEventListener("submit", (e) => {
       rol: form.rol.value,
     });
     form.nombre.value = "";
+    await recargarListas();
     mostrar("msg-integrantes", "Integrante " + m.id + " registrado: " + m.nombre + " (" + nombresDeRoles[m.rol] + ").", false);
   });
 });
@@ -246,19 +427,37 @@ $("form-modificar-integrante").addEventListener("submit", (e) => {
       nombre: form.nombre.value,
       rol: form.rol.value,
     });
+    await recargarListas();
     mostrar("msg-integrantes", "Integrante " + m.id + " modificado: " + m.nombre + " (" + nombresDeRoles[m.rol] + ").", false);
   });
 });
+
+// elegirIntegrante deja elegido el integrante en "Modificar integrante" y
+// carga su nombre y su rol (HU-53, CA-53.4).
+function elegirIntegrante(id) {
+  const form = $("form-modificar-integrante");
+  form.id.value = id;
+  const m = datos.integrantes.find((i) => i.id === id);
+  if (m) {
+    form.nombre.value = m.nombre;
+    form.rol.value = m.rol;
+  }
+}
+
+$("form-modificar-integrante").id.addEventListener("change", (e) => elegirIntegrante(e.target.value));
 
 // HU-17: lista los integrantes del proyecto actual con su rol legible.
 $("ver-integrantes").addEventListener("click", () =>
   accion("msg-integrantes", async () => {
     const proyecto = proyectoActual();
     const integrantes = await api("GET", "/proyectos/" + proyecto + "/integrantes");
+    datos.integrantes = integrantes;
     $("lista-integrantes").replaceChildren(
       ...integrantes.map((m) => {
         const tr = document.createElement("tr");
-        tr.append(celda(m.id), celda(m.nombre), celda(nombresDeRoles[m.rol]));
+        const acciones = document.createElement("td");
+        acciones.append(boton("Modificar", () => elegirIntegrante(m.id), "secundario", "msg-integrantes"));
+        tr.append(celda(m.id), celda(m.nombre), celda(nombresDeRoles[m.rol]), acciones);
         return tr;
       }),
     );
@@ -464,6 +663,12 @@ function filaItem(it) {
       await cargarBacklog();
       mostrar("msg-backlog", "Ítem " + it.id + " completado en el sprint " + sprint + ".", false);
     }),
+    // HU-53 · Acciones de fila (CA-53.4): llevan al formulario con el ítem elegido.
+    boton("Registrar esfuerzo", () => registrarEsfuerzoDe(it), "secundario"),
+    boton("Registrar defecto", () => {
+      irA("defectos");
+      $("form-registrar-defecto").item_id.value = it.id;
+    }, "secundario"),
   );
   tr.append(acciones);
   return tr;
@@ -481,7 +686,8 @@ $("form-crear-item").addEventListener("submit", (e) => {
     });
     form.reset();
     await cargarBacklog();
-    mostrar("msg-backlog", "Ítem " + it.id + " creado.", false);
+    await recargarListas();
+    mostrar("msg-backlog", "Ítem «" + it.titulo + "» creado.", false);
   });
 });
 
@@ -528,6 +734,7 @@ $("actualizar-backlog").addEventListener("click", () => accion("msg-backlog", ca
 // --- Sprints (HU-10 a HU-13) ---
 
 function mostrarSprint(s) {
+  asegurarOpcion($("sprint-actual"), s.id, textoSprint(s));
   $("sprint-actual").value = s.id;
   $("datos-sprint").textContent =
     "Sprint " + s.id + ": " + s.nombre + " (" + s.estado + "), del " + s.fecha_inicio +
@@ -546,7 +753,10 @@ $("form-crear-sprint").addEventListener("submit", (e) => {
       objetivo: form.objetivo.value,
     });
     form.reset();
+    // HU-53: el sprint nuevo queda elegido en «Sprint actual» (CA-53.2).
+    await cargarSprints();
     mostrarSprint(s);
+    await recargarListas();
     mostrar("msg-sprints", "Sprint " + s.id + " creado.", false);
   });
 });
@@ -589,6 +799,7 @@ $("ver-sprints").addEventListener("click", () =>
             "Ver ítems completados",
             async () => {
               mostrarSprint(s);
+              await recargarListas();
               const items = await mostrarCompletados(s.id);
               mostrar("msg-sprints", "Sprint " + s.id + " seleccionado: " + items.length + " ítem(s) completado(s).", false);
             },
@@ -615,6 +826,7 @@ $("ver-sprints").addEventListener("click", () =>
 $("cerrar-sprint").addEventListener("click", () =>
   accion("msg-sprints", async () => {
     const s = await api("POST", "/sprints/" + sprintActual() + "/cerrar");
+    await cargarSprints();
     mostrarSprint(s);
     mostrar("msg-sprints", "Sprint " + s.id + " cerrado.", false);
   }),
@@ -627,9 +839,13 @@ formEsfuerzo.setAttribute("aria-label", "Registrar esfuerzo");
 formEsfuerzo.addEventListener("submit", (e) => {
   e.preventDefault();
   const form = e.target;
-  accion("msg-sprints", async () => {
+  accion("msg-esfuerzos", async () => {
     const sprint = sprintActual();
     const item = form.item_id.value.trim();
+    // HU-53: sin ítem elegido, avisa con el texto del desplegable, sin llamar a la API.
+    if (item === "") {
+      throw new Error(form.item_id.options[form.item_id.selectedIndex]?.textContent || "Elegí un ítem");
+    }
     const esfuerzo = await api("POST", "/sprints/" + sprint + "/items/" + item + "/esfuerzos", {
       integrante: form.integrante.value,
       fecha: form.fecha.value,
@@ -638,7 +854,8 @@ formEsfuerzo.addEventListener("submit", (e) => {
     });
     form.reset();
     await cargarBacklog();
-    mostrar("msg-sprints", "Esfuerzo " + esfuerzo.id + " registrado para el ítem " + esfuerzo.item_id + ".", false);
+    await recargarListas();
+    mostrar("msg-esfuerzos", "Esfuerzo registrado para «" + tituloDe(esfuerzo.item_id) + "».", false);
   });
 });
 
@@ -649,13 +866,14 @@ formCorregirEsfuerzo.setAttribute("aria-label", "Corregir esfuerzo");
 formCorregirEsfuerzo.addEventListener("submit", (e) => {
   e.preventDefault();
   const form = e.target;
-  accion("msg-sprints", async () => {
+  accion("msg-esfuerzos", async () => {
     const id = form.esfuerzo_id.value.trim();
     const esfuerzo = await api("PATCH", "/esfuerzos/" + id + "/horas", {
       horas: Number(form.horas.value),
     });
     form.reset();
-    mostrar("msg-sprints", "Esfuerzo " + esfuerzo.id + " corregido: " + esfuerzo.horas + " horas.", false);
+    await recargarListas();
+    mostrar("msg-esfuerzos", "Esfuerzo " + esfuerzo.id + " corregido: " + esfuerzo.horas + " horas.", false);
   });
 });
 
@@ -663,22 +881,41 @@ formCorregirEsfuerzo.addEventListener("submit", (e) => {
 // llena la tabla y muestra el total con un decimal.
 const formConsultaEsfuerzos = $("form-consultar-esfuerzos");
 formConsultaEsfuerzos.setAttribute("aria-label", "Consultar esfuerzos");
+// HU-53: el ítem solo hace falta para consultar por historia.
+const actualizarReferencia = () => {
+  formConsultaEsfuerzos.referencia.required = formConsultaEsfuerzos.tipo.value === "item";
+};
+formConsultaEsfuerzos.tipo.addEventListener("change", actualizarReferencia);
+actualizarReferencia();
+
+// registrarEsfuerzoDe lleva a Esfuerzo con el ítem elegido; si el ítem no
+// está en el sprint actual, avisa y no elige ninguno (HU-53, CA-53.4).
+function registrarEsfuerzoDe(it) {
+  irA("esfuerzo");
+  const select = $("form-registrar-esfuerzo").item_id;
+  if ([...select.options].some((o) => o.value === it.id)) {
+    select.value = it.id;
+    $("msg-esfuerzos").hidden = true;
+  } else {
+    select.value = "";
+    mostrar("msg-esfuerzos", "El ítem no está en el sprint actual: asignalo o elegí su sprint", true);
+  }
+}
 formConsultaEsfuerzos.addEventListener("submit", (e) => {
   e.preventDefault();
   const form = e.target;
   accion("msg-esfuerzos", async () => {
-    const referencia = form.referencia.value.trim();
     const ruta =
       form.tipo.value === "sprint"
-        ? "/sprints/" + referencia + "/esfuerzos"
-        : "/items/" + referencia + "/esfuerzos";
+        ? "/sprints/" + sprintActual() + "/esfuerzos"
+        : "/items/" + form.referencia.value.trim() + "/esfuerzos";
     const resumen = await api("GET", ruta);
     const tbody = $("esfuerzos");
     tbody.replaceChildren(...resumen.esfuerzos.map(filaEsfuerzo));
     if (resumen.esfuerzos.length === 0) {
       const tr = document.createElement("tr");
       const td = celda("No hay esfuerzos registrados.");
-      td.colSpan = 7;
+      td.colSpan = 8;
       td.className = "vacio";
       tr.append(td);
       tbody.append(tr);
@@ -700,6 +937,15 @@ function filaEsfuerzo(e) {
     celda(e.sprint_id),
     celda(e.horas),
   );
+  // HU-53 · "Corregir horas" deja este esfuerzo elegido en "Corregir esfuerzo".
+  const acciones = document.createElement("td");
+  acciones.append(boton("Corregir horas", () => {
+    const form = $("form-corregir-esfuerzo");
+    asegurarOpcion(form.esfuerzo_id, e.id, e.fecha + " · " + e.integrante + " · " + e.actividad + " · " + e.horas + " h");
+    form.esfuerzo_id.value = e.id;
+    form.horas.focus();
+  }, "secundario", "msg-esfuerzos"));
+  tr.append(acciones);
   return tr;
 }
 
@@ -1090,13 +1336,17 @@ formDefecto.addEventListener("submit", (e) => {
   const form = e.target;
   accion("msg-defectos", async () => {
     const item = form.item_id.value.trim();
+    if (item === "") {
+      throw new Error(form.item_id.options[form.item_id.selectedIndex]?.textContent || "Elegí un ítem");
+    }
     const defecto = await api("POST", "/items/" + item + "/defectos", {
       descripcion: form.descripcion.value,
       severidad: form.severidad.value,
       sprint_deteccion_id: form.sprint_deteccion_id.value.trim(),
     });
     form.reset();
-    mostrar("msg-defectos", "Defecto " + defecto.id + " registrado para el ítem " + defecto.item_id + ".", false);
+    await recargarListas();
+    mostrar("msg-defectos", "Defecto registrado para «" + tituloDe(defecto.item_id) + "».", false);
   });
 });
 
@@ -1120,6 +1370,7 @@ formEstadoDefecto.addEventListener("submit", (e) => {
     }
     const cambiado = await api("PATCH", "/defectos/" + defecto + "/estado", cuerpo);
     form.reset();
+    await recargarListas();
     let texto = "Defecto " + cambiado.id + " ahora está en " + cambiado.estado;
     if (cambiado.estado === "RESUELTO") {
       texto += "," + " resuelto en el sprint " + cambiado.sprint_resolucion_id;
@@ -1152,7 +1403,7 @@ formConsultaDefectos.addEventListener("submit", (e) => {
     if (resultado.defectos.length === 0) {
       const tr = document.createElement("tr");
       const td = celda("Sin defectos.");
-      td.colSpan = 7;
+      td.colSpan = 8;
       td.className = "vacio";
       tr.append(td);
       tbody.append(tr);
@@ -1175,5 +1426,21 @@ function filaDefecto(d) {
     celda(d.sprint_deteccion_id),
     celda(d.sprint_resolucion_id === 0 ? "—" : d.sprint_resolucion_id),
   );
+  // HU-53 · "Cambiar estado" deja este defecto elegido en "Cambiar estado de defecto".
+  const acciones = document.createElement("td");
+  acciones.append(boton("Cambiar estado", () => {
+    const form = $("form-cambiar-estado-defecto");
+    asegurarOpcion(form.defecto_id, d.id, d.descripcion + " (" + d.estado + ")");
+    form.defecto_id.value = d.id;
+    form.estado.focus();
+  }, "secundario", "msg-consultar-defectos"));
+  tr.append(acciones);
   return tr;
 }
+
+
+// HU-53 · Al abrir la página se cargan los proyectos de «Proyecto actual».
+// El error de la lista de proyectos lo muestra cargarProyectos en el encabezado.
+cargarProyectos()
+  .then(recargarListas)
+  .catch((err) => mostrar("msg-contexto", err.message, true));

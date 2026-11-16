@@ -24,10 +24,10 @@ Rama `feature/HU-53-navegacion-por-secciones`, desde `main` (`d6b6dfb`). Cada co
 
 ## 4. Código (GREEN)
 
-- [ ] 4.1 `index.html`: el `<nav>`, el encabezado con los dos desplegables (D3), las nueve secciones (D2) y los `<select>` de los formularios.
-- [ ] 4.2 `app.js`: `mostrarSeccion()` y `hashchange` (D1), `cargarProyectos()` y `cargarSprints()`, `llenarDesplegable()` y `recargarListas()` (D4), el filtro de D5, las acciones de fila con `irA()` (D6) y los mensajes con el nombre.
-- [ ] 4.3 `styles.css`: el menú al costado y, en `@media (max-width: 700px)`, arriba; las tablas con desplazamiento propio. Sin cambiar los colores (TEC-12).
-- [ ] 4.4 Correr `gofmt -l .`, `go vet ./...` y `go test -count=1 ./...`, en memoria y con PostgreSQL: todo en verde. Verificar con `git diff --stat` que el GREEN no toca `_test.go` ni `.feature`. Proponer `git commit -m "feat(HU-53): navegar por secciones y elegir de listas (GREEN)" -m "Refs #211"`.
+- [x] 4.1 `index.html`: el `<nav>`, el encabezado con los dos desplegables (D3), las nueve secciones (D2) y los `<select>` de los formularios.
+- [x] 4.2 `app.js`: `mostrarSeccion()` y `hashchange` (D1), `cargarProyectos()` y `cargarSprints()`, `llenarDesplegable()` y `recargarListas()` (D4), el filtro de D5, las acciones de fila con `irA()` (D6) y los mensajes con el nombre.
+- [x] 4.3 `styles.css`: el menú al costado y, en `@media (max-width: 700px)`, arriba; las tablas con desplazamiento propio. Sin cambiar los colores (TEC-12).
+- [x] 4.4 Correr `gofmt -l .`, `go vet ./...` y `go test -count=1 ./...`, en memoria y con PostgreSQL: todo en verde. Verificar con `git diff --stat` que el GREEN no toca `_test.go` ni `.feature`. Proponer `git commit -m "feat(HU-53): navegar por secciones y elegir de listas (GREEN)" -m "Refs #211"`.
 
 ## 5. Refactor
 
