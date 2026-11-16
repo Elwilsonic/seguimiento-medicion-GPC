@@ -182,7 +182,103 @@ Para verificarlo, se simuló la parte de ítems sin commitearla (el `id` y el `s
 
 ### Defectos y esfuerzos (García Santiago)
 
-Pendiente de su responsable.
+**29 tests nuevos (funciones `Test`), 2 runners de godog y 23 escenarios BDD** (12 de defectos y 11 de esfuerzos; con los ejemplos de los dos esquemas, cada `.feature` corre 13 casos), en la rama `feature/HU-52-uuid-defectos-esfuerzos`. La rama se creó desde `main`, trajo `main` con la base (PR #201) y después dos veces la rama de integración. Se reparten así:
+
+- 14 de defectos en `internal/httpapi/defects_uuid_test.go`, 11 de esfuerzos en `internal/httpapi/efforts_uuid_test.go` y 4 de la interfaz en `internal/httpapi/defects_efforts_uuid_web_test.go`;
+- los runners `TestFeatures_HU52Defectos` y `TestFeatures_HU52Esfuerzos` en `internal/httpapi/defects_efforts_uuid_features_test.go`, sobre `features/HU-52-defectos.feature` y `features/HU-52-esfuerzos.feature`, a nivel de la API.
+
+Los tests y los escenarios crean el proyecto, el ítem, el sprint, la asignación y los registros previos con los `Manager` del dominio (`defectEffortWorld`) y usan su `PublicID`. Así prueban solo las 7 rutas de esta parte (D3), sin depender de cómo responden las rutas de ítems y sprints. Las cuentas de la tabla no suman 29 porque un test puede cubrir más de un criterio. Los 1000 identificadores (CA-52.2), PostgreSQL (CA-52.5) y la concurrencia (CA-52.7) los cubre la base.
+
+#### Criterio → test → código
+
+| Criterio | Escenarios BDD | Tests de Go (archivo) | Código que lo implementa (función y archivo) |
+|---|---|---|---|
+| CA-52.1 Al registrar un defecto o un esfuerzo, su id es un UUID v4, y el primero no es el 1 | "Registrar un defecto", "El primer defecto no es el 1", "Registrar un esfuerzo" y "El primer esfuerzo no es el 1" (runners [`TestFeatures_HU52Defectos`](../../internal/httpapi/defects_efforts_uuid_features_test.go#L20) y [`TestFeatures_HU52Esfuerzos`](../../internal/httpapi/defects_efforts_uuid_features_test.go#L25)) | [`TestRegistrarDefecto_IDEsUUIDVersion4YReferenciasSonUUID`](../../internal/httpapi/defects_uuid_test.go#L203) y [`TestRegistrarDefecto_PrimerDefectoNoEsUnNumero`](../../internal/httpapi/defects_uuid_test.go#L222) (`internal/httpapi/defects_uuid_test.go`); [`TestRegistrarEsfuerzo_IDEsUUIDVersion4YReferenciasSonUUID`](../../internal/httpapi/efforts_uuid_test.go#L36) y [`TestRegistrarEsfuerzo_PrimerEsfuerzoNoEsUnNumero`](../../internal/httpapi/efforts_uuid_test.go#L52) (`internal/httpapi/efforts_uuid_test.go`) | [`toDefectResponse`](../../internal/httpapi/defects.go#L163) ([`internal/httpapi/defects.go`](../../internal/httpapi/defects.go)); [`toEffortResponse`](../../internal/httpapi/efforts.go#L118) ([`internal/httpapi/efforts.go`](../../internal/httpapi/efforts.go)) |
+| CA-52.2 Dos defectos o dos esfuerzos no tienen el mismo id | — (los 1000 de la base) | [`TestRegistrarDefecto_DosDefectosTienenUUIDDistintos`](../../internal/httpapi/defects_uuid_test.go#L232); [`TestRegistrarEsfuerzo_DosEsfuerzosTienenUUIDDistintos`](../../internal/httpapi/efforts_uuid_test.go#L62) | Las mismas de CA-52.1, con el `PublicID` que genera la base |
+| CA-52.3 Las 7 rutas aceptan el UUID (también en mayúsculas); los sprints del cuerpo del defecto son UUID; ninguna respuesta expone el entero, y un defecto sin resolver responde `""` | "Resolver un defecto por UUID", "UUID del defecto en mayúsculas", "La lista de defectos de un proyecto", "La lista de defectos de un sprint por su UUID", "Corregir las horas por UUID", "UUID del esfuerzo en mayúsculas", "La lista de esfuerzos de un sprint" y "La lista de esfuerzos de una historia por su UUID" | [`TestCambiarEstadoDefecto_ResuelvePorUUID`](../../internal/httpapi/defects_uuid_test.go#L248), [`TestCambiarEstadoDefecto_AceptaElUUIDEnMayusculas`](../../internal/httpapi/defects_uuid_test.go#L269), [`TestListarDefectos_MuestranLosUUID`](../../internal/httpapi/defects_uuid_test.go#L282) y [`TestCambiarEstadoDefecto_SprintResolucionPorUUID`](../../internal/httpapi/defects_uuid_test.go#L391) (`internal/httpapi/defects_uuid_test.go`); [`TestCorregirEsfuerzo_CorrigePorUUID`](../../internal/httpapi/efforts_uuid_test.go#L77), [`TestCorregirEsfuerzo_AceptaElUUIDEnMayusculas`](../../internal/httpapi/efforts_uuid_test.go#L97) y [`TestListarEsfuerzos_PorSprintYPorHistoriaMuestranLosUUID`](../../internal/httpapi/efforts_uuid_test.go#L110) (`internal/httpapi/efforts_uuid_test.go`) | [`server.registerDefect`](../../internal/httpapi/defects.go#L33), [`server.changeDefectStatus`](../../internal/httpapi/defects.go#L71), [`server.listDefectsBySprint`](../../internal/httpapi/defects.go#L117), [`toDefectListResponse`](../../internal/httpapi/defects.go#L155) y [`toDefectResponse`](../../internal/httpapi/defects.go#L163) ([`internal/httpapi/defects.go`](../../internal/httpapi/defects.go)); [`server.registerEffort`](../../internal/httpapi/efforts.go#L40), [`server.listEffortsByItem`](../../internal/httpapi/efforts.go#L75), [`server.listEffortsBySprint`](../../internal/httpapi/efforts.go#L91), [`server.correctEffortHours`](../../internal/httpapi/efforts.go#L138), [`toEffortListResponse`](../../internal/httpapi/efforts.go#L106) y [`toEffortResponse`](../../internal/httpapi/efforts.go#L118) ([`internal/httpapi/efforts.go`](../../internal/httpapi/efforts.go)); en los tests, las 7 rutas en `uuidRoutes` (`entity_ids_test.go`) |
+| CA-52.4 Un id que no es un UUID (número, entre llaves, con `urn:uuid:` o sin guiones) responde 400 con el mensaje de su entidad; un UUID inexistente o el nulo, 404; el sprint del cuerpo con otro texto da 400 del sprint, vacío o ausente da sprint faltante, e inexistente, 404; se conserva el orden de errores de HU-28 y HU-30 | "Un ID numérico de defecto", "El sprint de detección escrito como número", "El sprint de detección ausente o vacío" (2 ejemplos), "UUID de defecto que no existe", "Sprint de detección que no existe", "Se conserva el orden de errores al resolver", "Un ID numérico de esfuerzo", "Otras formas del UUID del esfuerzo se rechazan" (3 ejemplos), "El ID del esfuerzo se valida antes que el cuerpo", "UUID de esfuerzo que no existe" y "Se conserva el orden de errores" | [`TestRutasDeDefectos_IDQueNoEsUUIDDevuelve400`](../../internal/httpapi/defects_uuid_test.go#L318), [`TestRutasDeDefectos_UUIDInexistenteDevuelve404`](../../internal/httpapi/defects_uuid_test.go#L330), [`TestCambiarEstadoDefecto_IDSeValidaAntesQueElCuerpo`](../../internal/httpapi/defects_uuid_test.go#L347), [`TestRegistrarDefecto_SprintDeteccionQueNoEsUUIDDevuelve400`](../../internal/httpapi/defects_uuid_test.go#L356), [`TestRegistrarDefecto_SprintDeteccionAusenteOVacioDevuelve400`](../../internal/httpapi/defects_uuid_test.go#L367), [`TestRegistrarDefecto_SprintDeteccionInexistenteDevuelve404`](../../internal/httpapi/defects_uuid_test.go#L380) y [`TestCambiarEstadoDefecto_UUIDInexistenteConservaElOrdenDeErrores`](../../internal/httpapi/defects_uuid_test.go#L414) (`internal/httpapi/defects_uuid_test.go`); [`TestRutasDeEsfuerzos_IDQueNoEsUUIDDevuelve400`](../../internal/httpapi/efforts_uuid_test.go#L163), [`TestRutasDeEsfuerzos_UUIDInexistenteDevuelve404`](../../internal/httpapi/efforts_uuid_test.go#L175), [`TestRegistrarEsfuerzo_IDDelSprintSeValidaAntesQueElDelItem`](../../internal/httpapi/efforts_uuid_test.go#L187), [`TestCorregirEsfuerzo_IDSeValidaAntesQueElCuerpo`](../../internal/httpapi/efforts_uuid_test.go#L196) y [`TestCorregirEsfuerzo_UUIDInexistenteConservaElOrdenDeErrores`](../../internal/httpapi/efforts_uuid_test.go#L205) (`internal/httpapi/efforts_uuid_test.go`) | Los handlers de CA-52.3, que leen el `{id}` con `itemIDFromPath`, `sprintIDFromPath`, `defectIDFromPath` o `effortIDFromPath` de la base antes del cuerpo, y el sprint del cuerpo con `sprintIDFromBody` después del JSON y antes del `Manager`; [`server.sprintItemPublicIDs`](../../internal/httpapi/sprints.go#L178) (Buttini Cristobal), que lee el `{id}` del sprint antes que el `{itemId}`; el centinela `missingInternalID` de la base, que deja la inexistencia en el mismo punto del `Manager` |
+| CA-52.6 La interfaz usa los UUID: los 7 campos de ID de Esfuerzos y Defectos son de texto, y app.js manda los sprints del defecto como texto | — | [`TestInterfaz_CamposDeIDDeEsfuerzosAceptanElUUIDComoTexto`](../../internal/httpapi/defects_efforts_uuid_web_test.go#L55), [`TestInterfaz_CamposDeIDDeDefectosAceptanElUUIDComoTexto`](../../internal/httpapi/defects_efforts_uuid_web_test.go#L68), [`TestInterfaz_CamposDeIDObligatoriosSiguenSiendoObligatorios`](../../internal/httpapi/defects_efforts_uuid_web_test.go#L82) y [`TestInterfaz_NoConvierteLosIDsDeDefectosYEsfuerzosANumero`](../../internal/httpapi/defects_efforts_uuid_web_test.go#L97) (`internal/httpapi/defects_efforts_uuid_web_test.go`); las 4 aserciones de `type="text"` en `web_test.go` | Los formularios `form-registrar-esfuerzo`, `form-corregir-esfuerzo`, `form-consultar-esfuerzos`, `form-registrar-defecto` y `form-cambiar-estado-defecto` de [`internal/web/index.html`](../../internal/web/index.html) (`type="text"`, `placeholder` «UUID del …», sin autocompletar ni corrector); el registro y el cambio de estado de defectos en [`internal/web/app.js`](../../internal/web/app.js), sin `Number(...)` |
+
+#### Tests existentes adaptados
+
+En el RED se adaptaron los tests existentes de `defects_test.go`, `defect_lists_test.go`, `efforts_test.go`, `efforts_correct_test.go` y `effort_lists_test.go` cuyo resultado cambia, y las 4 aserciones de `web_test.go` que exigían `type="number"` (D9). No cambió lo que verifican:
+
+- **Cuerpos:** el sprint de detección y el de resolución se mandan como texto, con el `id` que devolvió la API al crear el sprint (`apiID`, `validDefectFor` y `resolveIn`). Un número en esos campos ahora da "el cuerpo del pedido no es un JSON válido", y `""` o `null`, el 400 de sprint faltante.
+- **Respuestas:** los `id`, `item_id`, `sprint_id` y sprints del defecto se comparan con el `id` que devolvió la API (`apiID`; en los contratos JSON, `apiIDJSON`), y no con `1`. Un defecto sin resolver tiene `""`. Al traer la rama de integración, `defectJSON` y `effortJSON` pasaron a `idRef`, el tipo del ajuste de la base.
+- **Inexistentes:** los casos de 999, 0 y -1 usan un UUID que nunca se asignó (`neverAssignedUUID`) o el nulo (`nilUUID`), porque el 0 y los negativos ahora son un formato inválido (400). Los dos tests de 500 con el repositorio roto usan un UUID que no existe, para que la falla aparezca al buscarlo.
+- **Tests de 413:** cuentan los registros con la lista del sprint, porque el `id` ya no dice cuántos hay.
+
+**6 tests del RED pasan antes del GREEN.** Fallaban en el RED (`2b9dd75`) porque leían el `id` como `string` estricto, o porque dependían de las rutas de ítems. Con `idRef`, que acepta un número o un texto, y con la parte de Cardozo Leandro integrada (PR #205), comparan contra `apiID`, que vale lo mismo antes y después del GREEN. Que el `id` sea un UUID lo verifican los tests nuevos de HU-52. Son:
+
+- `TestListarEsfuerzosPorSprint_Devuelve200ConLosEsfuerzosYElTotal`, `TestListarEsfuerzosPorItem_Devuelve200ConLosEsfuerzosYElTotal` y `TestListarEsfuerzos_RedondeaElTotalAUnDecimal`;
+- `TestRegistrarEsfuerzo_AceptaHorasComoTextoNumerico` y `TestRegistrarEsfuerzo_CuerpoMayorA1MiBDa413`;
+- `TestModificarIntegrante_NoCambiaLosEsfuerzosRegistrados`.
+
+**Commits de tests aparte, antes del GREEN** (lo pidió Peñalbé Hernán, Agile Enabler):
+
+- `c20c5bc` adapta los tests de otros archivos que mandan el sprint del defecto o leen un defecto o esfuerzo:
+  - en `metrics_test.go`, `reports_test.go` y `sprint_reports_test.go`, los sprints del cuerpo con `apiID`, y en los contratos, el `id`, `sprint_id`, `item_id`, `sprint_deteccion_id` y `sprint_resolucion_id` de cada defecto y esfuerzo con `apiIDJSON`. No se tocaron las rutas ni los `sprint_id` de las métricas y del sprint del reporte, que son de Buttini Cristobal;
+  - mis 5 filas de `TestRutasConID_IDNoNumericoDevuelve400` (`server_test.go`);
+  - la fila de `TestRutasDeOtrasEntidades_ConservanElIDEntero` (`projects_uuid_test.go`) y el escenario de HU-51 que apuntan a `GET /api/items/{id}/esfuerzos`. Los dos ahora esperan "el id del ítem debe ser un UUID", y conservan su nombre porque los citan otras evidencias y la spec archivada de HU-51.
+- `3e55461` corrige la fila "cambiar estado de defecto" de `bodyEndpoints` (`server_test.go`, usada por `TestHandler_CuerpoMayorA1MiBDa413` y `TestHandler_TextoDespuesDelJSONDa400`). Quedó fuera del RED: tenía la ruta fija `/api/defectos/1/estado` sin ningún defecto creado, y con el GREEN daba el 400 del UUID antes de leer el cuerpo. Pasa a `"/api/defectos/" + neverAssignedUUID + "/estado"`, como la fila "modificar integrante" de Cardozo Leandro (`missingMemberID`). Sin el GREEN, la fila fallaba por aserción.
+
+#### Commits
+
+| Fase | Commit |
+|---|---|
+| RED | `2b9dd75` |
+| Merge de la rama de integración (sprints y Planning Poker) | `63eb989` |
+| Merge de la rama de integración (ítems e integrantes, PR #205) | `44b576b` |
+| Tests aparte: métricas, reportes, HU-51 y tabla de los 400 | `c20c5bc` |
+| Tests aparte: ruta de `bodyEndpoints` | `3e55461` |
+| GREEN | `5d32e7c` |
+| Refactor: quitar la traducción inversa de `withEntityIDs` | `00276f4` |
+| Refactor: quitar `sprintItemIDs`, que quedó sin uso | `f8b5b88` |
+
+#### RED (`2b9dd75`)
+
+`go test ./...` en memoria, sobre `main` con la base: `internal/httpapi` en `FAIL` con 74 tests que fallan, todos de esta parte y por aserción (0 de compilación y 0 `panic`). Son 28 de los 29 tests nuevos y los 2 runners, 43 tests existentes adaptados y `TestModificarIntegrante_NoCambiaLosEsfuerzosRegistrados`, que lee `effortListJSON`. El que pasa a propósito es `TestInterfaz_CamposDeIDObligatoriosSiguenSiendoObligatorios`: protege que los campos obligatorios no pierdan `required` al pasar a texto. `internal/trazabilidad` pasa (con `-update` de los links de HU-27 y HU-28). `internal/postgrestest` no corrió en Windows porque una política de control de aplicaciones bloqueó el ejecutable del test; no tiene que ver con HU-52.
+
+Después del merge con la parte de Cardozo Leandro (`44b576b`) y del commit de tests `c20c5bc`, fallan 86 tests, todos de defectos y esfuerzos y por aserción, y ninguno por "el id del ítem debe ser un UUID": 68 del RED (6 pasan, ver arriba), 15 de métricas y reportes (4 de `metrics_test.go`, 4 de `reports_test.go`, 5 de `sprint_reports_test.go` y 2 de `report_pdf_test.go`), la tabla de los 400 y los 2 de HU-51.
+
+#### GREEN (`5d32e7c`)
+
+Cambian `defects.go`, `efforts.go`, `index.html`, `app.js`, mis 7 rutas en `uuidRoutes` (`entity_ids_test.go`, autorizado por Peñalbé Hernán dentro del GREEN) y los números de línea de 5 evidencias (`-update`); ningún otro `_test.go` ni `.feature`. El registro de esfuerzos usa `sprintItemPublicIDs`, de Buttini Cristobal.
+
+`gofmt -l .` vacío, `go vet ./...` sin errores y `go test -count=1 ./...` con los 15 paquetes en `ok`, incluidos `internal/httpapi`, `internal/trazabilidad` e `internal/postgrestest`.
+
+#### Refactor (`00276f4` y `f8b5b88`)
+
+- **`00276f4`:** con las 7 rutas en `uuidRoutes`, las 23 rutas de las 6 entidades reciben su UUID, y `withEntityIDs` ya no necesita la traducción inversa (segunda desviación de la base, condición (2) del Agile Enabler). El refactor la quita y borra el test de Cardozo Leandro que la verificaba, `TestWithEntityIDs_FueraDeLaTablaTraduceElUUIDAlEntero`, como se acordó con él y con Peñalbé Hernán. Ningún otro test dependía de ella.
+- **`f8b5b88`:** borra `sprintItemIDs` de `sprints.go`, que quedó sin uso desde el GREEN (autorizado por Buttini Cristobal). `docs/evidencias/TEC-04-tdd.md` la sigue nombrando como historia de TEC-04. `pathID` y `pathInt` (`server.go`, de la base) también quedaron sin uso, y no se tocaron.
+
+Después de los dos, `gofmt -l .` vacío, `go vet ./...` sin errores y `go test -count=1 ./...` con los 15 paquetes en `ok`.
+
+#### Cobertura
+
+`go test -count=1 -cover ./...` después del refactor: los 15 paquetes en `ok`, con `internal/httpapi` en 96,7 %. Las 13 funciones de `defects.go` y `efforts.go` tienen 100 % (`go tool cover -func`).
+
+```
+ok  	seguimiento-medicion-gpc/cmd/server	coverage: 48.6% of statements
+ok  	seguimiento-medicion-gpc/internal/backlog	coverage: 77.8% of statements
+ok  	seguimiento-medicion-gpc/internal/dashboard	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/defect	coverage: 73.0% of statements
+ok  	seguimiento-medicion-gpc/internal/effort	coverage: 68.5% of statements
+ok  	seguimiento-medicion-gpc/internal/httpapi	coverage: 96.7% of statements
+ok  	seguimiento-medicion-gpc/internal/member	coverage: 65.3% of statements
+ok  	seguimiento-medicion-gpc/internal/metrics	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/poker	coverage: 70.8% of statements
+ok  	seguimiento-medicion-gpc/internal/postgres	coverage: 83.3% of statements
+ok  	seguimiento-medicion-gpc/internal/postgrestest	coverage: 36.8% of statements
+ok  	seguimiento-medicion-gpc/internal/project	coverage: 71.1% of statements
+ok  	seguimiento-medicion-gpc/internal/report	coverage: 100.0% of statements
+ok  	seguimiento-medicion-gpc/internal/sprint	coverage: 71.9% of statements
+ok  	seguimiento-medicion-gpc/internal/trazabilidad	coverage: [no statements]
+```
+
+La corrida fue en memoria: sin `TEST_DATABASE_URL`, las pruebas de PostgreSQL se saltean. La salida con PostgreSQL se pega en el PR.
+
+**Trazabilidad:** 29 tests y 2 runners cubriendo 23 escenarios BDD (26 casos con los ejemplos), en 5 criterios (CA-52.1, 52.2, 52.3, 52.4 y 52.6).
 
 ### PDF del reporte (tarea 1.8) · Peñalbé Hernán
 
