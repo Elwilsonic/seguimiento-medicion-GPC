@@ -3,14 +3,17 @@ module seguimiento-medicion-gpc
 go 1.27.1
 
 require (
+	github.com/chromedp/chromedp v0.21.1
 	github.com/cucumber/godog v0.16.0
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/jackc/pgx/v5 v5.11.0
 )
 
 require (
+	github.com/chromedp/cdproto v0.159.0 // indirect
 	github.com/cucumber/gherkin/go/v42 v42.0.0 // indirect
 	github.com/cucumber/messages/go/v34 v34.2.0 // indirect
+	github.com/go-json-experiment/json v0.0.0-20260213210345-44df1a37e875 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-memdb v1.3.5 // indirect

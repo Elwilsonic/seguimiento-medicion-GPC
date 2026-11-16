@@ -208,3 +208,20 @@ Las decisiones técnicas del proyecto, cada una con su "por qué", las alternati
   - cada test lleva un comentario con su historia y su criterio.
 - **Aplicación:** HU-50 y HU-51 recorrieron el ciclo completo y se archivaron (PR #189 y #196). `openspec/specs/proyectos/spec.md` quedó con 16 requisitos. Evidencia: [`docs/evidencias/TEC-10.md`](evidencias/TEC-10.md).
 - **Fuente:** revisión del profesor del 05/11/2026; TEC-10 (Issue #177).
+
+### 23. chromedp para probar la interfaz en un navegador real
+
+- **Decisión:** los tests de la interfaz de HU-53 hacen clics en un navegador real con **chromedp** (https://github.com/chromedp/chromedp, versión fija v0.21.1, licencia MIT), que maneja Chrome o Chromium por el protocolo de DevTools. Es una dependencia **solo de tests**: se importa únicamente desde archivos `_test.go`, así que no entra al binario (`go list -deps ./cmd/server` no la muestra) y la interfaz sigue sin librerías externas (CA-TEC04.4).
+- **Por qué:** HU-53 cambia lo que pasa al hacer clic (cambiar de sección, elegir del desplegable, acciones de fila). Los tests de la interfaz que había (`web_test.go`) leen el texto de `index.html` y `app.js` y no ejecutan JavaScript, así que no pueden probar ese comportamiento. Con chromedp, cada escenario BDD de HU-53 corre con `go test ./...` y en la CI.
+- **Alternativas descartadas:**
+  - Playwright: es de Node.js y no corre dentro de `go test`.
+  - Selenium: necesita un servidor aparte.
+  - Seguir con tests de contenido y probar los clics a mano: no prueba el comportamiento en la CI.
+- **Revisión antes de usarla:**
+  - **Versión:** v0.21.1, publicada el 01/11/2026. Es la más nueva con más de dos semanas al agregarla (16/11/2026); las cuatro siguientes salieron en los 13 días anteriores.
+  - **Dependencias que agrega:** `github.com/chromedp/cdproto` v0.159.0 (MIT) y `github.com/go-json-experiment/json` (BSD-3, de los autores de Go).
+  - **Qué descarga:** nada. No baja ningún navegador: usa el Chrome o Chromium instalado (el de `CHROME_PATH` o el primero del `PATH`).
+  - **Conexiones:** solo con el navegador local, por el protocolo de DevTools; no manda telemetría. Los tests abren solo el servidor de prueba (`httptest`).
+  - **Sin navegador:** el test se saltea con un aviso que dice cómo instalarlo; en la CI (`CI=true`) es un error, para que los escenarios no dejen de correr sin que nadie lo note. `ubuntu-latest` ya trae Chrome.
+- **Autorización:** Peñalbé Hernán (Agile Enabler), 16/11/2026.
+- **Fuente:** HU-53 (Issue #211), D7 de `openspec/changes/hu-53-navegacion-por-secciones/design.md`.
