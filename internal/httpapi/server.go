@@ -10,7 +10,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"strconv"
 	"uuid"
 
 	"seguimiento-medicion-gpc/internal/backlog"
@@ -157,11 +156,6 @@ func bodyError(err error) error {
 		return errBodyTooLarge
 	}
 	return errInvalidJSON
-}
-
-// pathID lee el {id} de la ruta.
-func pathID(r *http.Request) (int, error) {
-	return pathInt(r, "id")
 }
 
 // parseProjectID lee el {id} de una ruta de proyecto como UUID en forma
@@ -359,15 +353,6 @@ func (s *server) writeResolved(w http.ResponseWriter, status int, v any, ids *pu
 		return
 	}
 	writeJSON(w, status, v)
-}
-
-// pathInt lee el parámetro name de la ruta como número entero.
-func pathInt(r *http.Request, name string) (int, error) {
-	n, err := strconv.Atoi(r.PathValue(name))
-	if err != nil {
-		return 0, errInvalidID
-	}
-	return n, nil
 }
 
 // statusFor traduce un error a su código HTTP. Los errores no reconocidos
