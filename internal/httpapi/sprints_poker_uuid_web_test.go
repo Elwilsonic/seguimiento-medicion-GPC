@@ -13,10 +13,11 @@ import (
 // el contenido de index.html y app.js; el uso en el navegador se registra en
 // la evidencia TDD.
 
-// currentSprintInput devuelve la etiqueta <input> del campo «Sprint actual».
+// currentSprintInput devuelve la etiqueta del campo «Sprint actual»: un <input> o, desde
+// HU-53, un <select> (D3 de su diseño).
 func currentSprintInput(t *testing.T) string {
 	t.Helper()
-	input := regexp.MustCompile(`<input id="sprint-actual"[^>]*>`).FindString(contextSection(t))
+	input := regexp.MustCompile(`<(input|select) id="sprint-actual"[^>]*>`).FindString(contextSection(t))
 	if input == "" {
 		t.Fatal("la sección de contexto no tiene el campo «Sprint actual»")
 	}
@@ -26,6 +27,10 @@ func currentSprintInput(t *testing.T) string {
 // HU-52 · CA-52.6 · Verifica que el campo «Sprint actual» acepte el UUID como texto: type="text", sin min, con placeholder de UUID, sin autocompletar ni corrector.
 func TestInterfaz_SprintActualAceptaElUUIDComoTexto(t *testing.T) {
 	input := currentSprintInput(t)
+	// Un <select> acepta el UUID siempre: es el valor de cada opción (HU-53).
+	if strings.HasPrefix(input, "<select") {
+		return
+	}
 
 	for _, want := range []string{`type="text"`, `placeholder="UUID del sprint"`, `autocomplete="off"`, `spellcheck="false"`} {
 		if !strings.Contains(input, want) {
