@@ -1016,6 +1016,24 @@ $("ver-metricas").addEventListener("click", () =>
   }),
 );
 
+// TEC-12 · tarjetas arma las tarjetas del dashboard (CA-TEC12.4): una por
+// métrica, con su título y su texto, en un contenedor .tarjetas.
+function tarjetas(lista) {
+  const grilla = document.createElement("div");
+  grilla.className = "tarjetas";
+  for (const [titulo, texto] of lista) {
+    const tarjeta = document.createElement("div");
+    tarjeta.className = "tarjeta";
+    const h = document.createElement("h4");
+    h.textContent = titulo;
+    const p = document.createElement("p");
+    p.textContent = texto;
+    tarjeta.append(h, p);
+    grilla.append(tarjeta);
+  }
+  return grilla;
+}
+
 // HU-36 · Resumen del estado del proyecto (CA-36.6). Muestra el proyecto
 // actual, sus ítems por estado y su sprint abierto, o "ninguno abierto".
 $("ver-resumen").addEventListener("click", () =>
@@ -1025,11 +1043,13 @@ $("ver-resumen").addEventListener("click", () =>
     const sprint = s === null
       ? "ninguno abierto"
       : s.nombre + " (" + s.fecha_inicio + " al " + s.fecha_fin + ") · Objetivo: " + s.objetivo;
-    $("datos-resumen").textContent =
-      "Proyecto «" + r.nombre + "» · Estado: " + r.estado + ". " +
-      "Ítems: " + r.items_pendientes + " pendientes, " + r.items_en_curso + " en curso, " +
-      r.items_terminados + " terminados. " +
-      "Sprint actual: " + sprint + ".";
+    // TEC-12: el resumen se muestra en tres tarjetas (CA-TEC12.4).
+    $("datos-resumen").replaceChildren(tarjetas([
+      ["Proyecto", "«" + r.nombre + "» · Estado: " + r.estado],
+      ["Ítems", r.items_pendientes + " pendientes, " + r.items_en_curso + " en curso, " +
+        r.items_terminados + " terminados"],
+      ["Sprint actual", "Sprint actual: " + sprint + "."],
+    ]));
     $("datos-resumen").className = "";
   }),
 );
@@ -1192,9 +1212,13 @@ $("ver-graficos").addEventListener("click", () =>
     $("graficos").replaceChildren();
     const p = await api("GET", "/proyectos/" + proyectoActual() + "/metricas");
     const lista = await api("GET", "/proyectos/" + proyectoActual() + "/metricas/sprints");
-    $("datos-graficos").textContent =
-      storyPointsYVelocidad(p) +
-      historiasCompletadas(p) + " " + horasYDesviacion(p) + " " + defectos(p);
+    // TEC-12: M1 a M10 del proyecto en cuatro tarjetas (CA-TEC12.4).
+    $("datos-graficos").replaceChildren(tarjetas([
+      ["Story Points y velocidad", storyPointsYVelocidad(p)],
+      ["Historias completadas", historiasCompletadas(p)],
+      ["Horas", horasYDesviacion(p)],
+      ["Defectos", defectos(p)],
+    ]));
     $("datos-graficos").className = "";
     $("graficos").replaceChildren(...graficosDelProyecto(p, lista));
   }),

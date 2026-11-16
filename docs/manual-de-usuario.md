@@ -46,6 +46,10 @@ Con este comando los datos se guardan **en memoria** y se pierden al detener el 
 
 Desde HU-53, la interfaz se recorre por secciones. A la izquierda está el **menú**, con una entrada por sección: Proyectos, Integrantes, Backlog, Sprints, Planning Poker, Esfuerzo, Defectos, Métricas y dashboard, y Reportes. Al elegir una, se ve solo esa sección, sin recargar la página, y la entrada queda marcada. La sección queda en la dirección (por ejemplo, `…/#backlog`), así que el botón **Atrás** del navegador vuelve a la anterior y se puede guardar o compartir el link de una sección. En un celular, el menú aparece arriba.
 
+![Menú al costado y Backlog con los colores de TEC-12](img/manual-de-usuario/tec12-2-backlog.png)
+
+Los colores son los de TEC-12: azul índigo para lo principal (menú elegido, botones y títulos), verde azulado como acento y mensajes en verde (éxito), rojo (error) o ámbar (aviso). Las capturas de HU-53 que siguen muestran la misma estructura con los colores anteriores.
+
 ![Menú al costado y Backlog con el proyecto y el sprint elegidos](img/manual-de-usuario/hu53-1-backlog-escritorio.png)
 
 - **Proyecto actual:** arriba de cada sección hay un desplegable con los proyectos, por nombre y en orden alfabético (los que empiezan con acento o con ñ, como "Ábaco", quedan al final). Elegí uno y se cargan sus datos, su backlog y sus sprints; no hace falta escribir ni pegar su ID (HU-50 y HU-53). Al crear un proyecto, queda elegido solo. Sin proyectos, el desplegable dice "Sin proyectos: creá uno en Proyectos". **Ver proyectos** sigue mostrando la tabla con todos los proyectos y su botón **Elegir**.
@@ -263,6 +267,12 @@ Todas salen de una sola consulta (HU-35). Si una métrica no se puede calcular (
    - Story Points completados por sprint cerrado, con la velocidad como línea de referencia.
    - Story Points planificados y completados por sprint.
    - Horas estimadas y reales por sprint, con su desviación.
+
+Desde TEC-12, el resumen y las métricas se muestran en **tarjetas**, una por tema (proyecto, ítems y sprint actual; Story Points y velocidad, historias completadas, horas y defectos):
+
+![Dashboard con las tarjetas de TEC-12](img/manual-de-usuario/tec12-1-dashboard.png)
+
+Captura anterior a TEC-12:
 
 ![Dashboard con el resumen y los gráficos](img/manual-de-usuario/17-dashboard.png)
 
