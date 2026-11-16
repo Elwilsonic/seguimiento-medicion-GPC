@@ -1,6 +1,6 @@
 # language: es
 # HU-52 · Identificadores UUID del resto de las entidades, parte de defectos (Issue #197), vinculada a HU-29 (#47), HU-30 (#48) y HU-31 (#49)
-# Especificación (OpenSpec): openspec/changes/hu-52-identificadores-uuid-entidades/specs/defectos/spec.md
+# Especificación (OpenSpec): openspec/specs/defectos/spec.md
 # Los escenarios son a nivel de la API y prueban solo las rutas de defectos.go
 # (D3 de design.md): POST /api/items/{id}/defectos, PATCH /api/defectos/{id}/estado
 # y GET /api/sprints/{id}/defectos, más la lista por proyecto, que ya recibe el

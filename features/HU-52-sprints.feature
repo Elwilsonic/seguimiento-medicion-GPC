@@ -1,6 +1,6 @@
 # language: es
 # HU-52 · Identificadores UUID del resto de las entidades (Issue #197), parte de sprints
-# Cambio (OpenSpec): openspec/changes/hu-52-identificadores-uuid-entidades/specs/sprints/spec.md
+# Especificación (OpenSpec): openspec/specs/sprints/spec.md
 # Los escenarios son de la API, porque lo observable de los sprints son las
 # rutas, los 400 y 404 y las salidas. Los 1000 sprints (CA-52.2), PostgreSQL
 # (CA-52.5) y la concurrencia (CA-52.7) se cubren en la base, con tests de Go;

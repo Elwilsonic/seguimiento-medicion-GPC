@@ -16,7 +16,7 @@ openspec validate hu-52-identificadores-uuid-entidades --strict
 ## 0. Aprobación y preparación
 
 - [x] 0.1 El Agile Enabler aprueba explícitamente la propuesta completa (proposal, las 6 specs, design y tasks), incluidas las tres diferencias con el acta de Planning (alcance, corte y Story Points), D3 (el dominio de las 6 entidades en la base), D4 (el centinela `math.MaxInt32`), D5 (el resolvedor), D7 (`""` para "sin sprint"), la base en pareja (Sosa y Cardozo) y su horario (domingo 15/11/2026 a las 21:00). Verificar que la aprobación quedó en el chat o en el Issue #197. Aprobada por WhatsApp el 15/11/2026.
-- [ ] 0.2 Actualizar los criterios del Issue #197 con los CA-52.1 a CA-52.7 definitivos, solo con el permiso del Agile Enabler. Verificar que el body del Issue los muestra.
+- [x] 0.2 Actualizar los criterios del Issue #197 con los CA-52.1 a CA-52.7 definitivos, solo con el permiso del Agile Enabler. Verificar que el body del Issue los muestra. Criterios definitivos actualizados en el Issue #197 por Peñalbé Hernán, con permiso de Sosa Ricardo.
 - [x] 0.3 Registrar la aprobación en `proposal.md` (línea de estado) y proponer `git commit -m "docs(HU-52): registrar la aprobación de la propuesta" -m "Refs #197"`.
 
 ## 1. Base compartida (Sosa Ricardo y Cardozo Leandro en pareja, rama `feature/HU-52-uuid-base`)
@@ -155,7 +155,7 @@ Decidido por el Agile Enabler el 15/11/2026 (D3). Se creó desde `feature/HU-52-
 
 - [x] 6.1 Con las cinco partes integradas, o a las 14:00 del 16/11 lo que haya, completar en la evidencia la sección "Pendiente al corte", según la tabla "Si no llega al corte" de `proposal.md`, y actualizar el riesgo R2 de `design.md`. Hecho el 15/11/2026: no quedó nada pendiente (las 6 entidades, la base y el PDF llegaron), y R2 quedó cerrado en `design.md`.
 - [x] 6.2 Actualizar el manual de usuario y la documentación técnica (TEC-06 y TEC-07: los UUID de las 6 entidades y los errores nuevos), y la cobertura con PostgreSQL comparada con `main`. Hecho con `docs(HU-52): cerrar las tareas y la documentación de HU-52`: manual de usuario, documentación técnica y cobertura de la rama completa con PostgreSQL, igual que `main` (95.1% y 95.9%).
-- [ ] 6.3 Agregar al Issue #197 la sección "## Trazabilidad", con los links a la propuesta, a los 7 `.feature` y a la evidencia. Proponer el commit de cierre: con `Closes #197` si llegaron todas las entidades, y con `Refs #197` si quedó algo pendiente.
+- [ ] 6.3 Agregar al Issue #197 la sección "## Trazabilidad", con los links a la propuesta, a los 7 `.feature` y a la evidencia. Proponer el commit de cierre: con `Closes #197` si llegaron todas las entidades, y con `Refs #197` si quedó algo pendiente. A cargo de Peñalbé Hernán. El Issue #197 ya se cerró con el PR #210 (22:26 hora argentina); solo se actualiza la sección Trazabilidad, sin reabrirlo.
 
 ## Workflow follow-up
 
