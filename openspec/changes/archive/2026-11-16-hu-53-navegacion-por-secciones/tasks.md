@@ -10,7 +10,7 @@ Rama `feature/HU-53-navegacion-por-secciones`, desde `main` (`d6b6dfb`). Cada co
 
 - [x] 1.1 Agregar `github.com/chromedp/chromedp` a `go.mod` con una versión fija publicada hace más de dos semanas, y registrar la decisión técnica 23 en `docs/decisiones-tecnicas.md` (alternativas descartadas, licencia, qué descarga, sin telemetría, solo tests). Verificar con `go list -deps ./cmd/server | grep chromedp`, que no debe mostrar nada (no entra al binario).
 - [x] 1.2 Escribir el helper `newBrowser(t)` en `internal/httpapi/ui_helpers_test.go`: levanta `httptest.NewServer(newHandler())`, abre un Chromium sin ventana con tiempo máximo, lo cierra con `t.Cleanup`, se saltea sin navegador y falla en la CI (`CI=true`). Verificar con un test que abre `/` y lee el título de la página, en verde contra la interfaz actual.
-- [ ] 1.3 Agregar a la CI (`.github/workflows/ci.yml`) lo que haga falta para que el navegador esté disponible, y comprobarlo en el PR. No hizo falta cambiar el workflow: `ubuntu-latest` ya trae Chrome y GitHub define `CI=true`; queda por comprobar en el PR. Proponer `git commit -m "test(HU-53): agregar chromedp para probar la interfaz en el navegador" -m "Refs #211"`.
+- [x] 1.3 Agregar a la CI (`.github/workflows/ci.yml`) lo que haga falta para que el navegador esté disponible, y comprobarlo en el PR. No hizo falta cambiar el workflow: `ubuntu-latest` ya trae Chrome y GitHub define `CI=true`. Comprobado en el PR #214: la CI pasó con los tests del navegador sin saltearse. Proponer `git commit -m "test(HU-53): agregar chromedp para probar la interfaz en el navegador" -m "Refs #211"`.
 
 ## 2. Escenarios BDD
 
@@ -41,7 +41,7 @@ Rama `feature/HU-53-navegacion-por-secciones`, desde `main` (`d6b6dfb`). Cada co
 
 ## 7. Pull Request
 
-- [ ] 7.1 Con los commits autorizados y pusheados, abrir el PR hacia `main` con la revisión de otro integrante, y agregar la sección "## Trazabilidad" al Issue #211 con el link a esta propuesta, el `.feature` y la evidencia. Verificar que la CI corre los tests del navegador (no salteados) y queda en verde. El merge va después de la presentación del 16/11 (R5).
+- [x] 7.1 Con los commits autorizados y pusheados, abrir el PR hacia `main` con la revisión de otro integrante, y agregar la sección "## Trazabilidad" al Issue #211 con el link a esta propuesta, el `.feature` y la evidencia. Verificar que la CI corre los tests del navegador (no salteados) y queda en verde. PR #214, aprobado por Buttini Cristobal; la CI pasó. Se integró el 16/11/2026 antes de la presentación, por decisión del Agile Enabler, para mostrar la interfaz nueva (ver R5 en `design.md`).
 
 ## Workflow follow-up
 

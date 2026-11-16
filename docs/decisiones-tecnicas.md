@@ -224,4 +224,4 @@ Las decisiones técnicas del proyecto, cada una con su "por qué", las alternati
   - **Conexiones:** solo con el navegador local, por el protocolo de DevTools; no manda telemetría. Los tests abren solo el servidor de prueba (`httptest`).
   - **Sin navegador:** el test se saltea con un aviso que dice cómo instalarlo; en la CI (`CI=true`) es un error, para que los escenarios no dejen de correr sin que nadie lo note. `ubuntu-latest` ya trae Chrome.
 - **Autorización:** Peñalbé Hernán (Agile Enabler), 16/11/2026.
-- **Fuente:** HU-53 (Issue #211), D7 de `openspec/changes/hu-53-navegacion-por-secciones/design.md`.
+- **Fuente:** HU-53 (Issue #211), D7 de `openspec/changes/archive/2026-11-16-hu-53-navegacion-por-secciones/design.md`.

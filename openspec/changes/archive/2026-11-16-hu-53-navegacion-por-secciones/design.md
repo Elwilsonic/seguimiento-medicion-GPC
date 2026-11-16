@@ -95,7 +95,7 @@ Los tests de contenido que buscan los campos que se reemplazan (por ejemplo, `ty
 - **[R2] Integrantes en Windows sin Chrome.** → El test se saltea con un aviso que dice cómo instalarlo; la CI no los saltea (D7). El README lo explica.
 - **[R3] Muchos tests de contenido rotos.** → D3 conserva los `id` y los `name`; los que igual se rompen se adaptan en un commit propio (D9).
 - **[R4] Choque con TEC-12.** → TEC-12 empieza después de que HU-53 esté en `main`, y solo toca `styles.css`.
-- **[R5] La demo del 16/11 a las 18:30.** → HU-53 no entra a `main` antes de la presentación: el merge dispara el deploy a Azure.
+- **[R5] La demo del 16/11 a las 18:30.** → HU-53 no entra a `main` antes de la presentación: el merge dispara el deploy a Azure. **Actualización:** el Agile Enabler decidió integrarla antes de la presentación, para mostrar la interfaz nueva, con la CI en verde y la aprobación de Buttini Cristobal (PR #214, 16/11/2026); si el deploy fallara, se revierte el merge.
 - **[R6] Listas desactualizadas** si otro usuario crea entidades en simultáneo. → Se recargan al cambiar de proyecto o de sprint y después de cada acción; la API valida igual.
 
 ## Migration Plan

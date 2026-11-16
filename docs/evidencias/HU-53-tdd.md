@@ -2,7 +2,7 @@
 
 > Issue del repositorio: #211 · Épica E10 · Dashboard · Vinculada a HU-50 (#183), HU-51 (#193), HU-52 (#197) y TEC-04 (#34)
 
-- **Especificación (OpenSpec):** el cambio [`openspec/changes/hu-53-navegacion-por-secciones/`](../../openspec/changes/hu-53-navegacion-por-secciones/): [propuesta](../../openspec/changes/hu-53-navegacion-por-secciones/proposal.md), [spec delta de `interfaz-web`](../../openspec/changes/hu-53-navegacion-por-secciones/specs/interfaz-web/spec.md) (7 requisitos), [diseño](../../openspec/changes/hu-53-navegacion-por-secciones/design.md) y [tareas](../../openspec/changes/hu-53-navegacion-por-secciones/tasks.md). Se archiva con `/opsx:archive` cuando el PR esté integrado en `main`.
+- **Especificación (OpenSpec):** la spec de la capability `interfaz-web`, [`openspec/specs/interfaz-web/spec.md`](../../openspec/specs/interfaz-web/spec.md), con los 7 requisitos de HU-53. El cambio está archivado en [`openspec/changes/archive/2026-11-16-hu-53-navegacion-por-secciones/`](../../openspec/changes/archive/2026-11-16-hu-53-navegacion-por-secciones/): [propuesta](../../openspec/changes/archive/2026-11-16-hu-53-navegacion-por-secciones/proposal.md), [spec delta](../../openspec/changes/archive/2026-11-16-hu-53-navegacion-por-secciones/specs/interfaz-web/spec.md), [diseño](../../openspec/changes/archive/2026-11-16-hu-53-navegacion-por-secciones/design.md) y [tareas](../../openspec/changes/archive/2026-11-16-hu-53-navegacion-por-secciones/tasks.md). Se archivó con `/opsx:archive` el 16/11/2026, con el PR #214 integrado en `main`.
 - **Aprobación:** Peñalbé Hernán (Agile Enabler) aprobó la propuesta el 16/11/2026, sin ajustes, y autorizó chromedp el mismo día, solo para tests (decisión técnica 23).
 - **Escenarios BDD:** [`features/HU-53-navegacion-por-secciones.feature`](../../features/HU-53-navegacion-por-secciones.feature): 26 escenarios (uno es un esquema con 2 ejemplos), es decir, 27 ejecuciones y 143 pasos, en un navegador real.
 - **Rama:** `feature/HU-53-navegacion-por-secciones`, creada desde `main` `d6b6dfb` (con HU-52 archivada, PR #213).
@@ -148,6 +148,7 @@ Igual a `main` (`d6b6dfb`) en todos los paquetes, medido en una copia temporal c
 | RED | 20f1261 | `test(HU-53): agregar tests de la navegación y las listas (RED)` |
 | GREEN | 64ebe63 | `feat(HU-53): navegar por secciones y elegir de listas (GREEN)` |
 | Refactor | 29876fa | `refactor(HU-53): unificar el texto de esfuerzos y defectos en los desplegables` |
-| Evidencia | (propuesto) | `docs(HU-53): agregar evidencia TDD y cobertura` |
+| Evidencia | 5939982 | `docs(HU-53): agregar evidencia TDD y cobertura` |
+| Integración (PR #214) | 3eb86fb | `Merge pull request #214 from Elwilsonic/feature/HU-53-navegacion-por-secciones` |
 
 HU-53: Historia → Especificación (OpenSpec) → Criterios de Aceptación → BDD → Tests → Código
