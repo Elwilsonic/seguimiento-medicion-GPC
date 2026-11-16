@@ -46,6 +46,12 @@ Con este comando los datos se guardan **en memoria** y se pierden al detener el 
 
 Desde HU-53, la interfaz se recorre por secciones. A la izquierda está el **menú**, con una entrada por sección: Proyectos, Integrantes, Backlog, Sprints, Planning Poker, Esfuerzo, Defectos, Métricas y dashboard, y Reportes. Al elegir una, se ve solo esa sección, sin recargar la página, y la entrada queda marcada. La sección queda en la dirección (por ejemplo, `…/#backlog`), así que el botón **Atrás** del navegador vuelve a la anterior y se puede guardar o compartir el link de una sección. En un celular, el menú aparece arriba.
 
+![Proyectos con los íconos del menú, la descripción de la sección y los formularios en tarjetas](img/manual-de-usuario/tec13-1-proyectos.png)
+
+Desde TEC-13, cada entrada del menú tiene su ícono, cada sección empieza con una línea que dice para qué sirve, cada formulario es una tarjeta con su título y su botón abajo a la derecha, y los estados se muestran como etiquetas de color: gris para lo pendiente o planificado, azul para lo que está en curso o abierto, verde para lo terminado, resuelto o cerrado, rojo para un defecto abierto y ámbar para uno en corrección.
+
+![Backlog con los estados como etiquetas de color](img/manual-de-usuario/tec13-2-backlog.png)
+
 ![Menú al costado y Backlog con los colores de TEC-12](img/manual-de-usuario/tec12-2-backlog.png)
 
 Los colores son los de TEC-12: azul índigo para lo principal (menú elegido, botones y títulos), verde azulado como acento y mensajes en verde (éxito), rojo (error) o ámbar (aviso). Las capturas de HU-53 que siguen muestran la misma estructura con los colores anteriores.

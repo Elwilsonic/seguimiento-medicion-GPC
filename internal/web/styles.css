@@ -28,6 +28,17 @@
   --serie-a: #a5b4fc;
   --serie-b: #4338ca;
   --referencia: #dc2626;
+  /* TEC-13: etiquetas de estado (CA-TEC13.4), con contraste AA. */
+  --etiqueta-neutro-fondo: #e2e8f0;
+  --etiqueta-neutro-texto: #334155;
+  --etiqueta-info-fondo: #e0e7ff;
+  --etiqueta-info-texto: #3730a3;
+  --etiqueta-ok-fondo: #d1fae5;
+  --etiqueta-ok-texto: #065f46;
+  --etiqueta-error-fondo: #fee2e2;
+  --etiqueta-error-texto: #991b1b;
+  --etiqueta-aviso-fondo: #fef3c7;
+  --etiqueta-aviso-texto: #92400e;
   /* TEC-12: borde redondeado común (CA-TEC12.4). */
   --radio: 8px;
 }
@@ -383,11 +394,10 @@ main {
   width: 100%;
 }
 
-/* El proyecto y el sprint actuales quedan a la vista al desplazarse (CA-53.2). */
+/* El proyecto y el sprint actuales están arriba de cada sección (CA-53.2).
+   TEC-13: ya no acompaña el desplazamiento, porque con la lista de proyectos
+   abierta tapaba las tablas. */
 .contexto {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   border-left: 4px solid var(--primario);
 }
 
@@ -417,3 +427,109 @@ main {
     position: static;
   }
 }
+
+/* TEC-13 · Presentación de las secciones. */
+
+/* Una línea debajo del título que dice para qué sirve la sección (CA-TEC13.3). */
+.descripcion {
+  margin: -0.5rem 0 1rem;
+  color: var(--suave);
+}
+
+/* Cada formulario es una tarjeta con su título (CA-TEC13.2). */
+section form {
+  background: var(--encabezado-tabla);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 1rem 1.1rem;
+}
+
+section form h3 {
+  margin: -1rem -1.1rem 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-bottom: 1px solid var(--borde);
+  border-radius: var(--radio) var(--radio) 0 0;
+  background: var(--panel);
+  color: var(--primario-oscuro);
+}
+
+section form + form,
+section .columnas + form {
+  margin-top: 1rem;
+}
+
+/* El botón que envía el formulario va al pie, a la derecha (CA-TEC13.6). */
+section form > button[type="submit"] {
+  align-self: flex-end;
+  margin-top: 0.25rem;
+}
+
+/* Estados como etiquetas de color (CA-TEC13.4). */
+.etiqueta {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--etiqueta-neutro-fondo);
+  color: var(--etiqueta-neutro-texto);
+}
+
+.etiqueta.estado-EN_CURSO,
+.etiqueta.estado-ABIERTO {
+  background: var(--etiqueta-info-fondo);
+  color: var(--etiqueta-info-texto);
+}
+
+.etiqueta.estado-TERMINADO,
+.etiqueta.estado-FINALIZADO,
+.etiqueta.estado-RESUELTO,
+.etiqueta.estado-CERRADO {
+  background: var(--etiqueta-ok-fondo);
+  color: var(--etiqueta-ok-texto);
+}
+
+.etiqueta.defecto.estado-ABIERTO {
+  background: var(--etiqueta-error-fondo);
+  color: var(--etiqueta-error-texto);
+}
+
+.etiqueta.estado-EN_CORRECCION {
+  background: var(--etiqueta-aviso-fondo);
+  color: var(--etiqueta-aviso-texto);
+}
+
+/* Íconos del menú (CA-TEC13.5): SVG en la página, del color del texto. */
+#menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+#menu .icono {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* El formulario del encabezado no es una tarjeta: es la barra de contexto. */
+.contexto form {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Botones y selectores más chicos dentro de las tablas, para que las filas
+   no crezcan tanto. */
+td button,
+td select {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.82rem;
+}
+
