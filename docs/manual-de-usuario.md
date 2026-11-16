@@ -163,7 +163,7 @@ Un ítem `TERMINADO` no se puede reestimar.
 ### Estimar con Planning Poker (HU-21 a HU-25)
 
 1. **Abrir la sesión (HU-21):** tocá **Abrir Poker** en la fila del ítem. La sección **Planning Poker** muestra la sesión (ID, ítem, estado `ABIERTA` y ronda) y las cartas. Solo puede haber una sesión abierta por ítem, y no se abre para un ítem `TERMINADO`.
-2. **Votar (HU-22):** cada integrante escribe su nombre en **Integrante** y toca **Votar N** con su carta. Los votos no se muestran hasta revelarlos; si alguien vota de nuevo, se reemplaza su voto.
+2. **Votar (HU-22 y HU-54):** cada integrante se elige en el desplegable **Integrante**, que muestra los integrantes del proyecto actual, y toca **Votar N** con su carta. Si el proyecto no tiene integrantes, el desplegable dice "Registrá integrantes primero". Los votos no se muestran hasta revelarlos; si alguien vota de nuevo, se reemplaza su voto.
 
    ![Votación en curso](img/manual-de-usuario/08-poker-votar.png)
 
@@ -211,7 +211,7 @@ Los formularios están en la sección **Esfuerzo** del menú (HU-53).
 
 ### Registrar el esfuerzo (HU-26)
 
-1. En **Registrar esfuerzo**, elegí el **Ítem** (el desplegable muestra solo los ítems del sprint actual; si no hay, dice "Sin ítems en el sprint actual"), y completá el **Integrante**, la **Fecha**, la **Actividad** (por ejemplo, "Desarrollo" o "Pruebas") y las **Horas** (un número positivo; se aceptan decimales, como 2.5).
+1. En **Registrar esfuerzo**, elegí el **Ítem** (el desplegable muestra solo los ítems del sprint actual; si no hay, dice "Sin ítems en el sprint actual"), elegí el **Integrante** del desplegable (los integrantes del proyecto actual, HU-54), y completá la **Fecha**, la **Actividad** (por ejemplo, "Desarrollo" o "Pruebas") y las **Horas** (un número positivo; se aceptan decimales, como 2.5).
 2. Tocá **Registrar esfuerzo**. El esfuerzo queda en el sprint al que está asignado el ítem, que tiene que estar abierto.
 
 ### Consultar los esfuerzos (HU-27)
@@ -317,6 +317,7 @@ Los errores se muestran en rojo debajo de la sección donde se hizo la acción. 
 | ya hay una sesión de Planning Poker abierta para ese ítem | El ítem ya tiene una sesión abierta. | Seguí votando en esa sesión y revelala antes de abrir otra. |
 | la sesión de Planning Poker no tiene votos para revelar | Se tocó **Revelar votos** sin votos. | Registrá al menos un voto. |
 | no se pueden cambiar los story points de un ítem terminado | El ítem está `TERMINADO`. | Si hace falta reestimarlo, volvelo a `EN_CURSO` con **Cambiar estado**. |
+| el integrante no pertenece al proyecto | Se votó o se registró un esfuerzo con un nombre que no es integrante del proyecto (HU-54). Solo puede pasar llamando a la API directamente. | Registrá el integrante en **Integrantes** o elegí uno del desplegable. |
 | ya hay un integrante con ese nombre en el proyecto | El nombre se repite en el proyecto, aunque cambien las mayúsculas o el rol. | Usá otro nombre o modificá el integrante existente. |
 | la fecha de fin debe ser posterior a la de inicio | Las fechas están invertidas o son el mismo día (proyecto o sprint). | Elegí un fin posterior al inicio. |
 | el proyecto no tiene fecha de inicio registrada | Se quiso registrar la fecha de fin antes que la de inicio. | Registrá primero la fecha de inicio. |

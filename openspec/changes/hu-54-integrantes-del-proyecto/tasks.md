@@ -30,13 +30,13 @@ Rama `feature/HU-54-integrantes-del-proyecto`, desde `main` (`d0a2b98`). Cada co
 
 ## 4. Refactor
 
-- [ ] 4.1 Revisar si hay una mejora clara; si no, registrarlo en la evidencia.
+- [x] 4.1 Revisar si hay una mejora clara; si no, registrarlo en la evidencia.
 
 ## 5. Evidencia y documentación
 
-- [ ] 5.1 `gofmt -w`, `go test ./...` y `go test -cover ./...`.
-- [ ] 5.2 `docs/evidencias/HU-54-tdd.md` con RED, GREEN, cobertura, commits y la tabla criterio → test → código; `-update` de `internal/trazabilidad`.
-- [ ] 5.3 `docs/reportes/cobertura.md`, manual de usuario (votar y registrar esfuerzo eligen el integrante) y `docs/ia/registro.md`. Proponer `git commit -m "docs(HU-54): agregar evidencia TDD y cobertura" -m "Refs #219"`.
+- [x] 5.1 `gofmt -w`, `go test ./...` y `go test -cover ./...`.
+- [x] 5.2 `docs/evidencias/HU-54-tdd.md` con RED, GREEN, cobertura, commits y la tabla criterio → test → código; `-update` de `internal/trazabilidad`.
+- [x] 5.3 `docs/reportes/cobertura.md`, manual de usuario (votar y registrar esfuerzo eligen el integrante) y `docs/ia/registro.md`. Proponer `git commit -m "docs(HU-54): agregar evidencia TDD y cobertura" -m "Refs #219"`.
 
 ## 6. Pull Request y trazabilidad
 
