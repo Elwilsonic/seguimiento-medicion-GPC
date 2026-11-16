@@ -67,5 +67,5 @@ Los links de 18 evidencias se actualizaron con `-update` (solo números de líne
 
 | Fase | Commit | Mensaje |
 |---|---|---|
-| RED | (propuesto) | `test(TEC-13): agregar tests de la presentación de las secciones (RED)` |
-| GREEN | (propuesto) | `feat(TEC-13): pulir la presentación de cada sección (GREEN)` |
+| RED | 661e5f1 | `test(TEC-13): agregar tests de la presentación de las secciones (RED)` |
+| GREEN | 6819581 | `feat(TEC-13): pulir la presentación de cada sección (GREEN)` |
