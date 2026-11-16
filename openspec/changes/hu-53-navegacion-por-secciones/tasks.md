@@ -14,13 +14,13 @@ Rama `feature/HU-53-navegacion-por-secciones`, desde `main` (`d6b6dfb`). Cada co
 
 ## 2. Escenarios BDD
 
-- [ ] 2.1 Escribir `features/HU-53-navegacion-por-secciones.feature`, en español, con los escenarios de `specs/interfaz-web/spec.md` (normal, alternativo, límite y error de cada requisito), y su runner de godog `TestFeatures_HU53Navegacion` en `internal/httpapi/ui_features_test.go`, con `// HU-53 · BDD · Verifica que …`. Los pasos usan `newBrowser(t)`.
+- [x] 2.1 Escribir `features/HU-53-navegacion-por-secciones.feature`, en español, con los escenarios de `specs/interfaz-web/spec.md` (normal, alternativo, límite y error de cada requisito), y su runner de godog `TestFeatures_HU53Navegacion` en `internal/httpapi/ui_features_test.go`, con `// HU-53 · BDD · Verifica que …`. Los pasos usan `newBrowser(t)`.
 
 ## 3. Tests (RED)
 
-- [ ] 3.1 Commit de tests aparte, antes de los tests nuevos (D9): adaptar los tests de contenido que buscan lo que se reemplaza (los `type="text"` de «Proyecto actual», «Sprint actual» y los campos de ID de CA-51.6 y CA-52.6, el botón «Cargar proyecto»). Listar cada test adaptado con su historia original. Verificar que `go test ./...` sigue en verde con la interfaz actual. Proponer `git commit -m "test(HU-53): adaptar los tests de contenido de la interfaz" -m "Refs #211"`.
-- [ ] 3.2 Escribir los tests de navegación (`ui_navegacion_test.go`), de los desplegables (`ui_listas_test.go`) y de las acciones de fila y los mensajes (`ui_acciones_test.go`), cada uno con `// HU-53 · CA-53.N · Verifica que …`. Cubrir los escenarios de 2.1 y CA-53.6 (360 px) y CA-53.7 (ningún pedido a otro dominio).
-- [ ] 3.3 Correr `go test ./...` y verificar que fallan solo los tests nuevos de HU-53, por aserción (por ejemplo, "no hay un menú de navegación"), con `internal/trazabilidad` en verde. Proponer `git commit -m "test(HU-53): agregar tests de la navegación y las listas (RED)" -m "Refs #211"`.
+- [x] 3.1 Commit de tests aparte, antes de los tests nuevos (D9): adaptar los tests de contenido que buscan lo que se reemplaza (los `type="text"` de «Proyecto actual», «Sprint actual» y los campos de ID de CA-51.6 y CA-52.6, el botón «Cargar proyecto»). Listar cada test adaptado con su historia original. Verificar que `go test ./...` sigue en verde con la interfaz actual. Proponer `git commit -m "test(HU-53): adaptar los tests de contenido de la interfaz" -m "Refs #211"`.
+- [x] 3.2 Escribir los tests de navegación (`ui_navegacion_test.go`), de los desplegables (`ui_listas_test.go`) y de las acciones de fila y los mensajes (`ui_acciones_test.go`), cada uno con `// HU-53 · CA-53.N · Verifica que …`. Cubrir los escenarios de 2.1 y CA-53.6 (360 px) y CA-53.7 (ningún pedido a otro dominio).
+- [x] 3.3 Correr `go test ./...` y verificar que fallan solo los tests nuevos de HU-53, por aserción (por ejemplo, "no hay un menú de navegación"), con `internal/trazabilidad` en verde. Proponer `git commit -m "test(HU-53): agregar tests de la navegación y las listas (RED)" -m "Refs #211"`.
 
 ## 4. Código (GREEN)
 

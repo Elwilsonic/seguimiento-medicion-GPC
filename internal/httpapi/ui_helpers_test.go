@@ -2,6 +2,7 @@ package httpapi_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -36,11 +37,24 @@ func browserPath() string {
 	return ""
 }
 
-// newBrowser sirve h en un servidor de prueba y abre un Chrome sin ventana,
-// de 1280 x 800 px. Devuelve el contexto de chromedp y la dirección del
-// servidor; los dos se cierran al terminar el test. Sin navegador, el test se
-// saltea con un aviso, salvo en la CI (CI=true), donde es un error (D7).
-func newBrowser(t *testing.T, h http.Handler) (context.Context, string) {
+// failer es lo que los helpers de la interfaz necesitan para fallar: un
+// *testing.T en los tests de Go, o stepFailer en los pasos de godog.
+type failer interface {
+	Helper()
+	Fatalf(format string, args ...any)
+}
+
+// stepFailer hace fallar un paso de godog: godog recupera el panic y lo
+// informa como el error del paso.
+type stepFailer struct{}
+
+func (stepFailer) Helper() {}
+
+func (stepFailer) Fatalf(format string, args ...any) { panic(fmt.Sprintf(format, args...)) }
+
+// requireBrowser devuelve el ejecutable del navegador. Sin navegador, el test
+// se saltea con un aviso, salvo en la CI (CI=true), donde es un error (D7).
+func requireBrowser(t *testing.T) string {
 	t.Helper()
 	path := browserPath()
 	if path == "" {
@@ -50,43 +64,61 @@ func newBrowser(t *testing.T, h http.Handler) (context.Context, string) {
 		}
 		t.Skip(msg)
 	}
+	return path
+}
 
+// startBrowser sirve h en un servidor de prueba y abre el navegador path sin
+// ventana, de width x 800 px. Devuelve el contexto de chromedp, la dirección
+// del servidor y la función que cierra los dos.
+func startBrowser(f failer, path string, h http.Handler, width int) (context.Context, string, func()) {
+	f.Helper()
 	srv := httptest.NewServer(h)
-	t.Cleanup(srv.Close)
-
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.ExecPath(path),
 		chromedp.NoSandbox,
-		chromedp.WindowSize(1280, 800),
+		chromedp.WindowSize(width, 800),
 	)
 	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
 	browserCtx, cancelBrowser := chromedp.NewContext(allocCtx)
-	t.Cleanup(func() {
+	stop := func() {
 		cancelBrowser()
 		cancelAlloc()
-	})
+		srv.Close()
+	}
 	// La primera ejecución abre el navegador y no puede tener tiempo máximo,
 	// porque al vencer cerraría el navegador; el tiempo máximo va en un
 	// contexto derivado.
-	if err := chromedp.Do(browserCtx); err != nil {
-		t.Fatalf("no se pudo abrir el navegador %s: %v", path, err)
+	if err := chromedp.Do(browserCtx, chromedp.EmulateViewport(int64(width), 800)); err != nil {
+		stop()
+		f.Fatalf("no se pudo abrir el navegador %s: %v", path, err)
 	}
 	ctx, cancelTimeout := context.WithTimeout(browserCtx, uiTimeout)
-	t.Cleanup(cancelTimeout)
-	return ctx, srv.URL
+	return ctx, srv.URL, func() {
+		cancelTimeout()
+		stop()
+	}
 }
 
-// browse ejecuta los pasos en el navegador, en orden, y falla el test si alguno da
+// newBrowser abre la interfaz servida por h en un Chrome de 1280 x 800 px,
+// que se cierra al terminar el test.
+func newBrowser(t *testing.T, h http.Handler) (context.Context, string) {
+	t.Helper()
+	ctx, url, stop := startBrowser(t, requireBrowser(t), h, 1280)
+	t.Cleanup(stop)
+	return ctx, url
+}
+
+// browse ejecuta los pasos en el navegador, en orden, y falla si alguno da
 // error.
-func browse(t *testing.T, ctx context.Context, steps ...chromedp.Action[chromedp.Void]) {
+func browse(t failer, ctx context.Context, steps ...chromedp.Action[chromedp.Void]) {
 	t.Helper()
 	if err := chromedp.Do(ctx, steps...); err != nil {
 		t.Fatalf("navegador: %v", err)
 	}
 }
 
-// value ejecuta una acción que devuelve un valor y falla el test si da error.
-func value[T any](t *testing.T, ctx context.Context, a chromedp.Action[T]) T {
+// value ejecuta una acción que devuelve un valor y falla si da error.
+func value[T any](t failer, ctx context.Context, a chromedp.Action[T]) T {
 	t.Helper()
 	v, err := chromedp.Run(ctx, a)
 	if err != nil {
