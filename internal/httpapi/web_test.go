@@ -1466,7 +1466,7 @@ func TestInterfaz_FilaDeHistoriaDelReporteIndicaSinEstimarYSinSprint(t *testing.
 	for _, want := range []string{
 		`h.story_points === 0 ? "—" : h.story_points`,
 		"h.horas_estimadas",
-		`h.sprint_id === 0 ? "—" : h.sprint_id`,
+		`h.sprint_id === "" ? "—" : h.sprint_id`,
 	} {
 		if !strings.Contains(cuerpo, want) {
 			t.Errorf("filaHistoriaReporte no contiene %q", want)

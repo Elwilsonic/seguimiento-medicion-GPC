@@ -20,7 +20,7 @@ func (s *server) listMembers(w http.ResponseWriter, r *http.Request) {
 	}
 	resp := make([]memberResponse, 0, len(members))
 	for _, m := range members {
-		resp = append(resp, memberResponse{ID: m.ID, ProyectoID: publicID, Nombre: m.Name, Rol: m.Role})
+		resp = append(resp, memberResponse{ID: m.PublicID.String(), ProyectoID: publicID, Nombre: m.Name, Rol: m.Role})
 	}
 	writeJSON(w, http.StatusOK, resp)
 }

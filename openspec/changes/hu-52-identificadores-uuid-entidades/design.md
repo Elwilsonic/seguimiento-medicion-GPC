@@ -231,6 +231,16 @@ El esquema se recrea con `docker compose down -v` y `docker compose up -d --wait
 
 Es un ajuste de tests, sin ciclo RED/GREEN: no cambia el comportamiento ni lo que verifica ningún test, y no toca código de producción.
 
+**Segunda desviación de la base (15/11/2026).** Cardozo Leandro la encontró al preparar el GREEN de ítems e integrantes, y la decidió como responsable de esa parte. Aprobada por Peñalbé Hernán (Agile Enabler) el 15/11/2026, con dos condiciones: (1) el PR de ítems e integrantes apunta a la rama de integración feature/HU-52-uuid-entidades y no a main; (2) la traducción inversa es temporal: cuando García agregue sus 7 rutas a uuidRoutes deja de usarse, y en su PR, o en el PR final a main, se borra y se verifica que go test ./... quede en verde sin ella, para que ningún test termine el sprint dependiendo de ella. Con `idRef`, los tests de otros responsables arman sus rutas con el `id` que devolvió la API. Apenas el ítem responde su UUID, ese UUID llega a rutas cuyos handlers todavía leen un entero (por ejemplo, el `{itemId}` de `POST /api/sprints/{id}/items/{itemId}`, de Buttini Cristobal, o `POST /api/items/{id}/defectos`, de García Santiago), y `uuidRoutes` no lo evita, porque la ruta ya trae el UUID. **Se resolvió en `withEntityIDs`** (`entity_ids_test.go`), solo en los tests: en una ruta que no está en `uuidRoutes`, un `id` que `do()` registró al crear una entidad se traduce al revés, al número de su orden de creación, que es su ID interno. Es la misma suposición que la traducción hacia el UUID: las entidades de ese tipo se crean por la API y en orden. Lo verifica `TestWithEntityIDs_FueraDeLaTablaTraduceElUUIDAlEntero`. Cuando cada responsable suma sus rutas a `uuidRoutes`, sus rutas dejan de traducirse al revés.
+
+Además, con el ítem en UUID, en los tests de otros responsables cambian algunos resultados que nombran un ítem, y se adaptan en el GREEN de ítems:
+
+- `sprints_test.go` (líneas 124, 204 y 281): el `id` de los ítems se compara con `itemRef`, y el `sprint_id` del ítem asignado, con la forma de un UUID (el único sprint del entorno), porque el UUID del sprint todavía no se ve en el `id` del sprint.
+- `reports_test.go`: la lista de historias se compara por orden de creación (`itemNumber`), y los contratos del reporte del proyecto y del sprint (`reports_test.go` y `sprint_reports_test.go`) arman el `id` y el `sprint_id` de cada historia con `jsonItemID` y `jsonItemSprintID`.
+- `internal/web/app.js` (`filaHistoriaReporte`) y su aserción de `web_test.go`: las historias de los reportes salen de `toItemResponse`, así que "sin sprint" pasa de `0` a `""` (D7), igual que en el backlog.
+
+Hasta que se integren sprints y Planning Poker, la API queda mezclada como prevé R2: el `sprint_id` de un ítem es el UUID del sprint, pero el `id` del propio sprint sigue siendo un entero.
+
 ### D10. Cantidades, contadas con comandos sobre `main` `a56b052`
 
 ```bash
@@ -283,6 +293,7 @@ Todos los IDs fijos de tests están en 15 archivos de `internal/httpapi`. Los `.
 - **[R5] El centinela `math.MaxInt32` como ID real.** → Una tabla tendría que llegar a 2147483647 filas, y en ese caso `GENERATED ALWAYS AS IDENTITY` ya falla por desborde. Queda documentado.
 - **[R6] La firma con el resolvedor sin usar en la base.** → Es un parámetro que todavía no se usa, y queda así hasta que cada entidad lo use. Si una entidad no llega al corte, queda sin usar para esa entidad, y se documenta.
 - **[R7] La carga de la base.** → La hacen dos personas en pareja (Sosa y Cardozo, sujeto a que Cardozo lo confirme), con el horario aprobado del domingo 15/11/2026 a las 21:00. La base toca el dominio de 6 paquetes, el esquema, `server.go`, los reportes y los tests compartidos. Es la parte más grande y la que más se repite. Se mide en la tarea B.0 (la prueba de los tests que se rompen) y se avisa si no llega a una hora acordada con el Agile Enabler.
+- **[R8] La traducción inversa de `withEntityIDs` es temporal** (segunda desviación de la base, condición (2) del Agile Enabler). → Pendiente: borrar la traducción inversa de withEntityIDs y verificar go test ./... en verde sin ella. Se hace en el PR de García Santiago, cuando agregue sus 7 rutas a `uuidRoutes`, o en el PR final a `main`.
 - **[Trade-off] Dos identificadores por entidad,** como en HU-51.
 - **[Trade-off] UUID largos en la interfaz y en los mensajes.** → Las entidades se eligen desde listas y botones donde existen. Donde hay que escribir el ID (esfuerzos y defectos), se copia de la tabla.
 

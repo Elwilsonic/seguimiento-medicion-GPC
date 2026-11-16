@@ -77,8 +77,8 @@ La base la hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo 
 
 Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:30 (`c329a62`). Toca solo los archivos de su fila en D3.
 
-- [ ] 2.1 Escribir `features/HU-52-items.feature` y `features/HU-52-integrantes.feature` (de API, en español), con casos normal, alternativo, límite y de error por entidad, según `specs/backlog/spec.md` y `specs/integrantes/spec.md`. Escribir los pasos y los runners `TestFeatures_HU52Items` y `TestFeatures_HU52Integrantes`.
-- [ ] 2.2 Escribir los tests en RED en `internal/httpapi/items_uuid_test.go`, `members_uuid_test.go` y `items_members_uuid_web_test.go`:
+- [x] 2.1 Escribir `features/HU-52-items.feature` y `features/HU-52-integrantes.feature` (de API, en español), con casos normal, alternativo, límite y de error por entidad, según `specs/backlog/spec.md` y `specs/integrantes/spec.md`. Escribir los pasos y los runners `TestFeatures_HU52Items` y `TestFeatures_HU52Integrantes`. Hecho en `2350f63`: 17 escenarios de ítems y 14 de integrantes, con los runners en `items_members_uuid_features_test.go`.
+- [x] 2.2 Escribir los tests en RED en `internal/httpapi/items_uuid_test.go`, `members_uuid_test.go` y `items_members_uuid_web_test.go`:
   - el `id` es un UUID v4 al crear (CA-52.1);
   - sus 5 rutas (las 4 de `/api/items/{id}` en `items.go` y `PUT /api/integrantes/{id}`, tabla "Rutas por responsable" de D3) aceptan el UUID, también en mayúsculas (CA-52.3);
   - un número, llaves, `urn:uuid:` o sin guiones dan 400 con su mensaje, y un UUID inexistente o el nulo dan 404, en cada ruta (CA-52.4);
@@ -86,15 +86,15 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
   - ninguna respuesta de ítem o integrante con un entero (CA-52.3);
   - los campos de la interfaz (CA-52.6).
 
-  Adaptar las filas de ítems e integrantes en las tablas de `server_test.go` y los tests de `items_test.go`, `members*_test.go` cuyo resultado cambia. Correr `go test -count=1 ./...` y verificar que fallan solo estos tests, por aserción. Proponer `git commit -m "test(HU-52): agregar tests de ítems e integrantes (RED)" -m "Refs #197"`.
-- [ ] 2.3 GREEN:
+  Adaptar las filas de ítems e integrantes en las tablas de `server_test.go` y los tests de `items_test.go`, `members*_test.go` cuyo resultado cambia. Correr `go test -count=1 ./...` y verificar que fallan solo estos tests, por aserción. Proponer `git commit -m "test(HU-52): agregar tests de ítems e integrantes (RED)" -m "Refs #197"`. Hecho: RED en `2350f63`. Además del plan se adaptaron los 7 JSON de integrantes con el id escrito a mano y, de HU-51, `TestRutasDeOtrasEntidades_ConservanElIDEntero`, `TestRespuestas_IdentificanElProyectoConSuUUID` y las líneas 86 y 144 de `features/HU-51-identificadores-uuid.feature`.
+- [x] 2.3 GREEN:
   - los handlers de `items.go` (las 4 rutas de `/api/items/{id}`) y `members_update.go` usan `itemIDFromPath` y `memberIDFromPath`;
   - el cuerpo de `toItemResponse` usa el resolvedor para `id` y `sprint_id`;
   - las respuestas de `members*.go` usan el UUID del integrante;
   - las secciones de Product Backlog e Integrantes de `index.html` y `app.js`.
 
-  Correr los comandos de cierre y verificar que el GREEN no toca tests. Proponer `git commit -m "feat(HU-52): identificar los ítems y los integrantes con un UUID público (GREEN)" -m "Refs #197"`.
-- [ ] 2.4 Refactor, si aplica. Completar la sección de Cardozo en `docs/evidencias/HU-52-tdd.md` (RED, GREEN, curl, navegador y tabla con links), sumar su fila a `docs/ia/registro.md` y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de ítems e integrantes" -m "Refs #197"`.
+  Correr los comandos de cierre y verificar que el GREEN no toca tests. Proponer `git commit -m "feat(HU-52): identificar los ítems y los integrantes con un UUID público (GREEN)" -m "Refs #197"`. Hecho: GREEN en `ca39108`. Cambios respecto del plan: el GREEN sí tocó tests, por la segunda desviación de la base (la traducción inversa en `withEntityIDs`, con su test) y por los tests de otros responsables que cambian con el ítem en UUID (`sprints_test.go`, `reports_test.go`, `sprint_reports_test.go` y `web_test.go`); y `filaHistoriaReporte` de `app.js`, porque las historias de los reportes salen de `toItemResponse`. Después se trajo la rama de integración `feature/HU-52-uuid-entidades` (D3), con sprints y Planning Poker (PR #204), en el merge `bebcfc4`: quedan 13 fallos que dependen de la parte de García Santiago.
+- [x] 2.4 Refactor, si aplica. Completar la sección de Cardozo en `docs/evidencias/HU-52-tdd.md` (RED, GREEN, curl, navegador y tabla con links), sumar su fila a `docs/ia/registro.md` y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de ítems e integrantes" -m "Refs #197"`. Hecho en `5264bbd`. No hubo refactor. No se verificó con curl ni en el navegador: queda como "no verificado" en la evidencia. El PR de esta parte va a `feature/HU-52-uuid-entidades` y no a `main` (cambio en D3).
 - [ ] 2.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
 
 ## 3. Sprints y Planning Poker (Buttini Cristobal, rama `feature/HU-52-uuid-sprints-poker`)

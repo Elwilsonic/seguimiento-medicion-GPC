@@ -7,7 +7,7 @@ import "net/http"
 // updateMember atiende PUT /api/integrantes/{id}. El orden de los errores es
 // ID de la ruta, JSON y Manager.
 func (s *server) updateMember(w http.ResponseWriter, r *http.Request) {
-	id, err := pathID(r)
+	id, err := s.memberIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -29,7 +29,7 @@ func (s *server) updateMember(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, memberResponse{ID: updated.ID, ProyectoID: publicID, Nombre: updated.Name, Rol: updated.Role})
+	writeJSON(w, http.StatusOK, memberResponse{ID: updated.PublicID.String(), ProyectoID: publicID, Nombre: updated.Name, Rol: updated.Role})
 }
 
 // memberMethodNotAllowed responde 405 a GET /api/integrantes/{id}. Sin esta

@@ -14,7 +14,8 @@ type memberRequest struct {
 }
 
 type memberResponse struct {
-	ID int `json:"id"`
+	// ID es el UUID público del integrante (HU-52, CA-52.3).
+	ID string `json:"id"`
 	// ProyectoID es el UUID del proyecto (HU-51, CA-51.3).
 	ProyectoID string      `json:"proyecto_id"`
 	Nombre     string      `json:"nombre"`
@@ -41,5 +42,5 @@ func (s *server) registerMember(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, memberResponse{ID: saved.ID, ProyectoID: publicID, Nombre: saved.Name, Rol: saved.Role})
+	writeJSON(w, http.StatusCreated, memberResponse{ID: saved.PublicID.String(), ProyectoID: publicID, Nombre: saved.Name, Rol: saved.Role})
 }
