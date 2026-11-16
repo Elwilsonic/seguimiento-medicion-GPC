@@ -9,27 +9,30 @@ import (
 
 // Handler del registro de defectos (HU-29, CA-29.11).
 
+// HU-52, CA-52.3: el sprint de detección es el UUID del sprint, como texto.
 type defectRequest struct {
 	Descripcion       string `json:"descripcion"`
 	Severidad         string `json:"severidad"`
-	SprintDeteccionID int    `json:"sprint_deteccion_id"`
+	SprintDeteccionID string `json:"sprint_deteccion_id"`
 }
 
+// HU-52, CA-52.3: el defecto, su ítem y sus sprints se identifican con su
+// UUID; un defecto sin resolver tiene "" en sprint_resolucion_id (D7).
 type defectResponse struct {
-	ID                 int             `json:"id"`
+	ID                 string          `json:"id"`
 	Descripcion        string          `json:"descripcion"`
 	Severidad          defect.Severity `json:"severidad"`
 	Estado             defect.Status   `json:"estado"`
-	ItemID             int             `json:"item_id"`
-	SprintDeteccionID  int             `json:"sprint_deteccion_id"`
-	SprintResolucionID int             `json:"sprint_resolucion_id"`
+	ItemID             string          `json:"item_id"`
+	SprintDeteccionID  string          `json:"sprint_deteccion_id"`
+	SprintResolucionID string          `json:"sprint_resolucion_id"`
 }
 
 // registerDefect atiende POST /api/items/{id}/defectos. El orden de los errores
-// es ID de la ruta, JSON y Manager.
+// es ID de la ruta, JSON, sprint de detección del cuerpo y Manager.
 func (s *server) registerDefect(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	itemID, err := pathID(r)
+	itemID, err := s.itemIDFromPath(r, "id")
 	if err != nil {
 		writeError(w, err)
 		return
@@ -41,7 +44,13 @@ func (s *server) registerDefect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	saved, err := s.defects.Register(itemID, req.Descripcion, req.Severidad, req.SprintDeteccionID)
+	sprintID, err := s.sprintIDFromBody(req.SprintDeteccionID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	saved, err := s.defects.Register(itemID, req.Descripcion, req.Severidad, sprintID)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -51,16 +60,17 @@ func (s *server) registerDefect(w http.ResponseWriter, r *http.Request) {
 
 // Handler del cambio de estado de un defecto (HU-30, CA-30.9).
 
+// HU-52, CA-52.3: el sprint de resolución es el UUID del sprint, como texto.
 type defectStatusRequest struct {
 	Estado             string `json:"estado"`
-	SprintResolucionID int    `json:"sprint_resolucion_id"`
+	SprintResolucionID string `json:"sprint_resolucion_id"`
 }
 
 // changeDefectStatus atiende PATCH /api/defectos/{id}/estado. El orden de los
-// errores es ID de la ruta, JSON y Manager.
+// errores es ID de la ruta, JSON, sprint de resolución del cuerpo y Manager.
 func (s *server) changeDefectStatus(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	id, err := pathID(r)
+	id, err := s.defectIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -72,7 +82,13 @@ func (s *server) changeDefectStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	changed, err := s.defects.ChangeStatus(id, req.Estado, req.SprintResolucionID)
+	sprintID, err := s.sprintIDFromBody(req.SprintResolucionID)
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	changed, err := s.defects.ChangeStatus(id, req.Estado, sprintID)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -99,7 +115,7 @@ func (s *server) listDefectsByProject(w http.ResponseWriter, r *http.Request) {
 
 // listDefectsBySprint atiende GET /api/sprints/{id}/defectos.
 func (s *server) listDefectsBySprint(w http.ResponseWriter, r *http.Request) {
-	s.listDefects(w, r, pathID, s.defects.ListBySprint)
+	s.listDefects(w, r, s.sprintIDFromPath, s.defects.ListBySprint)
 }
 
 // listDefects lee el ID de la ruta con readID, lista con list y aplica el
@@ -146,12 +162,12 @@ func toDefectListResponse(defects []defect.Defect, ids *publicIDs) defectListRes
 
 func toDefectResponse(d defect.Defect, ids *publicIDs) defectResponse {
 	return defectResponse{
-		ID:                 d.ID,
+		ID:                 d.PublicID.String(),
 		Descripcion:        d.Description,
 		Severidad:          d.Severity,
 		Estado:             d.Status,
-		ItemID:             d.ItemID,
-		SprintDeteccionID:  d.DetectionSprintID,
-		SprintResolucionID: d.ResolutionSprintID,
+		ItemID:             ids.item(d.ItemID),
+		SprintDeteccionID:  ids.sprint(d.DetectionSprintID),
+		SprintResolucionID: ids.sprint(d.ResolutionSprintID),
 	}
 }

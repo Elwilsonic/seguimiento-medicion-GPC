@@ -140,6 +140,13 @@ var uuidRoutes = []string{
 	// (defects.go); GET /api/items/{id}/esfuerzos,
 	// POST /api/sprints/{id}/items/{itemId}/esfuerzos, GET /api/sprints/{id}/esfuerzos
 	// y PATCH /api/esfuerzos/{id}/horas (efforts.go).
+	"POST /api/items/{id}/defectos",
+	"PATCH /api/defectos/{id}/estado",
+	"GET /api/sprints/{id}/defectos",
+	"GET /api/items/{id}/esfuerzos",
+	"POST /api/sprints/{id}/items/{itemId}/esfuerzos",
+	"GET /api/sprints/{id}/esfuerzos",
+	"PATCH /api/esfuerzos/{id}/horas",
 }
 
 // inUUIDRoutes dice si el pedido method path (sin la query) corresponde a
