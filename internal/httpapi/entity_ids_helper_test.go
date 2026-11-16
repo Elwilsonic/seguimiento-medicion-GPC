@@ -68,25 +68,3 @@ func TestWithEntityIDs_TraduceSoloLasRutasDeLaTabla(t *testing.T) {
 		}
 	}
 }
-
-// HU-52 · CA-52.3 · Verifica que, en una ruta que no está en uuidRoutes, do() traduzca al revés el id que devolvió la API (el UUID del primer ítem pasa a 1) y deje igual los números y los UUID desconocidos.
-func TestWithEntityIDs_FueraDeLaTablaTraduceElUUIDAlEntero(t *testing.T) {
-	h := withFakeItemID(t)
-	saved := uuidRoutes
-	uuidRoutes = []string{"GET /api/items/{id}"}
-	t.Cleanup(func() { uuidRoutes = saved })
-
-	cases := []struct{ method, path, want string }{
-		{http.MethodPost, "/api/sprints/1/items/" + fakeItemUUID, "/api/sprints/1/items/1"},
-		{http.MethodPost, "/api/sprints/1/items/" + fakeItemUUID + "/esfuerzos", "/api/sprints/1/items/1/esfuerzos"},
-		{http.MethodGet, "/api/items/" + fakeItemUUID + "/esfuerzos?x=1", "/api/items/1/esfuerzos?x=1"},
-		{http.MethodPost, "/api/sprints/1/items/2", "/api/sprints/1/items/2"},
-		{http.MethodPost, "/api/items/" + missingItemID + "/defectos", "/api/items/" + missingItemID + "/defectos"},
-		{http.MethodGet, "/api/items/" + fakeItemUUID, "/api/items/" + fakeItemUUID},
-	}
-	for _, c := range cases {
-		if got := withEntityIDs(h, c.method, c.path); got != c.want {
-			t.Errorf("%s %s: ruta = %q, se esperaba %q", c.method, c.path, got, c.want)
-		}
-	}
-}

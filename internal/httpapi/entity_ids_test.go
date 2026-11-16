@@ -96,9 +96,7 @@ func serveRecording(t *testing.T, h http.Handler, rec *httptest.ResponseRecorder
 // uuidRoutes son las rutas cuyo handler ya recibe el UUID de sus entidades.
 // do() traduce los números de una ruta solo si la ruta está en esta tabla:
 // así, cuando un responsable pasa sus handlers a UUID, sus tests siguen
-// funcionando con las rutas fijas, y en las rutas de los demás, que todavía
-// leen un entero, el id se traduce al revés (withEntityIDs; desviaciones de
-// la base, D9 de design.md).
+// funcionando con las rutas fijas (D9 de design.md).
 //
 // Cada responsable agrega, en el GREEN de su entidad, las rutas cuyos
 // handlers están en sus archivos (tabla "Rutas por responsable" de D3), con
@@ -175,25 +173,19 @@ func inUUIDRoutes(method, path string) bool {
 
 // withEntityIDs traduce en path los ids de las entidades. Entiende
 // /api/{entidad}/{N}/... y el {itemId} de /api/sprints/{N}/items/{M}/...
-//
-//   - Si la ruta del pedido está en uuidRoutes, cada número N pasa al "id" de
-//     la N-ésima entidad de ese tipo creada por la API en h.
-//   - Si no está, es al revés (segunda desviación de la base, D9 de
-//     design.md): un "id" que la API devolvió al crear una entidad pasa al
-//     número N de su orden de creación, que es su ID interno, porque el
-//     handler de esa ruta todavía lee un entero. Así, un test que arma la
-//     ruta de otro responsable con el id que devolvió la API (por ejemplo,
-//     el UUID de un ítem en POST /api/sprints/{id}/items/{itemId}) sigue
-//     funcionando hasta que ese responsable pase su ruta a UUID.
-//
-// Las dos traducciones suponen lo mismo: que las entidades de ese tipo se
-// crean por la API, en orden, así que la N-ésima tiene el ID interno N.
+// Si la ruta del pedido está en uuidRoutes, cada número N pasa al "id" de la
+// N-ésima entidad de ese tipo creada por la API en h; si no está, la ruta
+// queda igual. Con las rutas de las 6 entidades en uuidRoutes (HU-52), ya no
+// hace falta la traducción inversa, del "id" al número, que se usó mientras
+// cada responsable pasaba sus rutas a UUID (segunda desviación de la base).
 func withEntityIDs(h http.Handler, method, path string) string {
 	if !strings.HasPrefix(path, "/api/") {
 		return path
 	}
 	rest, query, _ := strings.Cut(path, "?")
-	toUUID := inUUIDRoutes(method, rest)
+	if !inUUIDRoutes(method, rest) {
+		return path
+	}
 	parts := strings.Split(rest, "/")
 	entityIDsMu.Lock()
 	defer entityIDsMu.Unlock()
@@ -201,15 +193,6 @@ func withEntityIDs(h http.Handler, method, path string) string {
 	for i := 2; i+1 < len(parts); i++ {
 		kind, ok := pathSegments[parts[i]]
 		if !ok || (i > 2 && !(parts[2] == "sprints" && parts[i] == "items")) {
-			continue
-		}
-		if !toUUID {
-			for n, id := range ids[kind] {
-				if id == parts[i+1] {
-					parts[i+1] = strconv.Itoa(n + 1)
-					break
-				}
-			}
 			continue
 		}
 		n, err := strconv.Atoi(parts[i+1])
