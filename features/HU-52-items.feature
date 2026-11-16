@@ -1,6 +1,6 @@
 # language: es
 # HU-52 · Identificadores UUID del resto de las entidades, parte de ítems (Issue #197), vinculada a HU-04 a HU-09 y HU-20
-# Especificación (OpenSpec): openspec/changes/hu-52-identificadores-uuid-entidades/specs/backlog/spec.md
+# Especificación (OpenSpec): openspec/specs/backlog/spec.md
 # Los escenarios son a nivel de la API y prueban solo las rutas de ítems cuyo
 # handler está en items.go (tabla "Rutas por responsable" de D3 en design.md):
 # GET y PUT /api/items/{id}, PATCH /api/items/{id}/estado y /story-points, y la

@@ -1,6 +1,6 @@
 # language: es
 # HU-52 · Identificadores UUID del resto de las entidades, parte de esfuerzos (Issue #197), vinculada a HU-26 (#44), HU-27 (#45) y HU-28 (#46)
-# Especificación (OpenSpec): openspec/changes/hu-52-identificadores-uuid-entidades/specs/esfuerzos/spec.md
+# Especificación (OpenSpec): openspec/specs/esfuerzos/spec.md
 # Los escenarios son a nivel de la API y prueban solo las rutas de efforts.go
 # (D3 de design.md): POST /api/sprints/{id}/items/{itemId}/esfuerzos,
 # GET /api/items/{id}/esfuerzos, GET /api/sprints/{id}/esfuerzos y

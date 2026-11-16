@@ -1,6 +1,6 @@
 # language: es
 # HU-52 · Identificadores UUID del resto de las entidades, parte de integrantes (Issue #197), vinculada a HU-15 a HU-17
-# Especificación (OpenSpec): openspec/changes/hu-52-identificadores-uuid-entidades/specs/integrantes/spec.md
+# Especificación (OpenSpec): openspec/specs/integrantes/spec.md
 # Los escenarios son a nivel de la API: el registro (HU-15), la lista (HU-17)
 # y PUT /api/integrantes/{id} (HU-16), la única ruta que recibe un integrante
 # (tabla "Rutas por responsable" de D3 en design.md). Los 1000 integrantes

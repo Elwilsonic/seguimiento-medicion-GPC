@@ -1,6 +1,6 @@
 # language: es
 # HU-52 · Identificadores UUID del resto de las entidades (Issue #197), base compartida
-# Cambio (OpenSpec): openspec/changes/hu-52-identificadores-uuid-entidades/
+# Cambio (OpenSpec): openspec/changes/archive/2026-11-15-hu-52-identificadores-uuid-entidades/ (archivado); specs: openspec/specs/{backlog,sprints,integrantes,defectos,esfuerzos,planning-poker}/spec.md
 # Los escenarios son de dominio (D9 de design.md): verifican que los Manager
 # de las 6 entidades asignen el UUID al crear, lo busquen y lo conserven. Las
 # rutas, los 400 y los 404 de la API van en el .feature de cada entidad. Los
