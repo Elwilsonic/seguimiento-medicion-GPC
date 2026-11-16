@@ -278,6 +278,16 @@ Los escenarios están en `features/HU-XX-nombre.feature`, en Gherkin y en españ
 go test -run TestFeatures ./internal/backlog/
 ```
 
+### 4.3.1 Tests de la interfaz en el navegador (HU-53)
+
+Desde HU-53, los tests de la interfaz abren la página en Chrome o Chromium sin ventana con **chromedp** (decisión técnica 23), cargan los datos por la API, hacen clics y leen la pantalla. Están en `internal/httpapi/ui_*_test.go`, y los escenarios de `features/HU-53-navegacion-por-secciones.feature` usan los mismos pasos. Corren con `go test ./...` y tardan unos 35 s.
+
+- Necesitan Chrome o Chromium instalado: se usa el de la variable `CHROME_PATH` o el primero del `PATH` (`google-chrome`, `chromium`…). chromedp no descarga ningún navegador.
+- Sin navegador, se saltean con un aviso. En la CI (`CI=true`) es un error; `ubuntu-latest` ya trae Chrome.
+- Para correr solo estos: `go test -run 'TestFeatures_HU53|TestNavegacion_|TestProyectoActual_|TestListas_|TestAcciones_|TestMensajes_|TestPantalla_|TestSinCambios_' ./internal/httpapi/`.
+
+La interfaz (`internal/web`) se organiza en secciones: `app.js` muestra la `<section>` del fragmento de la dirección (`mostrarSeccion`), y los desplegables de proyecto, sprint y entidades se llenan con las listas de la API (`cargarProyectos`, `cargarSprints` y `recargarListas`), sin rutas nuevas.
+
 ### 4.4 Pruebas de integración con PostgreSQL
 
 Los tests de los repositorios PostgreSQL y del wiring de `cmd/server` corren solo si está definida `TEST_DATABASE_URL`; si no, hacen `t.Skip`, así que en una máquina sin Docker los tests pasan igual. El CI sí define `TEST_DATABASE_URL` y corre estos tests (sección 6). Con la base levantada (sección 5):
@@ -348,6 +358,7 @@ Las reglas completas están en [`AGENTS.md`](../AGENTS.md), y el checklist previ
 | `github.com/jackc/pgx/v5` v5.11.0 | Driver y pool de PostgreSQL (código de producción) | TEC-05 (motivos en el [README](../README.md#driver-de-postgresql)) |
 | `github.com/go-pdf/fpdf` v0.9.0 | Exportación del reporte del proyecto a PDF (código de producción, solo en `internal/report/pdf.go`) | Aprobada por el equipo el 29/10/2026, tema 3 del Planning del Sprint 4 (motivos en el [README](../README.md#librería-de-pdf) y en la SDD de HU-40) |
 | `github.com/cucumber/godog` v0.16.0 | Ejecución de los escenarios BDD (solo tests) | Aprobada por el equipo (AGENTS.md) |
+| `github.com/chromedp/chromedp` v0.21.1 | Tests de la interfaz en un navegador real (solo tests, HU-53) | Autorizada por el Agile Enabler el 16/11/2026 ([decisión 23](decisiones-tecnicas.md)) |
 
 El resto usa solo la biblioteca estándar de Go. Agregar otra librería requiere la aprobación del equipo.
 

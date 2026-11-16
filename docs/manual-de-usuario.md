@@ -44,13 +44,19 @@ Con este comando los datos se guardan **en memoria** y se pierden al detener el 
 
 ## 2. Cómo está organizada la interfaz
 
-La interfaz es una sola página. Arriba está la barra **Proyecto actual / Sprint actual**, y debajo, una sección por tema: Proyectos, Integrantes, Product Backlog, Planning Poker, Métricas, Dashboard, Reportes, Sprints y Defectos.
+Desde HU-53, la interfaz se recorre por secciones. A la izquierda está el **menú**, con una entrada por sección: Proyectos, Integrantes, Backlog, Sprints, Planning Poker, Esfuerzo, Defectos, Métricas y dashboard, y Reportes. Al elegir una, se ve solo esa sección, sin recargar la página, y la entrada queda marcada. La sección queda en la dirección (por ejemplo, `…/#backlog`), así que el botón **Atrás** del navegador vuelve a la anterior y se puede guardar o compartir el link de una sección. En un celular, el menú aparece arriba.
 
-- **Proyecto actual (ID):** casi todas las secciones trabajan sobre este proyecto. Su ID es un UUID que asigna el sistema, por ejemplo `3f2b8c1d-5e6a-4b7c-8d9e-0f1a2b3c4d5e`, y no un número correlativo (HU-51); las capturas de este manual son anteriores y muestran IDs numéricos. Se completa solo al crear un proyecto. Para volver a uno existente, tocá **Ver proyectos**: aparece una tabla con todos los proyectos, con su ID, nombre, descripción, estado y fechas, y el mensaje "N proyecto(s).". Tocá **Elegir** en la fila del proyecto: queda como proyecto actual y se cargan sus datos y su backlog, sin escribir su ID (HU-50). Los proyectos aparecen en orden alfabético por nombre, sin distinguir mayúsculas; los nombres que empiezan con acento o con ñ (por ejemplo, "Ábaco") quedan al final, después de los que empiezan con "z". Si sabés el ID, también podés escribirlo o pegarlo, en mayúsculas o minúsculas, y tocar **Cargar proyecto**; un ID que no es un UUID, como "1", da el error "el id del proyecto debe ser un UUID".
-- **Sprint actual (ID):** lo usan "Asignar al sprint", "Completar", los reportes del sprint y la consulta de defectos por sprint. Su ID también es un UUID (HU-52). Se completa solo al crear un sprint, y también se puede elegir desde la tabla de "Ver sprints del proyecto" o escribiendo su ID.
-- **IDs de las demás entidades (HU-52):** los ítems del backlog, los sprints, los integrantes, los defectos, los registros de esfuerzo y las sesiones de Planning Poker también se identifican con un UUID, por ejemplo `7c1e4b2a-9d3f-4e8a-b6c5-1a2b3c4d5e6f`, y no con 1, 2, 3. Los campos donde se escribe un ID («ID del integrante», «Ítem (ID)», «Esfuerzo (ID)», el «ID» de "Consultar esfuerzos", «Sprint de detección (ID)», «Defecto (ID)» y «Sprint de resolución (ID)») son de texto y aceptan el UUID en mayúsculas o minúsculas. Los mensajes y las tablas muestran el UUID: por ejemplo, "Integrante 2f6c… registrado". Lo más cómodo es copiarlo de la tabla o del mensaje, o usar los botones de cada fila (**Asignar al sprint**, **Completar**, **Abrir Poker**), que ya lo llevan. Un ID que no es un UUID, como "1", da el error de su entidad (ver la [sección 14](#14-mensajes-de-error-comunes)).
-- **Mensajes:** cada sección muestra el resultado de la última acción debajo de sus formularios. En **verde** si salió bien (por ejemplo, "Proyecto 1 creado.") y en **rojo** si la aplicación rechazó el pedido, con el motivo. En la [sección 14](#14-mensajes-de-error-comunes) están los errores más comunes y cómo resolverlos.
+![Menú al costado y Backlog con el proyecto y el sprint elegidos](img/manual-de-usuario/hu53-1-backlog-escritorio.png)
+
+- **Proyecto actual:** arriba de cada sección hay un desplegable con los proyectos, por nombre y en orden alfabético (los que empiezan con acento o con ñ, como "Ábaco", quedan al final). Elegí uno y se cargan sus datos, su backlog y sus sprints; no hace falta escribir ni pegar su ID (HU-50 y HU-53). Al crear un proyecto, queda elegido solo. Sin proyectos, el desplegable dice "Sin proyectos: creá uno en Proyectos". **Ver proyectos** sigue mostrando la tabla con todos los proyectos y su botón **Elegir**.
+- **Sprint actual:** al lado, otro desplegable con los sprints del proyecto, por nombre y estado, por ejemplo "Sprint 2 (ABIERTO)". Lo usan "Asignar al sprint", "Completar", el registro de esfuerzo, los reportes del sprint y la consulta de defectos por sprint. Al crear un sprint, queda elegido solo; también se puede elegir desde "Ver sprints del proyecto".
+- **IDs (HU-51 y HU-52):** cada entidad se identifica con un UUID, por ejemplo `7c1e4b2a-9d3f-4e8a-b6c5-1a2b3c4d5e6f`, y no con 1, 2, 3. Desde HU-53 no hay que escribirlos: los formularios eligen el ítem, el sprint, el integrante, el defecto o el esfuerzo de un desplegable con su nombre, y las tablas tienen botones en cada fila (**Registrar esfuerzo**, **Registrar defecto**, **Corregir horas**, **Cambiar estado**, **Modificar**) que abren el formulario con esa entidad ya elegida. Las tablas siguen mostrando el UUID en la columna ID.
+- **Mensajes:** cada sección muestra el resultado de la última acción debajo de sus formularios. En **verde** si salió bien, con el nombre (por ejemplo, "Ítem «Emitir factura» creado.") y en **rojo** si la aplicación rechazó el pedido, con el motivo. En la [sección 14](#14-mensajes-de-error-comunes) están los errores más comunes y cómo resolverlos.
 - **Fechas:** los campos de fecha usan el calendario del navegador; la aplicación muestra las fechas como `AAAA-MM-DD`.
+
+En un celular (360 px de ancho), el menú pasa arriba, los formularios ocupan el ancho de la pantalla y las tablas anchas se desplazan dentro de su recuadro:
+
+![La interfaz en un celular](img/manual-de-usuario/hu53-3-celular.png)
 
 Recorrido recomendado para un proyecto nuevo: crear el proyecto y registrar sus fechas → registrar los integrantes → cargar el backlog → estimar con Planning Poker → crear el sprint y asignarle ítems → pasar los ítems a `EN_CURSO`, registrar el esfuerzo y los defectos → completar los ítems y cerrar el sprint → consultar métricas, dashboard y reportes.
 
@@ -191,26 +197,28 @@ Un ítem `TERMINADO` no se puede reestimar.
 
 ## 9. Registro de esfuerzo (HU-26 a HU-28)
 
-Los formularios están en la sección **Sprints**.
+Los formularios están en la sección **Esfuerzo** del menú (HU-53).
 
 ### Registrar el esfuerzo (HU-26)
 
-1. En **Registrar esfuerzo**, completá el **Ítem (ID)**, el **Integrante**, la **Fecha**, la **Actividad** (por ejemplo, "Desarrollo" o "Pruebas") y las **Horas** (un número positivo; se aceptan decimales, como 2.5).
+1. En **Registrar esfuerzo**, elegí el **Ítem** (el desplegable muestra solo los ítems del sprint actual; si no hay, dice "Sin ítems en el sprint actual"), y completá el **Integrante**, la **Fecha**, la **Actividad** (por ejemplo, "Desarrollo" o "Pruebas") y las **Horas** (un número positivo; se aceptan decimales, como 2.5).
 2. Tocá **Registrar esfuerzo**. El esfuerzo queda en el sprint al que está asignado el ítem, que tiene que estar abierto.
 
 ### Consultar los esfuerzos (HU-27)
 
-1. En **Consultar esfuerzos**, elegí **Ver por** **Sprint** o **Historia** y escribí su **ID**.
+1. En **Consultar esfuerzos**, elegí **Ver por** **Sprint** (el sprint actual) o **Historia**, y en ese caso elegí el **Ítem** del desplegable.
 2. Tocá **Consultar**. La tabla lista los esfuerzos y debajo se muestra el total de horas.
 
 ### Corregir las horas de un esfuerzo (HU-28)
 
-1. En **Corregir esfuerzo**, escribí el **Esfuerzo (ID)**, que figura en la tabla de la consulta, y las **Horas** correctas.
+1. En **Corregir esfuerzo**, elegí el **Esfuerzo** del desplegable (o tocá **Corregir horas** en su fila de la consulta) y escribí las **Horas** correctas.
 2. Tocá **Corregir esfuerzo**. Solo cambian las horas, y solo si el sprint del esfuerzo sigue abierto.
 
 En la captura, el esfuerzo 2 se registró con 3 horas y se corrigió a 4.5.
 
 ![Sprint actual, esfuerzos registrados y consulta por sprint](img/manual-de-usuario/12-sprint-y-esfuerzos.png)
+
+![Sección Esfuerzo con los desplegables de HU-53](img/manual-de-usuario/hu53-2-esfuerzo.png)
 
 ## 10. Defectos (HU-29 a HU-31)
 

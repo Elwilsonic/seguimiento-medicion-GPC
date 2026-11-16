@@ -35,9 +35,9 @@ Rama `feature/HU-53-navegacion-por-secciones`, desde `main` (`d6b6dfb`). Cada co
 
 ## 6. Evidencia y documentación
 
-- [ ] 6.1 Crear `docs/evidencias/HU-53-tdd.md`: RED, GREEN y refactor con sus salidas, la cantidad exacta de tests y de escenarios, la tabla criterio → test → código con links (correr `go test ./internal/trazabilidad/ -run TestEnlaces -args -update`), los tests adaptados de 3.1 y el tiempo de los tests del navegador (R1).
-- [ ] 6.2 Capturas de la interfaz nueva a 1280 px y a 360 px en `docs/img/`, y actualizar el manual de usuario (TEC-07) y la documentación técnica (TEC-06) con la navegación y los desplegables.
-- [ ] 6.3 Actualizar `docs/reportes/cobertura.md`, la fila de HU-53 del README (y cómo instalar Chrome para los tests, R2) y `docs/ia/registro.md`. Proponer `git commit -m "docs(HU-53): agregar evidencia TDD y cobertura" -m "Refs #211"`.
+- [x] 6.1 Crear `docs/evidencias/HU-53-tdd.md`: RED, GREEN y refactor con sus salidas, la cantidad exacta de tests y de escenarios, la tabla criterio → test → código con links (correr `go test ./internal/trazabilidad/ -run TestEnlaces -args -update`), los tests adaptados de 3.1 y el tiempo de los tests del navegador (R1).
+- [x] 6.2 Capturas de la interfaz nueva a 1280 px y a 360 px en `docs/img/`, y actualizar el manual de usuario (TEC-07) y la documentación técnica (TEC-06) con la navegación y los desplegables.
+- [x] 6.3 Actualizar `docs/reportes/cobertura.md`, la fila de HU-53 del README (y cómo instalar Chrome para los tests, R2) y `docs/ia/registro.md`. Proponer `git commit -m "docs(HU-53): agregar evidencia TDD y cobertura" -m "Refs #211"`.
 
 ## 7. Pull Request
 
