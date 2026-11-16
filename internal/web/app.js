@@ -186,7 +186,9 @@ async function cargarSprints() {
   } else {
     datos.sprints = await api("GET", "/proyectos/" + proyectoActual() + "/sprints");
   }
-  llenarDesplegable(select, datos.sprints, textoSprint, "Sin sprints: creá uno en Sprints", "Elegí un sprint");
+  // TEC-13: sin proyecto, «Sprint actual» avisa qué elegir primero.
+  const vacio = $("proyecto-actual").value === "" ? "Elegí un proyecto primero" : "Sin sprints: creá uno en Sprints";
+  llenarDesplegable(select, datos.sprints, textoSprint, vacio, "Elegí un sprint");
 }
 
 // recargarListas lee las listas del proyecto y del sprint actuales y llena
@@ -312,7 +314,7 @@ $("ver-proyectos").addEventListener("click", () =>
           celda(p.id),
           celda(p.nombre),
           celda(p.descripcion),
-          celda(p.estado),
+          celdaEstado(p.estado),
           celda(p.fecha_inicio),
           celda(p.fecha_fin),
           acciones,
@@ -497,6 +499,19 @@ function celda(texto) {
   return td;
 }
 
+// TEC-13 · celdaEstado muestra un estado como etiqueta de color (CA-TEC13.4);
+// la clase estado-X elige el color en styles.css.
+// tipo distingue estados con el mismo nombre (un defecto ABIERTO es un
+// problema; un sprint ABIERTO, no).
+function celdaEstado(estado, tipo = "") {
+  const td = document.createElement("td");
+  const etiqueta = document.createElement("span");
+  etiqueta.className = ("etiqueta estado-" + estado + " " + tipo).trim();
+  etiqueta.textContent = estado;
+  td.append(etiqueta);
+  return td;
+}
+
 // boton crea un botón que ejecuta fn y muestra su error en msgId (por
 // defecto, el mensaje del backlog).
 function boton(texto, fn, clase, msgId = "msg-backlog") {
@@ -614,7 +629,7 @@ function filaItem(it) {
     celda(it.id),
     celda(it.titulo),
     celda(it.prioridad),
-    celda(it.estado),
+    celdaEstado(it.estado),
     // 0 significa sin estimar (TEC-03).
     celda(it.story_points === 0 ? "—" : it.story_points),
     celda(it.horas_estimadas),
@@ -818,7 +833,7 @@ $("ver-sprints").addEventListener("click", () =>
           celda(s.fecha_inicio),
           celda(s.fecha_fin),
           celda(s.objetivo),
-          celda(s.estado),
+          celdaEstado(s.estado),
           acciones,
         );
         return tr;
@@ -1450,7 +1465,7 @@ function filaDefecto(d) {
     celda(d.id),
     celda(d.descripcion),
     celda(d.severidad),
-    celda(d.estado),
+    celdaEstado(d.estado, "defecto"),
     celda(d.item_id),
     celda(d.sprint_deteccion_id),
     celda(d.sprint_resolucion_id === 0 ? "—" : d.sprint_resolucion_id),
@@ -1471,5 +1486,6 @@ function filaDefecto(d) {
 // HU-53 · Al abrir la página se cargan los proyectos de «Proyecto actual».
 // El error de la lista de proyectos lo muestra cargarProyectos en el encabezado.
 cargarProyectos()
+  .then(cargarSprints)
   .then(recargarListas)
   .catch((err) => mostrar("msg-contexto", err.message, true));

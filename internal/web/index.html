@@ -15,15 +15,15 @@
   <div class="app">
   <!-- HU-53 · Una sección por vez: el menú cambia el fragmento de la dirección (#backlog, #sprints, …) y app.js muestra esa sección (CA-53.1). -->
   <nav id="menu" aria-label="Secciones">
-    <a href="#proyectos">Proyectos</a>
-    <a href="#integrantes">Integrantes</a>
-    <a href="#backlog">Backlog</a>
-    <a href="#sprints">Sprints</a>
-    <a href="#poker">Planning Poker</a>
-    <a href="#esfuerzo">Esfuerzo</a>
-    <a href="#defectos">Defectos</a>
-    <a href="#metricas">Métricas y dashboard</a>
-    <a href="#reportes">Reportes</a>
+    <a href="#proyectos"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Proyectos</a>
+    <a href="#integrantes"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-6 9a6 6 0 0 1 12 0M17 11a3 3 0 1 0-1-5.8M21 20a6 6 0 0 0-4-5.6"/></svg>Integrantes</a>
+    <a href="#backlog"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Backlog</a>
+    <a href="#sprints"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16v15H4zM4 9h16M9 3v4M15 3v4"/></svg>Sprints</a>
+    <a href="#poker"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm5 6l3 3-3 3-3-3z"/></svg>Planning Poker</a>
+    <a href="#esfuerzo"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0-13v5l3 2"/></svg>Esfuerzo</a>
+    <a href="#defectos"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Defectos</a>
+    <a href="#metricas"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg>Métricas y dashboard</a>
+    <a href="#reportes"><svg class="icono" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/></svg>Reportes</a>
   </nav>
 
   <main>
@@ -55,6 +55,7 @@
 
     <section id="proyectos">
       <h2>Proyectos</h2>
+      <p class="descripcion">Creá un proyecto, modificá sus datos y registrá sus fechas de inicio y de fin.</p>
       <div class="columnas">
         <form id="form-crear-proyecto">
           <h3>Crear proyecto</h3>
@@ -65,7 +66,7 @@
 
         <form id="form-modificar-proyecto">
           <h3>Proyecto actual</h3>
-          <p class="vacio" id="sin-proyecto">Creá un proyecto o cargá uno por su ID.</p>
+          <p class="vacio" id="sin-proyecto">Elegí un proyecto en «Proyecto actual» o creá uno.</p>
           <label>Nombre <input name="nombre"></label>
           <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
           <label>Estado
@@ -109,6 +110,7 @@
 
     <section id="integrantes">
       <h2>Integrantes</h2>
+      <p class="descripcion">Registrá a las personas del equipo con su rol y modificalas cuando haga falta.</p>
       <form id="form-registrar-integrante">
         <h3>Registrar integrante</h3>
         <label>Nombre <input name="nombre" required></label>
@@ -152,6 +154,7 @@
 
     <section id="backlog">
       <h2>Product Backlog</h2>
+      <p class="descripcion">Cargá las historias del proyecto, estimalas y seguí su estado hasta terminarlas.</p>
       <div class="columnas">
         <form id="form-crear-item">
           <h3>Crear ítem</h3>
@@ -212,9 +215,11 @@
 
     <section id="poker">
       <h2>Planning Poker</h2>
+      <p class="descripcion">Estimá una historia en equipo: cada integrante vota en secreto y después se revelan los votos.</p>
       <p id="datos-poker" class="vacio">Abrí una sesión desde un ítem del backlog.</p>
       <p id="cartas-poker" class="vacio"></p>
       <form id="form-votar-poker" hidden>
+        <h3>Votar</h3>
         <label>Integrante <input name="integrante" required></label>
         <div id="botones-cartas-poker" class="acciones"></div>
         <button type="button" id="btn-revelar-poker">Revelar votos</button>
@@ -231,6 +236,7 @@
 
     <section id="metricas">
       <h2>Métricas</h2>
+      <p class="descripcion">Story Points, velocidad, horas y defectos del proyecto y del sprint actuales.</p>
       <button type="button" id="ver-metricas">Ver métricas</button>
       <p id="datos-metricas" class="vacio">Muestra los story points y las horas del proyecto actual y, si hay uno, del sprint actual.</p>
       <p class="mensaje" id="msg-metricas" role="alert" hidden></p>
@@ -238,6 +244,7 @@
 
     <section id="dashboard">
       <h2>Dashboard</h2>
+      <p class="descripcion">El estado del proyecto de un vistazo, con tarjetas y gráficos por sprint.</p>
       <button type="button" id="ver-resumen">Ver resumen</button>
       <div id="datos-resumen" class="vacio">Muestra el estado del proyecto actual, sus ítems por estado y su sprint actual.</div>
       <p class="mensaje" id="msg-resumen" role="alert" hidden></p>
@@ -249,6 +256,7 @@
 
     <section id="reportes">
       <h2>Reportes</h2>
+      <p class="descripcion">El reporte completo del proyecto o del sprint, también para descargar en PDF.</p>
       <button type="button" id="generar-reporte">Generar reporte</button>
       <button type="button" id="descargar-reporte-pdf">Descargar PDF</button>
       <div id="datos-reporte">
@@ -334,6 +342,7 @@
 
     <section id="sprints">
       <h2>Sprints</h2>
+      <p class="descripcion">Creá los sprints del proyecto, asignales historias y cerralos al terminar.</p>
       <div class="columnas">
         <form id="form-crear-sprint">
           <h3>Crear sprint en el proyecto actual</h3>
@@ -346,7 +355,7 @@
 
         <div>
           <h3>Sprint actual</h3>
-          <p id="datos-sprint" class="vacio">Creá un sprint o escribí su ID arriba.</p>
+          <p id="datos-sprint" class="vacio">Creá un sprint o elegilo en «Sprint actual».</p>
           <div class="acciones">
             <button type="button" id="ver-completados" class="secundario">Ver ítems completados</button>
             <button type="button" id="cerrar-sprint">Cerrar sprint</button>
@@ -374,6 +383,7 @@
 
     <section id="esfuerzo">
       <h2>Esfuerzo</h2>
+      <p class="descripcion">Registrá las horas trabajadas en cada historia del sprint y corregilas si hace falta.</p>
       <form id="form-registrar-esfuerzo">
         <h3>Registrar esfuerzo</h3>
         <label>Ítem <select name="item_id"></select></label>
@@ -419,6 +429,7 @@
 
     <section id="defectos">
       <h2>Defectos</h2>
+      <p class="descripcion">Registrá los defectos encontrados en las historias y seguí su estado hasta resolverlos.</p>
       <form id="form-registrar-defecto">
         <h3>Registrar defecto</h3>
         <label>Ítem <select name="item_id"></select></label>
