@@ -1,6 +1,6 @@
 # language: es
 # HU-53 · Navegar la interfaz por secciones y elegir de listas (Issue #211), vinculada a HU-50, HU-51, HU-52 y TEC-04
-# Especificación (OpenSpec): openspec/changes/hu-53-navegacion-por-secciones/specs/interfaz-web/spec.md
+# Especificación (OpenSpec): openspec/specs/interfaz-web/spec.md
 # Los escenarios se ejecutan en un navegador real (Chrome sin ventana) con
 # chromedp (decisión técnica 23): cada paso hace los clics y lee la pantalla.
 # Los datos se cargan antes por la API. Los nombres de las secciones son los
