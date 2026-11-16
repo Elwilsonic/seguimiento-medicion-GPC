@@ -31,7 +31,7 @@ Rama `feature/HU-53-navegacion-por-secciones`, desde `main` (`d6b6dfb`). Cada co
 
 ## 5. Refactor
 
-- [ ] 5.1 Si hay una mejora clara (por ejemplo, quitar funciones de `app.js` que quedaron sin uso), proponerla aparte y correr de nuevo los comandos de 4.4. Si no, anotar "no hubo refactor" en la evidencia. Commit, si lo hay: `refactor(HU-53): <qué se mejoró>`.
+- [x] 5.1 Si hay una mejora clara (por ejemplo, quitar funciones de `app.js` que quedaron sin uso), proponerla aparte y correr de nuevo los comandos de 4.4. Si no, anotar "no hubo refactor" en la evidencia. Commit, si lo hay: `refactor(HU-53): <qué se mejoró>`.
 
 ## 6. Evidencia y documentación
 

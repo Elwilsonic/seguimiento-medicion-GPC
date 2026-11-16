@@ -155,7 +155,12 @@ function asegurarOpcion(select, id, texto) {
 const porTitulo = (a, b) => a.titulo.localeCompare(b.titulo, "es");
 const textoSprint = (s) => s.nombre + " (" + s.estado + ")";
 
-// tituloDe y nombreDeSprint dan el nombre de un ítem o de un sprint por su id.
+// textoEsfuerzo y textoDefecto son el texto de un esfuerzo o de un defecto en
+// sus desplegables, el mismo en la lista y en las acciones de fila.
+const textoEsfuerzo = (e) => e.fecha + " · " + e.integrante + " · " + e.actividad + " · " + e.horas + " h";
+const textoDefecto = (d) => d.descripcion + " (" + d.estado + ")";
+
+// tituloDe da el título de un ítem por su id, para los mensajes.
 const tituloDe = (id) => (datos.items.find((it) => it.id === id) || { titulo: id }).titulo;
 
 // cargarProyectos llena «Proyecto actual» con los proyectos, en el orden de
@@ -218,9 +223,9 @@ async function recargarListas() {
   llenarDesplegable($("form-modificar-integrante").id, datos.integrantes,
     (m) => m.nombre + " (" + nombresDeRoles[m.rol] + ")", "Sin integrantes en el proyecto", "Elegí un integrante");
   llenarDesplegable($("form-cambiar-estado-defecto").defecto_id, datos.defectos,
-    (d) => d.descripcion + " (" + d.estado + ")", "Sin defectos en el proyecto", "Elegí un defecto");
+    textoDefecto, "Sin defectos en el proyecto", "Elegí un defecto");
   llenarDesplegable($("form-corregir-esfuerzo").esfuerzo_id, datos.esfuerzos,
-    (e) => e.fecha + " · " + e.integrante + " · " + e.actividad + " · " + e.horas + " h",
+    textoEsfuerzo,
     "Sin esfuerzos en el sprint actual", "Elegí un esfuerzo");
 }
 
@@ -941,7 +946,7 @@ function filaEsfuerzo(e) {
   const acciones = document.createElement("td");
   acciones.append(boton("Corregir horas", () => {
     const form = $("form-corregir-esfuerzo");
-    asegurarOpcion(form.esfuerzo_id, e.id, e.fecha + " · " + e.integrante + " · " + e.actividad + " · " + e.horas + " h");
+    asegurarOpcion(form.esfuerzo_id, e.id, textoEsfuerzo(e));
     form.esfuerzo_id.value = e.id;
     form.horas.focus();
   }, "secundario", "msg-esfuerzos"));
@@ -1430,7 +1435,7 @@ function filaDefecto(d) {
   const acciones = document.createElement("td");
   acciones.append(boton("Cambiar estado", () => {
     const form = $("form-cambiar-estado-defecto");
-    asegurarOpcion(form.defecto_id, d.id, d.descripcion + " (" + d.estado + ")");
+    asegurarOpcion(form.defecto_id, d.id, textoDefecto(d));
     form.defecto_id.value = d.id;
     form.estado.focus();
   }, "secundario", "msg-consultar-defectos"));
