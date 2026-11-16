@@ -345,7 +345,12 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 
 		// Buttini Cristobal: sprints y Planning Poker.
 
-		// García Santiago: defectos y esfuerzos.
+		// García Santiago: defectos y esfuerzos (defects.go y efforts.go).
+		"cambiar estado de defecto":   "el id del defecto debe ser un UUID",
+		"listar defectos del sprint":  "el id del sprint debe ser un UUID",
+		"listar esfuerzos del ítem":   "el id del ítem debe ser un UUID",
+		"listar esfuerzos del sprint": "el id del sprint debe ser un UUID",
+		"corregir esfuerzo":           "el id del esfuerzo debe ser un UUID",
 	}
 	casos := []struct {
 		nombre, method, path, body string
