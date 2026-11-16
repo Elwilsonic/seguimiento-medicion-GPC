@@ -288,6 +288,39 @@ Desde HU-53, los tests de la interfaz abren la página en Chrome o Chromium sin 
 
 La interfaz (`internal/web`) se organiza en secciones: `app.js` muestra la `<section>` del fragmento de la dirección (`mostrarSeccion`), y los desplegables de proyecto, sprint y entidades se llenan con las listas de la API (`cargarProyectos`, `cargarSprints` y `recargarListas`), sin rutas nuevas.
 
+### 4.3.2 Paleta de colores (TEC-12)
+
+Los colores de la interfaz se definen una sola vez, como variables de CSS en `:root` de `internal/web/styles.css`; el resto del CSS, el HTML y el JavaScript solo usan esas variables (`var(--primario)`, etc.). Un test (`TestEstilo_ColoresSoloEnLasVariablesDeRoot`) falla si aparece un color escrito fuera de `:root`. Para cambiar la paleta alcanza con cambiar estos valores.
+
+| Rol | Variable | Valor | Uso |
+|---|---|---|---|
+| Principal | `--primario` | `#4338ca` | Botones, menú elegido, títulos y gráficos (`--serie-b`) |
+| Principal oscuro | `--primario-oscuro` | `#312e81` | Encabezado, botón al pasar el mouse, títulos de sección |
+| Secundario (acento) | `--acento` | `#0f766e` | Borde del encabezado y de las tarjetas del dashboard |
+| Fondo | `--fondo` | `#f1f5f9` | Fondo de la página |
+| Panel | `--panel` | `#ffffff` | Secciones, tarjetas y campos |
+| Texto | `--texto` | `#0f172a` | Texto principal |
+| Texto suave | `--suave` | `#475569` | Etiquetas, encabezados de tabla y avisos |
+| Éxito | `--ok-texto` sobre `--ok-fondo` | `#065f46` sobre `#ecfdf5` | Mensajes de éxito |
+| Error | `--error-texto` sobre `--error-fondo` | `#991b1b` sobre `#fef2f2` | Mensajes de error y línea de referencia de los gráficos (`--referencia`, `#dc2626`) |
+| Advertencia | `--aviso-texto` sobre `--aviso-fondo` | `#92400e` sobre `#fffbeb` | Avisos |
+
+**Contraste (WCAG 2.x, mínimo AA 4.5:1 para texto normal),** calculado por `TestEstilo_ContrasteAA`:
+
+| Texto sobre fondo | Contraste |
+|---|---|
+| `--texto` sobre `--panel` / `--fondo` | 17.9:1 / 16.3:1 |
+| `--suave` sobre `--panel` / `--fondo` | 7.6:1 / 6.9:1 |
+| `--sobre-primario` (blanco) sobre `--primario` / `--primario-oscuro` | 7.9:1 / 11.4:1 |
+| `--primario` sobre `--panel` (botón secundario) | 7.9:1 |
+| `--texto` sobre `--encabezado-tabla` | 17.1:1 |
+| `--ok-texto` sobre `--ok-fondo` | 7.3:1 |
+| `--error-texto` sobre `--error-fondo` | 7.6:1 |
+| `--aviso-texto` sobre `--aviso-fondo` | 6.8:1 |
+| `--acento` sobre `--panel` | 5.5:1 |
+
+Los componentes (botones, campos, tablas, mensajes y tarjetas) comparten el borde redondeado `--radio` (8 px), y el dashboard muestra el resumen y las métricas en tarjetas (`.tarjetas` y `.tarjeta`).
+
 ### 4.4 Pruebas de integración con PostgreSQL
 
 Los tests de los repositorios PostgreSQL y del wiring de `cmd/server` corren solo si está definida `TEST_DATABASE_URL`; si no, hacen `t.Skip`, así que en una máquina sin Docker los tests pasan igual. El CI sí define `TEST_DATABASE_URL` y corre estos tests (sección 6). Con la base levantada (sección 5):
