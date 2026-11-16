@@ -78,8 +78,8 @@ func initializeUUIDBaseScenario(ctx *godog.ScenarioContext) {
 		s.sprints = sprint.NewManager(sprint.NewMemoryRepository(), s.projects, s.items)
 		s.members = member.NewManager(member.NewMemoryRepository(), s.projects)
 		s.defects = defect.NewManager(defect.NewMemoryRepository(), s.items, s.sprints)
-		s.efforts = effort.NewManager(effort.NewMemoryRepository(), s.sprints, s.items)
-		s.poker = poker.NewManager(poker.NewMemoryRepository(), s.items)
+		s.efforts = effort.NewManager(effort.NewMemoryRepository(), s.sprints, s.items, anyMember{})
+		s.poker = poker.NewManager(poker.NewMemoryRepository(), s.items, anyMember{})
 		return ctx, nil
 	})
 

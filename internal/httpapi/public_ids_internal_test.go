@@ -130,8 +130,8 @@ func newPublicIDServer(t *testing.T) (*publicIDServer, *itemCounter) {
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
 	members := member.NewManager(member.NewMemoryRepository(), projects)
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
-	pokers := poker.NewManager(poker.NewMemoryRepository(), items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
+	pokers := poker.NewManager(poker.NewMemoryRepository(), items, anyMember{})
 	env := &publicIDServer{server: &server{projects: projects, items: items, sprints: sprints, members: members, defects: defects, efforts: efforts, poker: pokers}}
 
 	must := func(what string, err error) {

@@ -76,7 +76,7 @@ func initializeEffortScenario(ctx *godog.ScenarioContext) {
 		s.sprints = sprint.NewManager(s.sprintRepo, s.projects, s.items)
 		s.memory = NewMemoryRepository()
 		s.repo = s.memory
-		s.manager = NewManager(s.repo, s.sprints, s.items)
+		s.manager = NewManager(s.repo, s.sprints, s.items, anyMember{})
 		s.member, s.activity, s.dateRaw = "", "", ""
 		s.date = time.Time{}
 		s.hours = 0
@@ -190,7 +190,7 @@ func (s *effortScenario) assignedItem(itemID, sprintID int) error {
 
 func (s *effortScenario) repoFailsOnSave() error {
 	s.repo = failingEffortRepository{err: errEffortRepository}
-	s.manager = NewManager(s.repo, s.sprints, s.items)
+	s.manager = NewManager(s.repo, s.sprints, s.items, anyMember{})
 	return nil
 }
 
@@ -259,7 +259,7 @@ func (s *effortScenario) registerAndClose(member, dateRaw, activity, hoursRaw st
 	sprintRepo := &recordingSprintRepository{Repository: s.sprintRepo, log: log}
 	effortRepo := &recordingEffortRepository{MemoryRepository: s.memory, log: log}
 	sprintManager := sprint.NewManager(sprintRepo, s.projects, s.items)
-	manager := NewManager(effortRepo, sprintManager, s.items)
+	manager := NewManager(effortRepo, sprintManager, s.items, anyMember{})
 
 	start := make(chan struct{})
 	var wg sync.WaitGroup

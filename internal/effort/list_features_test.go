@@ -60,7 +60,7 @@ func initializeListScenario(ctx *godog.ScenarioContext) {
 		s.sprintRepo = sprint.NewMemoryRepository()
 		s.sprints = sprint.NewManager(s.sprintRepo, s.projects, s.items)
 		s.memory = NewMemoryRepository()
-		s.manager = NewManager(s.memory, s.sprints, s.items)
+		s.manager = NewManager(s.memory, s.sprints, s.items, anyMember{})
 		s.projectID = 0
 		s.summary = Summary{}
 		s.err = nil
@@ -168,7 +168,7 @@ func (s *listEffortScenario) seedEffort(hoursRaw, member, activity string, itemI
 }
 
 func (s *listEffortScenario) repoFailsOnList() error {
-	s.manager = NewManager(failingEffortRepository{err: errEffortRepository}, s.sprints, s.items)
+	s.manager = NewManager(failingEffortRepository{err: errEffortRepository}, s.sprints, s.items, anyMember{})
 	return nil
 }
 

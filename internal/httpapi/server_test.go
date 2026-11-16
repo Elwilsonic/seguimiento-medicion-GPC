@@ -71,10 +71,25 @@ func newHandler() http.Handler {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
-	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
+}
+
+// newHandlerValidatingMembers arma el handler como cmd/server: Planning Poker y
+// Esfuerzo validan contra los integrantes del proyecto (HU-54). newHandler
+// acepta cualquier nombre, para que los tests de las historias anteriores
+// sigan verificando lo mismo sin registrar integrantes (D5 de HU-54).
+func newHandlerValidatingMembers() http.Handler {
+	projects := project.NewManager(project.NewMemoryRepository())
+	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
+	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
+	members := newMembers(projects)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, members)
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items, members)
+	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
+	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, members)
 }
 
 // newMembers crea el Manager de integrantes (HU-15) en memoria, sobre el
@@ -651,8 +666,8 @@ func TestRegistrarFechaInicioProyecto_ErrorInternoDevuelve500(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
-	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 
@@ -824,8 +839,8 @@ func TestErrorInterno_Devuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(brokenRepository{})
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
-	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 

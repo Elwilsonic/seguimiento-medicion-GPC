@@ -222,7 +222,7 @@ func TestListByItem_ItemInexistente(t *testing.T) {
 func TestListBySprint_ErrorDelRepositorio(t *testing.T) {
 	env := newEffortEnv(t)
 	sp := env.addSprint(t, "Sprint 1", sprint.StatusOpen)
-	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items)
+	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items, anyMember{})
 
 	got, err := env.manager.ListBySprint(sp.ID)
 
@@ -238,7 +238,7 @@ func TestListBySprint_ErrorDelRepositorio(t *testing.T) {
 func TestListByItem_ErrorDelRepositorio(t *testing.T) {
 	env := newEffortEnv(t)
 	item := env.addItem(t, "Login de usuarios", backlog.StatusInProgress, 0)
-	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items)
+	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items, anyMember{})
 
 	got, err := env.manager.ListByItem(item.ID)
 

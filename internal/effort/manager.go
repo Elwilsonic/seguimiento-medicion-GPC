@@ -10,8 +10,15 @@ type Manager struct {
 	repo    Repository
 	sprints *sprint.Manager
 	items   *backlog.Manager
+	members Members
 }
 
-func NewManager(repo Repository, sprints *sprint.Manager, items *backlog.Manager) *Manager {
-	return &Manager{repo: repo, sprints: sprints, items: items}
+// Members resuelve el nombre registrado de un integrante del proyecto, o
+// devuelve un error si no lo es (HU-54, D2). Lo cumple *member.Manager.
+type Members interface {
+	CanonicalName(projectID int, name string) (string, error)
+}
+
+func NewManager(repo Repository, sprints *sprint.Manager, items *backlog.Manager, members Members) *Manager {
+	return &Manager{repo: repo, sprints: sprints, items: items, members: members}
 }

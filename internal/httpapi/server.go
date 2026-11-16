@@ -377,6 +377,7 @@ func statusFor(err error) int {
 		errors.Is(err, defect.ErrMissingDetectionSprint),
 		errors.Is(err, defect.ErrInvalidStatus), errors.Is(err, defect.ErrMissingResolutionSprint),
 		errors.Is(err, poker.ErrEmptyVoter), errors.Is(err, poker.ErrInvalidCard),
+		errors.Is(err, member.ErrNotProjectMember),
 		errors.Is(err, member.ErrEmptyName), errors.Is(err, member.ErrMissingRole), errors.Is(err, member.ErrInvalidRole):
 		return http.StatusBadRequest
 	case errors.Is(err, project.ErrProjectNotFound), errors.Is(err, backlog.ErrItemNotFound),

@@ -141,7 +141,7 @@ func newReportEnv() *reportEnv {
 	e.projects = project.NewManager(e.projectSpy)
 	e.items = backlog.NewManager(e.itemSpy, e.projects)
 	e.sprints = sprint.NewManager(e.sprintSpy, e.projects, e.items)
-	e.efforts = effort.NewManager(e.effortSpy, e.sprints, e.items)
+	e.efforts = effort.NewManager(e.effortSpy, e.sprints, e.items, anyMember{})
 	e.defects = defect.NewManager(e.defectSpy, e.items, e.sprints)
 	e.metrics = metrics.NewManager(e.items, e.sprints, e.efforts, e.defects)
 	e.reports = NewManager(e.projects, e.items, e.sprints, e.metrics, e.efforts, e.defects)

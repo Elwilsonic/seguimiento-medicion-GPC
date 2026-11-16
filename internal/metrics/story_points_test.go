@@ -55,7 +55,7 @@ func newMetricsEnvWithDefects(itemRepo backlog.Repository, sprintRepo sprint.Rep
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(itemRepo, projects)
 	sprints := sprint.NewManager(sprintRepo, projects, items)
-	efforts := effort.NewManager(effortRepo, sprints, items)
+	efforts := effort.NewManager(effortRepo, sprints, items, anyMember{})
 	defects := defect.NewManager(defectRepo, items, sprints)
 	return &metricsEnv{itemRepo: itemRepo, sprintRepo: sprintRepo, effortRepo: effortRepo, defectRepo: defectRepo, projects: projects, items: items, sprints: sprints, efforts: efforts, defects: defects, metrics: NewManager(items, sprints, efforts, defects)}
 }

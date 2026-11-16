@@ -74,8 +74,8 @@ func initializeSprintsPokerUUIDScenario(ctx *godog.ScenarioContext) {
 		s.projects = project.NewManager(project.NewMemoryRepository())
 		s.items = backlog.NewManager(backlog.NewMemoryRepository(), s.projects)
 		s.sprints = sprint.NewManager(sprint.NewMemoryRepository(), s.projects, s.items)
-		efforts := effort.NewManager(effort.NewMemoryRepository(), s.sprints, s.items)
-		s.poker = poker.NewManager(poker.NewMemoryRepository(), s.items)
+		efforts := effort.NewManager(effort.NewMemoryRepository(), s.sprints, s.items, anyMember{})
+		s.poker = poker.NewManager(poker.NewMemoryRepository(), s.items, anyMember{})
 		defects := defect.NewManager(defect.NewMemoryRepository(), s.items, s.sprints)
 		s.h = httpapi.NewHandler(s.projects, s.items, s.sprints, efforts, s.poker, defects, newMembers(s.projects))
 		s.ids = map[string]string{}

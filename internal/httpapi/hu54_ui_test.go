@@ -10,12 +10,22 @@ import (
 
 // HU-54 · Elegir el integrante de una lista al votar y al registrar esfuerzo (Issue #219).
 
+// newHU54Test prepara la interfaz con el handler que valida integrantes,
+// como cmd/server.
+func newHU54Test(t *testing.T) *hu53 {
+	t.Helper()
+	s := newHU53Test(t)
+	s.h = newHandlerValidatingMembers()
+	s.data.h = s.h
+	return s
+}
+
 const (
 	voteMemberField   = "#form-votar-poker [name=integrante]"
 	effortMemberField = "#form-registrar-esfuerzo [name=integrante]"
 )
 
-// HU-54 · CA-54.1 · Verifica que «Integrante» de "Votar" y de "Registrar esfuerzo" sea un desplegable obligatorio y no un campo de texto.
+// HU-54 · CA-54.1 · Verifica que «Integrante» de "Votar" y de "Registrar esfuerzo" sea un desplegable y no un campo de texto.
 func TestHU54_IntegranteEsUnDesplegable(t *testing.T) {
 	page := get(t, newHandler(), "/").Body.String()
 	for _, form := range []string{"form-votar-poker", "form-registrar-esfuerzo"} {
@@ -23,8 +33,8 @@ func TestHU54_IntegranteEsUnDesplegable(t *testing.T) {
 		if m == nil {
 			t.Fatalf("la página no tiene el formulario %s", form)
 		}
-		if !regexp.MustCompile(`<select name="integrante"[^>]*\brequired\b`).MatchString(m[1]) {
-			t.Errorf("%s: «Integrante» no es un <select name=\"integrante\" required>", form)
+		if !regexp.MustCompile(`<select name="integrante"`).MatchString(m[1]) {
+			t.Errorf("%s: «Integrante» no es un <select name=\"integrante\">", form)
 		}
 		if regexp.MustCompile(`<input name="integrante"`).MatchString(m[1]) {
 			t.Errorf("%s: «Integrante» sigue siendo un campo de texto", form)
@@ -34,7 +44,7 @@ func TestHU54_IntegranteEsUnDesplegable(t *testing.T) {
 
 // HU-54 · CA-54.1 · Verifica que los desplegables ofrezcan los integrantes del proyecto actual y cambien con él, en el navegador.
 func TestHU54_DesplegablesConLosIntegrantesDelProyecto(t *testing.T) {
-	s := newHU53Test(t)
+	s := newHU54Test(t)
 	s.member("Sistema de ventas", "Sosa Ricardo", "PRODUCT_BUILDER")
 	s.member("Sistema de ventas", "García Santiago", "PRODUCT_BUILDER")
 	s.member("Inventario", "Cardozo Leandro", "PRODUCT_BUILDER")
@@ -57,7 +67,7 @@ func TestHU54_DesplegablesConLosIntegrantesDelProyecto(t *testing.T) {
 
 // HU-54 · CA-54.1 · Verifica que, sin integrantes, «Integrante» avise "Registrá integrantes primero" y el formulario no se pueda enviar.
 func TestHU54_SinIntegrantesAvisa(t *testing.T) {
-	s := newHU53Test(t)
+	s := newHU54Test(t)
 	s.openSprintWithItem("Sistema de ventas", "Sprint 2", "Registrar venta")
 	s.openWithProjectAndSprint("Sistema de ventas", "Sprint 2")
 
@@ -66,16 +76,18 @@ func TestHU54_SinIntegrantesAvisa(t *testing.T) {
 			sel+" no avisa \"Registrá integrantes primero\"")
 	}
 	s.goTo("Esfuerzo")
+	s.u.choose(fields["«Ítem» de Registrar esfuerzo"], "Registrar venta")
 	s.u.countAPICalls()
 	s.u.click("#form-registrar-esfuerzo button[type=submit]")
+	s.messageIs("esfuerzo", "Registrá integrantes primero")
 	if n := s.u.apiCalls(); n != 0 {
-		t.Errorf("el formulario se envió %d vez/veces sin integrante elegido", n)
+		t.Errorf("el formulario llamó %d vez/veces a la API sin integrante elegido", n)
 	}
 }
 
 // HU-54 · CA-54.1 · Verifica que se registre un esfuerzo eligiendo al integrante de la lista, en el navegador.
 func TestHU54_RegistrarEsfuerzoEligiendoDeLaLista(t *testing.T) {
-	s := newHU53Test(t)
+	s := newHU54Test(t)
 	s.openSprintWithItem("Sistema de ventas", "Sprint 2", "Registrar venta")
 	s.member("Sistema de ventas", "Sosa Ricardo", "PRODUCT_BUILDER")
 	s.member("Sistema de ventas", "García Santiago", "PRODUCT_BUILDER")

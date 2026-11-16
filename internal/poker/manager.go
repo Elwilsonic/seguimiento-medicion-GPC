@@ -13,15 +13,22 @@ type Manager struct {
 	// mu protege las operaciones que consultan y escriben el repositorio, para
 	// que dos aperturas simultáneas no dejen dos sesiones abiertas para el
 	// mismo ítem (CA-21.6).
-	mu    sync.Mutex
-	repo  Repository
-	items *backlog.Manager
+	mu      sync.Mutex
+	repo    Repository
+	items   *backlog.Manager
+	members Members
 }
 
-// NewManager crea un Manager que guarda las sesiones en repo y valida los
-// ítems con items (HU-21).
-func NewManager(repo Repository, items *backlog.Manager) *Manager {
-	return &Manager{repo: repo, items: items}
+// Members resuelve el nombre registrado de un integrante del proyecto, o
+// devuelve un error si no lo es (HU-54, D2). Lo cumple *member.Manager.
+type Members interface {
+	CanonicalName(projectID int, name string) (string, error)
+}
+
+// NewManager crea un Manager que guarda las sesiones en repo, valida los
+// ítems con items (HU-21) y los votantes con members (HU-54).
+func NewManager(repo Repository, items *backlog.Manager, members Members) *Manager {
+	return &Manager{repo: repo, items: items, members: members}
 }
 
 // Vote registra o reemplaza un voto y devuelve la sesión sin exponer sus
@@ -44,6 +51,17 @@ func (m *Manager) Vote(sessionID int, voter string, points int) (Session, error)
 	}
 	if session.Status != StatusOpen {
 		return Session{}, ErrSessionNotOpen
+	}
+	// HU-54 (D3): el votante tiene que ser integrante del proyecto del ítem,
+	// y el voto se guarda con su nombre registrado. Se valida al final, para
+	// conservar el orden de errores de HU-22.
+	item, err := m.items.GetItem(session.ItemID)
+	if err != nil {
+		return Session{}, err
+	}
+	voter, err = m.members.CanonicalName(item.ProjectID, voter)
+	if err != nil {
+		return Session{}, err
 	}
 
 	replaced := false

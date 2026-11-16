@@ -282,9 +282,18 @@ func (s *hu53) createItemFromSection(title string) error {
 }
 
 func (s *hu53) registerEffort(member string, hours int, item string) error {
+	// HU-54 (D5): «Integrante» es un desplegable con los integrantes del
+	// proyecto. Si el integrante del escenario no está registrado, se
+	// registra por la API y se vuelven a elegir el proyecto y el sprint para
+	// recargar las listas, sin cambiar lo que verifica el escenario.
+	if !slices.Contains(s.u.options(effortMemberField), member) {
+		s.data.member(s.ids[s.project], member, "PRODUCT_BUILDER")
+		s.chooseIn(s.project, "«Proyecto actual»")
+		s.chooseIn(s.sprint+" (ABIERTO)", "«Sprint actual»")
+	}
 	s.goTo("Esfuerzo")
 	s.u.choose(fields["«Ítem» de Registrar esfuerzo"], item)
-	s.u.fill("#form-registrar-esfuerzo [name=integrante]", member)
+	s.u.choose(effortMemberField, member)
 	s.u.fill("#form-registrar-esfuerzo [name=fecha]", "2026-10-02")
 	s.u.fill("#form-registrar-esfuerzo [name=actividad]", "Desarrollo")
 	s.u.fill("#form-registrar-esfuerzo [name=horas]", itoa(hours))

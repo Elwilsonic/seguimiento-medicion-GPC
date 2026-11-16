@@ -59,7 +59,7 @@ func newEffortEnv(t *testing.T) *effortEnv {
 		sprintRepo: sprintRepo,
 		sprints:    sprints,
 		memory:     memory,
-		manager:    NewManager(memory, sprints, items),
+		manager:    NewManager(memory, sprints, items, anyMember{}),
 	}
 }
 
@@ -371,7 +371,7 @@ func TestRegister_CopiaIndependiente(t *testing.T) {
 // HU-26 · CA-26.9 · Verifica que, si el repositorio falla al guardar, Register devuelva ese error y no se guarde nada.
 func TestRegister_ErrorDelRepositorio(t *testing.T) {
 	env, item, sp := envForRegister(t)
-	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items)
+	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items, anyMember{})
 
 	_, err := env.manager.Register(sp.ID, item.ID, "García Santiago", testEffortDate, "Implementar", 2)
 
@@ -430,7 +430,7 @@ func TestRegister_ConcurrenteConCierre(t *testing.T) {
 			sprintRepo := &recordingSprintRepository{Repository: env.sprintRepo, log: log}
 			effortRepo := &recordingEffortRepository{MemoryRepository: env.memory, log: log}
 			sprintManager := sprint.NewManager(sprintRepo, env.projects, env.items)
-			manager := NewManager(effortRepo, sprintManager, env.items)
+			manager := NewManager(effortRepo, sprintManager, env.items, anyMember{})
 
 			start := make(chan struct{})
 			var wg sync.WaitGroup

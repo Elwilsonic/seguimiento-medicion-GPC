@@ -17,16 +17,16 @@ Rama `feature/HU-54-integrantes-del-proyecto`, desde `main` (`d0a2b98`). Cada co
 - [x] 2.1 `internal/member`: `CanonicalName` (nombre exacto, otras mayúsculas y espacios, no integrante, integrante de otro proyecto, proyecto sin integrantes).
 - [x] 2.2 `internal/poker` y `internal/effort`: voto y esfuerzo con integrante, con nombre normalizado, rechazados sin guardar, y orden de errores (D3).
 - [x] 2.3 `internal/httpapi`: 400 con el mensaje en las dos rutas, y los desplegables de la interfaz en el navegador (chromedp, como HU-53).
-- [ ] 2.4 Adaptar los tests existentes según D5, sin cambiar lo que verifican. Va con el GREEN: necesita la firma nueva de `NewManager`, que en RED no existe.
+- [x] 2.4 Adaptar los tests existentes según D5, sin cambiar lo que verifican. Va con el GREEN: necesita la firma nueva de `NewManager`, que en RED no existe.
 - [x] 2.5 Correr `go test ./...` y verificar que fallan solo los tests de HU-54, por función no declarada o por aserción. Proponer `git commit -m "test(HU-54): agregar tests (RED)" -m "Refs #219"`.
 
 ## 3. Código en GREEN
 
-- [ ] 3.1 `member.CanonicalName` y `ErrNotProjectMember` (D1).
-- [ ] 3.2 Interfaz `Members` y validación en `poker.Vote` y `effort.Register` (D2, D3); `NewManager` con el parámetro nuevo; `cmd/server/main.go`.
-- [ ] 3.3 `statusFor`: `ErrNotProjectMember` → 400 (D4).
-- [ ] 3.4 `index.html` y `app.js`: desplegables de integrante (D6).
-- [ ] 3.5 `go test ./...` y `go test -race ./...` en verde. Proponer `git commit -m "feat(HU-54): validar el integrante al votar y al registrar esfuerzo (GREEN)" -m "Refs #219"`.
+- [x] 3.1 `member.CanonicalName` y `ErrNotProjectMember` (D1).
+- [x] 3.2 Interfaz `Members` y validación en `poker.Vote` y `effort.Register` (D2, D3); `NewManager` con el parámetro nuevo; `cmd/server/main.go`.
+- [x] 3.3 `statusFor`: `ErrNotProjectMember` → 400 (D4).
+- [x] 3.4 `index.html` y `app.js`: desplegables de integrante (D6).
+- [x] 3.5 `go test ./...` y `go test -race ./...` en verde. Proponer `git commit -m "feat(HU-54): validar el integrante al votar y al registrar esfuerzo (GREEN)" -m "Refs #219"`.
 
 ## 4. Refactor
 

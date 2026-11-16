@@ -44,7 +44,7 @@ type hu54Scenario struct {
 func initializeHU54Scenario(ctx *godog.ScenarioContext) {
 	s := &hu54Scenario{}
 	ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
-		s.h = newHandler()
+		s.h = newHandlerValidatingMembers()
 		s.projects = map[string]string{}
 		s.sprints = map[string]string{}
 		s.items = map[string]string{}

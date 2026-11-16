@@ -40,11 +40,11 @@ Es un valor inválido del cuerpo, como el integrante vacío (`ErrEmptyVoter`, `E
 
 ### D5. Tests existentes: un falso que acepta a todos
 
-`NewManager` de `poker` y de `effort` recibe el nuevo parámetro `members`. Los tests de otras historias (HU-21 a HU-28) que arman el `Manager` a mano reciben un falso que devuelve el nombre tal cual (`anyMember`), para que sigan verificando lo mismo sin registrar integrantes. Los handlers de `internal/httpapi` de los tests usan el `member.Manager` real: los tests de API que votan o registran horas registran antes a los integrantes que usan, en sus helpers. Ningún test cambia lo que verifica, y la evidencia lista cada uno.
+`NewManager` de `poker` y de `effort` recibe el nuevo parámetro `members`. Los tests de otras historias que arman los managers (en `poker`, `effort`, `metrics`, `report` y `httpapi`, incluido `newHandler`) reciben un falso que devuelve el nombre tal cual (`anyMember`), para que sigan verificando lo mismo sin registrar integrantes. Los tests de HU-54 usan `newHandlerValidatingMembers`, armado como `cmd/server` con el `member.Manager` real. El único helper de otra historia que cambia es `registerEffort` de HU-53, que ahora elige al integrante del desplegable y, si no está, lo registra por la API antes. Ningún test cambia lo que verifica.
 
 ### D6. Interfaz
 
-`<input name="integrante">` de `#form-votar-poker` y de "Registrar esfuerzo" pasan a `<select name="integrante">`, llenados con `llenarDesplegable` desde `datos.integrantes` (HU-53), con el nombre como valor y como texto. Sin integrantes, una sola opción deshabilitada "Registrá integrantes primero" y el botón no envía (validación `required` del navegador).
+`<input name="integrante">` de `#form-votar-poker` y de "Registrar esfuerzo" pasan a `<select name="integrante">`, llenados con `llenarDesplegable` desde `datos.integrantes` (HU-53), con el nombre como valor y como texto. Sin integrantes, una sola opción vacía "Registrá integrantes primero", y la interfaz avisa con ese texto sin llamar a la API, como el aviso de ítem de HU-53. No se usa `required` del navegador: cortaría el envío antes de que la interfaz muestre su mensaje (CA-53.5). Los errores al votar se muestran en la sección Planning Poker (`msg-poker`).
 
 ## Risks / Trade-offs
 

@@ -245,7 +245,7 @@ func TestCorrectHours_ReflejaLasHorasRealesDelSprint(t *testing.T) {
 // HU-28 · Error · Verifica que, si el repositorio falla al buscar el esfuerzo, CorrectHours devuelva ese error.
 func TestCorrectHours_ErrorDelRepositorio(t *testing.T) {
 	env := newEffortEnv(t)
-	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items)
+	env.manager = NewManager(failingEffortRepository{err: errEffortRepository}, env.sprints, env.items, anyMember{})
 
 	_, err := env.manager.CorrectHours(1, 10)
 
@@ -284,7 +284,7 @@ func (r *secondReadFailingRepository) Update(e Effort) (Effort, error) {
 func TestCorrectHours_ErrorEnLaSegundaLecturaSePropaga(t *testing.T) {
 	env, saved, _ := envForCorrect(t)
 	repo := &secondReadFailingRepository{MemoryRepository: env.memory}
-	env.manager = NewManager(repo, env.sprints, env.items)
+	env.manager = NewManager(repo, env.sprints, env.items, anyMember{})
 
 	got, err := env.manager.CorrectHours(saved.ID, 10)
 
