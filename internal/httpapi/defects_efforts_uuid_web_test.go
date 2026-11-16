@@ -12,8 +12,8 @@ import (
 // Los tests no tienen un motor de JavaScript, así que verifican el contenido de
 // index.html y app.js; el uso en el navegador se registra en la evidencia TDD.
 
-// formInput devuelve la etiqueta <input> del campo name dentro del formulario
-// formID de la página.
+// formInput devuelve la etiqueta del campo name dentro del formulario formID
+// de la página: un <input> o, desde HU-53, un <select> (D9 de su diseño).
 func formInput(t *testing.T, page, formID, name string) string {
 	t.Helper()
 	inicio := strings.Index(page, `<form id="`+formID+`"`)
@@ -24,18 +24,22 @@ func formInput(t *testing.T, page, formID, name string) string {
 	if fin == -1 {
 		t.Fatalf("el formulario %q no se cierra", formID)
 	}
-	input := regexp.MustCompile(`<input name="` + name + `"[^>]*>`).FindString(page[inicio : inicio+fin])
+	input := regexp.MustCompile(`<(input|select) name="` + name + `"[^>]*>`).FindString(page[inicio : inicio+fin])
 	if input == "" {
 		t.Fatalf("el formulario %q no tiene el campo %q", formID, name)
 	}
 	return input
 }
 
-// expectUUIDTextInput verifica que el campo acepte un UUID como texto:
-// type="text", un placeholder que nombra el UUID, sin autocompletar ni
-// corrector, y sin type="number" ni min.
+// expectUUIDTextInput verifica que el campo acepte un UUID como texto. Un
+// <select> lo acepta siempre: el valor de cada opción es el UUID (HU-53). Un
+// <input> tiene type="text", un placeholder que nombra el UUID, sin
+// autocompletar ni corrector, y sin type="number" ni min.
 func expectUUIDTextInput(t *testing.T, label, input string) {
 	t.Helper()
+	if strings.HasPrefix(input, "<select") {
+		return
+	}
 	for _, want := range []string{`type="text"`, `autocomplete="off"`, `spellcheck="false"`} {
 		if !strings.Contains(input, want) {
 			t.Errorf("%s = %s, no tiene %s", label, input, want)

@@ -357,7 +357,7 @@ func TestInterfaz_FormularioDeDefecto(t *testing.T) {
 		"<h2>Defectos</h2>",
 		`id="form-registrar-defecto"`,
 		"Registrar defecto",
-		`name="sprint_deteccion_id" type="text"`,
+		`name="sprint_deteccion_id"`,
 		`id="msg-defectos"`,
 	} {
 		if !strings.Contains(page, want) {
@@ -383,7 +383,9 @@ func TestInterfaz_FormularioDeDefecto(t *testing.T) {
 func TestInterfaz_RegistrarDefectoMuestraElMensajeDeExito(t *testing.T) {
 	js := get(t, newHandler(), "/app.js").Body.String()
 
-	for _, want := range []string{`mostrar("msg-defectos", "Defecto "`, `" registrado para el ítem "`} {
+	// Desde HU-53 el mensaje nombra el ítem ("Defecto registrado para
+	// «Registrar venta»."), así que se verifica el comienzo común.
+	for _, want := range []string{`mostrar("msg-defectos", "Defecto `, `registrado para `} {
 		if !strings.Contains(js, want) {
 			t.Errorf("app.js no contiene %q", want)
 		}
@@ -452,9 +454,9 @@ func TestInterfaz_FormularioCambiarEstadoDeDefecto(t *testing.T) {
 	}
 	for _, want := range []string{
 		"Cambiar estado de defecto",
-		`name="defecto_id" type="text"`,
+		`name="defecto_id"`,
 		`<select name="estado" required></select>`,
-		`name="sprint_resolucion_id" type="text"`,
+		`name="sprint_resolucion_id"`,
 	} {
 		if !strings.Contains(formulario, want) {
 			t.Errorf("el formulario para cambiar el estado no contiene %q", want)
@@ -644,7 +646,7 @@ func TestInterfaz_FormularioDeConsultaDeEsfuerzos(t *testing.T) {
 		"Consultar esfuerzos",
 		`<option value="sprint">Sprint</option>`,
 		`<option value="item">Historia</option>`,
-		`name="referencia" type="text"`,
+		`name="referencia"`,
 		`id="esfuerzos"`,
 		`id="total-esfuerzos"`,
 		`id="msg-esfuerzos"`,

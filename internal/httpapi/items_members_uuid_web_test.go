@@ -12,8 +12,8 @@ import (
 // verifican el contenido de index.html y app.js; el uso en el navegador se
 // registra en la evidencia TDD.
 
-// memberIDInput devuelve la etiqueta <input> del campo «ID del integrante»
-// del formulario "Modificar integrante".
+// memberIDInput devuelve la etiqueta del campo «ID del integrante» del
+// formulario "Modificar integrante": un <input> o, desde HU-53, un <select>.
 func memberIDInput(t *testing.T) string {
 	t.Helper()
 	page := get(t, newHandler(), "/").Body.String()
@@ -21,7 +21,7 @@ func memberIDInput(t *testing.T) string {
 	if inicio == -1 {
 		t.Fatal("la página no contiene el formulario de modificar integrante")
 	}
-	input := regexp.MustCompile(`<input name="id"[^>]*>`).FindString(page[inicio:])
+	input := regexp.MustCompile(`<(input|select) name="id"[^>]*>`).FindString(page[inicio:])
 	if input == "" {
 		t.Fatal("el formulario de modificar integrante no tiene el campo «ID del integrante»")
 	}
@@ -31,8 +31,15 @@ func memberIDInput(t *testing.T) string {
 // HU-52 · CA-52.6 · Verifica que el campo «ID del integrante» acepte el UUID como texto: type="text", sin min, con placeholder de UUID, sin autocompletar ni corrector.
 func TestInterfaz_IDDelIntegranteAceptaElUUIDComoTexto(t *testing.T) {
 	input := memberIDInput(t)
+	if !strings.Contains(input, "required") {
+		t.Errorf("«ID del integrante» = %s, debería ser obligatorio", input)
+	}
+	// Un <select> acepta el UUID siempre: es el valor de cada opción (HU-53).
+	if strings.HasPrefix(input, "<select") {
+		return
+	}
 
-	for _, want := range []string{`type="text"`, `required`, `placeholder="UUID del integrante"`, `autocomplete="off"`, `spellcheck="false"`} {
+	for _, want := range []string{`type="text"`, `placeholder="UUID del integrante"`, `autocomplete="off"`, `spellcheck="false"`} {
 		if !strings.Contains(input, want) {
 			t.Errorf("«ID del integrante» = %s, no tiene %s", input, want)
 		}
