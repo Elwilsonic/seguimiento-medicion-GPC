@@ -46,7 +46,7 @@ func initializeVoteScenario(ctx *godog.ScenarioContext) {
 		s.projects = project.NewManager(project.NewMemoryRepository())
 		s.items = backlog.NewManager(backlog.NewMemoryRepository(), s.projects)
 		s.repo = NewMemoryRepository()
-		s.manager = NewManager(s.repo, s.items)
+		s.manager = NewManager(s.repo, s.items, anyMember{})
 		s.session = Session{}
 		s.err = nil
 		return ctx, nil

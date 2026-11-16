@@ -130,9 +130,9 @@ func TestAbrirSesionPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T)
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
-	h := httpapi.NewHandler(projects, items, sprints, efforts, poker.NewManager(brokenPokerRepository{}, items), defects, newMembers(projects))
+	h := httpapi.NewHandler(projects, items, sprints, efforts, poker.NewManager(brokenPokerRepository{}, items, anyMember{}), defects, newMembers(projects))
 	createProject(t, h, "Sistema de ventas")
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/backlog", validItem), http.StatusCreated)
 
@@ -183,9 +183,9 @@ func TestVotarPoker_SesionNoAbiertaDevuelve409(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	pokerRepo := poker.NewMemoryRepository()
-	pokerManager := poker.NewManager(pokerRepo, items)
+	pokerManager := poker.NewManager(pokerRepo, items, anyMember{})
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	p, err := projects.Create("Sistema de ventas", "")
 	if err != nil {
@@ -227,9 +227,9 @@ func TestVotarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
-	pokerManager := poker.NewManager(pokerRepo, items)
+	pokerManager := poker.NewManager(pokerRepo, items, anyMember{})
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	p, err := projects.Create("Sistema de ventas", "")
 	if err != nil {
@@ -328,9 +328,9 @@ func TestRevelarPoker_ErrorDelRepositorioDevuelve500SinDetalle(t *testing.T) {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	pokerRepo := &failingVoteHTTPRepository{MemoryRepository: poker.NewMemoryRepository()}
-	pokerManager := poker.NewManager(pokerRepo, items)
+	pokerManager := poker.NewManager(pokerRepo, items, anyMember{})
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	p, err := projects.Create("Sistema de ventas", "")
 	if err != nil {
@@ -489,9 +489,9 @@ func TestRegistrarEstimacionPoker_SesionInexistenteDevuelve404(t *testing.T) {
 func newEstimateHandler(pokerRepo poker.Repository) http.Handler {
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
-	pokerManager := poker.NewManager(pokerRepo, items)
+	pokerManager := poker.NewManager(pokerRepo, items, anyMember{})
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
 	defects := defect.NewManager(defect.NewMemoryRepository(), items, sprints)
 	return httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 }

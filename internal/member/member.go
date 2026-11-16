@@ -39,4 +39,7 @@ var (
 	// ErrDuplicateMember indica que ya hay un integrante con ese nombre en el
 	// proyecto (RN-15.4).
 	ErrDuplicateMember = errors.New("ya hay un integrante con ese nombre en el proyecto")
+	// ErrNotProjectMember indica que el nombre no es de ningún integrante
+	// del proyecto (HU-54, CA-54.2 y CA-54.3).
+	ErrNotProjectMember = errors.New("el integrante no pertenece al proyecto")
 )

@@ -94,8 +94,8 @@ func newHandlerWithDefectRepository(t *testing.T, repo defect.Repository) http.H
 	projects := project.NewManager(project.NewMemoryRepository())
 	items := backlog.NewManager(backlog.NewMemoryRepository(), projects)
 	sprints := sprint.NewManager(sprint.NewMemoryRepository(), projects, items)
-	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items)
-	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items)
+	efforts := effort.NewManager(effort.NewMemoryRepository(), sprints, items, anyMember{})
+	pokerManager := poker.NewManager(poker.NewMemoryRepository(), items, anyMember{})
 	defects := defect.NewManager(repo, items, sprints)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, newMembers(projects))
 

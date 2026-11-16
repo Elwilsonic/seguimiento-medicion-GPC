@@ -40,9 +40,15 @@ func (m *Manager) Register(sprintID, itemID int, member string, date time.Time, 
 		if item.SprintID != sprintID {
 			return sprint.ErrItemNotAssignedToSprint
 		}
+		// HU-54 (D3): el integrante tiene que ser del proyecto del ítem, y
+		// el esfuerzo se guarda con su nombre registrado.
+		registered, err := m.members.CanonicalName(item.ProjectID, member)
+		if err != nil {
+			return err
+		}
 		saved, err = m.repo.Save(Effort{
 			PublicID: uuid.NewV4(),
-			Member:   member,
+			Member:   registered,
 			Date:     date,
 			Activity: activity,
 			ItemID:   itemID,

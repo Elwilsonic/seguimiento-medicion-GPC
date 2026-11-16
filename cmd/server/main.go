@@ -34,10 +34,11 @@ func main() {
 	projects := project.NewManager(repos.projects)
 	items := backlog.NewManager(repos.items, projects)
 	sprints := sprint.NewManager(repos.sprints, projects, items)
-	efforts := effort.NewManager(repos.efforts, sprints, items)
-	pokerManager := poker.NewManager(repos.poker, items)
 	defects := defect.NewManager(repos.defects, items, sprints)
 	members := member.NewManager(repos.members, projects)
+	// HU-54: Planning Poker y Esfuerzo validan contra los integrantes.
+	efforts := effort.NewManager(repos.efforts, sprints, items, members)
+	pokerManager := poker.NewManager(repos.poker, items, members)
 
 	addr := address(os.Getenv)
 	log.Printf("servidor escuchando en %s (almacenamiento: %s)", addr, cfg.kind)

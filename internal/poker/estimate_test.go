@@ -304,7 +304,7 @@ func TestEstimate_ErrorDelBacklogAlAsignarPropagaErrorYSesionSigueRevelada(t *te
 		t.Fatalf("crear ítem: %v", err)
 	}
 	repo := NewMemoryRepository()
-	manager := NewManager(repo, items)
+	manager := NewManager(repo, items, anyMember{})
 	session, err := manager.OpenSession(item.ID)
 	if err != nil {
 		t.Fatalf("abrir sesión: %v", err)

@@ -36,7 +36,7 @@ func newTestEnv(t *testing.T) *testEnv {
 		projects:  projects,
 		items:     items,
 		repo:      repo,
-		manager:   NewManager(repo, items),
+		manager:   NewManager(repo, items, anyMember{}),
 		projectID: p.ID,
 	}
 }
@@ -308,7 +308,7 @@ func TestOpenSession_ErrorDelRepositorioSEPropaga(t *testing.T) {
 	it := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
 
 	t.Run("al buscar la sesión abierta", func(t *testing.T) {
-		manager := NewManager(failingRepository{base: env.repo, failOpen: true}, env.items)
+		manager := NewManager(failingRepository{base: env.repo, failOpen: true}, env.items, anyMember{})
 
 		if _, err := manager.OpenSession(it.ID); !errors.Is(err, errRepository) {
 			t.Fatalf("error = %v, se esperaba errRepository", err)
@@ -316,7 +316,7 @@ func TestOpenSession_ErrorDelRepositorioSEPropaga(t *testing.T) {
 	})
 
 	t.Run("al guardar la sesión", func(t *testing.T) {
-		manager := NewManager(failingRepository{base: env.repo, failSave: true}, env.items)
+		manager := NewManager(failingRepository{base: env.repo, failSave: true}, env.items, anyMember{})
 
 		if _, err := manager.OpenSession(it.ID); !errors.Is(err, errRepository) {
 			t.Fatalf("error = %v, se esperaba errRepository", err)

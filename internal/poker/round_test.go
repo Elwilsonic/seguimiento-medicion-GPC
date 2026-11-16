@@ -248,7 +248,7 @@ func revealFailingRoundSession(t *testing.T) (*failingRoundRepository, *Manager,
 	env := newTestEnv(t)
 	item := env.createItem(t, "Historia de ejemplo", backlog.StatusPending, 0)
 	repo := &failingRoundRepository{MemoryRepository: NewMemoryRepository()}
-	manager := NewManager(repo, env.items)
+	manager := NewManager(repo, env.items, anyMember{})
 	session, err := manager.OpenSession(item.ID)
 	if err != nil {
 		t.Fatalf("abrir sesión: %v", err)

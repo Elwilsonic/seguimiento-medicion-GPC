@@ -152,6 +152,10 @@ function asegurarOpcion(select, id, texto) {
   }
 }
 
+// sinIntegrantes es el aviso de los desplegables de integrante sin
+// integrantes en el proyecto (HU-54).
+const sinIntegrantes = "Registrá integrantes primero";
+
 const porTitulo = (a, b) => a.titulo.localeCompare(b.titulo, "es");
 const textoSprint = (s) => s.nombre + " (" + s.estado + ")";
 
@@ -222,6 +226,12 @@ async function recargarListas() {
   }
   llenarDesplegable($("form-cambiar-estado-defecto").sprint_resolucion_id, datos.sprints, textoSprint,
     "Sin sprint de resolución", "Sin sprint de resolución");
+  // HU-54: votar y registrar esfuerzo eligen al integrante del proyecto por
+  // su nombre, que es lo que reciben la API y los reportes.
+  const porNombre = datos.integrantes.map((m) => ({ id: m.nombre, nombre: m.nombre }));
+  for (const form of ["form-votar-poker", "form-registrar-esfuerzo"]) {
+    llenarDesplegable($(form).integrante, porNombre, (m) => m.nombre, sinIntegrantes);
+  }
   llenarDesplegable($("form-modificar-integrante").id, datos.integrantes,
     (m) => m.nombre + " (" + nombresDeRoles[m.rol] + ")", "Sin integrantes en el proyecto", "Elegí un integrante");
   llenarDesplegable($("form-cambiar-estado-defecto").defecto_id, datos.defectos,
@@ -542,12 +552,16 @@ function mostrarPoker(s) {
   for (const carta of s.cartas) {
     botones.append(boton("Votar " + carta, async () => {
       const integrante = form.integrante.value;
+      // HU-54: sin integrante elegido, avisa sin llamar a la API.
+      if (integrante === "") {
+        throw new Error(sinIntegrantes);
+      }
       await api("POST", "/poker-sessions/" + form.dataset.sessionId + "/votes", {
         integrante,
         puntos: carta,
       });
       mostrar("msg-poker", "Voto registrado en la sesión " + s.id + ".", false);
-    }, "secundario"));
+    }, "secundario", "msg-poker"));
   }
 }
 
@@ -865,6 +879,9 @@ formEsfuerzo.addEventListener("submit", (e) => {
     // HU-53: sin ítem elegido, avisa con el texto del desplegable, sin llamar a la API.
     if (item === "") {
       throw new Error(form.item_id.options[form.item_id.selectedIndex]?.textContent || "Elegí un ítem");
+    }
+    if (form.integrante.value === "") {
+      throw new Error(sinIntegrantes);
     }
     const esfuerzo = await api("POST", "/sprints/" + sprint + "/items/" + item + "/esfuerzos", {
       integrante: form.integrante.value,
