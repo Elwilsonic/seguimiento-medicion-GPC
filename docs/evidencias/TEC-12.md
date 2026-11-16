@@ -71,5 +71,5 @@ Los links de las evidencias de HU-31, HU-37, HU-38, HU-49 y HU-53 se actualizaro
 
 | Fase | Commit | Mensaje |
 |---|---|---|
-| RED | (propuesto) | `test(TEC-12): agregar tests de la paleta y el estilo (RED)` |
-| GREEN | (propuesto) | `feat(TEC-12): renovar los colores y el estilo de la interfaz (GREEN)` |
+| RED | 3824303 | `test(TEC-12): agregar tests de la paleta y el estilo (RED)` |
+| GREEN | acf52f8 | `feat(TEC-12): renovar los colores y el estilo de la interfaz (GREEN)` |
