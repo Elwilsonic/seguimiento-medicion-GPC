@@ -569,7 +569,7 @@ Hasta que se integren sprints y Planning Poker, la API queda mezclada como prev�
 | GREEN de la base | 2bcd3c6 | `feat(HU-52): agregar el UUID público al dominio de las 6 entidades y los helpers compartidos (GREEN)` |
 | RED del PDF (Peñalbé Hernán) | 3229e3f | `test(HU-52): agregar tests del PDF con UUID (RED)` |
 | GREEN del PDF (Peñalbé Hernán) | 4461a88 | `feat(HU-52): mostrar los UUID en el texto del PDF (GREEN)` |
-| Refactor de la base | (propuesto) | — |
+| Refactor de la base (en el cierre) | 6004613 | `refactor(HU-52): quitar pathID y pathInt, que quedaron sin uso` |
 | PDF fuera de la base | 66a576c | `docs(HU-52): pasar el PDF del reporte a Peñalbé Hernán` |
 | Evidencia de la base | 235b781 | `docs(HU-52): agregar la evidencia de la base` |
 | Merge del PR #200 (PDF) | 0a6c513 | `Merge pull request #200 from Elwilsonic/feature/HU-52-uuid-pdf` |
@@ -577,17 +577,14 @@ Hasta que se integren sprints y Planning Poker, la API queda mezclada como prev�
 
 ## Pendiente al corte
 
-Estado al 15/11/2026, antes del corte del lunes 16/11/2026 a las 14:00. La base (PR #201, con el PDF del PR #200 integrado en su rama) está integrada en `main` el 15/11/2026 a las 18:30 (`c329a62`), por Cardozo Leandro. Las tres partes por entidad todavía no tienen rama ni PR en el repositorio (`git ls-remote --heads origin` muestra solo `feature/HU-52-uuid-base` y `feature/HU-52-uuid-pdf`): se crean desde `main`, que ya tiene la base. **Desde el cambio en D3 del 15/11/2026, las tres partes van a la rama de integración `feature/HU-52-uuid-entidades`, y a `main` llegan juntas en un solo PR:** el corte por entidad de la tabla de abajo ya no aplica parte por parte, y si a las 12:00 del 16/11/2026 falta alguna, se decide con el Agile Enabler. Según "Si no llega al corte" de `proposal.md`, lo que no esté en `main` con la CI en verde a esa hora queda así:
+**No quedó nada pendiente** (tarea 6.1, 15/11/2026, antes del corte del lunes 16/11/2026 a las 14:00): las 6 entidades, la base y el PDF llegaron. La base, con el PDF, está en `main` desde el 15/11/2026 a las 18:30 (PR #201, `c329a62`). Las tres partes por entidad están integradas en la rama de integración `feature/HU-52-uuid-entidades` (D3), que llega a `main` en un solo PR.
 
-| Parte | Responsable | Estado | Lo que queda en `main` si no llega | Pendiente que se documenta |
-|---|---|---|---|---|
-| Base compartida | Sosa Ricardo y Cardozo Leandro | PR #201, integrada en `main` el 15/11/2026 a las 18:30 (`c329a62`) | Ya está en `main` | — |
-| PDF del reporte | Peñalbé Hernán | Hecho, integrado en la rama de la base (PR #200) y en `main` con el PR #201 | Ya está en `main` | — |
-| Ítems | Cardozo Leandro | Pendiente | Rutas y respuestas del ítem con ID entero | Las 10 rutas de ítems y el `id` del ítem, y que el `item_id` de otras respuestas no sirve todavía para `/api/items/{id}` |
-| Integrantes | Cardozo Leandro | Pendiente | `PUT /api/integrantes/{id}` y el `id` del integrante con entero | 1 ruta, 1 campo y el campo «ID del integrante» |
-| Sprints | Buttini Cristobal | Pendiente | Las 9 rutas de sprints, `id` y `sprint_id` con entero, y «Sprint actual» numérico | Lo mismo que en ítems, para los campos que nombran un sprint |
-| Planning Poker | Buttini Cristobal | Pendiente | Las 4 rutas de sesiones con entero | 4 rutas y el `id` de la sesión |
-| Defectos | García Santiago | Pendiente | `PATCH /api/defectos/{id}/estado`, el `id` y los sprints del cuerpo con entero | 1 ruta, 2 campos del cuerpo, 4 de respuesta y 4 de la interfaz |
-| Esfuerzos | García Santiago | Pendiente | `PATCH /api/esfuerzos/{id}/horas` y el `id` con entero | 1 ruta, 3 campos de respuesta y 3 de la interfaz |
+| Parte | Responsable | Estado | Pendiente |
+|---|---|---|---|
+| Base compartida | Sosa Ricardo y Cardozo Leandro | En `main` con el PR #201 (`c329a62`) | — |
+| PDF del reporte | Peñalbé Hernán | En la rama de la base con el PR #200 (`0a6c513`), y en `main` con el PR #201 | — |
+| Sprints y Planning Poker | Buttini Cristobal | En la rama de integración con el PR #204 (`041889c`) | — |
+| Ítems e integrantes | Cardozo Leandro | En la rama de integración con el PR #205 (`44e0936`) | — |
+| Defectos y esfuerzos | García Santiago | En la rama de integración con el PR #206 (`9e0f322`) | — |
 
-Al corte, esta tabla se actualiza con lo que haya llegado (tarea 6.1). Cada pendiente se avisa en la Review y queda como riesgo abierto en `design.md`.
+El riesgo R2 de `design.md` (una entidad que no llega y deja la API mezclada) queda cerrado. Falta solo el PR de la rama de integración a `main`, con `Closes #197`.

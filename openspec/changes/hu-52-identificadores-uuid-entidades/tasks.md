@@ -64,7 +64,7 @@ La base la hacen Sosa Ricardo y Cardozo Leandro en pareja, sujeto a que Cardozo 
   Correr los comandos de D4 adaptados (ningún código compara un ID con `math.MaxInt32`).
 - [x] 1.8 GREEN, PDF: pasó a Peñalbé Hernán (sección 5, "PDF del reporte"), decidido por el Agile Enabler el 15/11/2026: cambia una salida, los tests de `internal/report` verifican el texto con enteros, y depende solo de la base (D3).
 - [x] 1.9 Correr los comandos de cierre: todo en verde, en memoria y con PostgreSQL. Verificar con `git diff --stat` que el GREEN no toca tests ni `.feature`. Proponer `git commit -m "feat(HU-52): agregar la base de los identificadores UUID (GREEN)" -m "Refs #197"`. Hecho: GREEN en `2bcd3c6`.
-- [x] 1.10 Refactor, si hay una mejora clara. Si no, anotar "no hubo refactor". No hubo refactor.
+- [x] 1.10 Refactor, si hay una mejora clara. Si no, anotar "no hubo refactor". En el GREEN de la base no hubo refactor. En el cierre, `6004613` quitó `pathID` y `pathInt` de `server.go`, que quedaron sin uso después de los refactors de defectos y esfuerzos.
 - [x] 1.11 Crear `docs/evidencias/HU-52-tdd.md`: Hecho en `235b781` y completado con `docs(HU-52): completar las tareas y la documentación de la base` (Pendiente al corte, README y cobertura).
   - la sección de la base completa: RED, GREEN, salidas con conteos y la tabla criterio → test → código con links;
   - las secciones de las tres entidades, vacías y con su responsable;
@@ -95,7 +95,7 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
 
   Correr los comandos de cierre y verificar que el GREEN no toca tests. Proponer `git commit -m "feat(HU-52): identificar los ítems y los integrantes con un UUID público (GREEN)" -m "Refs #197"`. Hecho: GREEN en `ca39108`. Cambios respecto del plan: el GREEN sí tocó tests, por la segunda desviación de la base (la traducción inversa en `withEntityIDs`, con su test) y por los tests de otros responsables que cambian con el ítem en UUID (`sprints_test.go`, `reports_test.go`, `sprint_reports_test.go` y `web_test.go`); y `filaHistoriaReporte` de `app.js`, porque las historias de los reportes salen de `toItemResponse`. Después se trajo la rama de integración `feature/HU-52-uuid-entidades` (D3), con sprints y Planning Poker (PR #204), en el merge `bebcfc4`: quedan 13 fallos que dependen de la parte de García Santiago.
 - [x] 2.4 Refactor, si aplica. Completar la sección de Cardozo en `docs/evidencias/HU-52-tdd.md` (RED, GREEN, curl, navegador y tabla con links), sumar su fila a `docs/ia/registro.md` y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de ítems e integrantes" -m "Refs #197"`. Hecho en `5264bbd`. No hubo refactor. No se verificó con curl ni en el navegador: queda como "no verificado" en la evidencia. El PR de esta parte va a `feature/HU-52-uuid-entidades` y no a `main` (cambio en D3).
-- [ ] 2.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
+- [x] 2.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante. El `git merge main` quedó reemplazado por la rama de integración `feature/HU-52-uuid-entidades` (D3): la parte entró en esa rama con el PR #205 (`44e0936`).
 
 ## 3. Sprints y Planning Poker (Buttini Cristobal, rama `feature/HU-52-uuid-sprints-poker`)
 
@@ -118,14 +118,14 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
 
   Correr los comandos de cierre y proponer `git commit -m "feat(HU-52): identificar los sprints y las sesiones de Planning Poker con un UUID público (GREEN)" -m "Refs #197"`.
 - [x] 3.4 Refactor, si aplica. Completar la sección de Buttini en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de sprints y Planning Poker" -m "Refs #197"`.
-- [ ] 3.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
+- [x] 3.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante. El `git merge main` quedó reemplazado por la rama de integración `feature/HU-52-uuid-entidades` (D3): la parte entró en esa rama con el PR #204 (`041889c`).
 
 ## 4. Defectos y esfuerzos (García Santiago, rama `feature/HU-52-uuid-defectos-esfuerzos`)
 
 Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:30 (`c329a62`). Toca solo los archivos de su fila en D3.
 
-- [ ] 4.1 Escribir `features/HU-52-defectos.feature` y `features/HU-52-esfuerzos.feature` (de API), según `specs/defectos/spec.md` y `specs/esfuerzos/spec.md`, con los runners `TestFeatures_HU52Defectos` y `TestFeatures_HU52Esfuerzos`.
-- [ ] 4.2 Escribir los tests en RED en `internal/httpapi/defects_uuid_test.go`, `efforts_uuid_test.go` y `defects_efforts_uuid_web_test.go`:
+- [x] 4.1 Escribir `features/HU-52-defectos.feature` y `features/HU-52-esfuerzos.feature` (de API), según `specs/defectos/spec.md` y `specs/esfuerzos/spec.md`, con los runners `TestFeatures_HU52Defectos` y `TestFeatures_HU52Esfuerzos`. Hecho en `2b9dd75`, con el runner en `internal/httpapi/defects_efforts_uuid_features_test.go`.
+- [x] 4.2 Escribir los tests en RED en `internal/httpapi/defects_uuid_test.go`, `efforts_uuid_test.go` y `defects_efforts_uuid_web_test.go`: Hecho en `2b9dd75`; los tests existentes se terminaron de adaptar en `c20c5bc` y `3e55461`.
   - el `id` es un UUID v4 al registrar, y `item_id` y los sprints llevan UUID, con `""` para "sin resolver" (CA-52.1 y CA-52.3);
   - sus 7 rutas (tabla "Rutas por responsable" de D3: las de `defects.go` y `efforts.go`, que reciben un defecto, un esfuerzo, un ítem o un sprint) aceptan el UUID (CA-52.3);
   - `sprint_deteccion_id` y `sprint_resolucion_id` con UUID: válido, mal formato (400 del sprint), vacío (400 de sprint faltante) e inexistente (404) (CA-52.4);
@@ -133,14 +133,14 @@ Se crea desde `main`, que tiene la base integrada desde el 15/11/2026 a las 18:3
   - los 7 campos de las secciones de Esfuerzos y Defectos, sin `Number(...)` para los sprints (CA-52.6).
 
   Adaptar las filas de defectos y esfuerzos de `server_test.go`, las 4 aserciones de `web_test.go` que exigen `type="number"` y los tests de `defects_test.go`, `defect_lists_test.go`, `efforts*_test.go` y `effort_lists_test.go` cuyo resultado cambia. Verificar el RED y proponer `git commit -m "test(HU-52): agregar tests de defectos y esfuerzos (RED)" -m "Refs #197"`.
-- [ ] 4.3 GREEN:
+- [x] 4.3 GREEN: Hecho en `5d32e7c`.
   - los handlers de sus 7 rutas, en `defects.go` y `efforts.go`, usan `defectIDFromPath`, `effortIDFromPath`, `itemIDFromPath`, `sprintIDFromPath` y `sprintIDFromBody`;
   - los cuerpos de `toDefectResponse`, `toDefectListResponse`, `toEffortResponse` y `toEffortListResponse` usan el resolvedor;
   - las secciones de Esfuerzos y Defectos de `index.html` y `app.js`.
 
   Correr los comandos de cierre y proponer `git commit -m "feat(HU-52): identificar los defectos y los esfuerzos con un UUID público (GREEN)" -m "Refs #197"`.
-- [ ] 4.4 Refactor, si aplica. Completar la sección de García en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de defectos y esfuerzos" -m "Refs #197"`.
-- [ ] 4.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante.
+- [x] 4.4 Refactor, si aplica. Completar la sección de García en la evidencia y su fila en el registro de IA, y correr `-update` si hace falta. Proponer `git commit -m "docs(HU-52): agregar la evidencia de defectos y esfuerzos" -m "Refs #197"`. Refactor en `00276f4` (quitar la traducción inversa de `withEntityIDs`) y `f8b5b88` (quitar `sprintItemIDs`); la evidencia, en `20e29b4`; la fila del registro de IA está en `docs/ia/registro.md`.
+- [x] 4.5 `git merge main`, comandos de cierre, push y PR, con la revisión de otro integrante. El `git merge main` quedó reemplazado por la rama de integración `feature/HU-52-uuid-entidades` (D3), traída en `63eb989` y `44b576b`; la parte entró en esa rama con el PR #206 (`9e0f322`).
 
 ## 5. PDF del reporte (Peñalbé Hernán, rama `feature/HU-52-uuid-pdf`)
 
@@ -153,8 +153,8 @@ Decidido por el Agile Enabler el 15/11/2026 (D3). Se creó desde `feature/HU-52-
 
 ## 6. Cierre (Sosa Ricardo)
 
-- [ ] 6.1 Con las cinco partes integradas, o a las 14:00 del 16/11 lo que haya, completar en la evidencia la sección "Pendiente al corte", según la tabla "Si no llega al corte" de `proposal.md`, y actualizar el riesgo R2 de `design.md`.
-- [ ] 6.2 Actualizar el manual de usuario y la documentación técnica (TEC-06 y TEC-07: los UUID de las 6 entidades y los errores nuevos), y la cobertura con PostgreSQL comparada con `main`.
+- [x] 6.1 Con las cinco partes integradas, o a las 14:00 del 16/11 lo que haya, completar en la evidencia la sección "Pendiente al corte", según la tabla "Si no llega al corte" de `proposal.md`, y actualizar el riesgo R2 de `design.md`. Hecho el 15/11/2026: no quedó nada pendiente (las 6 entidades, la base y el PDF llegaron), y R2 quedó cerrado en `design.md`.
+- [x] 6.2 Actualizar el manual de usuario y la documentación técnica (TEC-06 y TEC-07: los UUID de las 6 entidades y los errores nuevos), y la cobertura con PostgreSQL comparada con `main`. Hecho con `docs(HU-52): cerrar las tareas y la documentación de HU-52`: manual de usuario, documentación técnica y cobertura de la rama completa con PostgreSQL, igual que `main` (95.1% y 95.9%).
 - [ ] 6.3 Agregar al Issue #197 la sección "## Trazabilidad", con los links a la propuesta, a los 7 `.feature` y a la evidencia. Proponer el commit de cierre: con `Closes #197` si llegaron todas las entidades, y con `Refs #197` si quedó algo pendiente.
 
 ## Workflow follow-up
