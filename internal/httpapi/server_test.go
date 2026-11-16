@@ -329,9 +329,29 @@ func TestConsultarProyecto_IDNoNumericoDevuelve400(t *testing.T) {
 	expectError(t, rec, http.StatusBadRequest, "el id del proyecto debe ser un UUID")
 }
 
-// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id inválido: las de proyecto con el mensaje de UUID (HU-51) y las demás con el de número entero.
+// TEC-01 · CA-TEC01.2 · Verifica que las demás rutas con {id} también respondan 400 a un id inválido: las de proyecto (HU-51) y las que ya pasaron a UUID en HU-52 con el mensaje de UUID de su entidad, y las demás con el de número entero.
 // CA-TEC01.2 · Las demás rutas con {id} también rechazan un id no numérico.
 func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
+	// uuidErrorByCase es el mensaje de 400 de los casos cuya ruta ya recibe
+	// el UUID de su entidad (HU-52, CA-52.4), por nombre del caso. Cada
+	// responsable agrega los suyos en su bloque, separados por una línea en
+	// blanco, para que los merges no choquen.
+	uuidErrorByCase := map[string]string{
+		// Cardozo Leandro: ítems (items.go) e integrantes (members_update.go).
+		"consultar ítem":       "el id del ítem debe ser un UUID",
+		"modificar ítem":       "el id del ítem debe ser un UUID",
+		"cambiar estado":       "el id del ítem debe ser un UUID",
+		"modificar integrante": "el id del integrante debe ser un UUID",
+
+		// Buttini Cristobal: sprints y Planning Poker.
+
+		// García Santiago: defectos y esfuerzos (defects.go y efforts.go).
+		"cambiar estado de defecto":   "el id del defecto debe ser un UUID",
+		"listar defectos del sprint":  "el id del sprint debe ser un UUID",
+		"listar esfuerzos del ítem":   "el id del ítem debe ser un UUID",
+		"listar esfuerzos del sprint": "el id del sprint debe ser un UUID",
+		"corregir esfuerzo":           "el id del esfuerzo debe ser un UUID",
+	}
 	casos := []struct {
 		nombre, method, path, body string
 	}{
@@ -377,9 +397,9 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 		// HU-14, CA-14.4: listar los sprints del proyecto.
 		{"listar sprints del proyecto", http.MethodGet, "/api/proyectos/abc/sprints", ""},
 		{"asignar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1", ""},
-		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc", ""},
+		{"asignar ítem: ítem", http.MethodPost, "/api/sprints/" + missingSprintID + "/items/abc", ""},
 		{"completar ítem: sprint", http.MethodPost, "/api/sprints/abc/items/1/completar", ""},
-		{"completar ítem: ítem", http.MethodPost, "/api/sprints/1/items/abc/completar", ""},
+		{"completar ítem: ítem", http.MethodPost, "/api/sprints/" + missingSprintID + "/items/abc/completar", ""},
 		{"listar completados", http.MethodGet, "/api/sprints/abc/completados", ""},
 		{"cerrar sprint", http.MethodPost, "/api/sprints/abc/cerrar", ""},
 
@@ -421,6 +441,17 @@ func TestRutasConID_IDNoNumericoDevuelve400(t *testing.T) {
 			want := "el id debe ser un número entero"
 			if strings.HasPrefix(c.path, "/api/proyectos/") {
 				want = "el id del proyecto debe ser un UUID"
+			}
+			// HU-52, CA-52.4: las rutas que ya reciben el UUID de su
+			// entidad responden con el mensaje de esa entidad.
+			if msg, ok := uuidErrorByCase[c.nombre]; ok {
+				want = msg
+			}
+
+			// HU-52, CA-52.4 · Sprints y Planning Poker (Buttini Cristobal):
+			// las rutas de sprints.go, poker.go, metrics.go y sprint_reports.go.
+			if m, ok := sprintsPokerInvalidIDMessages[c.nombre]; ok {
+				want = m
 			}
 			expectError(t, rec, http.StatusBadRequest, want)
 		})
@@ -682,7 +713,7 @@ func TestCrearItem_Devuelve201ConElItemCreado(t *testing.T) {
 	expectStatus(t, rec, http.StatusCreated)
 	var it itemJSON
 	decode(t, rec, &it)
-	if it.ID != "1" || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
+	if it.ID != itemRef(t, h, 1) || it.ProyectoID != ref(t, h, 1) || it.Titulo != "Login de usuarios" || it.Descripcion != "Acceso" ||
 		it.Prioridad != "ALTA" || it.Estado != "PENDIENTE" || it.StoryPoints != 0 ||
 		len(it.Criterios) != 1 || it.Criterios[0] != "Credenciales válidas" {
 		t.Errorf("ítem = %+v", it)
@@ -743,7 +774,7 @@ func TestListarBacklog_Devuelve200ConLosItemsDelProyecto(t *testing.T) {
 	expectStatus(t, rec, http.StatusOK)
 	var items []itemJSON
 	decode(t, rec, &items)
-	if len(items) != 2 || items[0].ID != "1" || items[1].ID != "3" {
+	if len(items) != 2 || items[0].ID != itemRef(t, h, 1) || items[1].ID != itemRef(t, h, 3) {
 		t.Errorf("ítems = %+v, se esperaban los ítems 1 y 3 del proyecto 1", items)
 	}
 }
@@ -938,7 +969,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "votar Planning Poker",
 		method: http.MethodPost,
-		path:   "/api/poker-sessions/1/votes",
+		path:   "/api/poker-sessions/" + missingSessionID + "/votes",
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
 		},
@@ -948,7 +979,7 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:      "registrar estimación Planning Poker",
 		method:    http.MethodPost,
-		path:      "/api/poker-sessions/1/estimate",
+		path:      "/api/poker-sessions/" + missingSessionID + "/estimate",
 		untouched: expectItemWithoutStoryPoints,
 	},
 	// TEC-04, CA-TEC04.9: endpoint de sprints que recibe un cuerpo.
@@ -957,8 +988,8 @@ var bodyEndpoints = []bodyEndpoint{
 		method: http.MethodPost,
 		path:   "{proyecto}/sprints",
 		untouched: func(t *testing.T, h http.Handler) {
-			rec := do(t, h, http.MethodPost, "/api/sprints/1/cerrar", "")
-			expectStatus(t, rec, http.StatusNotFound)
+			rec := do(t, h, http.MethodGet, projectPath(t, h, 1)+"/sprints", "")
+			expectRawJSON(t, rec, `[]`)
 		},
 	},
 	// HU-30, CA-30.9: el cuerpo se rechaza antes de llegar al Manager. No
@@ -966,14 +997,14 @@ var bodyEndpoints = []bodyEndpoint{
 	{
 		name:   "cambiar estado de defecto",
 		method: http.MethodPatch,
-		path:   "/api/defectos/1/estado",
+		path:   "/api/defectos/" + neverAssignedUUID + "/estado",
 		untouched: func(t *testing.T, h http.Handler) {
 			t.Helper()
 		},
 	},
-	// HU-15, CA-15.7: el cuerpo se rechaza antes de llegar al Manager. No hay
-	// una consulta de integrantes (HU-17): se comprueba que el primer
-	// registro válido recibe el ID 1, así que no se guardó nada antes.
+	// HU-15, CA-15.7: el cuerpo se rechaza antes de llegar al Manager. Con la
+	// consulta de integrantes (HU-17) se comprueba que después del primer
+	// registro válido hay uno solo (HU-52), así que no se guardó nada antes.
 	{
 		name:   "registrar integrante",
 		method: http.MethodPost,
@@ -982,10 +1013,11 @@ var bodyEndpoints = []bodyEndpoint{
 			t.Helper()
 			rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", `{"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
 			expectStatus(t, rec, http.StatusCreated)
-			expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
+			expectMemberJSON(t, rec, `{"id":`+jsonMemberID(t, h, 1)+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Portal de clientes","rol":"PRODUCT_BUILDER"}`)
+			expectOnlyOneMember(t, h)
 		},
 	},
-	{name: "modificar integrante", method: http.MethodPut, path: "/api/integrantes/1", untouched: expectNoMemberSaved},
+	{name: "modificar integrante", method: http.MethodPut, path: "/api/integrantes/" + missingMemberID, untouched: expectNoMemberSaved},
 }
 
 // expectItemUntouched verifica que el ítem 1 siga como lo creó validItem.

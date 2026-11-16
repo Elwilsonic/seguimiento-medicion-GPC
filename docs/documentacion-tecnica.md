@@ -111,12 +111,14 @@ Cada dominio con datos propios define su interfaz `Repository` en `repository.go
 | Paquete | Operaciones de `Repository` |
 |---|---|
 | `project` | `Save`, `List`, `GetByID`, `GetByPublicID` (HU-51), `Update` |
-| `backlog` | `Save`, `ListByProject`, `GetByID`, `Update` |
-| `sprint` | `Save`, `OpenByProject`, `GetByID`, `Update`, `ListByProject` |
-| `poker` | `Save`, `OpenByItem`, `GetByID`, `Update` |
-| `effort` | `Save`, `ListByItem`, `ListBySprint`, `GetByID`, `Update` |
-| `defect` | `Save`, `GetByID`, `Update`, `List` |
-| `member` | `Save`, `ListByProject`, `GetByID`, `Update` |
+| `backlog` | `Save`, `ListByProject`, `GetByID`, `GetByPublicID` (HU-52), `Update` |
+| `sprint` | `Save`, `OpenByProject`, `GetByID`, `GetByPublicID` (HU-52), `Update`, `ListByProject` |
+| `poker` | `Save`, `OpenByItem`, `GetByID`, `GetByPublicID` (HU-52), `Update` |
+| `effort` | `Save`, `ListByItem`, `ListBySprint`, `GetByID`, `GetByPublicID` (HU-52), `Update` |
+| `defect` | `Save`, `GetByID`, `GetByPublicID` (HU-52), `Update`, `List` |
+| `member` | `Save`, `ListByProject`, `GetByID`, `GetByPublicID` (HU-52), `Update` |
+
+**Identificador público (HU-51 y HU-52).** Las 7 entidades (proyecto, ítem, sprint, integrante, defecto, esfuerzo y sesión de Planning Poker) tienen un `PublicID uuid.UUID`, que el `Manager` asigna con `uuid.NewV4()` al crear la entidad, dentro del lock que ya toma la creación. Es el único identificador que muestran la API y la interfaz. El ID entero sigue como clave interna (clave primaria y claves foráneas), y `Update` no cambia el `PublicID`. En PostgreSQL, cada una de las 7 tablas tiene la columna `public_id UUID NOT NULL UNIQUE` (`db/init/01-schema.sql`); el repositorio guarda el valor que recibe en `Save` y lo lee en su `scan`. `GetByPublicID` devuelve una copia, o el error de no encontrado de la entidad.
 
 `metrics`, `dashboard` y `report` no tienen repositorio: calculan a partir de los Manager de los otros dominios.
 
@@ -141,13 +143,13 @@ Todas las rutas están en `internal/httpapi/server.go` (`NewHandler`) y usan sol
 | Objeto | Campos |
 |---|---|
 | Proyecto | `id` (el UUID del proyecto, como texto, HU-51), `nombre`, `descripcion`, `estado`, `fecha_inicio` y `fecha_fin` (`""` si no están registradas) |
-| Ítem | `id`, `proyecto_id`, `titulo`, `descripcion`, `prioridad`, `criterios` (lista), `estado`, `story_points` (0 si no está estimado), `horas_estimadas`, `sprint_id` (0 si no está asignado) |
-| Sprint | `id`, `proyecto_id`, `nombre`, `fecha_inicio`, `fecha_fin`, `objetivo`, `estado` |
-| Sesión de Poker | `id`, `item_id`, `estado`, `ronda`, `votos` (lista de `{integrante, puntos}`), `cartas` (la escala). Solo la respuesta de revelar suma `comparacion`: `{hay_diferencias, menor, mayor}`, con `menor` y `mayor` como `{puntos, integrantes}` |
-| Integrante | `id`, `proyecto_id`, `nombre`, `rol` |
-| Esfuerzo | `id`, `sprint_id`, `item_id`, `integrante`, `fecha`, `actividad`, `horas` |
+| Ítem | `id` (el UUID del ítem, HU-52), `proyecto_id`, `titulo`, `descripcion`, `prioridad`, `criterios` (lista), `estado`, `story_points` (0 si no está estimado), `horas_estimadas`, `sprint_id` (el UUID del sprint, o `""` si no está asignado, HU-52) |
+| Sprint | `id` (el UUID del sprint, HU-52), `proyecto_id`, `nombre`, `fecha_inicio`, `fecha_fin`, `objetivo`, `estado` |
+| Sesión de Poker | `id` (el UUID de la sesión, HU-52), `item_id` (el UUID del ítem), `estado`, `ronda`, `votos` (lista de `{integrante, puntos}`), `cartas` (la escala). Solo la respuesta de revelar suma `comparacion`: `{hay_diferencias, menor, mayor}`, con `menor` y `mayor` como `{puntos, integrantes}` |
+| Integrante | `id` (el UUID del integrante, HU-52), `proyecto_id`, `nombre`, `rol` |
+| Esfuerzo | `id` (el UUID del esfuerzo, HU-52), `sprint_id` y `item_id` (los UUID del sprint y del ítem), `integrante`, `fecha`, `actividad`, `horas` |
 | Lista de esfuerzos | `esfuerzos` (lista), `total_horas` (redondeado a un decimal) |
-| Defecto | `id`, `descripcion`, `severidad`, `estado`, `item_id`, `sprint_deteccion_id`, `sprint_resolucion_id` (0 si no está resuelto) |
+| Defecto | `id` (el UUID del defecto, HU-52), `descripcion`, `severidad`, `estado`, `item_id`, `sprint_deteccion_id` y `sprint_resolucion_id` (los UUID del ítem y de los sprints; `sprint_resolucion_id` es `""` si no está resuelto) |
 | Lista de defectos | `defectos` (lista), `cantidad` |
 | Métricas del sprint | `sprint_id`, `sp_planificados`, `sp_completados`, `items_sin_estimar`, `items_totales`, `items_terminados`, `porcentaje_completadas`, `horas_estimadas`, `horas_reales`, `desviacion_horas`, `desviacion_porcentual`, `items_sin_horas_estimadas`, `defectos_detectados`, `defectos_resueltos` |
 | Métricas del proyecto | Las del sprint con `proyecto_id` en lugar de `sprint_id`, más `velocidad` y `sprints_cerrados` después de `items_sin_estimar` |
@@ -157,7 +159,7 @@ Todas las rutas están en `internal/httpapi/server.go` (`NewHandler`) y usan sol
 | Reporte del sprint | `sprint`, `metricas` (del sprint), `historias` (las asignadas al sprint, HU-49), `esfuerzos` (del sprint), `defectos` (los detectados o resueltos en el sprint) e `integrantes` |
 | Error | `error` (mensaje en español) |
 
-Una lista vacía se devuelve como `[]`, nunca como `null`. Desde HU-51, el `proyecto_id` de ítems, sprints, integrantes, métricas y resumen es el UUID del proyecto, como texto; el ID entero interno del proyecto no sale de la API.
+Una lista vacía se devuelve como `[]`, nunca como `null`. Desde HU-51, el `proyecto_id` de ítems, sprints, integrantes, métricas y resumen es el UUID del proyecto, como texto. Desde HU-52, también el `sprint_id` de las métricas del sprint, y todos los IDs de ítems, sprints, integrantes, defectos, esfuerzos y sesiones, incluidos los de los reportes y del texto del PDF: ningún ID entero interno sale de la API.
 
 ### 3.2 Endpoints
 
@@ -167,7 +169,13 @@ Una lista vacía se devuelve como `[]`, nunca como `null`. Desde HU-51, el `proy
 - `projectIDFromPath` llama a `parseProjectID`, busca el proyecto con `Manager.GetByPublicID` y devuelve su ID interno y el UUID en minúsculas. Si el UUID no existe, devuelve el ID interno 0, que ningún proyecto tiene (RN-01.5): así cada `Manager` informa `ErrProjectNotFound` (404) en el mismo punto de su orden de validaciones que antes, y se conserva el orden de errores de HU-18, HU-19, HU-41 y HU-04.
 - `publicProjectID` busca el UUID para las respuestas de las rutas por ID de otra entidad (`/api/items/{id}`, `/api/sprints/{id}/…` y `/api/integrantes/{id}`). Si no encuentra el proyecto, responde 500, porque una entidad siempre pertenece a un proyecto que existe.
 
-Los ítems, sprints, integrantes, defectos, esfuerzos y sesiones de Planning Poker siguen con IDs enteros (`errInvalidID`, "el id debe ser un número entero"): es la parte pendiente de HU-51.
+**Identificador de las demás entidades (HU-52).** Las rutas que reciben un ítem, un sprint, un integrante, un defecto, un esfuerzo o una sesión de Planning Poker (por su `{id}` o por el `{itemId}` de `/api/sprints/{id}/items/{itemId}…`) reciben su UUID. Las piezas están en `internal/httpapi/server.go`:
+
+- `parsePublicID(s, invalid)` aplica la misma forma canónica que `parseProjectID` (que la llama) y, si no se cumple, devuelve `invalid`, el error de formato de la entidad.
+- `itemIDFromPath(r, nombre)` (para `{id}` o `{itemId}`), `sprintIDFromPath`, `memberIDFromPath`, `defectIDFromPath`, `effortIDFromPath` y `sessionIDFromPath` leen el parámetro, lo buscan con `GetByPublicID` del `Manager` de su entidad y devuelven el ID interno.
+- `sprintIDFromBody(texto)` hace lo mismo con los campos del cuerpo que nombran un sprint (`sprint_deteccion_id` de HU-29 y `sprint_resolucion_id` de HU-30). El texto vacío da 0, que sigue siendo "sprint faltante" (400).
+- **`missingInternalID`** (`math.MaxInt32`): un UUID con la forma correcta que no corresponde a ninguna entidad se traduce a este ID interno, que ningún repositorio asigna. No es el 0, porque en defectos el 0 es "sprint faltante", y es el máximo de `INTEGER` en PostgreSQL. Así cada `Manager` informa la inexistencia (404) en el mismo punto de su orden de validaciones que con un ID entero.
+- **El resolvedor `publicIDs`** traduce, para las respuestas, el ID interno de un ítem (`item(id)`) o de un sprint (`sprint(id)`) a su UUID, buscando cada ID una sola vez (cache). El 0 da `""` ("sin asignar" o "sin resolver"). Las funciones que arman respuestas lo reciben, y el handler responde con `writeResolved`, que da 500 si el resolvedor no pudo buscar algún UUID.
 
 | Método y ruta | Cuerpo de entrada | Respuesta correcta | Historia |
 |---|---|---|---|
@@ -223,8 +231,8 @@ Todo error responde `{"error": "<mensaje>"}`. La traducción del error de domini
 
 | Código | Cuándo | Errores |
 |---|---|---|
-| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` de proyecto que no es un UUID en forma canónica (`errInvalidProjectID`, HU-51); `{id}` de otra entidad que no es un número; fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad, votante o rol vacíos; prioridad, estado, severidad, story points, carta o rol fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes (también la fecha de fin del proyecto); fin de sprint no posterior al inicio; sprint de detección faltante; estado de defecto inválido (también en el filtro `?estado=`); sprint de resolución faltante al resolver |
-| 404 | La entidad de la ruta no existe | Proyecto (también un UUID que nunca se asignó o el UUID nulo, HU-51), ítem, sprint, sesión de Planning Poker, defecto, esfuerzo o integrante inexistente |
+| 400 | Datos inválidos | JSON inválido o con texto después; `{id}` de proyecto que no es un UUID en forma canónica (`errInvalidProjectID`, HU-51); `{id}`, `{itemId}` o campo del cuerpo de otra entidad que no es un UUID en forma canónica, con los 6 errores de HU-52: `errInvalidItemID` ("el id del ítem debe ser un UUID"), `errInvalidSprintID` ("el id del sprint debe ser un UUID"), `errInvalidMemberID` ("el id del integrante debe ser un UUID"), `errInvalidDefectID` ("el id del defecto debe ser un UUID"), `errInvalidEffortID` ("el id del esfuerzo debe ser un UUID") y `errInvalidSessionID` ("el id de la sesión debe ser un UUID"); fecha que no es `AAAA-MM-DD`; nombre, título, objetivo, descripción, integrante, actividad, votante o rol vacíos; prioridad, estado, severidad, story points, carta o rol fuera de sus valores; ítem sin criterios de aceptación; horas estimadas negativas; horas trabajadas no positivas; fechas faltantes (también la fecha de fin del proyecto); fin de sprint no posterior al inicio; sprint de detección faltante; estado de defecto inválido (también en el filtro `?estado=`); sprint de resolución faltante al resolver |
+| 404 | La entidad de la ruta no existe | Proyecto, ítem, sprint, sesión de Planning Poker, defecto, esfuerzo o integrante inexistente, también un UUID que nunca se asignó o el UUID nulo (HU-51 y HU-52) |
 | 405 | Método no permitido | Un método distinto del de la ruta (por ejemplo, `GET` en las rutas de sesiones de Planning Poker, incluida `/rounds`, o en `/api/integrantes/{id}`), con el encabezado `Allow`. La respuesta es texto, no JSON |
 | 409 | El pedido choca con el estado actual | Nombre de proyecto repetido; transición de estado no permitida; ya hay un sprint abierto en el proyecto; sprint cerrado; ítem ya asignado, de otro proyecto o no asignado al sprint; story points de un ítem terminado; ya hay una sesión de Planning Poker abierta para el ítem, o el ítem está terminado; sesión no abierta, sin votos para revelar o no revelada; sprint de detección de otro proyecto; transición de estado de defecto no permitida; sprint de resolución de otro proyecto o anterior al de detección; fecha de fin de un proyecto sin fecha de inicio, o no posterior a ella; fecha de inicio no anterior a la fecha de fin registrada; modificar las fechas de un proyecto que no tiene registradas las dos; nombre de integrante repetido en el proyecto; corregir un esfuerzo de un sprint cerrado; repetir la ronda de una sesión no revelada o con otra sesión abierta para el ítem |
 | 413 | Cuerpo de más de 1 MiB | `el cuerpo del pedido supera el tamaño máximo de 1 MiB` |

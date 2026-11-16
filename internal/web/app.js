@@ -414,7 +414,8 @@ function filaItem(it) {
     // 0 significa sin estimar (TEC-03).
     celda(it.story_points === 0 ? "—" : it.story_points),
     celda(it.horas_estimadas),
-    celda(it.sprint_id === 0 ? "—" : it.sprint_id),
+    // "" significa sin sprint asignado (HU-52, D7).
+    celda(it.sprint_id === "" ? "—" : it.sprint_id),
   );
 
   const estado = document.createElement("select");
@@ -984,7 +985,7 @@ function filaHistoriaReporte(h) {
     celda(h.estado),
     celda(h.story_points === 0 ? "—" : h.story_points),
     celda(h.horas_estimadas),
-    celda(h.sprint_id === 0 ? "—" : h.sprint_id),
+    celda(h.sprint_id === "" ? "—" : h.sprint_id),
   );
   return tr;
 }
@@ -1092,7 +1093,7 @@ formDefecto.addEventListener("submit", (e) => {
     const defecto = await api("POST", "/items/" + item + "/defectos", {
       descripcion: form.descripcion.value,
       severidad: form.severidad.value,
-      sprint_deteccion_id: Number(form.sprint_deteccion_id.value),
+      sprint_deteccion_id: form.sprint_deteccion_id.value.trim(),
     });
     form.reset();
     mostrar("msg-defectos", "Defecto " + defecto.id + " registrado para el ítem " + defecto.item_id + ".", false);
@@ -1115,7 +1116,7 @@ formEstadoDefecto.addEventListener("submit", (e) => {
     const cuerpo = { estado: form.estado.value };
     const sprint = form.sprint_resolucion_id.value.trim();
     if (sprint !== "") {
-      cuerpo.sprint_resolucion_id = Number(sprint);
+      cuerpo.sprint_resolucion_id = sprint;
     }
     const cambiado = await api("PATCH", "/defectos/" + defecto + "/estado", cuerpo);
     form.reset();

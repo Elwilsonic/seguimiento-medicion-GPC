@@ -18,10 +18,12 @@ type effortRequest struct {
 	Horas      json.Number `json:"horas"`
 }
 
+// HU-52, CA-52.3: el esfuerzo, su sprint y su ítem se identifican con su
+// UUID.
 type effortResponse struct {
-	ID         int     `json:"id"`
-	SprintID   int     `json:"sprint_id"`
-	ItemID     int     `json:"item_id"`
+	ID         string  `json:"id"`
+	SprintID   string  `json:"sprint_id"`
+	ItemID     string  `json:"item_id"`
 	Integrante string  `json:"integrante"`
 	Fecha      string  `json:"fecha"`
 	Actividad  string  `json:"actividad"`
@@ -37,7 +39,7 @@ type effortListResponse struct {
 // orden de los errores es IDs de la ruta, JSON, fecha, horas y Manager.
 func (s *server) registerEffort(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	sprintID, itemID, err := sprintItemIDs(r)
+	sprintID, itemID, err := s.sprintItemPublicIDs(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -72,7 +74,7 @@ func (s *server) registerEffort(w http.ResponseWriter, r *http.Request) {
 // listEffortsByItem atiende GET /api/items/{id}/esfuerzos (HU-27).
 func (s *server) listEffortsByItem(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	itemID, err := pathID(r)
+	itemID, err := s.itemIDFromPath(r, "id")
 	if err != nil {
 		writeError(w, err)
 		return
@@ -88,7 +90,7 @@ func (s *server) listEffortsByItem(w http.ResponseWriter, r *http.Request) {
 // listEffortsBySprint atiende GET /api/sprints/{id}/esfuerzos (HU-27).
 func (s *server) listEffortsBySprint(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	sprintID, err := pathID(r)
+	sprintID, err := s.sprintIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -115,9 +117,9 @@ func toEffortListResponse(summary effort.Summary, ids *publicIDs) effortListResp
 
 func toEffortResponse(e effort.Effort, ids *publicIDs) effortResponse {
 	return effortResponse{
-		ID:         e.ID,
-		SprintID:   e.SprintID,
-		ItemID:     e.ItemID,
+		ID:         e.PublicID.String(),
+		SprintID:   ids.sprint(e.SprintID),
+		ItemID:     ids.item(e.ItemID),
 		Integrante: e.Member,
 		Fecha:      e.Date.Format(dateLayout),
 		Actividad:  e.Activity,
@@ -135,7 +137,7 @@ type effortHoursRequest struct {
 // ausentes o no numéricas dan ErrInvalidHours, como en HU-26.
 func (s *server) correctEffortHours(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	id, err := pathID(r)
+	id, err := s.effortIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return

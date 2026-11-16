@@ -33,13 +33,14 @@ func (brokenMemberRepository) Update(member.Member) (member.Member, error) {
 }
 
 // expectNoMemberSaved es el untouched de la fila de bodyEndpoints: el entorno
-// no tiene integrantes y el primer registro válido recibe el ID 1, así que el
-// pedido rechazado no guardó nada.
+// no tiene integrantes, y después del primer registro válido hay uno solo
+// (HU-52: el id es un UUID), así que el pedido rechazado no guardó nada.
 func expectNoMemberSaved(t *testing.T, h http.Handler) {
 	t.Helper()
 	rec := do(t, h, http.MethodPost, projectPath(t, h, 1)+"/integrantes", validMember)
 	expectStatus(t, rec, http.StatusCreated)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
+	expectMemberJSON(t, rec, `{"id":`+jsonMemberID(t, h, 1)+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana Pérez","rol":"PRODUCT_BUILDER"}`)
+	expectOnlyOneMember(t, h)
 }
 
 // newHandlerWithMembers arma la API con el proyecto 1 y los integrantes 1
@@ -60,7 +61,7 @@ func TestModificarIntegrante_Devuelve200ConElIntegrante(t *testing.T) {
 	rec := do(t, h, http.MethodPut, "/api/integrantes/1", `{"nombre":"  Ana María ","rol":"agile_enabler"}`)
 
 	expectStatus(t, rec, http.StatusOK)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana María","rol":"AGILE_ENABLER"}`)
+	expectMemberJSON(t, rec, `{"id":`+jsonMemberID(t, h, 1)+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"Ana María","rol":"AGILE_ENABLER"}`)
 }
 
 // CA-16.2 y CA-16.7 · Los datos inválidos devuelven 400 con el mensaje del
@@ -103,10 +104,10 @@ func TestModificarIntegrante_CuerpoInvalidoDevuelve400(t *testing.T) {
 	}
 }
 
-// CA-16.3 y CA-16.7 · Un integrante inexistente, 0 o negativo devuelve 404.
-// HU-16 · CA-16.3 · Verifica que modificar un integrante inexistente, 0 o negativo responda 404.
+// CA-16.3 y CA-16.7 · Un integrante inexistente devuelve 404 (HU-52: el 0 y el negativo ya no son un UUID y dan 400).
+// HU-16 · CA-16.3 · Verifica que modificar un integrante inexistente (un UUID que nunca se asignó o el UUID nulo, HU-52) responda 404.
 func TestModificarIntegrante_InexistenteDevuelve404(t *testing.T) {
-	for _, path := range []string{"/api/integrantes/999", "/api/integrantes/0", "/api/integrantes/-1"} {
+	for _, path := range []string{"/api/integrantes/" + missingMemberID, "/api/integrantes/" + nilMemberID} {
 		t.Run(path, func(t *testing.T) {
 			h := newHandlerWithMembers(t)
 
@@ -135,7 +136,7 @@ func TestModificarIntegrante_PropioNombreConOtrasMayusculasDevuelve200(t *testin
 	rec := do(t, h, http.MethodPut, "/api/integrantes/1", `{"nombre":"ANA PÉREZ","rol":"PRODUCT_BUILDER"}`)
 
 	expectStatus(t, rec, http.StatusOK)
-	expectMemberJSON(t, rec, `{"id":1,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"ANA PÉREZ","rol":"PRODUCT_BUILDER"}`)
+	expectMemberJSON(t, rec, `{"id":`+jsonMemberID(t, h, 1)+`,"proyecto_id":`+jsonProjectID(t, h, 1)+`,"nombre":"ANA PÉREZ","rol":"PRODUCT_BUILDER"}`)
 }
 
 // CA-16.7 · Los demás métodos devuelven 405. GET necesita su ruta porque, sin
@@ -179,7 +180,7 @@ func TestModificarIntegrante_ErrorDelRepositorioDevuelve500SinDetalle(t *testing
 	members := member.NewManager(brokenMemberRepository{}, projects)
 	h := httpapi.NewHandler(projects, items, sprints, efforts, pokerManager, defects, members)
 
-	rec := do(t, h, http.MethodPut, "/api/integrantes/1", validMember)
+	rec := do(t, h, http.MethodPut, "/api/integrantes/"+missingMemberID, validMember)
 
 	expectError(t, rec, http.StatusInternalServerError, "error interno del servidor")
 }

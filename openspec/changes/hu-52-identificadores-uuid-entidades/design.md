@@ -123,6 +123,34 @@ orden de integración
         +----> PR ----+----> PR ---------+----> PR   (cualquier orden)
 ```
 
+**Cambio en D3, aprobado por el Agile Enabler el 15/11/2026: una rama de integración.** Al medir la parte de sprints y Planning Poker antes del RED (aplicar el GREEN, correr `go test -count=1 ./...` y revertir), fallaron 123 tests, y la mayoría no eran de esa parte. Las partes no son independientes, porque cada una cambia la respuesta de una entidad que reciben las rutas de otra:
+
+- las rutas de sprints y Planning Poker reciben ítems (`POST /api/sprints/{id}/items/{itemId}`, `…/completar` y `POST /api/items/{id}/poker-sessions`): al exigir el UUID del ítem, fallan mientras la API devuelva el ítem con su entero, que es la parte de ítems. Fueron 81 fallos "el id del ítem debe ser un UUID", también en tests de esfuerzos y de reportes;
+- las rutas de defectos y esfuerzos reciben sprints: cuando la creación de un sprint devuelve su UUID, esas rutas siguen esperando un entero. Fueron 37 fallos "el id debe ser un número entero".
+
+Así, ninguna parte puede integrarse sola en `main` con la CI en verde, y "cualquier orden" no se cumple. El reparto de D3 no cambia (quién hace qué y qué archivos toca); cambia el destino de los PR:
+
+- **Rama de integración:** `feature/HU-52-uuid-entidades`, creada por Buttini Cristobal desde `main` (`29051da`, con la base).
+- **Todos los PR de HU-52 van a esa rama, no a `main`,** en el mismo orden de antes: el ajuste de la base de Cardozo Leandro, ítems e integrantes, sprints y Planning Poker, y defectos y esfuerzos.
+- **Sin CI en esos PR:** la CI corre solo hacia `main`. Cada responsable corre `go test ./...` en su máquina, en memoria y con PostgreSQL, y pega la salida en el PR. Se esperan fallos entre una parte y otra (por ejemplo, "el id del ítem debe ser un UUID" antes de que entre la parte de ítems): el PR dice cuántos quedan y de qué parte dependen, y fuera de esos no puede haber ningún otro.
+- **Revisión:** cada PR a la rama de integración lo revisa otro integrante y se integra con "Create a merge commit".
+- **Un solo PR a `main`,** cuando estén las tres partes. Ese corre la CI (con `-race`), tiene que dar verde con 0 fallos y cierra HU-52 con `Closes #197`.
+- **Horario:** las tres partes integradas en la rama de integración a las 12:00 del lunes 16/11/2026, y el PR a `main` aprobado e integrado antes de las 14:00. Si a las 12:00 falta alguna, se decide en ese momento con el Agile Enabler.
+
+```
+orden de integración (desde el 15/11/2026)
+
+  main (con la base) --> feature/HU-52-uuid-entidades
+                                  ^
+        +-------------------------+-------------------------+
+        |                         |                         |
+  items+integrantes          sprints+poker            defectos+esfuerzos
+   (Cardozo)                  (Buttini)                 (Garcia)
+        PR ------------------>    PR ------------------>    PR    (sin CI; go test local en el PR)
+
+  feature/HU-52-uuid-entidades --> PR a main (CI con -race, 0 fallos, Closes #197)
+```
+
 ### D4. Un UUID inexistente se traduce a un ID interno que nunca se asigna, y no al 0
 
 `xIDFromPath` sigue el patrón de `projectIDFromPath`:
@@ -203,6 +231,16 @@ El esquema se recrea con `docker compose down -v` y `docker compose up -d --wait
 
 Es un ajuste de tests, sin ciclo RED/GREEN: no cambia el comportamiento ni lo que verifica ningún test, y no toca código de producción.
 
+**Segunda desviación de la base (15/11/2026).** Cardozo Leandro la encontró al preparar el GREEN de ítems e integrantes, y la decidió como responsable de esa parte. Aprobada por Peñalbé Hernán (Agile Enabler) el 15/11/2026, con dos condiciones: (1) el PR de ítems e integrantes apunta a la rama de integración feature/HU-52-uuid-entidades y no a main; (2) la traducción inversa es temporal: cuando García agregue sus 7 rutas a uuidRoutes deja de usarse, y en su PR, o en el PR final a main, se borra y se verifica que go test ./... quede en verde sin ella, para que ningún test termine el sprint dependiendo de ella. Con `idRef`, los tests de otros responsables arman sus rutas con el `id` que devolvió la API. Apenas el ítem responde su UUID, ese UUID llega a rutas cuyos handlers todavía leen un entero (por ejemplo, el `{itemId}` de `POST /api/sprints/{id}/items/{itemId}`, de Buttini Cristobal, o `POST /api/items/{id}/defectos`, de García Santiago), y `uuidRoutes` no lo evita, porque la ruta ya trae el UUID. **Se resolvió en `withEntityIDs`** (`entity_ids_test.go`), solo en los tests: en una ruta que no está en `uuidRoutes`, un `id` que `do()` registró al crear una entidad se traduce al revés, al número de su orden de creación, que es su ID interno. Es la misma suposición que la traducción hacia el UUID: las entidades de ese tipo se crean por la API y en orden. Lo verifica `TestWithEntityIDs_FueraDeLaTablaTraduceElUUIDAlEntero`. Cuando cada responsable suma sus rutas a `uuidRoutes`, sus rutas dejan de traducirse al revés.
+
+Además, con el ítem en UUID, en los tests de otros responsables cambian algunos resultados que nombran un ítem, y se adaptan en el GREEN de ítems:
+
+- `sprints_test.go` (líneas 124, 204 y 281): el `id` de los ítems se compara con `itemRef`, y el `sprint_id` del ítem asignado, con la forma de un UUID (el único sprint del entorno), porque el UUID del sprint todavía no se ve en el `id` del sprint.
+- `reports_test.go`: la lista de historias se compara por orden de creación (`itemNumber`), y los contratos del reporte del proyecto y del sprint (`reports_test.go` y `sprint_reports_test.go`) arman el `id` y el `sprint_id` de cada historia con `jsonItemID` y `jsonItemSprintID`.
+- `internal/web/app.js` (`filaHistoriaReporte`) y su aserción de `web_test.go`: las historias de los reportes salen de `toItemResponse`, así que "sin sprint" pasa de `0` a `""` (D7), igual que en el backlog.
+
+Hasta que se integren sprints y Planning Poker, la API queda mezclada como prevé R2: el `sprint_id` de un ítem es el UUID del sprint, pero el `id` del propio sprint sigue siendo un entero.
+
 ### D10. Cantidades, contadas con comandos sobre `main` `a56b052`
 
 ```bash
@@ -249,12 +287,13 @@ Todos los IDs fijos de tests están en 15 archivos de `internal/httpapi`. Los `.
 ## Risks / Trade-offs
 
 - **[R1] La base se atrasa y frena a las tres entidades.** → La base es lo primero y no espera a nadie. Las entidades pueden escribir su `.feature` y sus tests en RED sobre la rama de la base apenas esté pusheado su GREEN, sin esperar el merge. Si a las 14:00 del 16/11 la base no está en `main`, HU-52 queda pendiente completa (tabla "Si no llega al corte" de `proposal.md`).
-- **[R2] Una entidad no llega al corte y la API queda mezclada.** → Por ejemplo, defectos con `item_id` UUID pero `/api/items/{id}` todavía con entero. Se documenta por entidad en la evidencia y en la Review. El Issue #197 queda abierto con `Refs #197`.
+- **[R2] Una entidad no llega al corte y la API queda mezclada.** → Por ejemplo, defectos con `item_id` UUID pero `/api/items/{id}` todavía con entero. Se documenta por entidad en la evidencia y en la Review. El Issue #197 queda abierto con `Refs #197`. **Cerrado el 15/11/2026 (tarea 6.1):** no quedó nada pendiente: las 6 entidades, la base y el PDF llegaron (la base y el PDF en `main` con el PR #201, y las tres partes en la rama de integración con los PR #204, #205 y #206), así que la API no queda mezclada.
 - **[R3] Conflictos de merge en archivos compartidos.** → La base resuelve todos los compartidos antes (D3), y las entidades escriben sus tests en archivos nuevos. Quedan dos riesgos: `app.js` e `index.html` (cada uno toca solo sus secciones, que están en bloques separados) y la tabla de `TestRutasConID_IDNoNumericoDevuelve400` (bloques separados por líneas en blanco). Se resuelve dejando las dos versiones, como en HU-51.
 - **[R4] Los links de la evidencia se corren con cada merge.** → `-update` de `internal/trazabilidad` después de cada `git merge main`, como en HU-51.
 - **[R5] El centinela `math.MaxInt32` como ID real.** → Una tabla tendría que llegar a 2147483647 filas, y en ese caso `GENERATED ALWAYS AS IDENTITY` ya falla por desborde. Queda documentado.
 - **[R6] La firma con el resolvedor sin usar en la base.** → Es un parámetro que todavía no se usa, y queda así hasta que cada entidad lo use. Si una entidad no llega al corte, queda sin usar para esa entidad, y se documenta.
 - **[R7] La carga de la base.** → La hacen dos personas en pareja (Sosa y Cardozo, sujeto a que Cardozo lo confirme), con el horario aprobado del domingo 15/11/2026 a las 21:00. La base toca el dominio de 6 paquetes, el esquema, `server.go`, los reportes y los tests compartidos. Es la parte más grande y la que más se repite. Se mide en la tarea B.0 (la prueba de los tests que se rompen) y se avisa si no llega a una hora acordada con el Agile Enabler.
+- **[R8] La traducción inversa de `withEntityIDs` es temporal** (segunda desviación de la base, condición (2) del Agile Enabler). → Pendiente: borrar la traducción inversa de withEntityIDs y verificar go test ./... en verde sin ella. Se hace en el PR de García Santiago, cuando agregue sus 7 rutas a `uuidRoutes`, o en el PR final a `main`.
 - **[Trade-off] Dos identificadores por entidad,** como en HU-51.
 - **[Trade-off] UUID largos en la interfaz y en los mensajes.** → Las entidades se eligen desde listas y botones donde existen. Donde hay que escribir el ID (esfuerzos y defectos), se copia de la tabla.
 

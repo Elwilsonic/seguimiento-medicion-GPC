@@ -157,7 +157,7 @@ func TestMetricasProyecto_SinSprintsCerradosLaVelocidadEsNull(t *testing.T) {
 // HU-32 · CA-32.9 · Verifica que las métricas de un sprint inexistente respondan 404.
 // CA-32.9 · Un sprint inexistente devuelve 404.
 func TestMetricasSprint_InexistenteDevuelve404(t *testing.T) {
-	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/99/metricas", "")
+	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/"+missingSprintID+"/metricas", "")
 
 	expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
 }
@@ -516,10 +516,10 @@ func expectDefectsJSON(t *testing.T, rec *httptest.ResponseRecorder, detected, r
 // métricas del sprint y del proyecto dan 2 detectados y 1 resuelto.
 func TestMetricas_IncluyenLosDefectosDetectadosYResueltos(t *testing.T) {
 	h := newHandlerWithDefects(t)
-	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefectFor(t, h)), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefectFor(t, h)), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"RESUELTO","sprint_resolucion_id":1}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", resolveIn(apiID(t, h, kindSprint, 1))), http.StatusOK)
 
 	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/sprints/1/metricas", ""), 2, 1)
 	expectDefectsJSON(t, do(t, h, http.MethodGet, projectPath(t, h, 1)+"/metricas", ""), 2, 1)
@@ -603,11 +603,10 @@ func contractTEC03(t *testing.T, h http.Handler) idRef {
 			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/completar", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		}
 	}
-	// García: cuando sprint pase a UUID, este id va entre comillas
-	defectBody := fmt.Sprintf(`{"descripcion":"El total no descuenta el descuento","severidad":"alta","sprint_deteccion_id":%s}`, string(sp.ID))
+	defectBody := fmt.Sprintf(`{"descripcion":"El total no descuenta el descuento","severidad":"alta","sprint_deteccion_id":%q}`, apiID(t, h, kindSprint, 1))
 	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%s/defectos", string(first.ID)), defectBody), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%s}`, string(sp.ID))), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", resolveIn(apiID(t, h, kindSprint, 1))), http.StatusOK)
 	return sp.ID
 }
 
@@ -638,7 +637,7 @@ func TestConsultaMetricas_ContratoDelSprint(t *testing.T) {
 	rec := do(t, h, http.MethodGet, fmt.Sprintf("/api/sprints/%s/metricas", string(id)), "")
 
 	expectRawJSON(t, rec, `{
-  "sprint_id": 1,
+  "sprint_id": `+jsonRef(sprintRef(t, h, 1))+`,
   "sp_planificados": 10,
   "sp_completados": 8,
   "items_sin_estimar": 1,
@@ -718,18 +717,18 @@ func TestConsultaMetricas_ContratoDelProyectoVacio(t *testing.T) {
 // CA-35.3 · Un {id} no numérico devuelve 400 en las dos rutas.
 func TestConsultaMetricas_IDNoNumericoDevuelve400(t *testing.T) {
 	h := newHandler()
-	for path, want := range map[string]string{"/api/sprints/abc/metricas": "el id debe ser un número entero", "/api/proyectos/abc/metricas": "el id del proyecto debe ser un UUID"} {
+	for path, want := range map[string]string{"/api/sprints/abc/metricas": "el id del sprint debe ser un UUID", "/api/proyectos/abc/metricas": "el id del proyecto debe ser un UUID"} {
 		rec := do(t, h, http.MethodGet, path, "")
 
 		expectError(t, rec, http.StatusBadRequest, want)
 	}
 }
 
-// HU-35 · CA-35.3 · Verifica que un sprint inexistente, 0 o negativo responda 404.
-// CA-35.3 · Un sprint inexistente, 0 o negativo devuelve 404.
+// HU-35 · CA-35.3 · Verifica que un sprint inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
+// CA-35.3 · Un sprint inexistente devuelve 404.
 func TestConsultaMetricas_SprintInexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingSprintID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/sprints/"+id+"/metricas", "")
 
 		expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
@@ -841,7 +840,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
 	expectRawJSON(t, rec, `[
   {
     "sprint": {
-      "id": 1,
+      "id": `+jsonRef(sprintRef(t, h, 1))+`,
       "proyecto_id":`+jsonProjectID(t, h, 1)+`,
       "nombre": "Sprint 1",
       "fecha_inicio": "2026-10-01",
@@ -850,7 +849,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
       "estado": "CERRADO"
     },
     "metricas": {
-      "sprint_id": 1,
+      "sprint_id": `+jsonRef(sprintRef(t, h, 1))+`,
       "sp_planificados": 10,
       "sp_completados": 8,
       "items_sin_estimar": 1,
@@ -868,7 +867,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
   },
   {
     "sprint": {
-      "id": 2,
+      "id": `+jsonRef(sprintRef(t, h, 2))+`,
       "proyecto_id":`+jsonProjectID(t, h, 1)+`,
       "nombre": "Sprint 2",
       "fecha_inicio": "2026-10-15",
@@ -877,7 +876,7 @@ func TestMetricasPorSprint_ContratoConUnSprintCerradoYOtroAbierto(t *testing.T) 
       "estado": "ABIERTO"
     },
     "metricas": {
-      "sprint_id": 2,
+      "sprint_id": `+jsonRef(sprintRef(t, h, 2))+`,
       "sp_planificados": 0,
       "sp_completados": 0,
       "items_sin_estimar": 0,

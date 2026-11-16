@@ -83,7 +83,7 @@ Característica: HU-51 Identificadores UUID de los proyectos
   Escenario: Un ítem consultado por su propio ID muestra el UUID de su proyecto (CA-51.3)
     Dado que existe el proyecto "Inventario"
     Y que el proyecto "Inventario" tiene un ítem en su backlog
-    Cuando pido GET "/api/items/1"
+    Cuando pido GET "/api/items/{ítem}"
     Entonces la respuesta tiene el código 200
     Y el "proyecto_id" de la respuesta es el UUID de "Inventario"
 
@@ -139,8 +139,8 @@ Característica: HU-51 Identificadores UUID de los proyectos
     Entonces la respuesta tiene el código 400
     Y el error es "la fecha de inicio del proyecto es obligatoria"
 
-  # Caso límite
+  # Caso límite · HU-52, CA-52.4: la ruta de esfuerzos de García Santiago (efforts.go) recibe el UUID del ítem
   Escenario: Las demás entidades conservan su ID entero (CA-51.4)
-    Cuando pido GET "/api/items/abc"
+    Cuando pido GET "/api/items/abc/esfuerzos"
     Entonces la respuesta tiene el código 400
-    Y el error es "el id debe ser un número entero"
+    Y el error es "el id del ítem debe ser un UUID"

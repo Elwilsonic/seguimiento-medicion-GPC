@@ -63,11 +63,10 @@ func sprintReportTEC03(t *testing.T, h http.Handler) {
 			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/completar", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		}
 	}
-	// García: cuando sprint pase a UUID, este id va entre comillas
-	defectBody := fmt.Sprintf(`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":%s}`, string(sp.ID))
+	defectBody := fmt.Sprintf(`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":%q}`, apiID(t, h, kindSprint, 1))
 	expectStatus(t, do(t, h, http.MethodPost, "/api/items/1/defectos", defectBody), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%s}`, string(sp.ID))), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", resolveIn(apiID(t, h, kindSprint, 1))), http.StatusOK)
 	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/cerrar", string(sp.ID)), ""), http.StatusOK)
 }
 
@@ -81,7 +80,7 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "sprint": {
-    "id": 1,
+    "id": `+jsonRef(sprintRef(t, h, 1))+`,
     "proyecto_id":`+jsonProjectID(t, h, 1)+`,
     "nombre": "Sprint 1",
     "fecha_inicio": "2026-10-05",
@@ -90,7 +89,7 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
     "estado": "CERRADO"
   },
   "metricas": {
-    "sprint_id": 1,
+    "sprint_id": `+jsonRef(sprintRef(t, h, 1))+`,
     "sp_planificados": 10,
     "sp_completados": 8,
     "items_sin_estimar": 1,
@@ -107,32 +106,32 @@ func TestReporteSprint_ContratoDelEjemploDeTEC03(t *testing.T) {
   },
   "historias": {
     "historias": [
-      {"id": 1, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": 1},
-      {"id": 2, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": 1},
-      {"id": 3, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": 1},
-      {"id": 4, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": 1}
+      {"id": `+jsonItemID(t, h, 1)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "A", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 5, "horas_estimadas": 10, "sprint_id": `+jsonItemSprintID(t, h, 1)+`},
+      {"id": `+jsonItemID(t, h, 2)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "B", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "TERMINADO", "story_points": 3, "horas_estimadas": 6, "sprint_id": `+jsonItemSprintID(t, h, 2)+`},
+      {"id": `+jsonItemID(t, h, 3)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "C", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "EN_CURSO", "story_points": 2, "horas_estimadas": 0, "sprint_id": `+jsonItemSprintID(t, h, 3)+`},
+      {"id": `+jsonItemID(t, h, 4)+`, "proyecto_id":`+jsonProjectID(t, h, 1)+`, "titulo": "D", "descripcion": "", "prioridad": "MEDIA", "criterios": ["Criterio"], "estado": "PENDIENTE", "story_points": 0, "horas_estimadas": 4, "sprint_id": `+jsonItemSprintID(t, h, 4)+`}
     ],
     "cantidad": 4,
     "completadas": 2
   },
   "esfuerzos": {
     "esfuerzos": [
-      {"id": 1, "sprint_id": 1, "item_id": 1, "integrante": "Ana", "fecha": "2026-10-06", "actividad": "Desarrollo", "horas": 12},
-      {"id": 2, "sprint_id": 1, "item_id": 2, "integrante": "Luis", "fecha": "2026-10-07", "actividad": "Desarrollo", "horas": 5},
-      {"id": 3, "sprint_id": 1, "item_id": 3, "integrante": "Ana", "fecha": "2026-10-08", "actividad": "Pruebas", "horas": 3}
+      {"id": `+apiIDJSON(t, h, kindEffort, 1)+`, "sprint_id": `+apiIDJSON(t, h, kindSprint, 1)+`, "item_id": `+apiIDJSON(t, h, kindItem, 1)+`, "integrante": "Ana", "fecha": "2026-10-06", "actividad": "Desarrollo", "horas": 12},
+      {"id": `+apiIDJSON(t, h, kindEffort, 2)+`, "sprint_id": `+apiIDJSON(t, h, kindSprint, 1)+`, "item_id": `+apiIDJSON(t, h, kindItem, 2)+`, "integrante": "Luis", "fecha": "2026-10-07", "actividad": "Desarrollo", "horas": 5},
+      {"id": `+apiIDJSON(t, h, kindEffort, 3)+`, "sprint_id": `+apiIDJSON(t, h, kindSprint, 1)+`, "item_id": `+apiIDJSON(t, h, kindItem, 3)+`, "integrante": "Ana", "fecha": "2026-10-08", "actividad": "Pruebas", "horas": 3}
     ],
     "total_horas": 20
   },
   "defectos": {
     "defectos": [
       {
-        "id": 1,
+        "id": `+apiIDJSON(t, h, kindDefect, 1)+`,
         "descripcion": "El total de horas no suma los decimales",
         "severidad": "ALTA",
         "estado": "RESUELTO",
-        "item_id": 1,
-        "sprint_deteccion_id": 1,
-        "sprint_resolucion_id": 1
+        "item_id": `+apiIDJSON(t, h, kindItem, 1)+`,
+        "sprint_deteccion_id": `+apiIDJSON(t, h, kindSprint, 1)+`,
+        "sprint_resolucion_id": `+apiIDJSON(t, h, kindSprint, 1)+`
       }
     ],
     "cantidad": 1
@@ -160,7 +159,7 @@ func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
 
 	expectRawJSON(t, rec, `{
   "sprint": {
-    "id": 2,
+    "id": `+jsonRef(sprintRef(t, h, 2))+`,
     "proyecto_id":`+jsonProjectID(t, h, 2)+`,
     "nombre": "Sprint vacío",
     "fecha_inicio": "2026-10-19",
@@ -169,7 +168,7 @@ func TestReporteSprint_ContratoDelSprintVacio(t *testing.T) {
     "estado": "ABIERTO"
   },
   "metricas": {
-    "sprint_id": 2,
+    "sprint_id": `+jsonRef(sprintRef(t, h, 2))+`,
     "sp_planificados": 0,
     "sp_completados": 0,
     "items_sin_estimar": 0,
@@ -265,12 +264,12 @@ func TestReporteSprint_DefectoResueltoEnElSprintYDetectadoEnOtro(t *testing.T) {
 	it := createHoursItem(t, h, "A", 10)
 	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/1/items/%s", string(it.ID)), ""), http.StatusOK)
 	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%s/defectos", string(it.ID)),
-		`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":1}`), http.StatusCreated)
+		`{"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","sprint_deteccion_id":`+apiIDJSON(t, h, kindSprint, 1)+`}`), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
 	expectStatus(t, do(t, h, http.MethodPost, "/api/sprints/1/cerrar", ""), http.StatusOK)
 	expectStatus(t, do(t, h, http.MethodPost, projectPath(t, h, 1)+"/sprints",
 		`{"nombre":"Sprint 2","fecha_inicio":"2026-10-19","fecha_fin":"2026-10-30","objetivo":"Corregir defectos"}`), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"RESUELTO","sprint_resolucion_id":2}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", resolveIn(apiID(t, h, kindSprint, 2))), http.StatusOK)
 
 	parts := reportParts(t, h, "/api/sprints/2/reporte")
 
@@ -281,8 +280,9 @@ func TestReporteSprint_DefectoResueltoEnElSprintYDetectadoEnOtro(t *testing.T) {
 	if err := json.Unmarshal(parts["metricas"], &m); err != nil || m.Detectados != 0 || m.Resueltos != 1 {
 		t.Errorf("metricas = %s (%v), se esperaban 0 detectados y 1 resuelto", parts["metricas"], err)
 	}
-	want := `{"defectos":[{"id":1,"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","estado":"RESUELTO",` +
-		`"item_id":1,"sprint_deteccion_id":1,"sprint_resolucion_id":2}],"cantidad":1}`
+	want := `{"defectos":[{"id":` + apiIDJSON(t, h, kindDefect, 1) + `,"descripcion":"El total de horas no suma los decimales","severidad":"ALTA","estado":"RESUELTO",` +
+		`"item_id":` + apiIDJSON(t, h, kindItem, 1) + `,"sprint_deteccion_id":` + apiIDJSON(t, h, kindSprint, 1) +
+		`,"sprint_resolucion_id":` + apiIDJSON(t, h, kindSprint, 2) + `}],"cantidad":1}`
 	if raw, ok := parts["defectos"]; !ok || compactJSON(t, raw) != want {
 		t.Errorf("defectos = %s, se esperaba %s", parts["defectos"], want)
 	}
@@ -316,10 +316,10 @@ func TestReporteSprint_RedondeaElTotalDeHorasAUnDecimal(t *testing.T) {
 }
 
 // CA-39.3 y CA-39.8 · Un sprint inexistente, 0 o negativo devuelve 404.
-// HU-39 · CA-39.3 · Verifica que el reporte de un sprint inexistente, 0 o negativo responda 404.
+// HU-39 · CA-39.3 · Verifica que el reporte de un sprint inexistente (un UUID que nunca se asignó o el UUID nulo) responda 404.
 func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
-	for _, id := range []string{"99", "0", "-1"} {
+	for _, id := range []string{missingSprintID, nilProjectID} {
 		rec := do(t, h, http.MethodGet, "/api/sprints/"+id+"/reporte", "")
 
 		expectError(t, rec, http.StatusNotFound, sprint.ErrSprintNotFound.Error())
@@ -331,7 +331,7 @@ func TestReporteSprint_InexistenteDevuelve404(t *testing.T) {
 func TestReporteSprint_IDNoNumericoDevuelve400(t *testing.T) {
 	rec := do(t, newHandler(), http.MethodGet, "/api/sprints/abc/reporte", "")
 
-	expectError(t, rec, http.StatusBadRequest, "el id debe ser un número entero")
+	expectError(t, rec, http.StatusBadRequest, "el id del sprint debe ser un UUID")
 }
 
 // CA-39.8 · Una falla del repositorio devuelve 500 sin exponer el detalle.

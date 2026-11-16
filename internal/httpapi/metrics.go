@@ -10,10 +10,10 @@ import (
 // sprintMetricsResponse es la respuesta de GET /api/sprints/{id}/metricas
 // (HU-32 y HU-34).
 type sprintMetricsResponse struct {
-	SprintID        int `json:"sprint_id"`
-	SPPlanificados  int `json:"sp_planificados"`
-	SPCompletados   int `json:"sp_completados"`
-	ItemsSinEstimar int `json:"items_sin_estimar"`
+	SprintID        string `json:"sprint_id"`
+	SPPlanificados  int    `json:"sp_planificados"`
+	SPCompletados   int    `json:"sp_completados"`
+	ItemsSinEstimar int    `json:"items_sin_estimar"`
 	completionResponse
 	hoursResponse
 	defectsResponse
@@ -46,7 +46,7 @@ type completionResponse struct {
 // consulta de todas las métricas del sprint (HU-35, RN-35.1).
 func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 	ids := s.newPublicIDs()
-	id, err := pathID(r)
+	id, err := s.sprintIDFromPath(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -64,7 +64,7 @@ func (s *server) sprintMetrics(w http.ResponseWriter, r *http.Request) {
 // GET /api/proyectos/{id}/metricas/sprints (HU-37).
 func toSprintMetricsResponse(m metrics.SprintMetrics, ids *publicIDs) sprintMetricsResponse {
 	return sprintMetricsResponse{
-		SprintID:           m.SprintID,
+		SprintID:           ids.sprint(m.SprintID),
 		SPPlanificados:     m.Points.Planned,
 		SPCompletados:      m.Points.Completed,
 		ItemsSinEstimar:    m.Points.Unestimated,

@@ -96,8 +96,7 @@ func serveRecording(t *testing.T, h http.Handler, rec *httptest.ResponseRecorder
 // uuidRoutes son las rutas cuyo handler ya recibe el UUID de sus entidades.
 // do() traduce los números de una ruta solo si la ruta está en esta tabla:
 // así, cuando un responsable pasa sus handlers a UUID, sus tests siguen
-// funcionando con las rutas fijas, y las rutas de los demás, que todavía
-// leen un entero, no se traducen (desviación de la base, D9 de design.md).
+// funcionando con las rutas fijas (D9 de design.md).
 //
 // Cada responsable agrega, en el GREEN de su entidad, las rutas cuyos
 // handlers están en sus archivos (tabla "Rutas por responsable" de D3), con
@@ -110,6 +109,11 @@ var uuidRoutes = []string{
 	// Cardozo Leandro (5): GET y PUT /api/items/{id},
 	// PATCH /api/items/{id}/estado y /api/items/{id}/story-points (items.go),
 	// y PUT /api/integrantes/{id} (members_update.go).
+	"GET /api/items/{id}",
+	"PUT /api/items/{id}",
+	"PATCH /api/items/{id}/estado",
+	"PATCH /api/items/{id}/story-points",
+	"PUT /api/integrantes/{id}",
 
 	// Buttini Cristobal (11): POST /api/items/{id}/poker-sessions y
 	// POST /api/poker-sessions/{id}/votes, /reveal, /estimate y /rounds
@@ -117,12 +121,30 @@ var uuidRoutes = []string{
 	// /api/sprints/{id}/items/{itemId}/completar, GET /api/sprints/{id}/completados
 	// y POST /api/sprints/{id}/cerrar (sprints.go); GET /api/sprints/{id}/metricas
 	// (metrics.go); GET /api/sprints/{id}/reporte (sprint_reports.go).
+	"POST /api/items/{id}/poker-sessions",
+	"POST /api/poker-sessions/{id}/votes",
+	"POST /api/poker-sessions/{id}/reveal",
+	"POST /api/poker-sessions/{id}/estimate",
+	"POST /api/poker-sessions/{id}/rounds",
+	"POST /api/sprints/{id}/items/{itemId}",
+	"POST /api/sprints/{id}/items/{itemId}/completar",
+	"GET /api/sprints/{id}/completados",
+	"POST /api/sprints/{id}/cerrar",
+	"GET /api/sprints/{id}/metricas",
+	"GET /api/sprints/{id}/reporte",
 
 	// García Santiago (7): POST /api/items/{id}/defectos,
 	// PATCH /api/defectos/{id}/estado y GET /api/sprints/{id}/defectos
 	// (defects.go); GET /api/items/{id}/esfuerzos,
 	// POST /api/sprints/{id}/items/{itemId}/esfuerzos, GET /api/sprints/{id}/esfuerzos
 	// y PATCH /api/esfuerzos/{id}/horas (efforts.go).
+	"POST /api/items/{id}/defectos",
+	"PATCH /api/defectos/{id}/estado",
+	"GET /api/sprints/{id}/defectos",
+	"GET /api/items/{id}/esfuerzos",
+	"POST /api/sprints/{id}/items/{itemId}/esfuerzos",
+	"GET /api/sprints/{id}/esfuerzos",
+	"PATCH /api/esfuerzos/{id}/horas",
 }
 
 // inUUIDRoutes dice si el pedido method path (sin la query) corresponde a
@@ -149,18 +171,21 @@ func inUUIDRoutes(method, path string) bool {
 	return false
 }
 
-// withEntityIDs traduce en path cada número que nombra una entidad al "id"
-// de la N-ésima entidad de ese tipo creada por la API en h, si la ruta del
-// pedido está en uuidRoutes. Entiende /api/{entidad}/{N}/... y el {itemId}
-// de /api/sprints/{N}/items/{M}/...
+// withEntityIDs traduce en path los ids de las entidades. Entiende
+// /api/{entidad}/{N}/... y el {itemId} de /api/sprints/{N}/items/{M}/...
+// Si la ruta del pedido está en uuidRoutes, cada número N pasa al "id" de la
+// N-ésima entidad de ese tipo creada por la API en h; si no está, la ruta
+// queda igual. Con las rutas de las 6 entidades en uuidRoutes (HU-52), ya no
+// hace falta la traducción inversa, del "id" al número, que se usó mientras
+// cada responsable pasaba sus rutas a UUID (segunda desviación de la base).
 func withEntityIDs(h http.Handler, method, path string) string {
 	if !strings.HasPrefix(path, "/api/") {
 		return path
 	}
-	if rest, _, _ := strings.Cut(path, "?"); !inUUIDRoutes(method, rest) {
+	rest, query, _ := strings.Cut(path, "?")
+	if !inUUIDRoutes(method, rest) {
 		return path
 	}
-	rest, query, _ := strings.Cut(path, "?")
 	parts := strings.Split(rest, "/")
 	entityIDsMu.Lock()
 	defer entityIDsMu.Unlock()
