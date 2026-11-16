@@ -145,17 +145,6 @@ func (s *server) closeSprint(w http.ResponseWriter, r *http.Request) {
 	s.writeResolved(w, http.StatusOK, toSprintResponse(sp, publicID, ids), ids)
 }
 
-// sprintItemIDs lee el {id} del sprint y el {itemId} del ítem de la ruta.
-func sprintItemIDs(r *http.Request) (sprintID, itemID int, err error) {
-	if sprintID, err = pathID(r); err != nil {
-		return 0, 0, err
-	}
-	if itemID, err = pathInt(r, "itemId"); err != nil {
-		return 0, 0, err
-	}
-	return sprintID, itemID, nil
-}
-
 // parseDate lee una fecha AAAA-MM-DD. Una fecha vacía es una fecha ausente
 // (el valor zero), y la valida el Manager de sprints.
 func parseDate(value string) (time.Time, error) {

@@ -40,8 +40,9 @@ func TestListarEsfuerzosPorSprint_Devuelve200ConLosEsfuerzosYElTotal(t *testing.
 	if len(got.Esfuerzos) != 2 {
 		t.Fatalf("esfuerzos = %d, se esperaban 2", len(got.Esfuerzos))
 	}
-	if got.Esfuerzos[0].ID != "1" || got.Esfuerzos[1].ID != "2" {
-		t.Errorf("IDs = %s y %s, se esperaban 1 y 2", string(got.Esfuerzos[0].ID), string(got.Esfuerzos[1].ID))
+	// HU-52, CA-52.3: cada esfuerzo tiene el UUID que devolvió su registro.
+	if first, second := apiID(t, h, kindEffort, 1), apiID(t, h, kindEffort, 2); string(got.Esfuerzos[0].ID) != first || string(got.Esfuerzos[1].ID) != second {
+		t.Errorf("IDs = %s y %s, se esperaban %s y %s", got.Esfuerzos[0].ID, got.Esfuerzos[1].ID, first, second)
 	}
 	if got.Esfuerzos[0].Integrante != "García Santiago" || got.Esfuerzos[0].Actividad != "Implementar el registro" {
 		t.Errorf("primer esfuerzo = %+v", got.Esfuerzos[0])
@@ -61,7 +62,7 @@ func TestListarEsfuerzosPorItem_Devuelve200ConLosEsfuerzosYElTotal(t *testing.T)
 	expectStatus(t, rec, http.StatusOK)
 	var got effortListJSON
 	decode(t, rec, &got)
-	if len(got.Esfuerzos) != 1 || got.Esfuerzos[0].ID != "1" {
+	if len(got.Esfuerzos) != 1 || string(got.Esfuerzos[0].ID) != apiID(t, h, kindEffort, 1) {
 		t.Fatalf("esfuerzos = %+v, se esperaba el esfuerzo 1", got.Esfuerzos)
 	}
 	if got.TotalHoras != 2.5 {
@@ -93,6 +94,8 @@ func TestListarEsfuerzos_SinRegistrosDevuelveListaVaciaYTotalCero(t *testing.T) 
 	}
 }
 
+// HU-52, CA-52.4: un sprint o una historia inexistentes son UUID que nunca se
+// asignaron.
 // HU-27 · CA-27.4 · Verifica que consultar un sprint o una historia inexistente responda 404.
 func TestListarEsfuerzos_InexistenteDevuelve404(t *testing.T) {
 	h := newHandler()
@@ -101,8 +104,8 @@ func TestListarEsfuerzos_InexistenteDevuelve404(t *testing.T) {
 		path string
 		want error
 	}{
-		"ítem inexistente":   {"/api/items/999/esfuerzos", backlog.ErrItemNotFound},
-		"sprint inexistente": {"/api/sprints/999/esfuerzos", sprint.ErrSprintNotFound},
+		"ítem inexistente":   {"/api/items/" + neverAssignedUUID + "/esfuerzos", backlog.ErrItemNotFound},
+		"sprint inexistente": {"/api/sprints/" + neverAssignedUUID + "/esfuerzos", sprint.ErrSprintNotFound},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

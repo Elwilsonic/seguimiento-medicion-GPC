@@ -1093,7 +1093,7 @@ formDefecto.addEventListener("submit", (e) => {
     const defecto = await api("POST", "/items/" + item + "/defectos", {
       descripcion: form.descripcion.value,
       severidad: form.severidad.value,
-      sprint_deteccion_id: Number(form.sprint_deteccion_id.value),
+      sprint_deteccion_id: form.sprint_deteccion_id.value.trim(),
     });
     form.reset();
     mostrar("msg-defectos", "Defecto " + defecto.id + " registrado para el ítem " + defecto.item_id + ".", false);
@@ -1116,7 +1116,7 @@ formEstadoDefecto.addEventListener("submit", (e) => {
     const cuerpo = { estado: form.estado.value };
     const sprint = form.sprint_resolucion_id.value.trim();
     if (sprint !== "") {
-      cuerpo.sprint_resolucion_id = Number(sprint);
+      cuerpo.sprint_resolucion_id = sprint;
     }
     const cambiado = await api("PATCH", "/defectos/" + defecto + "/estado", cuerpo);
     form.reset();

@@ -358,7 +358,7 @@
 
       <form id="form-registrar-esfuerzo">
         <h3>Registrar esfuerzo</h3>
-        <label>Ítem (ID) <input name="item_id" type="number" min="1" placeholder="Ej.: 1"></label>
+        <label>Ítem (ID) <input name="item_id" type="text" placeholder="UUID del ítem" autocomplete="off" spellcheck="false"></label>
         <label>Integrante <input name="integrante"></label>
         <label>Fecha <input name="fecha" type="date"></label>
         <label>Actividad <input name="actividad"></label>
@@ -368,7 +368,7 @@
 
       <form id="form-corregir-esfuerzo">
         <h3>Corregir esfuerzo</h3>
-        <label>Esfuerzo (ID) <input name="esfuerzo_id" type="number" min="1" placeholder="Ej.: 1"></label>
+        <label>Esfuerzo (ID) <input name="esfuerzo_id" type="text" placeholder="UUID del esfuerzo" autocomplete="off" spellcheck="false"></label>
         <label>Horas <input name="horas" type="number" step="any" placeholder="Ej.: 2.5"></label>
         <button type="submit">Corregir esfuerzo</button>
       </form>
@@ -381,7 +381,7 @@
             <option value="item">Historia</option>
           </select>
         </label>
-        <label>ID <input name="referencia" type="number" min="1" required placeholder="Ej.: 1"></label>
+        <label>ID <input name="referencia" type="text" required placeholder="UUID del sprint o de la historia" autocomplete="off" spellcheck="false"></label>
         <button type="submit">Consultar</button>
       </form>
 
@@ -405,21 +405,21 @@
       <h2>Defectos</h2>
       <form id="form-registrar-defecto">
         <h3>Registrar defecto</h3>
-        <label>Ítem (ID) <input name="item_id" type="number" min="1" placeholder="Ej.: 1"></label>
+        <label>Ítem (ID) <input name="item_id" type="text" placeholder="UUID del ítem" autocomplete="off" spellcheck="false"></label>
         <label>Descripción <textarea name="descripcion" rows="2"></textarea></label>
         <label>Severidad
           <select name="severidad" required></select>
         </label>
-        <label>Sprint de detección (ID) <input name="sprint_deteccion_id" type="number" min="1" required placeholder="Ej.: 1"></label>
+        <label>Sprint de detección (ID) <input name="sprint_deteccion_id" type="text" required placeholder="UUID del sprint" autocomplete="off" spellcheck="false"></label>
         <button type="submit">Registrar defecto</button>
       </form>
       <form id="form-cambiar-estado-defecto">
         <h3>Cambiar estado de defecto</h3>
-        <label>Defecto (ID) <input name="defecto_id" type="number" min="1" required placeholder="Ej.: 1"></label>
+        <label>Defecto (ID) <input name="defecto_id" type="text" required placeholder="UUID del defecto" autocomplete="off" spellcheck="false"></label>
         <label>Estado
           <select name="estado" required></select>
         </label>
-        <label>Sprint de resolución (ID) <input name="sprint_resolucion_id" type="number" min="1" placeholder="Solo para RESUELTO"></label>
+        <label>Sprint de resolución (ID) <input name="sprint_resolucion_id" type="text" placeholder="UUID del sprint, solo para RESUELTO" autocomplete="off" spellcheck="false"></label>
         <button type="submit">Cambiar estado</button>
       </form>
       <p class="mensaje" id="msg-defectos" role="alert" hidden></p>

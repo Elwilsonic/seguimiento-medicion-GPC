@@ -516,10 +516,10 @@ func expectDefectsJSON(t *testing.T, rec *httptest.ResponseRecorder, detected, r
 // métricas del sprint y del proyecto dan 2 detectados y 1 resuelto.
 func TestMetricas_IncluyenLosDefectosDetectadosYResueltos(t *testing.T) {
 	h := newHandlerWithDefects(t)
-	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
-	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefect), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefectFor(t, h)), http.StatusCreated)
+	expectStatus(t, do(t, h, http.MethodPost, defectsPath, validDefectFor(t, h)), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"RESUELTO","sprint_resolucion_id":1}`), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", resolveIn(apiID(t, h, kindSprint, 1))), http.StatusOK)
 
 	expectDefectsJSON(t, do(t, h, http.MethodGet, "/api/sprints/1/metricas", ""), 2, 1)
 	expectDefectsJSON(t, do(t, h, http.MethodGet, projectPath(t, h, 1)+"/metricas", ""), 2, 1)
@@ -603,11 +603,10 @@ func contractTEC03(t *testing.T, h http.Handler) idRef {
 			expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/sprints/%s/items/%s/completar", string(sp.ID), string(it.ID)), ""), http.StatusOK)
 		}
 	}
-	// García: cuando sprint pase a UUID, este id va entre comillas
-	defectBody := fmt.Sprintf(`{"descripcion":"El total no descuenta el descuento","severidad":"alta","sprint_deteccion_id":%s}`, string(sp.ID))
+	defectBody := fmt.Sprintf(`{"descripcion":"El total no descuenta el descuento","severidad":"alta","sprint_deteccion_id":%q}`, apiID(t, h, kindSprint, 1))
 	expectStatus(t, do(t, h, http.MethodPost, fmt.Sprintf("/api/items/%s/defectos", string(first.ID)), defectBody), http.StatusCreated)
 	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", `{"estado":"EN_CORRECCION"}`), http.StatusOK)
-	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", fmt.Sprintf(`{"estado":"RESUELTO","sprint_resolucion_id":%s}`, string(sp.ID))), http.StatusOK)
+	expectStatus(t, do(t, h, http.MethodPatch, "/api/defectos/1/estado", resolveIn(apiID(t, h, kindSprint, 1))), http.StatusOK)
 	return sp.ID
 }
 
